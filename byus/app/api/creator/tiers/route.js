@@ -51,22 +51,33 @@ export async function POST(request) {
     );
   }
 
-  // Create the Stripe Product + recurring Price for this tier.
-  const product = await stripe.products.create({ name });
-  const price = await stripe.prices.create({
-    product: product.id,
-    unit_amount: priceCents,
-    currency: 'usd',
-    recurring: { interval: 'month' },
-  });
+  // Creating the Stripe Product/Price (or the DB insert after it) can fail - without a
+  // try/catch, that throws unhandled, Next returns a bodyless 500, and the dashboard's
+  // fetch crashes trying to parse it as JSON instead of showing the actual error.
+  try {
+    // Create the Stripe Product + recurring Price for this tier.
+    const product = await stripe.products.create({ name });
+    const price = await stripe.prices.create({
+      product: product.id,
+      unit_amount: priceCents,
+      currency: 'usd',
+      recurring: { interval: 'month' },
+    });
 
-  const result = await query(
-    `INSERT INTO subscription_tiers
-       (creator_id, name, description, price_cents, stripe_price_id, stripe_product_id)
-     VALUES ($1, $2, $3, $4, $5, $6)
-     RETURNING id, name, description, price_cents, active, created_at`,
-    [session.userId, name, description || null, priceCents, price.id, product.id]
-  );
+    const result = await query(
+      `INSERT INTO subscription_tiers
+         (creator_id, name, description, price_cents, stripe_price_id, stripe_product_id)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id, name, description, price_cents, active, created_at`,
+      [session.userId, name, description || null, priceCents, price.id, product.id]
+    );
 
-  return NextResponse.json({ tier: result.rows[0] });
+    return NextResponse.json({ tier: result.rows[0] });
+  } catch (err) {
+    console.error('creator/tiers POST failed:', err);
+    return NextResponse.json(
+      { error: err.message || 'Could not create this tier. Try again.' },
+      { status: 500 }
+    );
+  }
 }
