@@ -9,12 +9,18 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import stripe, { PLATFORM_FEE_PERCENT } from '@/lib/stripe';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function POST(request) {
   const session = getCurrentUser();
   if (!session || session.role !== 'fan') {
     return NextResponse.json({ error: 'Only fans can subscribe.' }, { status: 403 });
   }
+
+  // Rate limit by user — this endpoint is authenticated, so the account itself is the
+  // identifier. Guards against a script hammering Stripe Checkout session creation.
+  const rateCheck = await checkRateLimit('subscribe', `user:${session.userId}`);
+  if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
   const { tierId } = await request.json();
   if (!tierId) {
