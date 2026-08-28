@@ -15,40 +15,57 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Only creators can connect a Stripe account.' }, { status: 403 });
   }
 
-  const userResult = await query('SELECT id, email, stripe_connect_account_id FROM users WHERE id = $1', [
-    session.userId,
-  ]);
-  const user = userResult.rows[0];
-  if (!user) {
-    return NextResponse.json({ error: 'User not found.' }, { status: 404 });
-  }
+  // Everything below can throw - a Stripe API error (e.g. Connect not yet activated on this
+  // platform's account) or a database error would otherwise propagate as an unhandled
+  // exception, which Next turns into a bare 500 with no JSON body. The dashboard's fetch call
+  // then crashes trying to parse that as JSON, leaving the "Redirecting..." button stuck
+  // forever with no explanation. Catching it here means the creator actually sees what went
+  // wrong (Stripe's own error messages are usually specific and actionable).
+  try {
+    const userResult = await query('SELECT id, email, stripe_connect_account_id FROM users WHERE id = $1', [
+      session.userId,
+    ]);
+    const user = userResult.rows[0];
+    if (!user) {
+      return NextResponse.json({ error: 'User not found.' }, { status: 404 });
+    }
 
-  let accountId = user.stripe_connect_account_id;
+    let accountId = user.stripe_connect_account_id;
 
-  // Only create a new Stripe account if this creator doesn't already have one.
-  // Re-running this after a partial/abandoned onboarding should resume, not duplicate.
-  if (!accountId) {
-    const account = await stripe.accounts.create({
-      type: 'express',
-      email: user.email,
-      capabilities: {
-        card_payments: { requested: true },
-        transfers: { requested: true },
-      },
+    // Only create a new Stripe account if this creator doesn't already have one.
+    // Re-running this after a partial/abandoned onboarding should resume, not duplicate.
+    if (!accountId) {
+      const account = await stripe.accounts.create({
+        type: 'express',
+        email: user.email,
+        capabilities: {
+          card_payments: { requested: true },
+          transfers: { requested: true },
+        },
+      });
+      accountId = account.id;
+      await query('UPDATE users SET stripe_connect_account_id = $1 WHERE id = $2', [accountId, user.id]);
+    }
+
+    // Generate a fresh onboarding link. These links expire quickly, so always generate
+    // a new one right before redirecting rather than reusing an old one.
+    const origin = request.headers.get('origin') || process.env.APP_URL;
+    const accountLink = await stripe.accountLinks.create({
+      account: accountId,
+      refresh_url: `${origin}/creator/onboarding?refresh=true`,
+      return_url: `${origin}/creator/onboarding?complete=true`,
+      type: 'account_onboarding',
     });
-    accountId = account.id;
-    await query('UPDATE users SET stripe_connect_account_id = $1 WHERE id = $2', [accountId, user.id]);
+
+    return NextResponse.json({ url: accountLink.url });
+  } catch (err) {
+    console.error('connect-stripe failed:', err);
+    // Stripe's own error messages (e.g. "Connect isn't enabled for this account yet") are
+    // specific enough to show directly - far more useful to whoever's debugging this than a
+    // generic "something went wrong".
+    return NextResponse.json(
+      { error: err.message || 'Could not start Stripe onboarding. Try again.' },
+      { status: 500 }
+    );
   }
-
-  // Generate a fresh onboarding link. These links expire quickly, so always generate
-  // a new one right before redirecting rather than reusing an old one.
-  const origin = request.headers.get('origin') || process.env.APP_URL;
-  const accountLink = await stripe.accountLinks.create({
-    account: accountId,
-    refresh_url: `${origin}/creator/onboarding?refresh=true`,
-    return_url: `${origin}/creator/onboarding?complete=true`,
-    type: 'account_onboarding',
-  });
-
-  return NextResponse.json({ url: accountLink.url });
 }
