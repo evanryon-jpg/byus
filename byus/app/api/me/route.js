@@ -14,16 +14,24 @@ export async function GET() {
     return NextResponse.json({ error: 'Not logged in.' }, { status: 401 });
   }
 
-  const result = await query(
-    `SELECT id, email, role, display_name, bio, profile_image_url,
-            stripe_connect_onboarded
-     FROM users WHERE id = $1`,
-    [session.userId]
-  );
-  const user = result.rows[0];
-  if (!user) {
-    return NextResponse.json({ error: 'User not found.' }, { status: 404 });
-  }
+  try {
+    const result = await query(
+      `SELECT id, email, role, display_name, bio, profile_image_url,
+              stripe_connect_onboarded
+       FROM users WHERE id = $1`,
+      [session.userId]
+    );
+    const user = result.rows[0];
+    if (!user) {
+      return NextResponse.json({ error: 'User not found.' }, { status: 404 });
+    }
 
-  return NextResponse.json({ user });
+    return NextResponse.json({ user });
+  } catch (err) {
+    console.error('me GET failed:', err);
+    return NextResponse.json(
+      { error: err.message || 'Could not load your account. Try again.' },
+      { status: 500 }
+    );
+  }
 }
