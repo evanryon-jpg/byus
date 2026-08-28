@@ -8,6 +8,7 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { query } from '@/lib/db';
 import { hashPassword } from '@/lib/auth';
+import { checkRateLimit, rateLimitResponse, getClientIp } from '@/lib/rate-limit';
 
 export async function POST(request) {
   const { token, password } = await request.json();
@@ -18,6 +19,12 @@ export async function POST(request) {
   if (password.length < 8) {
     return NextResponse.json({ error: 'Password must be at least 8 characters.' }, { status: 400 });
   }
+
+  // Rate limit by IP. The token itself is 256 bits of randomness, so brute-forcing it
+  // isn't realistic — this is just a general abuse/automation guard on the endpoint.
+  const ip = getClientIp(request);
+  const ipCheck = await checkRateLimit('reset-password', `ip:${ip}`);
+  if (!ipCheck.success) return rateLimitResponse(ipCheck);
 
   try {
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
