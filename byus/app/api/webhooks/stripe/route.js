@@ -8,7 +8,8 @@ export const dynamic = 'force-dynamic';
 // Setup: in the Stripe Dashboard, add a webhook endpoint pointing to
 //   https://yourdomain.com/api/webhooks/stripe
 // and subscribe it to: account.updated, checkout.session.completed,
-// customer.subscription.deleted, customer.subscription.updated, invoice.payment_failed
+// customer.subscription.deleted, customer.subscription.updated, invoice.payment_failed,
+// invoice.payment_succeeded
 
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
@@ -90,6 +91,22 @@ export async function POST(request) {
         if (invoice.subscription) {
           await query(
             `UPDATE subscriptions SET status = 'past_due' WHERE stripe_subscription_id = $1`,
+            [invoice.subscription]
+          );
+        }
+        break;
+      }
+
+      case 'invoice.payment_succeeded': {
+        // Covers the recovery case: a subscription that was 'past_due' (or freshly
+        // 'incomplete') gets a successful charge — most commonly a fan updating their card
+        // after a failure, or Stripe's automatic retry finally landing. Without this, a fan
+        // who fixes their card stays locked out of subscriber-only content indefinitely,
+        // since nothing else flips the status back to 'active'.
+        const invoice = event.data.object;
+        if (invoice.subscription) {
+          await query(
+            `UPDATE subscriptions SET status = 'active' WHERE stripe_subscription_id = $1`,
             [invoice.subscription]
           );
         }
