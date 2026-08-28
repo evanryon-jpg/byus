@@ -46,6 +46,8 @@ export async function GET(request, { params }) {
     );
 
     // Gate content here, server-side — never trust the client to hide this on its own.
+    // media_url in the DB is a private Blob pathname; unlocked posts get pointed at
+    // our own gated route instead of the raw pathname.
     const posts = postsResult.rows.map((post) => {
       const isLocked = post.visibility === 'subscribers_only' && !hasActiveSubscription;
       return {
@@ -55,7 +57,7 @@ export async function GET(request, { params }) {
         visibility: post.visibility,
         locked: isLocked,
         body: isLocked ? null : post.body,
-        media_url: isLocked ? null : post.media_url,
+        media_url: isLocked || !post.media_url ? null : `/api/posts/${post.id}/media`,
       };
     });
 
