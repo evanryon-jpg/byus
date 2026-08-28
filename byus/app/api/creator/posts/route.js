@@ -19,7 +19,13 @@ export async function GET() {
        FROM posts WHERE creator_id = $1 ORDER BY created_at DESC`,
       [session.userId]
     );
-    return NextResponse.json({ posts: result.rows });
+    // media_url in the DB is a private Blob pathname, never expose it directly —
+    // point the client at our own gated route instead.
+    const posts = result.rows.map((post) => ({
+      ...post,
+      media_url: post.media_url ? `/api/posts/${post.id}/media` : null,
+    }));
+    return NextResponse.json({ posts });
   } catch (err) {
     console.error('creator/posts GET failed:', err);
     return NextResponse.json(
@@ -43,6 +49,9 @@ export async function POST(request) {
   const finalVisibility = visibility === 'subscribers_only' ? 'subscribers_only' : 'public';
 
   try {
+    // mediaUrl here is actually the private Blob pathname returned by
+    // /api/creator/upload, stored as-is — it's only ever resolved back into
+    // real file bytes through the gated /api/posts/:id/media route.
     const result = await query(
       `INSERT INTO posts (creator_id, title, body, media_url, visibility)
        VALUES ($1, $2, $3, $4, $5)
@@ -50,7 +59,10 @@ export async function POST(request) {
       [session.userId, title || null, body, mediaUrl || null, finalVisibility]
     );
 
-    return NextResponse.json({ post: result.rows[0] });
+    const post = result.rows[0];
+    return NextResponse.json({
+      post: { ...post, media_url: post.media_url ? `/api/posts/${post.id}/media` : null },
+    });
   } catch (err) {
     console.error('creator/posts POST failed:', err);
     return NextResponse.json(
