@@ -9,6 +9,12 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 
+// profile_image_url in the DB is a private Blob pathname (or null) — never
+// expose it directly, point the client at our own public proxy route instead.
+function withAvatarUrl(user) {
+  return { ...user, profile_image_url: user.profile_image_url ? `/api/avatar/${user.id}` : null };
+}
+
 export async function GET() {
   const session = getCurrentUser();
   if (!session) {
@@ -27,7 +33,7 @@ export async function GET() {
       return NextResponse.json({ error: 'User not found.' }, { status: 404 });
     }
 
-    return NextResponse.json({ user });
+    return NextResponse.json({ user: withAvatarUrl(user) });
   } catch (err) {
     console.error('me GET failed:', err);
     return NextResponse.json(
@@ -74,7 +80,7 @@ export async function PATCH(request) {
       values
     );
 
-    return NextResponse.json({ user: result.rows[0] });
+    return NextResponse.json({ user: withAvatarUrl(result.rows[0]) });
   } catch (err) {
     console.error('me PATCH failed:', err);
     return NextResponse.json(
