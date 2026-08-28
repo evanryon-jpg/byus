@@ -13,12 +13,20 @@ export async function GET() {
     return NextResponse.json({ error: 'Only creators can view this.' }, { status: 403 });
   }
 
-  const result = await query(
-    `SELECT id, title, body, media_url, visibility, created_at
-     FROM posts WHERE creator_id = $1 ORDER BY created_at DESC`,
-    [session.userId]
-  );
-  return NextResponse.json({ posts: result.rows });
+  try {
+    const result = await query(
+      `SELECT id, title, body, media_url, visibility, created_at
+       FROM posts WHERE creator_id = $1 ORDER BY created_at DESC`,
+      [session.userId]
+    );
+    return NextResponse.json({ posts: result.rows });
+  } catch (err) {
+    console.error('creator/posts GET failed:', err);
+    return NextResponse.json(
+      { error: err.message || 'Could not load your posts. Try again.' },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(request) {
@@ -34,12 +42,20 @@ export async function POST(request) {
   }
   const finalVisibility = visibility === 'subscribers_only' ? 'subscribers_only' : 'public';
 
-  const result = await query(
-    `INSERT INTO posts (creator_id, title, body, media_url, visibility)
-     VALUES ($1, $2, $3, $4, $5)
-     RETURNING id, title, body, media_url, visibility, created_at`,
-    [session.userId, title || null, body, mediaUrl || null, finalVisibility]
-  );
+  try {
+    const result = await query(
+      `INSERT INTO posts (creator_id, title, body, media_url, visibility)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, title, body, media_url, visibility, created_at`,
+      [session.userId, title || null, body, mediaUrl || null, finalVisibility]
+    );
 
-  return NextResponse.json({ post: result.rows[0] });
+    return NextResponse.json({ post: result.rows[0] });
+  } catch (err) {
+    console.error('creator/posts POST failed:', err);
+    return NextResponse.json(
+      { error: err.message || 'Could not create this post. Try again.' },
+      { status: 500 }
+    );
+  }
 }
