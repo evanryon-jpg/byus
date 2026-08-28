@@ -25,10 +25,23 @@ export default function BrowsePage() {
           <li key={c.id}>
             <a
               href={`/creator/${c.id}`}
-              className="block rounded-2xl border border-black/5 bg-white p-6 hover:border-[#146359]/30"
+              className="flex items-center gap-4 rounded-2xl border border-black/5 bg-white p-6 hover:border-[#146359]/30"
             >
-              <h3 className="font-semibold">{c.display_name || 'Unnamed creator'}</h3>
-              {c.bio && <p className="mt-1 text-sm text-black/50 line-clamp-2">{c.bio}</p>}
+              {c.profile_image_url ? (
+                <img
+                  src={c.profile_image_url}
+                  alt=""
+                  className="h-12 w-12 shrink-0 rounded-full object-cover"
+                />
+              ) : (
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#146359]/10 text-lg font-semibold text-[#146359]">
+                  {(c.display_name || '?').trim().charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div className="min-w-0">
+                <h3 className="font-semibold">{c.display_name || 'Unnamed creator'}</h3>
+                {c.bio && <p className="mt-1 text-sm text-black/50 line-clamp-2">{c.bio}</p>}
+              </div>
             </a>
           </li>
         ))}
