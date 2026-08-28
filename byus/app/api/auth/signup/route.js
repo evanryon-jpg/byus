@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { hashPassword, createSessionToken, getSessionCookieOptions, SESSION_COOKIE_NAME } from '@/lib/auth';
+import { checkRateLimit, rateLimitResponse, getClientIp } from '@/lib/rate-limit';
 
 export async function POST(request) {
   const { email, password, role, displayName } = await request.json();
@@ -20,6 +21,11 @@ export async function POST(request) {
   if (password.length < 8) {
     return NextResponse.json({ error: 'Password must be at least 8 characters.' }, { status: 400 });
   }
+
+  // Rate limit by IP to slow down mass/bot account creation.
+  const ip = getClientIp(request);
+  const ipCheck = await checkRateLimit('signup', `ip:${ip}`);
+  if (!ipCheck.success) return rateLimitResponse(ipCheck);
 
   // --- Check for existing account ---
   const existing = await query('SELECT id FROM users WHERE email = $1', [email.toLowerCase()]);
