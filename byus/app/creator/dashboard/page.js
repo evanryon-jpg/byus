@@ -161,19 +161,48 @@ function PostSection({ posts, onCreated }) {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [visibility, setVisibility] = useState('public');
+  const [file, setFile] = useState(null);
+  const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
   async function handleCreate(e) {
     e.preventDefault();
+    setError('');
     setSaving(true);
-    await fetch('/api/creator/posts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, body, visibility }),
-    });
-    setSaving(false);
-    setTitle(''); setBody(''); setVisibility('public'); setOpen(false);
-    onCreated();
+
+    try {
+      let mediaUrl = null;
+      if (file) {
+        const form = new FormData();
+        form.append('file', file);
+        const uploadRes = await fetch('/api/creator/upload', { method: 'POST', body: form });
+        const uploadData = await uploadRes.json();
+        if (!uploadRes.ok) {
+          setError(uploadData.error || 'Could not upload the image.');
+          setSaving(false);
+          return;
+        }
+        mediaUrl = uploadData.pathname;
+      }
+
+      const res = await fetch('/api/creator/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, body, mediaUrl, visibility }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Could not create this post.');
+        setSaving(false);
+        return;
+      }
+      setTitle(''); setBody(''); setVisibility('public'); setFile(null); setOpen(false);
+      onCreated();
+    } catch (err) {
+      setError('Something went wrong. Try again.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -196,6 +225,9 @@ function PostSection({ posts, onCreated }) {
                 {p.visibility === 'subscribers_only' ? 'Subscribers only' : 'Public'}
               </span>
             </div>
+            {p.media_url && (
+              <img src={p.media_url} alt="" className="mt-2 max-h-64 rounded-lg object-cover" />
+            )}
             <p className="mt-1 text-sm text-black/60">{p.body}</p>
           </li>
         ))}
@@ -207,13 +239,23 @@ function PostSection({ posts, onCreated }) {
             className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm" />
           <textarea placeholder="What's on your mind?" value={body} onChange={(e) => setBody(e.target.value)} required rows={4}
             className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm" />
+          <div>
+            <label className="mb-1 block text-sm text-black/60">Image (optional)</label>
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              className="w-full text-sm"
+            />
+          </div>
           <select value={visibility} onChange={(e) => setVisibility(e.target.value)}
             className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm">
             <option value="public">Public</option>
             <option value="subscribers_only">Subscribers only</option>
           </select>
+          {error && <p className="text-sm text-red-600">{error}</p>}
           <button disabled={saving} className="rounded-full bg-[#146359] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
-            {saving ? 'Posting…' : 'Post'}
+            {saving ? (file ? 'Uploading…' : 'Posting…') : 'Post'}
           </button>
         </form>
       )}
