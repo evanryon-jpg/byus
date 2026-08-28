@@ -17,7 +17,8 @@
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.2",
     "cookie": "^0.6.0",
-    "@vercel/blob": "^2.8.0"
+    "@vercel/blob": "^2.8.0",
+    "resend": "^4.0.1"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
