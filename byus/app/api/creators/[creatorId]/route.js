@@ -17,10 +17,16 @@ export async function GET(request, { params }) {
       `SELECT id, display_name, bio, profile_image_url FROM users WHERE id = $1 AND role = 'creator'`,
       [creatorId]
     );
-    const creator = creatorResult.rows[0];
-    if (!creator) {
+    const creatorRow = creatorResult.rows[0];
+    if (!creatorRow) {
       return NextResponse.json({ error: 'Creator not found.' }, { status: 404 });
     }
+    // profile_image_url in the DB is a private Blob pathname — point the
+    // client at our own public proxy route instead of exposing it directly.
+    const creator = {
+      ...creatorRow,
+      profile_image_url: creatorRow.profile_image_url ? `/api/avatar/${creatorRow.id}` : null,
+    };
 
     const tiersResult = await query(
       `SELECT id, name, description, price_cents FROM subscription_tiers
