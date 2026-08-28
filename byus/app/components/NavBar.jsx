@@ -53,6 +53,7 @@ export default function NavBar() {
           {status === 'in' && (
             <>
               <a href={dashboardHref} className="hover:text-[#146359]">Dashboard</a>
+              <a href="/settings" className="hover:text-[#146359]">Settings</a>
               <button
                 type="button"
                 onClick={handleLogout}
