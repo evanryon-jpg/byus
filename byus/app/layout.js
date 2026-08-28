@@ -1,5 +1,7 @@
 import './globals.css';
 import NavBar from './components/NavBar';
+import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 export const metadata = {
   title: 'ByUs — Creator subscriptions, simplified',
@@ -12,6 +14,8 @@ export default function RootLayout({ children }) {
       <body className="min-h-screen bg-[#FAF8F4] text-[#1A1A1A] antialiased">
         <NavBar />
         <main>{children}</main>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
