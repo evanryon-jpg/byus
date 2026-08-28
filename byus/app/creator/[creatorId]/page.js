@@ -43,7 +43,20 @@ export default function CreatorProfilePage() {
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
-      <h1 className="text-2xl font-bold">{creator.display_name}</h1>
+      <div className="flex items-center gap-4">
+        {creator.profile_image_url ? (
+          <img
+            src={creator.profile_image_url}
+            alt=""
+            className="h-16 w-16 shrink-0 rounded-full object-cover"
+          />
+        ) : (
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#146359]/10 text-2xl font-semibold text-[#146359]">
+            {(creator.display_name || '?').trim().charAt(0).toUpperCase()}
+          </div>
+        )}
+        <h1 className="text-2xl font-bold">{creator.display_name}</h1>
+      </div>
       {creator.bio && <p className="mt-2 text-black/60">{creator.bio}</p>}
 
       {/* Tiers */}
