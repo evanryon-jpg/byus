@@ -87,7 +87,12 @@ export default function CreatorProfilePage() {
                 🔒 Subscribers only — subscribe above to unlock this post.
               </p>
             ) : (
-              <p className="mt-2 text-sm text-black/70">{p.body}</p>
+              <>
+                {p.media_url && (
+                  <img src={p.media_url} alt="" className="mt-3 max-h-96 w-full rounded-xl object-cover" />
+                )}
+                <p className="mt-2 text-sm text-black/70">{p.body}</p>
+              </>
             )}
           </li>
         ))}
