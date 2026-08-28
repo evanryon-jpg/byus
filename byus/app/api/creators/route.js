@@ -12,7 +12,13 @@ export async function GET() {
       `SELECT id, display_name, bio, profile_image_url
        FROM users WHERE role = 'creator' ORDER BY created_at DESC`
     );
-    return NextResponse.json({ creators: result.rows });
+    // profile_image_url in the DB is a private Blob pathname — point the
+    // client at our own public proxy route instead of exposing it directly.
+    const creators = result.rows.map((c) => ({
+      ...c,
+      profile_image_url: c.profile_image_url ? `/api/avatar/${c.id}` : null,
+    }));
+    return NextResponse.json({ creators });
   } catch (err) {
     console.error('creators GET failed:', err);
     return NextResponse.json(
