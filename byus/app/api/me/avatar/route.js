@@ -1,10 +1,12 @@
 export const dynamic = 'force-dynamic';
 
 // POST /api/me/avatar
-// Any logged-in user (creator or fan) uploads a profile photo. Unlike
-// /api/creator/upload (which stores post media privately, gated behind
-// subscriber checks), this one stores the image in a PUBLIC Vercel Blob —
-// avatars are meant to be visible on browse/profile pages without a login.
+// Any logged-in user (creator or fan) uploads a profile photo. The Blob
+// store behind this project only allows private-access blobs (a public
+// put() is rejected at the store level), so this stores the image privately
+// — just like post media — and points users.profile_image_url at the
+// pathname. It's served back out publicly through /api/avatar/:userId,
+// which has no auth check, so the photo still ends up visible to everyone.
 
 import { NextResponse } from 'next/server';
 import { put, del } from '@vercel/blob';
@@ -38,30 +40,30 @@ export async function POST(request) {
     }
 
     const existing = await query('SELECT profile_image_url FROM users WHERE id = $1', [session.userId]);
-    const previousUrl = existing.rows[0]?.profile_image_url || null;
+    const previousPathname = existing.rows[0]?.profile_image_url || null;
 
     const ext = (file.name?.split('.').pop() || 'jpg').toLowerCase().slice(0, 10);
     const pathname = `avatars/${session.userId}/${crypto.randomUUID()}.${ext}`;
 
     const blob = await put(pathname, file, {
-      access: 'public',
+      access: 'private',
       contentType: file.type,
     });
 
-    await query('UPDATE users SET profile_image_url = $1 WHERE id = $2', [blob.url, session.userId]);
+    await query('UPDATE users SET profile_image_url = $1 WHERE id = $2', [blob.pathname, session.userId]);
 
     // Best-effort cleanup of the old avatar — an orphaned blob costs storage,
     // not correctness, so a failure here should never block the upload that
     // already succeeded.
-    if (previousUrl) {
+    if (previousPathname) {
       try {
-        await del(previousUrl);
+        await del(previousPathname);
       } catch (err) {
         console.error(`Old avatar cleanup failed for user ${session.userId} (non-fatal):`, err);
       }
     }
 
-    return NextResponse.json({ profile_image_url: blob.url });
+    return NextResponse.json({ profile_image_url: `/api/avatar/${session.userId}` });
   } catch (err) {
     console.error('me/avatar POST failed:', err);
     return NextResponse.json(
