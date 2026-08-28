@@ -9,6 +9,7 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { query } from '@/lib/db';
 import { sendPasswordResetEmail } from '@/lib/email';
+import { checkRateLimit, rateLimitResponse, getClientIp } from '@/lib/rate-limit';
 
 const TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
 const GENERIC_MESSAGE = "If an account exists for that email, we've sent a password reset link.";
@@ -18,6 +19,17 @@ export async function POST(request) {
   if (!email) {
     return NextResponse.json({ error: 'Email is required.' }, { status: 400 });
   }
+
+  // Rate limit by IP and by the target email — this endpoint sends a real email
+  // through Resend on every hit, so unlike most rate limits this one is also a cost
+  // and harassment guard (someone repeatedly reset-emailing a stranger), not just an
+  // abuse guard. A 429 here doesn't leak whether the account exists, since it's
+  // checked before any DB lookup and applies the same whether or not it does.
+  const ip = getClientIp(request);
+  const ipCheck = await checkRateLimit('forgot-password', `ip:${ip}`);
+  if (!ipCheck.success) return rateLimitResponse(ipCheck);
+  const emailCheck = await checkRateLimit('forgot-password', `email:${email.toLowerCase()}`);
+  if (!emailCheck.success) return rateLimitResponse(emailCheck);
 
   try {
     const userResult = await query('SELECT id, email FROM users WHERE email = $1', [email.toLowerCase()]);
