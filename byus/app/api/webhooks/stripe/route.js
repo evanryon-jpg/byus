@@ -1,15 +1,18 @@
 export const dynamic = 'force-dynamic';
 
 // POST /api/webhooks/stripe
-// Stripe calls this URL whenever something relevant happens (account onboarding completes,
-// a checkout succeeds, a subscription is canceled, a payment fails, etc). This is how our
+// Stripe calls this URL whenever something relevant happens on OUR OWN platform account
+// (a checkout succeeds, a subscription is canceled, a payment fails, etc). This is how our
 // database stays in sync with reality in Stripe — never trust the frontend alone for this.
 //
-// Setup: in the Stripe Dashboard, add a webhook endpoint pointing to
+// Connected-account events (like a creator's Express onboarding status) are NOT delivered
+// here — Stripe routes those to a separate "Connected accounts"-scoped destination with its
+// own signing secret. See /api/webhooks/stripe-connect for that handler.
+//
+// Setup: in the Stripe Dashboard, add a "Your account"-scoped webhook endpoint pointing to
 //   https://yourdomain.com/api/webhooks/stripe
-// and subscribe it to: account.updated, checkout.session.completed,
-// customer.subscription.deleted, customer.subscription.updated, invoice.payment_failed,
-// invoice.payment_succeeded
+// and subscribe it to: checkout.session.completed, customer.subscription.deleted,
+// customer.subscription.updated, invoice.payment_failed, invoice.payment_succeeded
 
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
@@ -31,17 +34,6 @@ export async function POST(request) {
 
   try {
     switch (event.type) {
-      case 'account.updated': {
-        const account = event.data.object;
-        if (account.details_submitted && account.payouts_enabled) {
-          await query(
-            `UPDATE users SET stripe_connect_onboarded = true WHERE stripe_connect_account_id = $1`,
-            [account.id]
-          );
-        }
-        break;
-      }
-
       case 'checkout.session.completed': {
         const checkoutSession = event.data.object;
         if (checkoutSession.mode !== 'subscription') break;
