@@ -23,7 +23,7 @@ async function loadOwnedTier(tierId, userId) {
 }
 
 export async function PATCH(request, { params }) {
-  const session = getCurrentUser();
+  const session = await getCurrentUser();
   if (!session || session.role !== 'creator') {
     return NextResponse.json({ error: 'Only creators can edit tiers.' }, { status: 403 });
   }
@@ -87,7 +87,7 @@ export async function PATCH(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
-  const session = getCurrentUser();
+  const session = await getCurrentUser();
   if (!session || session.role !== 'creator') {
     return NextResponse.json({ error: 'Only creators can delete tiers.' }, { status: 403 });
   }
