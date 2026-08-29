@@ -13,7 +13,7 @@ import { getCurrentUser } from '@/lib/session';
 
 export async function GET(request, { params }) {
   const { postId } = params;
-  const session = getCurrentUser(); // may be null if the visitor isn't logged in
+  const session = await getCurrentUser(); // may be null if the visitor isn't logged in
 
   try {
     const postResult = await query(
