@@ -115,7 +115,7 @@ function TierSection({ tiers, onCreated, disabled }) {
       <div className="flex items-center justify-between">
         <h2 className="font-semibold">Subscription tiers</h2>
         {!disabled && (
-          <button onClick={() => setOpen(`open)} className="text-sm font-medium text-[#146359]">
+          <button onClick={() => setOpen(!open)} className="text-sm font-medium text-[#146359]">
             {open ? 'Cancel' : '+ New tier'}
           </button>
         )}
