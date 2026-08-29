@@ -8,7 +8,7 @@ import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 
 export async function GET() {
-  const session = getCurrentUser();
+  const session = await getCurrentUser();
   if (!session || session.role !== 'fan') {
     return NextResponse.json({ error: 'Only fans can view this.' }, { status: 403 });
   }
