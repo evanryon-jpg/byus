@@ -10,6 +10,10 @@ import { query } from '@/lib/db';
 import { hashPassword } from '@/lib/auth';
 import { checkRateLimit, rateLimitResponse, getClientIp } from '@/lib/rate-limit';
 
+// bcrypt silently ignores any bytes past 72 — capping here means the account's real
+// password is exactly what the user typed, not a truncated prefix of it.
+const PASSWORD_MAX = 72;
+
 export async function POST(request) {
   const { token, password } = await request.json();
 
@@ -18,6 +22,12 @@ export async function POST(request) {
   }
   if (password.length < 8) {
     return NextResponse.json({ error: 'Password must be at least 8 characters.' }, { status: 400 });
+  }
+  if (password.length > PASSWORD_MAX) {
+    return NextResponse.json(
+      { error: `Password must be ${PASSWORD_MAX} characters or fewer.` },
+      { status: 400 }
+    );
   }
 
   // Rate limit by IP. The token itself is 256 bits of randomness, so brute-forcing it
@@ -57,7 +67,7 @@ export async function POST(request) {
   } catch (err) {
     console.error('reset-password POST failed:', err);
     return NextResponse.json(
-      { error: err.message || 'Could not reset your password. Try again.' },
+      { error: 'Could not reset your password. Try again.' },
       { status: 500 }
     );
   }
