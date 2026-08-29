@@ -9,7 +9,11 @@ module.exports = {
         brand: {
           teal: '#146359',
           gold: '#C9A961',
+          clay: '#C97C5D',
         },
+      },
+      fontFamily: {
+        display: ['var(--font-display)', 'ui-serif', 'Georgia', 'serif'],
       },
     },
   },
