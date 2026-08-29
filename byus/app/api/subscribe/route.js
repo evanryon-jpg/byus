@@ -12,7 +12,7 @@ import stripe, { PLATFORM_FEE_PERCENT } from '@/lib/stripe';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function POST(request) {
-  const session = getCurrentUser();
+  const session = await getCurrentUser();
   if (!session || session.role !== 'fan') {
     return NextResponse.json({ error: 'Only fans can subscribe.' }, { status: 403 });
   }
