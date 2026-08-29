@@ -11,7 +11,11 @@ function getPool() {
   if (!pool) {
     pool = new Pool({
       connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false },
+      // Neon's endpoint presents a certificate signed by a public CA, so there's no
+      // reason to skip verifying it — rejectUnauthorized: false would accept a
+      // certificate from anyone, making it impossible to tell a MITM'd connection
+      // from the real database.
+      ssl: { rejectUnauthorized: true },
     });
   }
   return pool;
