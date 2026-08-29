@@ -25,4 +25,24 @@ export async function query(text, params) {
   return result;
 }
 
+// Run a series of queries as a single atomic transaction. `callback` receives a client
+// with the same `.query(text, params)` shape as the helper above — use it for anything
+// that needs multiple statements to succeed or fail together (e.g. a webhook handler
+// that claims an event ID and applies its effect in one all-or-nothing step). Rolls back
+// automatically on any error, and always releases the connection back to the pool.
+export async function withTransaction(callback) {
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const result = await callback(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 export default getPool;
