@@ -29,9 +29,16 @@ export async function GET(request, { params }) {
     let isAuthorized = post.visibility === 'public' || isOwner;
 
     if (!isAuthorized && session) {
+      // Cross-check current_period_end against now(), not just the cached status column.
+      // status is only ever updated by a webhook — if one is ever missed (a delivery
+      // failure, an outage), a canceled or lapsed subscription's status can stay stuck
+      // at 'active' with no reconciliation job to catch it. Requiring the period to
+      // still be current means access self-corrects at the paid-through date even if
+      // the webhook that should have flipped status never arrives.
       const subResult = await query(
         `SELECT id FROM subscriptions
-         WHERE fan_id = $1 AND creator_id = $2 AND status = 'active'`,
+         WHERE fan_id = $1 AND creator_id = $2 AND status = 'active'
+           AND (current_period_end IS NULL OR current_period_end > now())`,
         [session.userId, post.creator_id]
       );
       isAuthorized = subResult.rows.length > 0;
@@ -59,7 +66,7 @@ export async function GET(request, { params }) {
   } catch (err) {
     console.error('posts/[postId]/media GET failed:', err);
     return NextResponse.json(
-      { error: err.message || 'Could not load this file. Try again.' },
+      { error: 'Could not load this file. Try again.' },
       { status: 500 }
     );
   }
