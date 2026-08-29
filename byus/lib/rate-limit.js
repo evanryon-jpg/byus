@@ -41,6 +41,20 @@ const limiters = {
     limiter: Ratelimit.slidingWindow(20, '1 h'),
     prefix: 'rl:subscribe',
   }),
+  'connect-stripe': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(10, '1 h'),
+    prefix: 'rl:connect-stripe',
+  }),
+  // Guards the current-password check on PATCH /api/me/password. That check is a live
+  // password verification reachable by anyone with a valid session, so a hijacked session
+  // token could otherwise brute-force it with no friction at all — same risk shape as login,
+  // just authenticated instead of anonymous.
+  'password-change': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(10, '60 s'),
+    prefix: 'rl:password-change',
+  }),
 };
 
 // Best-effort client IP. Vercel always sets x-forwarded-for in production; the
