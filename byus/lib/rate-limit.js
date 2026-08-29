@@ -55,6 +55,15 @@ const limiters = {
     limiter: Ratelimit.slidingWindow(10, '60 s'),
     prefix: 'rl:password-change',
   }),
+  // Guards the two file-upload endpoints (post media, avatars). Uploads are relatively
+  // expensive (Blob storage writes, bandwidth) and otherwise have no cost to automating
+  // against with a valid session — this keeps a single account from being used to hammer
+  // Blob storage or run up usage.
+  upload: new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(20, '10 m'),
+    prefix: 'rl:upload',
+  }),
 };
 
 // Best-effort client IP. Vercel always sets x-forwarded-for in production; the
