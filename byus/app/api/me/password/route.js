@@ -11,6 +11,10 @@ import { getCurrentUser } from '@/lib/session';
 import { hashPassword, verifyPassword } from '@/lib/auth';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
+// bcrypt silently ignores any bytes past 72 — capping here means the account's real
+// password is exactly what the user typed, not a truncated prefix of it.
+const PASSWORD_MAX = 72;
+
 export async function PATCH(request) {
   const session = await getCurrentUser();
   if (!session) {
@@ -34,6 +38,12 @@ export async function PATCH(request) {
   }
   if (newPassword.length < 8) {
     return NextResponse.json({ error: 'New password must be at least 8 characters.' }, { status: 400 });
+  }
+  if (newPassword.length > PASSWORD_MAX) {
+    return NextResponse.json(
+      { error: `New password must be ${PASSWORD_MAX} characters or fewer.` },
+      { status: 400 }
+    );
   }
 
   try {
@@ -61,7 +71,7 @@ export async function PATCH(request) {
   } catch (err) {
     console.error('me/password PATCH failed:', err);
     return NextResponse.json(
-      { error: err.message || 'Could not change your password. Try again.' },
+      { error: 'Could not change your password. Try again.' },
       { status: 500 }
     );
   }
