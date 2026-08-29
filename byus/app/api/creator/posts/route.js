@@ -7,6 +7,9 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 
+const TITLE_MAX = 200;
+const BODY_MAX = 20000;
+
 export async function GET() {
   const session = await getCurrentUser();
   if (!session || session.role !== 'creator') {
@@ -29,7 +32,7 @@ export async function GET() {
   } catch (err) {
     console.error('creator/posts GET failed:', err);
     return NextResponse.json(
-      { error: err.message || 'Could not load your posts. Try again.' },
+      { error: 'Could not load your posts. Try again.' },
       { status: 500 }
     );
   }
@@ -45,6 +48,28 @@ export async function POST(request) {
 
   if (!body) {
     return NextResponse.json({ error: 'Post body is required.' }, { status: 400 });
+  }
+  if (title && title.length > TITLE_MAX) {
+    return NextResponse.json(
+      { error: `Title must be ${TITLE_MAX} characters or fewer.` },
+      { status: 400 }
+    );
+  }
+  if (body.length > BODY_MAX) {
+    return NextResponse.json(
+      { error: `Post body must be ${BODY_MAX} characters or fewer.` },
+      { status: 400 }
+    );
+  }
+  // mediaUrl here is actually the private Blob pathname returned by
+  // /api/creator/upload — that route always writes pathnames scoped as
+  // posts/{userId}/{uuid}.{ext}, so a genuine pathname for THIS creator always
+  // starts with their own prefix. Rejecting anything else stops a leaked or
+  // guessed pathname belonging to a different creator (or a different post
+  // type, like an avatar) from being attached here as if it were this
+  // creator's own upload.
+  if (mediaUrl && !mediaUrl.startsWith(`posts/${session.userId}/`)) {
+    return NextResponse.json({ error: 'Invalid media reference.' }, { status: 400 });
   }
   const finalVisibility = visibility === 'subscribers_only' ? 'subscribers_only' : 'public';
 
@@ -66,7 +91,7 @@ export async function POST(request) {
   } catch (err) {
     console.error('creator/posts POST failed:', err);
     return NextResponse.json(
-      { error: err.message || 'Could not create this post. Try again.' },
+      { error: 'Could not create this post. Try again.' },
       { status: 500 }
     );
   }
