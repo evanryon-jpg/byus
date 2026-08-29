@@ -9,7 +9,7 @@ import { getCurrentUser } from '@/lib/session';
 import stripe from '@/lib/stripe';
 
 export async function GET() {
-  const session = getCurrentUser();
+  const session = await getCurrentUser();
   if (!session || session.role !== 'creator') {
     return NextResponse.json({ error: 'Only creators can view their tiers.' }, { status: 403 });
   }
@@ -23,7 +23,7 @@ export async function GET() {
 }
 
 export async function POST(request) {
-  const session = getCurrentUser();
+  const session = await getCurrentUser();
   if (!session || session.role !== 'creator') {
     return NextResponse.json({ error: 'Only creators can create tiers.' }, { status: 403 });
   }
