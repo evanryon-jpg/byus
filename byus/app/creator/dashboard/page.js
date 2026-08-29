@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 
 export default function CreatorDashboard() {
   const [user, setUser] = useState(null);
@@ -114,7 +115,7 @@ function TierSection({ tiers, onCreated, disabled }) {
       <div className="flex items-center justify-between">
         <h2 className="font-semibold">Subscription tiers</h2>
         {!disabled && (
-          <button onClick={() => setOpen(!open)} className="text-sm font-medium text-[#146359]">
+          <button onClick={() => setOpen(`open)} className="text-sm font-medium text-[#146359]">
             {open ? 'Cancel' : '+ New tier'}
           </button>
         )}
@@ -422,7 +423,19 @@ function PostRow({ post, onChanged }) {
         </span>
       </div>
       {post.media_url && (
-        <img src={post.media_url} alt="" className="mt-2 max-h-64 rounded-lg object-cover" />
+        // Same reasoning as the public creator feed: this route authorizes per viewer
+        // session and serves privately/no-cache, so it stays unoptimized and browser-
+        // fetched directly rather than routed through Next's server-side image
+        // optimizer (which never sees the viewer's cookies).
+        <div className="relative mt-2 aspect-[16/10] w-full max-w-sm overflow-hidden rounded-lg">
+          <Image
+            src={post.media_url}
+            alt={post.title ? `Photo for "${post.title}"` : 'Post photo'}
+            fill
+            unoptimized
+            className="object-cover"
+          />
+        </div>
       )}
       <p className="mt-1 text-sm text-black/60">{post.body}</p>
       <div className="mt-2 flex gap-4 text-xs font-medium">
