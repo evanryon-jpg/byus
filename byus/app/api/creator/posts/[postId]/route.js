@@ -11,6 +11,9 @@ import { del } from '@vercel/blob';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 
+const TITLE_MAX = 200;
+const BODY_MAX = 20000;
+
 async function loadOwnedPost(postId, userId) {
   const result = await query(`SELECT id, creator_id, media_url FROM posts WHERE id = $1`, [postId]);
   const post = result.rows[0];
@@ -38,12 +41,24 @@ export async function PATCH(request, { params }) {
     let i = 1;
 
     if (title !== undefined) {
+      if (title && title.length > TITLE_MAX) {
+        return NextResponse.json(
+          { error: `Title must be ${TITLE_MAX} characters or fewer.` },
+          { status: 400 }
+        );
+      }
       fields.push(`title = $${i++}`);
       values.push(title || null);
     }
     if (typeof body === 'string') {
       if (!body.trim()) {
         return NextResponse.json({ error: 'Post body cannot be empty.' }, { status: 400 });
+      }
+      if (body.length > BODY_MAX) {
+        return NextResponse.json(
+          { error: `Post body must be ${BODY_MAX} characters or fewer.` },
+          { status: 400 }
+        );
       }
       fields.push(`body = $${i++}`);
       values.push(body);
@@ -71,7 +86,7 @@ export async function PATCH(request, { params }) {
   } catch (err) {
     console.error('creator/posts PATCH failed:', err);
     return NextResponse.json(
-      { error: err.message || 'Could not update this post. Try again.' },
+      { error: 'Could not update this post. Try again.' },
       { status: 500 }
     );
   }
@@ -107,7 +122,7 @@ export async function DELETE(request, { params }) {
   } catch (err) {
     console.error('creator/posts DELETE failed:', err);
     return NextResponse.json(
-      { error: err.message || 'Could not delete this post. Try again.' },
+      { error: 'Could not delete this post. Try again.' },
       { status: 500 }
     );
   }
