@@ -8,6 +8,17 @@ import { query } from '@/lib/db';
 import { hashPassword, createSessionToken, getSessionCookieOptions, SESSION_COOKIE_NAME } from '@/lib/auth';
 import { checkRateLimit, rateLimitResponse, getClientIp } from '@/lib/rate-limit';
 
+// Deliberately permissive — this is a sanity check (one "@", something on both sides,
+// a dot somewhere in the domain), not full RFC 5322 validation, which would reject
+// plenty of real addresses. Actual deliverability can only ever be confirmed by
+// sending mail, not by a regex.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_MAX = 254; // RFC 5321 mailbox length limit
+const DISPLAY_NAME_MAX = 100;
+// bcrypt silently ignores any bytes past 72 — capping here means the account's real
+// password is exactly what the user typed, not a truncated prefix of it.
+const PASSWORD_MAX = 72;
+
 export async function POST(request) {
   const { email, password, role, displayName } = await request.json();
 
@@ -18,8 +29,23 @@ export async function POST(request) {
   if (!['creator', 'fan'].includes(role)) {
     return NextResponse.json({ error: 'Role must be either "creator" or "fan".' }, { status: 400 });
   }
+  if (email.length > EMAIL_MAX || !EMAIL_RE.test(email)) {
+    return NextResponse.json({ error: 'Enter a valid email address.' }, { status: 400 });
+  }
   if (password.length < 8) {
     return NextResponse.json({ error: 'Password must be at least 8 characters.' }, { status: 400 });
+  }
+  if (password.length > PASSWORD_MAX) {
+    return NextResponse.json(
+      { error: `Password must be ${PASSWORD_MAX} characters or fewer.` },
+      { status: 400 }
+    );
+  }
+  if (displayName && displayName.length > DISPLAY_NAME_MAX) {
+    return NextResponse.json(
+      { error: `Display name must be ${DISPLAY_NAME_MAX} characters or fewer.` },
+      { status: 400 }
+    );
   }
 
   // Rate limit by IP to slow down mass/bot account creation.
