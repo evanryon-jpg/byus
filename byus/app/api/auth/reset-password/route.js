@@ -44,10 +44,13 @@ export async function POST(request) {
 
     const newHash = await hashPassword(password);
 
-    await query('UPDATE users SET password_hash = $1, updated_at = now() WHERE id = $2', [
-      newHash,
-      resetToken.user_id,
-    ]);
+    // Bumping session_version here invalidates every session token issued before this
+    // reset — including on other devices, and including whoever's cookie prompted the
+    // reset in the first place — the moment it's used, not up to 30 days later.
+    await query(
+      'UPDATE users SET password_hash = $1, session_version = session_version + 1, updated_at = now() WHERE id = $2',
+      [newHash, resetToken.user_id]
+    );
     await query('UPDATE password_reset_tokens SET used_at = now() WHERE id = $1', [resetToken.id]);
 
     return NextResponse.json({ message: 'Your password has been reset. You can now log in.' });
