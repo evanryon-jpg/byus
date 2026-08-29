@@ -39,13 +39,17 @@ export async function POST(request) {
         if (checkoutSession.mode !== 'subscription') break;
 
         const subscriptionId = checkoutSession.subscription;
-        const { fan_id, creator_id, tier_id } = checkoutSession.metadata || {};
+        const stripeSubscription = await stripe.subscriptions.retrieve(subscriptionId);
+
+        // Metadata is set on `subscription_data` in /api/subscribe, which Stripe attaches
+        // to the Subscription object itself — NOT to the Checkout Session. Reading it from
+        // checkoutSession.metadata (as this used to) is always empty, so no subscription row
+        // ever got created and fans could be charged repeatedly with no duplicate-check hit.
+        const { fan_id, creator_id, tier_id } = stripeSubscription.metadata || {};
         if (!fan_id || !creator_id || !tier_id) {
           console.error('checkout.session.completed missing expected metadata', checkoutSession.id);
           break;
         }
-
-        const stripeSubscription = await stripe.subscriptions.retrieve(subscriptionId);
 
         await query(
           `INSERT INTO subscriptions (fan_id, creator_id, tier_id, stripe_subscription_id, status, current_period_end)
