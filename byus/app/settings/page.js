@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 
 export default function SettingsPage() {
   const [user, setUser] = useState(null);
@@ -71,9 +72,11 @@ function AvatarCard({ user, onChanged }) {
       <h2 className="font-semibold">Profile photo</h2>
       <div className="mt-4 flex items-center gap-5">
         {user.profile_image_url ? (
-          <img
+          <Image
             src={user.profile_image_url}
-            alt=""
+            alt="Your profile photo"
+            width={80}
+            height={80}
             className="h-20 w-20 rounded-full object-cover"
           />
         ) : (
