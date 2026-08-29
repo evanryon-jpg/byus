@@ -35,11 +35,15 @@ export async function GET(request, { params }) {
     );
 
     // Does the visitor have an active subscription to THIS creator?
+    // Cross-check current_period_end against now(), not just the cached status column —
+    // status only updates on a webhook, so a missed one (delivery failure, outage) could
+    // otherwise leave a lapsed subscription reading as active indefinitely.
     let hasActiveSubscription = false;
     if (session) {
       const subResult = await query(
         `SELECT id FROM subscriptions
-         WHERE fan_id = $1 AND creator_id = $2 AND status = 'active'`,
+         WHERE fan_id = $1 AND creator_id = $2 AND status = 'active'
+           AND (current_period_end IS NULL OR current_period_end > now())`,
         [session.userId, creatorId]
       );
       hasActiveSubscription = subResult.rows.length > 0;
@@ -76,7 +80,7 @@ export async function GET(request, { params }) {
   } catch (err) {
     console.error('creators/[creatorId] GET failed:', err);
     return NextResponse.json(
-      { error: err.message || 'Could not load this creator. Try again.' },
+      { error: 'Could not load this creator. Try again.' },
       { status: 500 }
     );
   }
