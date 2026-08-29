@@ -9,12 +9,20 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { hashPassword, verifyPassword } from '@/lib/auth';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function PATCH(request) {
-  const session = getCurrentUser();
+  const session = await getCurrentUser();
   if (!session) {
     return NextResponse.json({ error: 'Not logged in.' }, { status: 401 });
   }
+
+  // Rate limit by user — this endpoint checks a live password, so a hijacked session
+  // token could otherwise be used to brute-force the account's real password with no
+  // friction. Same risk shape as login, just reached through an authenticated session
+  // instead of the login form.
+  const rateCheck = await checkRateLimit('password-change', `user:${session.userId}`);
+  if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
   const { currentPassword, newPassword } = await request.json();
 
@@ -41,7 +49,13 @@ export async function PATCH(request) {
     }
 
     const newHash = await hashPassword(newPassword);
-    await query('UPDATE users SET password_hash = $1 WHERE id = $2', [newHash, session.userId]);
+    // Bumping session_version invalidates every other session immediately — including a
+    // stolen cookie an attacker might be using elsewhere right now — rather than leaving
+    // them valid for up to 30 more days.
+    await query(
+      'UPDATE users SET password_hash = $1, session_version = session_version + 1 WHERE id = $2',
+      [newHash, session.userId]
+    );
 
     return NextResponse.json({ success: true });
   } catch (err) {
