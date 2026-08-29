@@ -8,7 +8,7 @@ import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 
 export async function GET() {
-  const session = getCurrentUser();
+  const session = await getCurrentUser();
   if (!session || session.role !== 'creator') {
     return NextResponse.json({ error: 'Only creators can view this.' }, { status: 403 });
   }
@@ -36,7 +36,7 @@ export async function GET() {
 }
 
 export async function POST(request) {
-  const session = getCurrentUser();
+  const session = await getCurrentUser();
   if (!session || session.role !== 'creator') {
     return NextResponse.json({ error: 'Only creators can post.' }, { status: 403 });
   }
