@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 
 export default function BrowsePage() {
   const [creators, setCreators] = useState([]);
@@ -28,9 +29,11 @@ export default function BrowsePage() {
               className="flex items-center gap-4 rounded-2xl border border-black/5 bg-white p-6 hover:border-[#146359]/30"
             >
               {c.profile_image_url ? (
-                <img
+                <Image
                   src={c.profile_image_url}
-                  alt=""
+                  alt={`${c.display_name || 'Creator'}'s profile photo`}
+                  width={48}
+                  height={48}
                   className="h-12 w-12 shrink-0 rounded-full object-cover"
                 />
               ) : (
