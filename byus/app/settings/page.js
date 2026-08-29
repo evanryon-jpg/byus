@@ -111,8 +111,10 @@ function AvatarCard({ user, onChanged }) {
 function ProfileCard({ user, onChanged }) {
   const [displayName, setDisplayName] = useState(user.display_name || '');
   const [bio, setBio] = useState(user.bio || '');
+  const [tagsText, setTagsText] = useState((user.tags || []).join(', '));
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState(null); // { type: 'ok' | 'error', text }
+  const isCreator = user.role === 'creator';
 
   async function handleSave(e) {
     e.preventDefault();
@@ -120,10 +122,14 @@ function ProfileCard({ user, onChanged }) {
     setStatus(null);
 
     try {
+      const body = { display_name: displayName, bio };
+      if (isCreator) {
+        body.tags = tagsText.split(',').map((t) => t.trim()).filter(Boolean);
+      }
       const res = await fetch('/api/me', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ display_name: displayName, bio }),
+        body: JSON.stringify(body),
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || 'Could not save changes.');
@@ -159,6 +165,21 @@ function ProfileCard({ user, onChanged }) {
             className="mt-1 w-full rounded-lg border border-black/10 px-3 py-2 text-sm"
           />
         </div>
+        {isCreator && (
+          <div>
+            <label className="text-sm font-medium">Categories</label>
+            <input
+              type="text"
+              value={tagsText}
+              onChange={(e) => setTagsText(e.target.value)}
+              placeholder="e.g. photography, cooking, fitness"
+              className="mt-1 w-full rounded-lg border border-black/10 px-3 py-2 text-sm"
+            />
+            <p className="mt-1 text-xs text-black/40">
+              Comma-separated. Shown as filter chips on the Browse page — up to 8.
+            </p>
+          </div>
+        )}
         <div className="flex items-center gap-3">
           <button
             type="submit"
