@@ -24,7 +24,7 @@ export async function POST(request) {
   if (!emailCheck.success) return rateLimitResponse(emailCheck);
 
   const result = await query(
-    'SELECT id, email, password_hash, role, display_name FROM users WHERE email = $1',
+    'SELECT id, email, password_hash, role, display_name, session_version FROM users WHERE email = $1',
     [email.toLowerCase()]
   );
   const user = result.rows[0];
