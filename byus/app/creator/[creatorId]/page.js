@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import Image from 'next/image';
 
 export default function CreatorProfilePage() {
   const { creatorId } = useParams();
@@ -45,9 +46,11 @@ export default function CreatorProfilePage() {
     <div className="mx-auto max-w-3xl px-6 py-12">
       <div className="flex items-center gap-4">
         {creator.profile_image_url ? (
-          <img
+          <Image
             src={creator.profile_image_url}
-            alt=""
+            alt={`${creator.display_name}'s profile photo`}
+            width={64}
+            height={64}
             className="h-16 w-16 shrink-0 rounded-full object-cover"
           />
         ) : (
@@ -102,7 +105,23 @@ export default function CreatorProfilePage() {
             ) : (
               <>
                 {p.media_url && (
-                  <img src={p.media_url} alt="" className="mt-3 max-h-96 w-full rounded-xl object-cover" />
+                  // Post photos have no stored width/height (uploads of arbitrary size), and
+                  // this route (`/api/posts/:id/media`) checks the *viewer's own* session to
+                  // decide whether they're allowed to see it, then serves it as private/no-cache.
+                  // Next's built-in image optimizer runs its own server-side fetch that carries
+                  // no cookies and caches by URL alone — wrong on both counts for a gated,
+                  // per-viewer image — so this stays unoptimized: the browser fetches it exactly
+                  // as before, and next/image just adds the reserved box (no layout jump) and
+                  // native lazy-loading on top.
+                  <div className="relative mt-3 aspect-[16/10] w-full overflow-hidden rounded-xl">
+                    <Image
+                      src={p.media_url}
+                      alt={p.title ? `Photo for "${p.title}"` : 'Post photo'}
+                      fill
+                      unoptimized
+                      className="object-cover"
+                    />
+                  </div>
                 )}
                 <p className="mt-2 text-sm text-black/70">{p.body}</p>
               </>
