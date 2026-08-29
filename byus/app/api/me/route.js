@@ -49,7 +49,7 @@ function normalizeTags(input) {
 }
 
 export async function GET() {
-  const session = getCurrentUser();
+  const session = await getCurrentUser();
   if (!session) {
     return NextResponse.json({ error: 'Not logged in.' }, { status: 401 });
   }
@@ -77,7 +77,7 @@ export async function GET() {
 }
 
 export async function PATCH(request) {
-  const session = getCurrentUser();
+  const session = await getCurrentUser();
   if (!session) {
     return NextResponse.json({ error: 'Not logged in.' }, { status: 401 });
   }
