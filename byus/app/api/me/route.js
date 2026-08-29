@@ -1,9 +1,10 @@
 export const dynamic = 'force-dynamic';
 
 // GET   /api/me  -> return the currently logged-in user's basic info, or 401 if not logged in.
-// PATCH /api/me  -> update display_name / bio for the currently logged-in user.
+// PATCH /api/me  -> update display_name / bio / tags for the currently logged-in user.
 // Used by the frontend to decide what to render (creator dashboard vs fan view, etc)
-// and by the settings page to edit a profile.
+// and by the settings page to edit a profile. `tags` are the creator categories
+// shown as filter chips on the public Browse page.
 
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
@@ -15,6 +16,38 @@ function withAvatarUrl(user) {
   return { ...user, profile_image_url: user.profile_image_url ? `/api/avatar/${user.id}` : null };
 }
 
+// Validate + clean up a creator's category tags: trim, lowercase, dedupe,
+// cap at 8 tags of up to 30 chars each, letters/numbers/spaces/hyphens only.
+// Returns { tags } on success or { error } on the first invalid entry.
+function normalizeTags(input) {
+  if (!Array.isArray(input)) {
+    return { error: 'Tags must be a list of strings.' };
+  }
+  const seen = new Set();
+  const cleaned = [];
+  for (const raw of input) {
+    if (typeof raw !== 'string') {
+      return { error: 'Each tag must be text.' };
+    }
+    const tag = raw.trim().toLowerCase();
+    if (!tag) continue;
+    if (tag.length > 30) {
+      return { error: `"${tag}" is too long (max 30 characters).` };
+    }
+    if (!/^[a-z0-9][a-z0-9 -]*$/.test(tag)) {
+      return { error: `"${tag}" can only contain letters, numbers, spaces, and hyphens.` };
+    }
+    if (!seen.has(tag)) {
+      seen.add(tag);
+      cleaned.push(tag);
+    }
+  }
+  if (cleaned.length > 8) {
+    return { error: 'You can have at most 8 tags.' };
+  }
+  return { tags: cleaned };
+}
+
 export async function GET() {
   const session = getCurrentUser();
   if (!session) {
@@ -24,7 +57,7 @@ export async function GET() {
   try {
     const result = await query(
       `SELECT id, email, role, display_name, bio, profile_image_url,
-              stripe_connect_onboarded
+              stripe_connect_onboarded, tags
        FROM users WHERE id = $1`,
       [session.userId]
     );
@@ -49,7 +82,7 @@ export async function PATCH(request) {
     return NextResponse.json({ error: 'Not logged in.' }, { status: 401 });
   }
 
-  const { display_name, bio } = await request.json();
+  const { display_name, bio, tags } = await request.json();
 
   const fields = [];
   const values = [];
@@ -67,6 +100,14 @@ export async function PATCH(request) {
     fields.push(`bio = $${i++}`);
     values.push(bio || null);
   }
+  if (tags !== undefined) {
+    const normalized = normalizeTags(tags);
+    if (normalized.error) {
+      return NextResponse.json({ error: normalized.error }, { status: 400 });
+    }
+    fields.push(`tags = $${i++}`);
+    values.push(normalized.tags);
+  }
 
   if (fields.length === 0) {
     return NextResponse.json({ error: 'Nothing to update.' }, { status: 400 });
@@ -76,7 +117,7 @@ export async function PATCH(request) {
     values.push(session.userId);
     const result = await query(
       `UPDATE users SET ${fields.join(', ')} WHERE id = $${i}
-       RETURNING id, email, role, display_name, bio, profile_image_url, stripe_connect_onboarded`,
+       RETURNING id, email, role, display_name, bio, profile_image_url, stripe_connect_onboarded, tags`,
       values
     );
 
