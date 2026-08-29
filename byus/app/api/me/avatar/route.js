@@ -17,7 +17,7 @@ const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
 const MAX_BYTES = 5 * 1024 * 1024; // 5MB — avatars are small, no reason to allow post-sized uploads
 
 export async function POST(request) {
-  const session = getCurrentUser();
+  const session = await getCurrentUser();
   if (!session) {
     return NextResponse.json({ error: 'Not logged in.' }, { status: 401 });
   }
