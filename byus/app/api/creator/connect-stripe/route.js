@@ -8,12 +8,18 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import stripe from '@/lib/stripe';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function POST(request) {
-  const session = getCurrentUser();
+  const session = await getCurrentUser();
   if (!session || session.role !== 'creator') {
     return NextResponse.json({ error: 'Only creators can connect a Stripe account.' }, { status: 403 });
   }
+
+  // Rate limit by user — this hits the Stripe API to create/link an account, unlike most
+  // reads, so it's worth guarding the same way the other Stripe-touching routes are.
+  const rateCheck = await checkRateLimit('connect-stripe', `user:${session.userId}`);
+  if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
   // Everything below can throw - a Stripe API error (e.g. Connect not yet activated on this
   // platform's account) or a database error would otherwise propagate as an unhandled
