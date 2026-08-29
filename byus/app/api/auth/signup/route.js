@@ -38,7 +38,7 @@ export async function POST(request) {
   const result = await query(
     `INSERT INTO users (email, password_hash, role, display_name)
      VALUES ($1, $2, $3, $4)
-     RETURNING id, email, role, display_name`,
+     RETURNING id, email, role, display_name, session_version`,
     [email.toLowerCase(), passwordHash, role, displayName || null]
   );
   const user = result.rows[0];
