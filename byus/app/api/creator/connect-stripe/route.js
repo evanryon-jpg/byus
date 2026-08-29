@@ -66,11 +66,12 @@ export async function POST(request) {
     return NextResponse.json({ url: accountLink.url });
   } catch (err) {
     console.error('connect-stripe failed:', err);
-    // Stripe's own error messages (e.g. "Connect isn't enabled for this account yet") are
-    // specific enough to show directly - far more useful to whoever's debugging this than a
-    // generic "something went wrong".
+    // Stripe's own error messages are logged above for debugging, but not forwarded to the
+    // client: some of Stripe's internal/account-config error text isn't meant for an end
+    // user, and raw error forwarding is also just a bad habit to have on any authenticated
+    // route (it can leak internal details on errors that don't originate from Stripe at all).
     return NextResponse.json(
-      { error: err.message || 'Could not start Stripe onboarding. Try again.' },
+      { error: 'Could not start Stripe onboarding. Try again.' },
       { status: 500 }
     );
   }
