@@ -81,7 +81,7 @@ export async function POST(request) {
   } catch (err) {
     console.error('subscribe failed:', err);
     return NextResponse.json(
-      { error: err.message || 'Could not start checkout. Try again.' },
+      { error: 'Could not start checkout. Try again.' },
       { status: 500 }
     );
   }
