@@ -10,6 +10,12 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 
+// Matches the cap used at signup — keep both in sync since they constrain the same column.
+const DISPLAY_NAME_MAX = 100;
+// Generous but bounded — bio is rendered on the public profile page, so an unbounded
+// value is both a layout hazard and a free place to dump arbitrary amounts of text.
+const BIO_MAX = 1000;
+
 // profile_image_url in the DB is a private Blob pathname (or null) — never
 // expose it directly, point the client at our own public proxy route instead.
 function withAvatarUrl(user) {
@@ -70,7 +76,7 @@ export async function GET() {
   } catch (err) {
     console.error('me GET failed:', err);
     return NextResponse.json(
-      { error: err.message || 'Could not load your account. Try again.' },
+      { error: 'Could not load your account. Try again.' },
       { status: 500 }
     );
   }
@@ -93,10 +99,22 @@ export async function PATCH(request) {
     if (!trimmed) {
       return NextResponse.json({ error: 'Display name cannot be empty.' }, { status: 400 });
     }
+    if (trimmed.length > DISPLAY_NAME_MAX) {
+      return NextResponse.json(
+        { error: `Display name must be ${DISPLAY_NAME_MAX} characters or fewer.` },
+        { status: 400 }
+      );
+    }
     fields.push(`display_name = $${i++}`);
     values.push(trimmed);
   }
   if (bio !== undefined) {
+    if (bio && bio.length > BIO_MAX) {
+      return NextResponse.json(
+        { error: `Bio must be ${BIO_MAX} characters or fewer.` },
+        { status: 400 }
+      );
+    }
     fields.push(`bio = $${i++}`);
     values.push(bio || null);
   }
@@ -125,7 +143,7 @@ export async function PATCH(request) {
   } catch (err) {
     console.error('me PATCH failed:', err);
     return NextResponse.json(
-      { error: err.message || 'Could not save your changes. Try again.' },
+      { error: 'Could not save your changes. Try again.' },
       { status: 500 }
     );
   }
