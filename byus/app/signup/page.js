@@ -55,6 +55,11 @@ function SignupForm() {
         <RoleTab label="I'm a fan" active={role === 'fan'} onClick={() => setRole('fan')} />
         <RoleTab label="I'm a creator" active={role === 'creator'} onClick={() => setRole('creator')} />
       </div>
+      {role === 'creator' && (
+        <p className="mt-3 text-xs text-black/50">
+          Next you'll connect Stripe and set up a subscription tier — takes a couple of minutes, right after you sign up.
+        </p>
+      )}
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
         <Field label="Display name">
