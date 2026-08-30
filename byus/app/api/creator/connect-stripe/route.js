@@ -28,12 +28,19 @@ export async function POST(request) {
   // forever with no explanation. Catching it here means the creator actually sees what went
   // wrong (Stripe's own error messages are usually specific and actionable).
   try {
-    const userResult = await query('SELECT id, email, stripe_connect_account_id FROM users WHERE id = $1', [
-      session.userId,
-    ]);
+    const userResult = await query(
+      'SELECT id, email, stripe_connect_account_id, email_verified FROM users WHERE id = $1',
+      [session.userId]
+    );
     const user = userResult.rows[0];
     if (!user) {
       return NextResponse.json({ error: 'User not found.' }, { status: 404 });
+    }
+    if (!user.email_verified) {
+      return NextResponse.json(
+        { error: 'Verify your email address before connecting Stripe.' },
+        { status: 403 }
+      );
     }
 
     let accountId = user.stripe_connect_account_id;
