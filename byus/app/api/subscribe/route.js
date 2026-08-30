@@ -13,7 +13,13 @@ import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function POST(request) {
   const session = await getCurrentUser();
-  if (!session || session.role !== 'fan') {
+  // Split "not logged in" from "wrong role": the client redirects straight to login (and
+  // back again afterward) on the first, but that would be a dead end for the second — a
+  // creator's own account is never going to become a fan by logging in again.
+  if (!session) {
+    return NextResponse.json({ error: 'Please log in to subscribe.' }, { status: 401 });
+  }
+  if (session.role !== 'fan') {
     return NextResponse.json({ error: 'Only fans can subscribe.' }, { status: 403 });
   }
 
@@ -22,8 +28,12 @@ export async function POST(request) {
   const rateCheck = await checkRateLimit('subscribe', `user:${session.userId}`);
   if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
-  const fanResult = await query('SELECT email_verified FROM users WHERE id = $1', [session.userId]);
-  if (!fanResult.rows[0]?.email_verified) {
+  const fanResult = await query(
+    'SELECT email_verified, stripe_customer_id FROM users WHERE id = $1',
+    [session.userId]
+  );
+  const fan = fanResult.rows[0];
+  if (!fan?.email_verified) {
     return NextResponse.json(
       { error: 'Verify your email address before subscribing.' },
       { status: 403 }
@@ -64,13 +74,30 @@ export async function POST(request) {
       return NextResponse.json({ error: 'You already have an active subscription to this tier.' }, { status: 409 });
     }
 
+    // Reuse this fan's existing Stripe Customer across every subscription rather than
+    // letting Checkout mint a new one per checkout (its default behavior when only
+    // `customer_email` is passed). Without this, a fan who subscribes to two creators ends
+    // up as two unrelated Stripe customers, and the billing portal — which is scoped to a
+    // single customer — would only ever show one of their subscriptions.
+    let customerId = fan.stripe_customer_id;
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: session.email,
+        metadata: { user_id: session.userId },
+      });
+      customerId = customer.id;
+      await query('UPDATE users SET stripe_customer_id = $1 WHERE id = $2', [customerId, session.userId]);
+    }
+
     const origin = request.headers.get('origin') || process.env.APP_URL;
 
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: 'subscription',
-      customer_email: session.email,
+      customer: customerId,
       line_items: [{ price: tier.stripe_price_id, quantity: 1 }],
-      success_url: `${origin}/fan/dashboard?subscribed=true`,
+      // Back to the creator's own page, not a generic dashboard — that's where the content
+      // the fan just paid for actually lives. ?subscribed=true triggers a welcome banner there.
+      success_url: `${origin}/creator/${tier.creator_id}?subscribed=true`,
       cancel_url: `${origin}/creator/${tier.creator_id}`,
       subscription_data: {
         application_fee_percent: PLATFORM_FEE_PERCENT,
