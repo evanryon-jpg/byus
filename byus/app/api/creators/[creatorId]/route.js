@@ -14,7 +14,7 @@ export async function GET(request, { params }) {
 
   try {
     const creatorResult = await query(
-      `SELECT id, display_name, bio, profile_image_url FROM users WHERE id = $1 AND role = 'creator'`,
+      `SELECT id, display_name, bio, profile_image_url, social_links FROM users WHERE id = $1 AND role = 'creator'`,
       [creatorId]
     );
     const creatorRow = creatorResult.rows[0];
@@ -26,6 +26,7 @@ export async function GET(request, { params }) {
     const creator = {
       ...creatorRow,
       profile_image_url: creatorRow.profile_image_url ? `/api/avatar/${creatorRow.id}` : null,
+      social_links: creatorRow.social_links || [],
     };
 
     const tiersResult = await query(
