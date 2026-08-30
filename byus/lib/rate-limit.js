@@ -63,6 +63,13 @@ const limiters = {
     limiter: Ratelimit.slidingWindow(3, '1 h'),
     prefix: 'rl:resend-verification',
   }),
+  // Guards opening a Stripe Billing Portal session — hits the Stripe API like
+  // connect-stripe does, just on the fan side.
+  'billing-portal': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(10, '1 h'),
+    prefix: 'rl:billing-portal',
+  }),
   // Guards the two file-upload endpoints (post media, avatars). Uploads are relatively
   // expensive (Blob storage writes, bandwidth) and otherwise have no cost to automating
   // against with a valid session — this keeps a single account from being used to hammer
