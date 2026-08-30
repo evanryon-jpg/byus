@@ -17,6 +17,13 @@ const fraunces = Fraunces({
 
 const SITE_URL = process.env.APP_URL || 'https://byus-ten.vercel.app';
 
+// Separate from `metadata` (Next.js 14 moved theme-color/viewport concerns out of
+// the metadata export) -- tints the mobile browser chrome (address bar, task
+// switcher) the brand teal instead of leaving it default white/gray.
+export const viewport = {
+  themeColor: '#146359',
+};
+
 export const metadata = {
   metadataBase: new URL(SITE_URL),
   title: 'ByUs — Creator subscriptions, simplified',
