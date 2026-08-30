@@ -8,6 +8,7 @@ export default function CreatorDashboard() {
   const [user, setUser] = useState(null);
   const [tiers, setTiers] = useState([]);
   const [posts, setPosts] = useState([]);
+  const [links, setLinks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
 
@@ -25,12 +26,14 @@ export default function CreatorDashboard() {
     const { user } = await meRes.json();
     setUser(user);
 
-    const [tiersRes, postsRes] = await Promise.all([
+    const [tiersRes, postsRes, linksRes] = await Promise.all([
       fetch('/api/creator/tiers'),
       fetch('/api/creator/posts'),
+      fetch('/api/creator/links'),
     ]);
     if (tiersRes.ok) setTiers((await tiersRes.json()).tiers);
     if (postsRes.ok) setPosts((await postsRes.json()).posts);
+    if (linksRes.ok) setLinks((await linksRes.json()).links);
     setLoading(false);
   }
 
@@ -90,6 +93,9 @@ export default function CreatorDashboard() {
 
       {/* Tiers */}
       <TierSection tiers={tiers} onCreated={load} disabled={!user?.stripe_connect_onboarded} />
+
+      {/* Links */}
+      <LinksSection links={links} onSaved={setLinks} />
 
       {/* Posts */}
       <PostSection posts={posts} onCreated={load} />
@@ -409,6 +415,113 @@ function TierRow({ tier, onChanged }) {
         </button>
       </div>
     </li>
+  );
+}
+
+// Any link works here -- TikTok, YouTube, Instagram, a personal site, whatever a creator
+// wants fans to find. Saved as one array in a single request, so reordering, editing,
+// and removing a row are all just "edit this state, then Save" rather than separate
+// per-link API calls that could race or partially fail.
+const MAX_LINKS = 8;
+
+function LinksSection({ links: savedLinks, onSaved }) {
+  const [rows, setRows] = useState(savedLinks.length ? savedLinks : [{ label: '', url: '' }]);
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  // Keep the form in sync if links load in after the form has already rendered
+  // (e.g. the initial empty-array render before the fetch resolves).
+  useEffect(() => {
+    setRows(savedLinks.length ? savedLinks : [{ label: '', url: '' }]);
+  }, [savedLinks]);
+
+  function updateRow(i, field, value) {
+    setSaved(false);
+    setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, [field]: value } : r)));
+  }
+
+  function addRow() {
+    setSaved(false);
+    setRows((prev) => (prev.length >= MAX_LINKS ? prev : [...prev, { label: '', url: '' }]));
+  }
+
+  function removeRow(i) {
+    setSaved(false);
+    setRows((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
+  async function handleSave(e) {
+    e.preventDefault();
+    setError('');
+    setSaving(true);
+    const res = await fetch('/api/creator/links', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ links: rows }),
+    });
+    const data = await res.json();
+    setSaving(false);
+    if (!res.ok) {
+      setError(data.error || 'Could not save your links.');
+      return;
+    }
+    onSaved(data.links);
+    setSaved(true);
+  }
+
+  return (
+    <div className="mt-8 rounded-2xl border border-black/5 bg-white p-6">
+      <h2 className="font-semibold">Links</h2>
+      <p className="mt-1 text-sm text-black/50">
+        Add your TikTok, YouTube, Instagram, or anywhere else you post — fans will see these on your profile.
+      </p>
+
+      <form onSubmit={handleSave} className="mt-4 space-y-3">
+        {rows.map((row, i) => (
+          <div key={i} className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
+            <input
+              placeholder="Label (optional)"
+              value={row.label}
+              onChange={(e) => updateRow(i, 'label', e.target.value)}
+              className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm sm:w-40"
+            />
+            <input
+              placeholder="tiktok.com/@you"
+              value={row.url}
+              onChange={(e) => updateRow(i, 'url', e.target.value)}
+              className="w-full flex-1 rounded-lg border border-black/10 px-3 py-2 text-sm"
+            />
+            <button
+              type="button"
+              onClick={() => removeRow(i)}
+              className="shrink-0 text-sm font-medium text-black/40 hover:text-red-600"
+            >
+              Remove
+            </button>
+          </div>
+        ))}
+
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+          <button
+            type="button"
+            onClick={addRow}
+            disabled={rows.length >= MAX_LINKS}
+            className="text-sm font-medium text-[#146359] disabled:opacity-40"
+          >
+            + Add another link
+          </button>
+          <button
+            disabled={saving}
+            className="rounded-full bg-[#146359] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          >
+            {saving ? 'Saving…' : 'Save links'}
+          </button>
+        </div>
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        {saved && !error && <p className="text-sm text-green-700">Saved.</p>}
+      </form>
+    </div>
   );
 }
 
