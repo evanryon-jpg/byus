@@ -66,6 +66,9 @@ export default function CreatorDashboard() {
         <GettingStartedChecklist stripeConnected={stripeConnected} hasTier={hasTier} hasPost={hasPost} />
       )}
 
+      {/* AI setup assistant */}
+      <AiSetupSection stripeConnected={stripeConnected} onProfileSaved={setUser} onTierAdded={load} />
+
       {/* Stripe connection status */}
       <div className="mt-8 rounded-2xl border border-black/5 bg-white p-6">
         <h2 className="font-semibold">Payments</h2>
@@ -99,6 +102,163 @@ export default function CreatorDashboard() {
 
       {/* Posts */}
       <PostSection posts={posts} onCreated={load} />
+    </div>
+  );
+}
+
+// Turns a plain-English description into a starter bio, categories, and three tier
+// ideas via /api/creator/ai-setup. Nothing is saved until the creator clicks one of
+// the "Use"/"Add" buttons below -- this only ever proposes, never writes on its own.
+function AiSetupSection({ stripeConnected, onProfileSaved, onTierAdded }) {
+  const [description, setDescription] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [suggestions, setSuggestions] = useState(null);
+  const [bioApplied, setBioApplied] = useState(false);
+  const [applyingBio, setApplyingBio] = useState(false);
+  const [addedTiers, setAddedTiers] = useState([]);
+  const [addingTierIndex, setAddingTierIndex] = useState(null);
+
+  async function handleGenerate(e) {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    setSuggestions(null);
+    try {
+      const res = await fetch('/api/creator/ai-setup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Could not generate suggestions.');
+        return;
+      }
+      setSuggestions(data);
+      setBioApplied(false);
+      setAddedTiers([]);
+    } catch {
+      setError('Network error — please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function applyBio() {
+    setApplyingBio(true);
+    const res = await fetch('/api/me', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bio: suggestions.bio, tags: suggestions.tags }),
+    });
+    setApplyingBio(false);
+    if (res.ok) {
+      const data = await res.json();
+      onProfileSaved(data.user);
+      setBioApplied(true);
+    }
+  }
+
+  async function addTier(tier, i) {
+    setAddingTierIndex(i);
+    const res = await fetch('/api/creator/tiers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: tier.name,
+        description: tier.description,
+        priceCents: tier.priceCents,
+      }),
+    });
+    setAddingTierIndex(null);
+    if (res.ok) {
+      setAddedTiers((prev) => [...prev, i]);
+      onTierAdded();
+    }
+  }
+
+  return (
+    <div className="mt-6 rounded-2xl border border-[#146359]/15 bg-[#146359]/5 p-5">
+      <h2 className="text-sm font-semibold text-[#146359]">AI setup assistant</h2>
+      <p className="mt-1 text-sm text-black/60">
+        Describe what you make or post about and get a starter bio, categories, and tier ideas —
+        review and use whichever ones fit.
+      </p>
+
+      <form onSubmit={handleGenerate} className="mt-3 space-y-2">
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="e.g. I'm a home baker who shares recipes, technique videos, and behind-the-scenes content."
+          rows={3}
+          maxLength={500}
+          required
+          className="w-full rounded-lg border border-black/10 bg-white px-3 py-2 text-sm"
+        />
+        <div className="flex items-center gap-3">
+          <button
+            disabled={loading}
+            className="rounded-full bg-[#146359] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          >
+            {loading ? 'Thinking…' : 'Suggest my setup'}
+          </button>
+          {error && <p className="text-sm text-red-600">{error}</p>}
+        </div>
+      </form>
+
+      {suggestions && (
+        <div className="mt-5 space-y-5 border-t border-[#146359]/15 pt-4">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-black/40">Suggested bio</p>
+            <p className="mt-1 rounded-xl bg-white p-3 text-sm text-black/70">{suggestions.bio}</p>
+            {suggestions.tags?.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {suggestions.tags.map((t) => (
+                  <span key={t} className="rounded-full bg-white px-2.5 py-1 text-xs text-black/50">
+                    {t}
+                  </span>
+                ))}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={applyBio}
+              disabled={applyingBio || bioApplied}
+              className="mt-2 rounded-full border border-[#146359] px-3 py-1.5 text-xs font-semibold text-[#146359] hover:bg-white disabled:opacity-50"
+            >
+              {bioApplied ? 'Applied ✓' : applyingBio ? 'Applying…' : 'Use this bio & categories'}
+            </button>
+          </div>
+
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-black/40">Suggested tiers</p>
+            {!stripeConnected && (
+              <p className="mt-1 text-xs text-black/40">Connect Stripe above before adding tiers.</p>
+            )}
+            <div className="mt-2 grid gap-2 sm:grid-cols-3">
+              {suggestions.tiers?.map((tier, i) => (
+                <div key={i} className="rounded-xl bg-white p-3">
+                  <p className="text-sm font-semibold">{tier.name}</p>
+                  <p className="text-xs text-black/50">{tier.description}</p>
+                  <p className="mt-1 text-sm font-bold text-[#146359]">
+                    ${(tier.priceCents / 100).toFixed(2)}
+                    <span className="text-xs font-normal text-black/40">/mo</span>
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => addTier(tier, i)}
+                    disabled={!stripeConnected || addingTierIndex === i || addedTiers.includes(i)}
+                    className="mt-2 w-full rounded-full border border-[#146359] py-1 text-xs font-semibold text-[#146359] hover:bg-[#146359]/5 disabled:opacity-50"
+                  >
+                    {addedTiers.includes(i) ? 'Added ✓' : addingTierIndex === i ? 'Adding…' : 'Add this tier'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
