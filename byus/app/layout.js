@@ -1,6 +1,7 @@
 import './globals.css';
 import { Fraunces } from 'next/font/google';
 import NavBar from './components/NavBar';
+import Footer from './components/Footer';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
@@ -14,17 +15,33 @@ const fraunces = Fraunces({
   display: 'swap',
 });
 
+const SITE_URL = process.env.APP_URL || 'https://byus-ten.vercel.app';
+
 export const metadata = {
+  metadataBase: new URL(SITE_URL),
   title: 'ByUs — Creator subscriptions, simplified',
   description: 'Support creators you love. Creators keep 90% of every payment.',
+  openGraph: {
+    title: 'ByUs — Creator subscriptions, simplified',
+    description: 'Support creators you love. Creators keep 90% of every payment.',
+    url: SITE_URL,
+    siteName: 'ByUs',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'ByUs — Creator subscriptions, simplified',
+    description: 'Support creators you love. Creators keep 90% of every payment.',
+  },
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={fraunces.variable}>
-      <body className="min-h-screen bg-[#FAF8F4] text-[#1A1A1A] antialiased">
+      <body className="flex min-h-screen flex-col bg-[#FAF8F4] text-[#1A1A1A] antialiased">
         <NavBar />
-        <main>{children}</main>
+        <main className="flex-1">{children}</main>
+        <Footer />
         <Analytics />
         <SpeedInsights />
       </body>
