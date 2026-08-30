@@ -20,18 +20,24 @@ function SignupForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [website, setWebsite] = useState(''); // honeypot — real users never see or fill this
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
+    if (!termsAccepted) {
+      setError('Please agree to the Terms of Service and Privacy Policy to continue.');
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, role, displayName }),
+        body: JSON.stringify({ email, password, role, displayName, termsAccepted, website }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -91,11 +97,47 @@ function SignupForm() {
           <p className="mt-1 text-xs text-black/40">At least 8 characters.</p>
         </Field>
 
+        {/* Honeypot — hidden from real users via CSS, but present in the DOM for bots
+            that fill every field they can find. Kept off the tab order and out of
+            screen readers so it never confuses an actual person. */}
+        <div className="absolute left-[-9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
+          <label htmlFor="website">Leave this field blank</label>
+          <input
+            id="website"
+            name="website"
+            type="text"
+            tabIndex={-1}
+            autoComplete="off"
+            value={website}
+            onChange={(e) => setWebsite(e.target.value)}
+          />
+        </div>
+
+        <label className="flex items-start gap-2.5 text-sm text-black/70">
+          <input
+            type="checkbox"
+            required
+            checked={termsAccepted}
+            onChange={(e) => setTermsAccepted(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border-black/20 text-[#146359] focus:ring-[#146359]"
+          />
+          <span>
+            I agree to the{' '}
+            <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-[#146359] underline">
+              Terms of Service
+            </a>{' '}
+            and{' '}
+            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-[#146359] underline">
+              Privacy Policy
+            </a>.
+          </span>
+        </label>
+
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !termsAccepted}
           className="w-full rounded-full bg-[#146359] py-3 font-semibold text-white hover:bg-[#0f4d45] disabled:opacity-50"
         >
           {loading ? 'Creating account…' : 'Sign up'}
