@@ -6,9 +6,17 @@ export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
 export default async function Image() {
-  const fontData = await fetch(
-    new URL('./fonts/Fraunces-Italic-Black9.ttf', import.meta.url)
+  // Reuse the actual app icon PNG as the badge image, rather than re-rendering the
+  // ampersand as live text. Satori (the renderer behind ImageResponse) does full
+  // OpenType shaping and picks up Fraunces' contextual swash-ampersand alternate --
+  // a fancier glyph than the plain one baked into icon.png -- so the two renderers
+  // disagreed on which glyph "&" means. Using the icon file directly guarantees this
+  // card always matches the real favicon/app icon pixel-for-pixel.
+  const iconData = await fetch(
+    new URL('./icon.png', import.meta.url)
   ).then((res) => res.arrayBuffer());
+  const iconBase64 = Buffer.from(iconData).toString('base64');
+  const iconDataUri = `data:image/png;base64,${iconBase64}`;
 
   return new ImageResponse(
     (
@@ -25,33 +33,14 @@ export default async function Image() {
             'radial-gradient(circle at 15% 20%, rgba(201,169,97,0.25) 0%, rgba(201,169,97,0) 45%), radial-gradient(circle at 85% 15%, rgba(20,99,89,0.12) 0%, rgba(20,99,89,0) 45%)',
         }}
       >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 120,
-            height: 120,
-            borderRadius: 28,
-            backgroundColor: '#146359',
-            marginBottom: 40,
-          }}
-        >
-          {/* The same ampersand mark used for the app icon -- "by us", not tied to
-              any one creative medium, so it reads for any kind of creator. */}
-          <div
-            style={{
-              display: 'flex',
-              fontFamily: 'Fraunces Italic Black',
-              fontSize: 92,
-              color: '#FAF8F4',
-              lineHeight: 1,
-              transform: 'translateY(-4px)',
-            }}
-          >
-            &amp;
-          </div>
-        </div>
+        {/* The same ampersand mark used for the app icon -- "by us", not tied to any
+            one creative medium, so it reads for any kind of creator. */}
+        <img
+          src={iconDataUri}
+          width={120}
+          height={120}
+          style={{ display: 'flex', marginBottom: 40 }}
+        />
         <div
           style={{
             display: 'flex',
@@ -75,16 +64,6 @@ export default async function Image() {
         </div>
       </div>
     ),
-    {
-      ...size,
-      fonts: [
-        {
-          name: 'Fraunces Italic Black',
-          data: fontData,
-          style: 'italic',
-          weight: 900,
-        },
-      ],
-    }
+    { ...size }
   );
 }
