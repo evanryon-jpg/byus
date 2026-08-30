@@ -1,14 +1,26 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 
 export default function CreatorProfilePage() {
+  return (
+    <Suspense fallback={<div className="p-12 text-center text-black/40">Loading…</div>}>
+      <CreatorProfile />
+    </Suspense>
+  );
+}
+
+function CreatorProfile() {
   const { creatorId } = useParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const justSubscribed = searchParams.get('subscribed') === 'true';
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [subscribing, setSubscribing] = useState(null);
+  const [subscribeError, setSubscribeError] = useState('');
 
   useEffect(() => {
     load();
@@ -23,6 +35,7 @@ export default function CreatorProfilePage() {
 
   async function handleSubscribe(tierId) {
     setSubscribing(tierId);
+    setSubscribeError('');
     const res = await fetch('/api/subscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -31,10 +44,16 @@ export default function CreatorProfilePage() {
     const result = await res.json();
     if (result.url) {
       window.location.href = result.url; // redirect to Stripe Checkout
-    } else {
-      alert(result.error || 'Could not start checkout. Are you logged in as a fan?');
-      setSubscribing(null);
+      return;
     }
+    if (res.status === 401) {
+      // Not logged in — send them to log in and land right back here afterward, rather
+      // than losing their place and having to search for this creator again.
+      router.push(`/login?next=${encodeURIComponent(`/creator/${creatorId}`)}`);
+      return;
+    }
+    setSubscribeError(result.error || 'Could not start checkout. Try again.');
+    setSubscribing(null);
   }
 
   if (loading) return <div className="p-12 text-center text-black/40">Loading…</div>;
@@ -44,6 +63,11 @@ export default function CreatorProfilePage() {
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
+      {justSubscribed && (
+        <p className="mb-6 rounded-xl bg-green-50 px-4 py-3 text-sm text-green-700">
+          🎉 You're in! Welcome to {creator.display_name}'s page — subscriber-only posts below are unlocked.
+        </p>
+      )}
       <div className="flex items-center gap-4">
         {creator.profile_image_url ? (
           <Image
@@ -63,26 +87,36 @@ export default function CreatorProfilePage() {
       {creator.bio && <p className="mt-2 text-black/60">{creator.bio}</p>}
 
       {/* Tiers */}
-      {!hasActiveSubscription && tiers.length > 0 && (
-        <div className="mt-8 grid gap-4 sm:grid-cols-2">
-          {tiers.map((t) => (
-            <div key={t.id} className="rounded-2xl border border-black/5 bg-white p-6">
-              <h3 className="font-semibold">{t.name}</h3>
-              {t.description && <p className="mt-1 text-sm text-black/50">{t.description}</p>}
-              <p className="mt-3 text-lg font-bold text-[#146359]">
-                ${(t.price_cents / 100).toFixed(2)}<span className="text-sm font-normal text-black/40">/mo</span>
-              </p>
-              <button
-                onClick={() => handleSubscribe(t.id)}
-                disabled={subscribing === t.id}
-                className="mt-4 w-full rounded-full bg-[#146359] py-2 text-sm font-semibold text-white hover:bg-[#0f4d45] disabled:opacity-50"
-              >
-                {subscribing === t.id ? 'Redirecting…' : 'Subscribe'}
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
+      <div id="tiers" className="scroll-mt-6">
+        {!hasActiveSubscription && tiers.length > 0 && (
+          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+            {tiers.map((t) => (
+              <div key={t.id} className="rounded-2xl border border-black/5 bg-white p-6">
+                <h3 className="font-semibold">{t.name}</h3>
+                {t.description && <p className="mt-1 text-sm text-black/50">{t.description}</p>}
+                <p className="mt-3 text-lg font-bold text-[#146359]">
+                  ${(t.price_cents / 100).toFixed(2)}<span className="text-sm font-normal text-black/40">/mo</span>
+                </p>
+                <button
+                  onClick={() => handleSubscribe(t.id)}
+                  disabled={subscribing === t.id}
+                  className="mt-4 w-full rounded-full bg-[#146359] py-2 text-sm font-semibold text-white hover:bg-[#0f4d45] disabled:opacity-50"
+                >
+                  {subscribing === t.id ? 'Redirecting…' : 'Subscribe'}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        {!hasActiveSubscription && tiers.length === 0 && (
+          <p className="mt-8 rounded-xl bg-black/5 px-4 py-3 text-sm text-black/50">
+            {creator.display_name} hasn't published any subscription tiers yet — check back soon.
+          </p>
+        )}
+        {subscribeError && (
+          <p className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{subscribeError}</p>
+        )}
+      </div>
       {hasActiveSubscription && (
         <p className="mt-6 rounded-xl bg-green-50 px-4 py-3 text-sm text-green-700">
           ✓ You're subscribed to this creator.
@@ -100,7 +134,15 @@ export default function CreatorProfilePage() {
             </div>
             {p.locked ? (
               <p className="mt-2 text-sm italic text-black/40">
-                🔒 Subscribers only — subscribe above to unlock this post.
+                🔒 Subscribers only —{' '}
+                {tiers.length > 0 ? (
+                  <a href="#tiers" className="not-italic text-[#146359] underline">
+                    subscribe above to unlock this post
+                  </a>
+                ) : (
+                  'subscribe to unlock this post'
+                )}
+                .
               </p>
             ) : (
               <>
