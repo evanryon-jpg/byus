@@ -6,6 +6,10 @@ export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
 export default async function Image() {
+  const fontData = await fetch(
+    new URL('./fonts/Fraunces-Italic-Black9.ttf', import.meta.url)
+  ).then((res) => res.arrayBuffer());
+
   return new ImageResponse(
     (
       <div
@@ -30,13 +34,23 @@ export default async function Image() {
             height: 120,
             borderRadius: 28,
             backgroundColor: '#146359',
-            color: 'white',
-            fontSize: 72,
-            fontWeight: 700,
             marginBottom: 40,
           }}
         >
-          B
+          {/* The same ampersand mark used for the app icon -- "by us", not tied to
+              any one creative medium, so it reads for any kind of creator. */}
+          <div
+            style={{
+              display: 'flex',
+              fontFamily: 'Fraunces Italic Black',
+              fontSize: 92,
+              color: '#FAF8F4',
+              lineHeight: 1,
+              transform: 'translateY(-4px)',
+            }}
+          >
+            &amp;
+          </div>
         </div>
         <div
           style={{
@@ -61,6 +75,16 @@ export default async function Image() {
         </div>
       </div>
     ),
-    { ...size }
+    {
+      ...size,
+      fonts: [
+        {
+          name: 'Fraunces Italic Black',
+          data: fontData,
+          style: 'italic',
+          weight: 900,
+        },
+      ],
+    }
   );
 }
