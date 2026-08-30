@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import VerifyEmailBanner from '../../components/VerifyEmailBanner';
 
 export default function CreatorDashboard() {
   const [user, setUser] = useState(null);
@@ -56,6 +57,8 @@ export default function CreatorDashboard() {
       <h1 className="text-2xl font-bold">Creator dashboard</h1>
       <p className="text-black/50">Welcome back, {user?.display_name || user?.email}.</p>
 
+      {user && !user.email_verified && <VerifyEmailBanner email={user.email} />}
+
       {!(stripeConnected && hasTier && hasPost) && (
         <GettingStartedChecklist stripeConnected={stripeConnected} hasTier={hasTier} hasPost={hasPost} />
       )}
@@ -70,13 +73,17 @@ export default function CreatorDashboard() {
             <p className="mt-2 text-sm text-black/60">
               Connect your Stripe account to create paid tiers and start receiving payouts.
             </p>
-            <button
-              onClick={handleConnectStripe}
-              disabled={connecting}
-              className="mt-4 rounded-full bg-[#146359] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#0f4d45] disabled:opacity-50"
-            >
-              {connecting ? 'Redirecting…' : 'Connect Stripe & start earning'}
-            </button>
+            {user && !user.email_verified ? (
+              <p className="mt-4 text-sm text-black/40">Verify your email above before connecting Stripe.</p>
+            ) : (
+              <button
+                onClick={handleConnectStripe}
+                disabled={connecting}
+                className="mt-4 rounded-full bg-[#146359] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#0f4d45] disabled:opacity-50"
+              >
+                {connecting ? 'Redirecting…' : 'Connect Stripe & start earning'}
+              </button>
+            )}
           </>
         )}
       </div>
