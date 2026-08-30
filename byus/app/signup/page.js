@@ -15,6 +15,9 @@ function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const defaultRole = searchParams.get('role') === 'creator' ? 'creator' : 'fan';
+  // Same-site-only guard as the login page — see the comment there.
+  const rawNext = searchParams.get('next') || '';
+  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '';
 
   const [role, setRole] = useState(defaultRole);
   const [email, setEmail] = useState('');
@@ -44,7 +47,7 @@ function SignupForm() {
         setError(data.error || 'Something went wrong.');
         return;
       }
-      router.push(role === 'creator' ? '/creator/dashboard' : '/browse');
+      router.push(next || (role === 'creator' ? '/creator/dashboard' : '/browse'));
       router.refresh();
     } catch {
       setError('Network error — please try again.');
@@ -145,7 +148,10 @@ function SignupForm() {
       </form>
 
       <p className="mt-6 text-center text-sm text-black/50">
-        Already have an account? <a href="/login" className="text-[#146359] underline">Log in</a>
+        Already have an account?{' '}
+        <a href={next ? `/login?next=${encodeURIComponent(next)}` : '/login'} className="text-[#146359] underline">
+          Log in
+        </a>
       </p>
 
       <style jsx global>{`
