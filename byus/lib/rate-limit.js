@@ -79,6 +79,13 @@ const limiters = {
     limiter: Ratelimit.slidingWindow(20, '10 m'),
     prefix: 'rl:upload',
   }),
+  // Guards saving a creator's social/external links — cheap to run, but still an
+  // authenticated write with no other cost to automating against.
+  'creator-links': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(20, '10 m'),
+    prefix: 'rl:creator-links',
+  }),
 };
 
 // Best-effort client IP. Vercel always sets x-forwarded-for in production; the
