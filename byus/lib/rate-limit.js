@@ -55,6 +55,14 @@ const limiters = {
     limiter: Ratelimit.slidingWindow(10, '60 s'),
     prefix: 'rl:password-change',
   }),
+  // Guards resending a verification email — session-gated already, but without a
+  // limit a single account could be used to spam an inbox (or someone else's, if we
+  // ever allow changing the address before verifying) with repeated sends.
+  'resend-verification': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(3, '1 h'),
+    prefix: 'rl:resend-verification',
+  }),
   // Guards the two file-upload endpoints (post media, avatars). Uploads are relatively
   // expensive (Blob storage writes, bandwidth) and otherwise have no cost to automating
   // against with a valid session — this keeps a single account from being used to hammer
