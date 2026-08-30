@@ -86,6 +86,22 @@ function CreatorProfile() {
       </div>
       {creator.bio && <p className="mt-2 text-black/60">{creator.bio}</p>}
 
+      {creator.social_links?.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {creator.social_links.map((link, i) => (
+            <a
+              key={i}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full border border-[#146359]/20 px-3 py-1.5 text-sm font-medium text-[#146359] hover:bg-[#146359]/5"
+            >
+              {link.label} ↗
+            </a>
+          ))}
+        </div>
+      )}
+
       {/* Tiers */}
       <div id="tiers" className="scroll-mt-6">
         {!hasActiveSubscription && tiers.length > 0 && (
