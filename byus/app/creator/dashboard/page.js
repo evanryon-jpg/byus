@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import VerifyEmailBanner from '../../components/VerifyEmailBanner';
 
@@ -77,7 +77,8 @@ export default function CreatorDashboard() {
         ) : (
           <>
             <p className="mt-2 text-sm text-black/60">
-              Connect your Stripe account to create paid tiers and start receiving payouts.
+              This is the only setup step that matters: tap the button, and Stripe walks
+              you through the rest. That's where your money gets paid out to.
             </p>
             {user && !user.email_verified ? (
               <p className="mt-4 text-sm text-black/40">Verify your email above before connecting Stripe.</p>
@@ -85,9 +86,9 @@ export default function CreatorDashboard() {
               <button
                 onClick={handleConnectStripe}
                 disabled={connecting}
-                className="mt-4 rounded-full bg-[#146359] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#0f4d45] disabled:opacity-50"
+                className="mt-4 w-full rounded-2xl bg-[#146359] px-6 py-5 text-lg font-semibold text-white hover:bg-[#0f4d45] disabled:opacity-50 sm:w-auto sm:px-10"
               >
-                {connecting ? 'Redirecting…' : 'Connect Stripe & start earning'}
+                {connecting ? 'Redirecting…' : 'Connect Stripe & start earning →'}
               </button>
             )}
           </>
@@ -584,17 +585,41 @@ function TierRow({ tier, onChanged }) {
 // per-link API calls that could race or partially fail.
 const MAX_LINKS = 8;
 
+// The four platforms almost every creator already posts on. A tap fills in a row with
+// the domain already typed out and drops the cursor right after it, so all that's left
+// to do is type a username and hit save -- no one has to remember or type a URL format.
+const QUICK_PLATFORMS = [
+  { key: 'tiktok', name: 'TikTok', domain: 'tiktok.com', prefix: 'https://www.tiktok.com/@', badgeClass: 'bg-black text-white' },
+  { key: 'youtube', name: 'YouTube', domain: 'youtube.com', prefix: 'https://www.youtube.com/@', badgeClass: 'bg-[#FF0000] text-white' },
+  { key: 'instagram', name: 'Instagram', domain: 'instagram.com', prefix: 'https://www.instagram.com/', badgeClass: 'bg-gradient-to-br from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] text-white' },
+  { key: 'x', name: 'X', domain: 'x.com', prefix: 'https://x.com/', badgeClass: 'bg-black text-white' },
+];
+
 function LinksSection({ links: savedLinks, onSaved }) {
   const [rows, setRows] = useState(savedLinks.length ? savedLinks : [{ label: '', url: '' }]);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [focusIndex, setFocusIndex] = useState(null);
+  const inputRefs = useRef([]);
 
   // Keep the form in sync if links load in after the form has already rendered
   // (e.g. the initial empty-array render before the fetch resolves).
   useEffect(() => {
     setRows(savedLinks.length ? savedLinks : [{ label: '', url: '' }]);
   }, [savedLinks]);
+
+  // After a quick-add tile inserts a row, jump the cursor into it (right after the
+  // domain that's already filled in) so the next thing anyone does is type their handle.
+  useEffect(() => {
+    if (focusIndex === null) return;
+    const el = inputRefs.current[focusIndex];
+    if (el) {
+      el.focus();
+      el.setSelectionRange(el.value.length, el.value.length);
+    }
+    setFocusIndex(null);
+  }, [focusIndex, rows]);
 
   function updateRow(i, field, value) {
     setSaved(false);
@@ -609,6 +634,20 @@ function LinksSection({ links: savedLinks, onSaved }) {
   function removeRow(i) {
     setSaved(false);
     setRows((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
+  function addQuickPlatform(platform) {
+    setSaved(false);
+    const existingIndex = rows.findIndex((r) => (r.url || '').toLowerCase().includes(platform.domain));
+    if (existingIndex !== -1) {
+      setFocusIndex(existingIndex);
+      return;
+    }
+    // Drop the still-empty starter row instead of leaving it dangling above the new one.
+    const base = rows.length === 1 && !rows[0].label && !rows[0].url ? [] : rows;
+    if (base.length >= MAX_LINKS) return;
+    setRows([...base, { label: platform.name, url: platform.prefix }]);
+    setFocusIndex(base.length);
   }
 
   async function handleSave(e) {
@@ -634,10 +673,30 @@ function LinksSection({ links: savedLinks, onSaved }) {
     <div className="mt-8 rounded-2xl border border-black/5 bg-white p-6">
       <h2 className="font-semibold">Links</h2>
       <p className="mt-1 text-sm text-black/50">
-        Add your TikTok, YouTube, Instagram, or anywhere else you post — fans will see these on your profile.
+        Tap where you already post — add your username, then save. Fans will see these on your profile.
       </p>
 
-      <form onSubmit={handleSave} className="mt-4 space-y-3">
+      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {QUICK_PLATFORMS.map((platform) => {
+          const added = rows.some((r) => (r.url || '').toLowerCase().includes(platform.domain));
+          return (
+            <button
+              key={platform.key}
+              type="button"
+              onClick={() => addQuickPlatform(platform)}
+              className={`flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-base font-semibold transition ${
+                added
+                  ? 'border-2 border-[#146359] bg-[#146359]/5 text-[#146359]'
+                  : `${platform.badgeClass} hover:opacity-90`
+              }`}
+            >
+              {added ? `✓ ${platform.name}` : platform.name}
+            </button>
+          );
+        })}
+      </div>
+
+      <form onSubmit={handleSave} className="mt-5 space-y-3">
         {rows.map((row, i) => (
           <div key={i} className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
             <input
@@ -647,6 +706,7 @@ function LinksSection({ links: savedLinks, onSaved }) {
               className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm sm:w-40"
             />
             <input
+              ref={(el) => (inputRefs.current[i] = el)}
               placeholder="tiktok.com/@you"
               value={row.url}
               onChange={(e) => updateRow(i, 'url', e.target.value)}
