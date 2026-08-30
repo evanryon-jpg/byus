@@ -1,10 +1,23 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="p-12 text-center text-black/40">Loading…</div>}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Only ever follow a same-site path (starts with a single "/") — an open redirect
+  // target could otherwise be used to bounce someone off ByUs right after they log in.
+  const rawNext = searchParams.get('next') || '';
+  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -25,7 +38,7 @@ export default function LoginPage() {
         setError(data.error || 'Something went wrong.');
         return;
       }
-      router.push(data.user.role === 'creator' ? '/creator/dashboard' : '/browse');
+      router.push(next || (data.user.role === 'creator' ? '/creator/dashboard' : '/browse'));
       router.refresh();
     } catch {
       setError('Network error — please try again.');
@@ -73,7 +86,10 @@ export default function LoginPage() {
         </button>
       </form>
       <p className="mt-6 text-center text-sm text-black/50">
-        No account yet? <a href="/signup" className="text-[#146359] underline">Sign up</a>
+        No account yet?{' '}
+        <a href={next ? `/signup?next=${encodeURIComponent(next)}` : '/signup'} className="text-[#146359] underline">
+          Sign up
+        </a>
       </p>
     </div>
   );
