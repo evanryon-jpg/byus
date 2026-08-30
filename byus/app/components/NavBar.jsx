@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 
 // Client component so it can check login state after the page loads.
 // The rest of the site is server-rendered, but "am I logged in" can only be
@@ -9,7 +10,12 @@ export default function NavBar() {
   const [status, setStatus] = useState('loading'); // 'loading' | 'in' | 'out'
   const [user, setUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname();
 
+  // Re-check on every client-side navigation, not just the first mount. Login and
+  // signup redirect into the app with router.push() rather than a full page load, so
+  // without this the nav kept showing "Log in / Sign up" right after someone signed
+  // in until they manually refreshed -- it never knew the session had changed.
   useEffect(() => {
     let cancelled = false;
 
@@ -31,7 +37,7 @@ export default function NavBar() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [pathname]);
 
   async function handleLogout() {
     try {
