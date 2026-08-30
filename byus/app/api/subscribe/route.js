@@ -22,6 +22,14 @@ export async function POST(request) {
   const rateCheck = await checkRateLimit('subscribe', `user:${session.userId}`);
   if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
+  const fanResult = await query('SELECT email_verified FROM users WHERE id = $1', [session.userId]);
+  if (!fanResult.rows[0]?.email_verified) {
+    return NextResponse.json(
+      { error: 'Verify your email address before subscribing.' },
+      { status: 403 }
+    );
+  }
+
   const { tierId } = await request.json();
   if (!tierId) {
     return NextResponse.json({ error: 'tierId is required.' }, { status: 400 });
