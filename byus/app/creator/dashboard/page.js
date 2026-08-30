@@ -47,10 +47,18 @@ export default function CreatorDashboard() {
 
   if (loading) return <div className="p-12 text-center text-black/40">Loading…</div>;
 
+  const stripeConnected = Boolean(user?.stripe_connect_onboarded);
+  const hasTier = tiers.length > 0;
+  const hasPost = posts.length > 0;
+
   return (
     <div className="mx-auto max-w-4xl px-6 py-12">
       <h1 className="text-2xl font-bold">Creator dashboard</h1>
       <p className="text-black/50">Welcome back, {user?.display_name || user?.email}.</p>
+
+      {!(stripeConnected && hasTier && hasPost) && (
+        <GettingStartedChecklist stripeConnected={stripeConnected} hasTier={hasTier} hasPost={hasPost} />
+      )}
 
       {/* Stripe connection status */}
       <div className="mt-8 rounded-2xl border border-black/5 bg-white p-6">
@@ -78,6 +86,45 @@ export default function CreatorDashboard() {
 
       {/* Posts */}
       <PostSection posts={posts} onCreated={load} />
+    </div>
+  );
+}
+
+// Three steps between "just signed up" and "earning": connect Stripe so payouts
+// have somewhere to go, add a tier so fans have something to subscribe to, then
+// publish a post so the profile isn't empty when they arrive. Shown until all
+// three are done, then it gets out of the way.
+function GettingStartedChecklist({ stripeConnected, hasTier, hasPost }) {
+  const steps = [
+    { label: 'Connect Stripe', done: stripeConnected },
+    { label: 'Create a tier', done: hasTier },
+    { label: 'Publish a post', done: hasPost },
+  ];
+  const doneCount = steps.filter((s) => s.done).length;
+
+  return (
+    <div className="mt-6 rounded-2xl border border-[#146359]/15 bg-[#146359]/5 p-5">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-[#146359]">Get set up to earn</h2>
+        <span className="text-xs font-medium text-[#146359]/70">{doneCount} of {steps.length} done</span>
+      </div>
+      <ol className="mt-3 flex flex-col gap-2 sm:flex-row sm:gap-4">
+        {steps.map((step, i) => (
+          <li key={step.label} className="flex items-center gap-2 text-sm">
+            <span
+              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+                step.done ? 'bg-[#146359] text-white' : 'border border-[#146359]/30 text-[#146359]/60'
+              }`}
+              aria-hidden="true"
+            >
+              {step.done ? '✓' : i + 1}
+            </span>
+            <span className={step.done ? 'text-black/40 line-through' : 'font-medium text-black/80'}>
+              {step.label}
+            </span>
+          </li>
+        ))}
+      </ol>
     </div>
   );
 }
