@@ -136,6 +136,16 @@ function GettingStartedChecklist({ stripeConnected, hasTier, hasPost }) {
   );
 }
 
+// Quick-start templates so a creator can go from a blank page to a live tier in one
+// click instead of guessing what to type — most creators land on something close to
+// one of these anyway. Clicking one just pre-fills the form; nothing is saved until
+// they hit "Create tier", so it's still easy to tweak the name, price, or description.
+const TIER_PRESETS = [
+  { label: 'Supporter', name: 'Supporter', price: '5.00', description: 'Support my work and get a warm thank-you.' },
+  { label: 'Fan club', name: 'Fan club', price: '10.00', description: 'Access to subscriber-only posts and updates.' },
+  { label: 'VIP', name: 'VIP', price: '25.00', description: 'Everything in Fan club, plus first access to new work.' },
+];
+
 function TierSection({ tiers, onCreated, disabled }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
@@ -143,6 +153,15 @@ function TierSection({ tiers, onCreated, disabled }) {
   const [price, setPrice] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [quickSetupError, setQuickSetupError] = useState('');
+  const [quickSetupBusy, setQuickSetupBusy] = useState(false);
+
+  function applyPreset(preset) {
+    setName(preset.name);
+    setDescription(preset.description);
+    setPrice(preset.price);
+    setOpen(true);
+  }
 
   async function handleCreate(e) {
     e.preventDefault();
@@ -164,6 +183,35 @@ function TierSection({ tiers, onCreated, disabled }) {
     onCreated();
   }
 
+  // Sets up the whole starter ladder (Supporter / Fan club / VIP) in one go, for a
+  // creator who'd rather start from a sensible default than build each tier by hand.
+  // Everything it creates can still be renamed, re-priced (via deactivate + recreate),
+  // or deactivated afterward — this is a starting point, not a commitment.
+  async function handleQuickSetup() {
+    setQuickSetupError('');
+    setQuickSetupBusy(true);
+    for (const preset of TIER_PRESETS) {
+      const res = await fetch('/api/creator/tiers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: preset.name,
+          description: preset.description,
+          priceCents: Math.round(parseFloat(preset.price) * 100),
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setQuickSetupError(data.error || `Could not create the "${preset.label}" tier. Try again.`);
+        break;
+      }
+    }
+    setQuickSetupBusy(false);
+    onCreated();
+  }
+
+  const previewPriceCents = Math.round((parseFloat(price) || 0) * 100);
+
   return (
     <div className="mt-8 rounded-2xl border border-black/5 bg-white p-6">
       <div className="flex items-center justify-between">
@@ -176,8 +224,32 @@ function TierSection({ tiers, onCreated, disabled }) {
       </div>
       {disabled && <p className="mt-2 text-sm text-black/40">Connect Stripe first to create tiers.</p>}
 
-      {tiers.length === 0 && !open && (
-        <p className="mt-2 text-sm text-black/40">No tiers yet.</p>
+      {tiers.length === 0 && !open && !disabled && (
+        <div className="mt-2">
+          <p className="text-sm text-black/40">No tiers yet — start from a template, or use one to fill in the form:</p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {TIER_PRESETS.map((preset) => (
+              <button
+                key={preset.label}
+                type="button"
+                onClick={() => applyPreset(preset)}
+                className="rounded-full bg-[#146359]/10 px-3 py-1.5 text-xs font-medium text-[#146359] hover:bg-[#146359]/20"
+              >
+                {preset.label} — ${preset.price}/mo
+              </button>
+            ))}
+            <span className="text-xs text-black/30">or</span>
+            <button
+              type="button"
+              onClick={handleQuickSetup}
+              disabled={quickSetupBusy}
+              className="rounded-full border border-[#146359] px-3 py-1.5 text-xs font-semibold text-[#146359] hover:bg-[#146359]/5 disabled:opacity-50"
+            >
+              {quickSetupBusy ? 'Setting up…' : 'Add all three'}
+            </button>
+          </div>
+          {quickSetupError && <p className="mt-2 text-sm text-red-600">{quickSetupError}</p>}
+        </div>
       )}
 
       <ul className="mt-4 space-y-2">
@@ -187,19 +259,55 @@ function TierSection({ tiers, onCreated, disabled }) {
       </ul>
 
       {open && (
-        <form onSubmit={handleCreate} className="mt-4 space-y-3 border-t border-black/5 pt-4">
-          <input placeholder="Tier name" value={name} onChange={(e) => setName(e.target.value)} required
-            className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm" />
-          <input placeholder="Description (optional)" value={description} onChange={(e) => setDescription(e.target.value)}
-            className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm" />
-          <input placeholder="Price per month (e.g. 10.00)" type="number" step="0.01" min="1" value={price}
-            onChange={(e) => setPrice(e.target.value)} required
-            className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm" />
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          <button disabled={saving} className="rounded-full bg-[#146359] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
-            {saving ? 'Creating…' : 'Create tier'}
-          </button>
-        </form>
+        <div className="mt-4 border-t border-black/5 pt-4">
+          <div className="flex flex-wrap gap-2">
+            {TIER_PRESETS.map((preset) => (
+              <button
+                key={preset.label}
+                type="button"
+                onClick={() => applyPreset(preset)}
+                className="rounded-full border border-[#146359]/25 px-3 py-1 text-xs font-medium text-[#146359] hover:bg-[#146359]/5"
+              >
+                Use "{preset.label}"
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-4 grid gap-6 sm:grid-cols-2">
+            <form onSubmit={handleCreate} className="space-y-3">
+              <input placeholder="Tier name" value={name} onChange={(e) => setName(e.target.value)} required
+                className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm" />
+              <input placeholder="Description (optional)" value={description} onChange={(e) => setDescription(e.target.value)}
+                className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm" />
+              <input placeholder="Price per month (e.g. 10.00)" type="number" step="0.01" min="1" value={price}
+                onChange={(e) => setPrice(e.target.value)} required
+                className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm" />
+              {error && <p className="text-sm text-red-600">{error}</p>}
+              <button disabled={saving} className="rounded-full bg-[#146359] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+                {saving ? 'Creating…' : 'Create tier'}
+              </button>
+            </form>
+
+            {/* Live preview — the exact card fans see on the public profile page, so a
+                creator can see what they're publishing before they publish it. */}
+            <div>
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-black/40">
+                How fans will see it
+              </p>
+              <div className="rounded-2xl border border-black/5 bg-[#FAF8F4] p-6">
+                <h3 className="font-semibold">{name || 'Tier name'}</h3>
+                {description && <p className="mt-1 text-sm text-black/50">{description}</p>}
+                <p className="mt-3 text-lg font-bold text-[#146359]">
+                  ${(previewPriceCents / 100).toFixed(2)}
+                  <span className="text-sm font-normal text-black/40">/mo</span>
+                </p>
+                <div className="mt-4 w-full rounded-full bg-[#146359] py-2 text-center text-sm font-semibold text-white opacity-90">
+                  Subscribe
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
