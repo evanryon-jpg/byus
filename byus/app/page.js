@@ -1,16 +1,25 @@
-export default function HomePage() {
+import { getCurrentUser } from '@/lib/session';
+
+// Server component so the hero and closing CTAs can tell whether someone is already
+// logged in -- an existing creator or fan should never be invited to sign up again,
+// they should be pointed straight back to the page they actually want.
+export default async function HomePage() {
+  const session = await getCurrentUser();
+
   return (
     <div>
-      <Hero />
+      <Hero user={session} />
       <StatsBand />
       <Features />
       <HowItWorks />
-      <ClosingCta />
+      <ClosingCta user={session} />
     </div>
   );
 }
 
-function Hero() {
+function Hero({ user }) {
+  const dashboardHref = user?.role === 'creator' ? '/creator/dashboard' : '/fan/dashboard';
+
   return (
     <section className="relative overflow-hidden">
       {/* Soft warm gradient blobs — decorative only, sit behind the copy */}
@@ -37,18 +46,37 @@ function Hero() {
         </p>
 
         <div className="mt-10 flex flex-wrap justify-center gap-4">
-          <a
-            href="/browse"
-            className="rounded-full bg-brand-teal px-7 py-3 font-semibold text-white shadow-lg shadow-brand-teal/20 transition hover:-translate-y-0.5 hover:bg-[#0f4d45] hover:shadow-xl hover:shadow-brand-teal/25"
-          >
-            Browse creators
-          </a>
-          <a
-            href="/signup?role=creator"
-            className="rounded-full border border-brand-teal px-7 py-3 font-semibold text-brand-teal transition hover:-translate-y-0.5 hover:bg-brand-teal/5"
-          >
-            Become a creator
-          </a>
+          {user ? (
+            <>
+              <a
+                href={dashboardHref}
+                className="rounded-full bg-brand-teal px-7 py-3 font-semibold text-white shadow-lg shadow-brand-teal/20 transition hover:-translate-y-0.5 hover:bg-[#0f4d45] hover:shadow-xl hover:shadow-brand-teal/25"
+              >
+                {user.role === 'creator' ? 'Go to your dashboard' : 'Your subscriptions'}
+              </a>
+              <a
+                href="/browse"
+                className="rounded-full border border-brand-teal px-7 py-3 font-semibold text-brand-teal transition hover:-translate-y-0.5 hover:bg-brand-teal/5"
+              >
+                Browse creators
+              </a>
+            </>
+          ) : (
+            <>
+              <a
+                href="/browse"
+                className="rounded-full bg-brand-teal px-7 py-3 font-semibold text-white shadow-lg shadow-brand-teal/20 transition hover:-translate-y-0.5 hover:bg-[#0f4d45] hover:shadow-xl hover:shadow-brand-teal/25"
+              >
+                Browse creators
+              </a>
+              <a
+                href="/signup?role=creator"
+                className="rounded-full border border-brand-teal px-7 py-3 font-semibold text-brand-teal transition hover:-translate-y-0.5 hover:bg-brand-teal/5"
+              >
+                Become a creator
+              </a>
+            </>
+          )}
         </div>
 
         <p className="mt-8 text-sm text-black/45">
@@ -214,25 +242,37 @@ function HowItWorks() {
   );
 }
 
-function ClosingCta() {
+function ClosingCta({ user }) {
+  const dashboardHref = user?.role === 'creator' ? '/creator/dashboard' : '/fan/dashboard';
+
   return (
     <section className="relative overflow-hidden bg-brand-teal">
       <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-brand-gold/20 blur-3xl" />
       <div className="mx-auto max-w-3xl px-6 py-20 text-center">
         <h2 className="font-display text-3xl font-semibold text-white sm:text-4xl">
-          Ready to get started?
+          {user ? 'Welcome back.' : 'Ready to get started?'}
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-white/75">
-          Whether you&rsquo;re here to support someone or to build your own membership,
-          it takes a couple of minutes to set up.
+          {user
+            ? 'Pick up right where you left off.'
+            : 'Whether you’re here to support someone or to build your own membership, it takes a couple of minutes to set up.'}
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-4">
-          <a
-            href="/signup"
-            className="rounded-full bg-white px-7 py-3 font-semibold text-brand-teal shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
-          >
-            Create your account
-          </a>
+          {user ? (
+            <a
+              href={dashboardHref}
+              className="rounded-full bg-white px-7 py-3 font-semibold text-brand-teal shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
+            >
+              Go to your dashboard
+            </a>
+          ) : (
+            <a
+              href="/signup"
+              className="rounded-full bg-white px-7 py-3 font-semibold text-brand-teal shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
+            >
+              Create your account
+            </a>
+          )}
           <a
             href="/browse"
             className="rounded-full border border-white/40 px-7 py-3 font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/10"
