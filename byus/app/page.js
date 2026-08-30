@@ -15,9 +15,9 @@ function Hero() {
     <section className="relative overflow-hidden">
       {/* Soft warm gradient blobs — decorative only, sit behind the copy */}
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -top-24 left-1/2 h-[36rem] w-[36rem] -translate-x-[60%] rounded-full bg-brand-gold/20 blur-3xl" />
-        <div className="absolute -top-10 right-0 h-[28rem] w-[28rem] translate-x-1/3 rounded-full bg-brand-teal/10 blur-3xl" />
-        <div className="absolute top-40 left-1/2 h-72 w-72 -translate-x-1/4 rounded-full bg-brand-clay/10 blur-3xl" />
+        <div className="absolute -top-24 left-1/2 h-[36rem] w-[36rem] -translate-x-[60%] rounded-full bg-brand-gold/10 blur-3xl" />
+        <div className="absolute -top-10 right-0 h-[28rem] w-[28rem] translate-x-1/3 rounded-full bg-brand-teal/[0.06] blur-3xl" />
+        <div className="absolute top-40 left-1/2 h-72 w-72 -translate-x-1/4 rounded-full bg-brand-clay/[0.06] blur-3xl" />
       </div>
 
       <div className="mx-auto max-w-4xl px-6 pt-20 pb-16 text-center">
