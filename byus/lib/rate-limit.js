@@ -86,6 +86,13 @@ const limiters = {
     limiter: Ratelimit.slidingWindow(20, '10 m'),
     prefix: 'rl:creator-links',
   }),
+  // Guards the AI setup assistant — each call is a paid LLM request, so this is sized
+  // to stop runaway cost rather than just abuse.
+  'ai-setup': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(8, '24 h'),
+    prefix: 'rl:ai-setup',
+  }),
 };
 
 // Best-effort client IP. Vercel always sets x-forwarded-for in production; the
