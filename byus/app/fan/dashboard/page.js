@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import VerifyEmailBanner from '../../components/VerifyEmailBanner';
 
 export default function FanDashboard() {
   const [user, setUser] = useState(null);
@@ -27,6 +28,8 @@ export default function FanDashboard() {
     <div className="mx-auto max-w-3xl px-6 py-12">
       <h1 className="text-2xl font-bold">Your subscriptions</h1>
       <p className="text-black/50">Welcome back, {user?.display_name || user?.email}.</p>
+
+      {user && !user.email_verified && <VerifyEmailBanner email={user.email} />}
 
       <ul className="mt-8 space-y-3">
         {subs.map((s) => (
