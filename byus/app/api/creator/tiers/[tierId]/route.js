@@ -37,6 +37,24 @@ export async function PATCH(request, { params }) {
       return NextResponse.json({ error: 'Tier not found.' }, { status: 404 });
     }
 
+    // Publishing a tier (flipping it active) is the one action that actually needs
+    // somewhere for a subscription to pay out to — everything else about a tier (naming
+    // it, drafting it) is fine without Stripe. /api/subscribe checks this again
+    // independently before checkout, but catching it here gives the creator a clear
+    // answer at the moment they try to publish instead of a dead Subscribe button later.
+    if (active === true) {
+      const creatorResult = await query(
+        'SELECT stripe_connect_onboarded FROM users WHERE id = $1',
+        [session.userId]
+      );
+      if (!creatorResult.rows[0]?.stripe_connect_onboarded) {
+        return NextResponse.json(
+          { error: 'Connect your Stripe account before publishing this tier.' },
+          { status: 400 }
+        );
+      }
+    }
+
     const fields = [];
     const values = [];
     let i = 1;
