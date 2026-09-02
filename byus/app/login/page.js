@@ -18,14 +18,30 @@ function LoginForm() {
   // target could otherwise be used to bounce someone off ByUs right after they log in.
   const rawNext = searchParams.get('next') || '';
   const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '';
+  const googleHref = `/api/auth/google${next ? `?next=${encodeURIComponent(next)}` : ''}`;
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
+  // A bounce back from /api/auth/google/callback lands here with ?error=... — surface
+  // it the same way as any other login failure instead of silently dropping it.
+  const [error, setError] = useState(searchParams.get('error') || '');
   const [loading, setLoading] = useState(false);
+
+  function validate() {
+    const errors = {};
+    if (!email.trim()) errors.email = 'Enter your email address.';
+    if (!password) errors.password = 'Enter your password.';
+    return errors;
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
+    const errors = validate();
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
     setLoading(true);
     try {
       const res = await fetch('/api/auth/login', {
@@ -50,29 +66,69 @@ function LoginForm() {
   return (
     <div className="mx-auto max-w-md px-6 py-16">
       <h1 className="text-2xl font-bold">Log in</h1>
-      <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+
+      <a
+        href={googleHref}
+        className="mt-6 flex w-full items-center justify-center gap-3 rounded-full border border-black/10 bg-white py-3 font-semibold text-[#1A1A1A] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+      >
+        <GoogleIcon />
+        Continue with Google
+      </a>
+      <p className="mt-3 text-center text-xs text-black/40">
+        By continuing, you agree to our{' '}
+        <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline">
+          Terms of Service
+        </a>{' '}
+        and{' '}
+        <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline">
+          Privacy Policy
+        </a>
+        .
+      </p>
+
+      <Divider label="or continue with email" />
+
+      <form onSubmit={handleSubmit} className="space-y-4">
         <label className="block">
-          <span className="mb-1 block text-sm font-medium text-black/70">Email</span>
+          <span className="mb-1 block text-sm font-medium text-black/60">Email</span>
           <input
             type="email"
-            required
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-xl border border-black/10 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#146359]"
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (fieldErrors.email) setFieldErrors((f) => ({ ...f, email: undefined }));
+            }}
+            aria-invalid={Boolean(fieldErrors.email)}
+            className={`w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${
+              fieldErrors.email
+                ? 'border-red-400 focus:ring-red-300'
+                : 'border-black/10 focus:ring-[#146359]'
+            }`}
           />
+          {fieldErrors.email && <p className="mt-1 text-xs text-red-600">{fieldErrors.email}</p>}
         </label>
         <label className="block">
           <div className="mb-1 flex items-center justify-between">
-            <span className="text-sm font-medium text-black/70">Password</span>
-            <a href="/forgot-password" className="text-sm text-[#146359] underline">Forgot password?</a>
+            <span className="text-sm font-medium text-black/60">Password</span>
+            <a href="/forgot-password" className="text-xs text-[#146359] underline">
+              Forgot password?
+            </a>
           </div>
           <input
             type="password"
-            required
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-xl border border-black/10 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#146359]"
+            onChange={(e) => {
+              setPassword(e.target.value);
+              if (fieldErrors.password) setFieldErrors((f) => ({ ...f, password: undefined }));
+            }}
+            aria-invalid={Boolean(fieldErrors.password)}
+            className={`w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${
+              fieldErrors.password
+                ? 'border-red-400 focus:ring-red-300'
+                : 'border-black/10 focus:ring-[#146359]'
+            }`}
           />
+          {fieldErrors.password && <p className="mt-1 text-xs text-red-600">{fieldErrors.password}</p>}
         </label>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
@@ -80,7 +136,7 @@ function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-full bg-[#146359] py-3 font-semibold text-white hover:bg-[#0f4d45] disabled:opacity-50"
+          className="w-full rounded-full bg-[#146359] py-3 text-sm font-semibold text-white hover:bg-[#0f4d45] disabled:opacity-50"
         >
           {loading ? 'Logging in…' : 'Log in'}
         </button>
@@ -92,5 +148,38 @@ function LoginForm() {
         </a>
       </p>
     </div>
+  );
+}
+
+function Divider({ label }) {
+  return (
+    <div className="my-6 flex items-center gap-3">
+      <div className="h-px flex-1 bg-black/10" />
+      <span className="text-xs font-medium uppercase tracking-wide text-black/35">{label}</span>
+      <div className="h-px flex-1 bg-black/10" />
+    </div>
+  );
+}
+
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+      <path
+        fill="#FFC107"
+        d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"
+      />
+      <path
+        fill="#FF3D00"
+        d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4c-7.4 0-13.8 4.2-17.7 10.7z"
+      />
+      <path
+        fill="#4CAF50"
+        d="M24 44c5.5 0 10.4-2.1 14.1-5.5l-6.5-5.5C29.6 34.9 26.9 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C10.1 39.7 16.5 44 24 44z"
+      />
+      <path
+        fill="#1976D2"
+        d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.2-4.1 5.6l6.5 5.5C41.5 36 44 30.5 44 24c0-1.3-.1-2.7-.4-3.5z"
+      />
+    </svg>
   );
 }
