@@ -1,5 +1,6 @@
 import { getCurrentUser } from '@/lib/session';
 import FAQSection from './components/FAQSection';
+import CreatorSearch from './components/CreatorSearch';
 
 // Server component so the hero and closing CTAs can tell whether someone is already
 // logged in -- an existing creator or fan should never be invited to sign up again,
@@ -37,47 +38,28 @@ function Hero({ user }) {
         </span>
 
         <h1 className="mt-6 font-display text-5xl font-semibold leading-[1.1] tracking-tight text-[#1A1A1A] sm:text-6xl">
-          Creator subscriptions,{' '}
-          <span className="italic text-brand-teal">simplified</span>
+          Connect with your favorite creators
         </h1>
 
         <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-black/60">
-          ByUs is a warm, straightforward home for paid memberships. Creators keep 90% of
-          every payment, paid directly to their own Stripe account — a flat 10% fee, no
-          hidden processing, payout, or currency stack on top.
+          Type a creator's name below, or set up your own page in a couple of minutes.
+          Creators keep 90% of every payment — a flat 10% fee, nothing hidden.
         </p>
 
-        <div className="mt-10 flex flex-wrap justify-center gap-4">
+        <CreatorSearch />
+
+        <div className="mt-6 flex flex-wrap justify-center gap-4">
           {user ? (
-            <>
-              <a
-                href={dashboardHref}
-                className="rounded-full bg-brand-teal px-7 py-3 font-semibold text-white shadow-lg shadow-brand-teal/20 transition hover:-translate-y-0.5 hover:bg-[#0f4d45] hover:shadow-xl hover:shadow-brand-teal/25"
-              >
-                {user.role === 'creator' ? 'Go to your dashboard' : 'Your subscriptions'}
-              </a>
-              <a
-                href="/browse"
-                className="rounded-full border border-brand-teal px-7 py-3 font-semibold text-brand-teal transition hover:-translate-y-0.5 hover:bg-brand-teal/5"
-              >
-                Browse creators
-              </a>
-            </>
+            <a
+              href={dashboardHref}
+              className="text-sm font-semibold text-brand-teal hover:underline"
+            >
+              {user.role === 'creator' ? 'Go to your dashboard' : 'Your subscriptions'} →
+            </a>
           ) : (
-            <>
-              <a
-                href="/browse"
-                className="rounded-full bg-brand-teal px-7 py-3 font-semibold text-white shadow-lg shadow-brand-teal/20 transition hover:-translate-y-0.5 hover:bg-[#0f4d45] hover:shadow-xl hover:shadow-brand-teal/25"
-              >
-                Browse creators
-              </a>
-              <a
-                href="/signup?role=creator"
-                className="rounded-full border border-brand-teal px-7 py-3 font-semibold text-brand-teal transition hover:-translate-y-0.5 hover:bg-brand-teal/5"
-              >
-                Become a creator
-              </a>
-            </>
+            <a href="/signup?role=creator" className="text-sm font-semibold text-brand-teal hover:underline">
+              Are you a creator? Start your own page →
+            </a>
           )}
         </div>
 
