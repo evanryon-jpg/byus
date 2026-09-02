@@ -35,6 +35,13 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Invalid email or password.' }, { status: 401 });
   }
 
+  // An account created (or since linked) through Google sign-in has no password_hash
+  // at all — bcrypt.compare would throw on a null hash. Same vague message as any
+  // other mismatch, so this doesn't leak that the account is Google-only.
+  if (!user.password_hash) {
+    return NextResponse.json({ error: 'Invalid email or password.' }, { status: 401 });
+  }
+
   const passwordMatches = await verifyPassword(password, user.password_hash);
   if (!passwordMatches) {
     return NextResponse.json({ error: 'Invalid email or password.' }, { status: 401 });
