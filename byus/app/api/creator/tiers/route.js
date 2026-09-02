@@ -57,19 +57,19 @@ export async function POST(request) {
     );
   }
 
-  // Confirm this creator has completed Stripe onboarding before letting them charge fans —
-  // otherwise a subscription would have nowhere to pay out to.
+  // Creators can design their page and tiers before touching Stripe at all — building the
+  // Product/Price and saving the row never requires a connected payout destination. What
+  // DOES require Stripe is actually letting a fan subscribe, so a tier created before
+  // onboarding is saved as an inactive draft (same "Inactive" state as one a creator turned
+  // off manually) instead of being blocked outright. It won't show on the public profile or
+  // accept subscribers until the creator both finishes Stripe and flips it active — enforced
+  // again, independently, in the PATCH handler and at /api/subscribe.
   const userResult = await query(
     'SELECT stripe_connect_account_id, stripe_connect_onboarded FROM users WHERE id = $1',
     [session.userId]
   );
   const creator = userResult.rows[0];
-  if (!creator?.stripe_connect_onboarded) {
-    return NextResponse.json(
-      { error: 'Connect your Stripe account before creating a paid tier.' },
-      { status: 400 }
-    );
-  }
+  const startActive = Boolean(creator?.stripe_connect_onboarded);
 
   // Creating the Stripe Product/Price (or the DB insert after it) can fail - without a
   // try/catch, that throws unhandled, Next returns a bodyless 500, and the dashboard's
@@ -86,13 +86,13 @@ export async function POST(request) {
 
     const result = await query(
       `INSERT INTO subscription_tiers
-         (creator_id, name, description, price_cents, stripe_price_id, stripe_product_id)
-       VALUES ($1, $2, $3, $4, $5, $6)
+         (creator_id, name, description, price_cents, stripe_price_id, stripe_product_id, active)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id, name, description, price_cents, active, created_at`,
-      [session.userId, name, description || null, priceCents, price.id, product.id]
+      [session.userId, name, description || null, priceCents, price.id, product.id, startActive]
     );
 
-    return NextResponse.json({ tier: result.rows[0] });
+    return NextResponse.json({ tier: result.rows[0], draft: !startActive });
   } catch (err) {
     console.error('creator/tiers POST failed:', err);
     return NextResponse.json(
