@@ -26,6 +26,15 @@ const limiters = {
     limiter: Ratelimit.slidingWindow(5, '1 h'),
     prefix: 'rl:signup',
   }),
+  // Guards the Google OAuth start + callback endpoints. Slightly more generous than
+  // login's raw credential attempts since a legitimate person bouncing through Google's
+  // account picker (wrong account, back button, slow mobile network) can hit these two
+  // routes more than once in quick succession without doing anything wrong.
+  oauth: new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(20, '10 m'),
+    prefix: 'rl:oauth',
+  }),
   'forgot-password': new Ratelimit({
     redis,
     limiter: Ratelimit.slidingWindow(5, '1 h'),
