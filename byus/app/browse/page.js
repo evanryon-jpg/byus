@@ -3,11 +3,18 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 
-export default function BrowsePage() {
+// searchParams is passed in automatically by Next.js for page.js files, client or
+// server, so a link like /browse?q=aria (from the homepage search, or its autocomplete
+// dropdown) arrives here already pre-filled and already searching -- no extra click
+// needed to see the results that were just promised.
+export default function BrowsePage({ searchParams }) {
+  const initialQ = typeof searchParams?.q === 'string' ? searchParams.q : '';
+  const initialTag = typeof searchParams?.tag === 'string' ? searchParams.tag : '';
+
   const [creators, setCreators] = useState([]);
   const [availableTags, setAvailableTags] = useState([]);
-  const [q, setQ] = useState('');
-  const [tag, setTag] = useState('');
+  const [q, setQ] = useState(initialQ);
+  const [tag, setTag] = useState(initialTag);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
