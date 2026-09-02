@@ -1,4 +1,5 @@
 import { getCurrentUser } from '@/lib/session';
+import FAQSection from './components/FAQSection';
 
 // Server component so the hero and closing CTAs can tell whether someone is already
 // logged in -- an existing creator or fan should never be invited to sign up again,
@@ -12,6 +13,7 @@ export default async function HomePage() {
       <StatsBand />
       <Features />
       <HowItWorks />
+      <FAQSection />
       <ClosingCta user={session} />
     </div>
   );
