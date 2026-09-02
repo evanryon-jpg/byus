@@ -144,19 +144,21 @@ function CreatorProfile() {
       <ul className="mt-4 space-y-4">
         {posts.map((p) => (
           <li key={p.id} className="rounded-2xl border border-black/5 bg-white p-6">
-            <div className="flex items-center justify-between">
-              <h3 className="font-medium">{p.title || '(untitled)'}</h3>
-              <span className="text-xs text-black/40">{new Date(p.created_at).toLocaleDateString()}</span>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 flex-1 items-center gap-2">
+                <h3 className="truncate font-medium">{p.title || '(untitled)'}</h3>
+                <StatusBadge locked={p.locked} />
+              </div>
+              <span className="shrink-0 text-xs text-black/40">{new Date(p.created_at).toLocaleDateString()}</span>
             </div>
             {p.locked ? (
-              <p className="mt-2 text-sm italic text-black/40">
-                🔒 Subscribers only —{' '}
+              <p className="mt-2 text-sm text-black/40">
                 {tiers.length > 0 ? (
-                  <a href="#tiers" className="not-italic text-[#146359] underline">
-                    subscribe above to unlock this post
+                  <a href="#tiers" className="text-[#146359] underline">
+                    Subscribe above to unlock this post
                   </a>
                 ) : (
-                  'subscribe to unlock this post'
+                  'Subscribe to unlock this post'
                 )}
                 .
               </p>
@@ -189,5 +191,25 @@ function CreatorProfile() {
         {posts.length === 0 && <p className="text-sm text-black/40">No posts yet.</p>}
       </ul>
     </div>
+  );
+}
+
+// A color-coded pill instead of a text explanation, so a scanning eye catches a post's
+// access level without reading a sentence: a pulsing green dot for anyone-can-read, a
+// muted lock for subscriber-only. Locked stays neutral gray rather than a warning color
+// — being subscriber-only isn't a problem to flag, just a state to show.
+function StatusBadge({ locked }) {
+  if (locked) {
+    return (
+      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-black/5 px-2 py-0.5 text-[11px] font-medium text-black/50">
+        🔒 Subscribers only
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-medium text-green-700">
+      <span className="h-1.5 w-1.5 rounded-full bg-green-500 motion-safe:animate-pulse" aria-hidden="true" />
+      Public
+    </span>
   );
 }
