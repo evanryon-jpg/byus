@@ -69,7 +69,18 @@ export default function CreatorDashboard() {
       {/* AI setup assistant */}
       <AiSetupSection stripeConnected={stripeConnected} onProfileSaved={setUser} onTierAdded={load} />
 
-      {/* Stripe connection status */}
+      {/* Tiers — build these first; Stripe is the last step, once the page is worth publishing */}
+      <TierSection tiers={tiers} onCreated={load} stripeConnected={stripeConnected} />
+
+      {/* Posts */}
+      <PostSection posts={posts} onCreated={load} />
+
+      {/* Links */}
+      <LinksSection links={links} onSaved={setLinks} />
+
+      {/* Stripe connection status — last step: connect it once there's actually a page worth
+          going live with. Tiers and posts above work fine before this is done; they just stay
+          drafts/hidden until it is. */}
       <div className="mt-8 rounded-2xl border border-black/5 bg-white p-6">
         <h2 className="font-semibold">Payments</h2>
         {user?.stripe_connect_onboarded ? (
@@ -77,8 +88,13 @@ export default function CreatorDashboard() {
         ) : (
           <>
             <p className="mt-2 text-sm text-black/60">
-              This is the only setup step that matters: tap the button, and Stripe walks
-              you through the rest. That's where your money gets paid out to.
+              This is the last step: tap the button, and Stripe walks you through the rest.
+              That's where your money gets paid out to — any draft tiers above go live the
+              moment this is done.
+            </p>
+            <p className="mt-2 text-xs text-black/40">
+              Stripe Express is a secure, simplified checkout that lets you route money straight
+              to your bank account without managing a full business profile.
             </p>
             {user && !user.email_verified ? (
               <p className="mt-4 text-sm text-black/40">Verify your email above before connecting Stripe.</p>
@@ -94,15 +110,6 @@ export default function CreatorDashboard() {
           </>
         )}
       </div>
-
-      {/* Tiers */}
-      <TierSection tiers={tiers} onCreated={load} disabled={!user?.stripe_connect_onboarded} />
-
-      {/* Links */}
-      <LinksSection links={links} onSaved={setLinks} />
-
-      {/* Posts */}
-      <PostSection posts={posts} onCreated={load} />
     </div>
   );
 }
@@ -235,7 +242,9 @@ function AiSetupSection({ stripeConnected, onProfileSaved, onTierAdded }) {
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-black/40">Suggested tiers</p>
             {!stripeConnected && (
-              <p className="mt-1 text-xs text-black/40">Connect Stripe above before adding tiers.</p>
+              <p className="mt-1 text-xs text-black/40">
+                Added as drafts — they'll go live once you connect Stripe below.
+              </p>
             )}
             <div className="mt-2 grid gap-2 sm:grid-cols-3">
               {suggestions.tiers?.map((tier, i) => (
@@ -249,7 +258,7 @@ function AiSetupSection({ stripeConnected, onProfileSaved, onTierAdded }) {
                   <button
                     type="button"
                     onClick={() => addTier(tier, i)}
-                    disabled={!stripeConnected || addingTierIndex === i || addedTiers.includes(i)}
+                    disabled={addingTierIndex === i || addedTiers.includes(i)}
                     className="mt-2 w-full rounded-full border border-[#146359] py-1 text-xs font-semibold text-[#146359] hover:bg-[#146359]/5 disabled:opacity-50"
                   >
                     {addedTiers.includes(i) ? 'Added ✓' : addingTierIndex === i ? 'Adding…' : 'Add this tier'}
@@ -264,15 +273,15 @@ function AiSetupSection({ stripeConnected, onProfileSaved, onTierAdded }) {
   );
 }
 
-// Three steps between "just signed up" and "earning": connect Stripe so payouts
-// have somewhere to go, add a tier so fans have something to subscribe to, then
-// publish a post so the profile isn't empty when they arrive. Shown until all
-// three are done, then it gets out of the way.
+// Three steps between "just signed up" and "earning" — build the page first (a tier,
+// a post), then connect Stripe last as the "go live" step. Tiers and posts don't need
+// Stripe to create; Stripe is just what turns a draft tier into one fans can actually
+// subscribe to. Shown until all three are done, then it gets out of the way.
 function GettingStartedChecklist({ stripeConnected, hasTier, hasPost }) {
   const steps = [
-    { label: 'Connect Stripe', done: stripeConnected },
     { label: 'Create a tier', done: hasTier },
     { label: 'Publish a post', done: hasPost },
+    { label: 'Connect Stripe', done: stripeConnected },
   ];
   const doneCount = steps.filter((s) => s.done).length;
 
@@ -313,7 +322,12 @@ const TIER_PRESETS = [
   { label: 'VIP', name: 'VIP', price: '25.00', description: 'Everything in Fan club, plus first access to new work.' },
 ];
 
-function TierSection({ tiers, onCreated, disabled }) {
+// Flat platform fee, mirrored from lib/stripe's PLATFORM_FEE_PERCENT (a server-only
+// module, so the number is restated here) — used only to show a creator what they'd
+// keep while they're typing a price, never to compute anything that touches money.
+const PLATFORM_FEE_PERCENT = 10;
+
+function TierSection({ tiers, onCreated, stripeConnected }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -378,20 +392,24 @@ function TierSection({ tiers, onCreated, disabled }) {
   }
 
   const previewPriceCents = Math.round((parseFloat(price) || 0) * 100);
+  const previewKeptCents = Math.round(previewPriceCents * (1 - PLATFORM_FEE_PERCENT / 100));
 
   return (
     <div className="mt-8 rounded-2xl border border-black/5 bg-white p-6">
       <div className="flex items-center justify-between">
         <h2 className="font-semibold">Subscription tiers</h2>
-        {!disabled && (
-          <button onClick={() => setOpen(!open)} className="text-sm font-medium text-[#146359]">
-            {open ? 'Cancel' : '+ New tier'}
-          </button>
-        )}
+        <button onClick={() => setOpen(!open)} className="text-sm font-medium text-[#146359]">
+          {open ? 'Cancel' : '+ New tier'}
+        </button>
       </div>
-      {disabled && <p className="mt-2 text-sm text-black/40">Connect Stripe first to create tiers.</p>}
+      {!stripeConnected && (
+        <p className="mt-2 text-sm text-black/40">
+          You can build tiers now — they'll save as drafts and go live once you connect Stripe
+          below.
+        </p>
+      )}
 
-      {tiers.length === 0 && !open && !disabled && (
+      {tiers.length === 0 && !open && (
         <div className="mt-2">
           <p className="text-sm text-black/40">No tiers yet — start from a template, or use one to fill in the form:</p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -446,9 +464,21 @@ function TierSection({ tiers, onCreated, disabled }) {
                 className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm" />
               <input placeholder="Description (optional)" value={description} onChange={(e) => setDescription(e.target.value)}
                 className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm" />
-              <input placeholder="Price per month (e.g. 10.00)" type="number" step="0.01" min="1" value={price}
-                onChange={(e) => setPrice(e.target.value)} required
-                className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm" />
+              <div>
+                <input placeholder="Price per month (e.g. 10.00)" type="number" step="0.01" min="1" value={price}
+                  onChange={(e) => setPrice(e.target.value)} required
+                  className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm" />
+                {previewPriceCents > 0 && (
+                  <p className="mt-1 text-xs text-black/40">
+                    You keep ${(previewKeptCents / 100).toFixed(2)}/mo ({100 - PLATFORM_FEE_PERCENT}% — flat {PLATFORM_FEE_PERCENT}% fee)
+                  </p>
+                )}
+              </div>
+              {!stripeConnected && (
+                <p className="text-xs text-black/40">
+                  Saves as a draft — hidden from your profile until Stripe is connected.
+                </p>
+              )}
               {error && <p className="text-sm text-red-600">{error}</p>}
               <button disabled={saving} className="rounded-full bg-[#146359] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
                 {saving ? 'Creating…' : 'Create tier'}
@@ -467,6 +497,9 @@ function TierSection({ tiers, onCreated, disabled }) {
                 <p className="mt-3 text-lg font-bold text-[#146359]">
                   ${(previewPriceCents / 100).toFixed(2)}
                   <span className="text-sm font-normal text-black/40">/mo</span>
+                </p>
+                <p className="mt-1 text-xs text-black/40">
+                  You keep ${(previewKeptCents / 100).toFixed(2)}/mo
                 </p>
                 <div className="mt-4 w-full rounded-full bg-[#146359] py-2 text-center text-sm font-semibold text-white opacity-90">
                   Subscribe
@@ -746,7 +779,11 @@ function LinksSection({ links: savedLinks, onSaved }) {
 }
 
 function PostSection({ posts, onCreated }) {
-  const [open, setOpen] = useState(false);
+  // A brand-new creator with zero posts lands on an empty section and a "+ New post"
+  // button they have to know to click. Opening the composer by default the first time
+  // turns that into "here's where you write your first thing" instead of a blank page —
+  // it collapses back to the compact list view as soon as there's at least one post.
+  const [open, setOpen] = useState(posts.length === 0);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [visibility, setVisibility] = useState('public');
@@ -803,7 +840,12 @@ function PostSection({ posts, onCreated }) {
         </button>
       </div>
 
-      {posts.length === 0 && !open && <p className="mt-2 text-sm text-black/40">No posts yet.</p>}
+      {posts.length === 0 && !open && (
+        <p className="mt-2 text-sm text-black/40">
+          No posts yet — your profile is visible without one, but a first post is what makes it
+          feel active instead of empty when someone new shows up.
+        </p>
+      )}
 
       <ul className="mt-4 space-y-2">
         {posts.map((p) => (
@@ -813,9 +855,16 @@ function PostSection({ posts, onCreated }) {
 
       {open && (
         <form onSubmit={handleCreate} className="mt-4 space-y-3 border-t border-black/5 pt-4">
+          {posts.length === 0 && (
+            <p className="text-sm text-black/50">
+              Write a quick welcome note to get started — who you are and what people can expect.
+            </p>
+          )}
           <input placeholder="Title (optional)" value={title} onChange={(e) => setTitle(e.target.value)}
             className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm" />
-          <textarea placeholder="What's on your mind?" value={body} onChange={(e) => setBody(e.target.value)} required rows={4}
+          <textarea
+            placeholder={posts.length === 0 ? "Hey, I'm excited to be here — here's what I'll be sharing…" : "What's on your mind?"}
+            value={body} onChange={(e) => setBody(e.target.value)} required rows={4}
             className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm" />
           <div>
             <label className="mb-1 block text-sm text-black/60">Image (optional)</label>
