@@ -44,12 +44,17 @@ export async function GET(request) {
   // account always logs in under whatever role it already has.
   const role = searchParams.get('role') === 'creator' ? 'creator' : 'fan';
 
+  // Same deal — only matters for a brand-new signup in the callback, so a referral
+  // link (/signup?ref=CODE) that routes through "Continue with Apple" still gets
+  // attributed instead of silently dropping the referral.
+  const referralCode = searchParams.get('ref') || '';
+
   // Random, unguessable CSRF token. It rides along in a short-lived httpOnly cookie
-  // together with the role/next we need to remember across the trip to Apple and
+  // together with the role/next/ref we need to remember across the trip to Apple and
   // back, then gets compared against the `state` Apple hands back on the callback —
   // if they don't match, this browser isn't the one that started the flow.
   const state = crypto.randomBytes(24).toString('hex');
-  const payload = Buffer.from(JSON.stringify({ state, role, next })).toString('base64url');
+  const payload = Buffer.from(JSON.stringify({ state, role, next, referralCode })).toString('base64url');
 
   const appleUrl = new URL('https://appleid.apple.com/auth/authorize');
   appleUrl.searchParams.set('client_id', process.env.APPLE_CLIENT_ID);
