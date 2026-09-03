@@ -19,7 +19,7 @@ export async function GET(request) {
   const rl = await checkRateLimit('oauth', `ip:${ip}`);
   if (!rl.success) return rateLimitResponse(rl);
 
-  // Both env vars must be set in Vercel (Production) for this to proceed past here.
+  // Both env vars must be set in Vercel (Production, real values) for this to proceed.
   if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
     const url = new URL('/login', origin);
     url.searchParams.set('error', 'Google sign-in isn’t set up yet — use email and password for now.');
