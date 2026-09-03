@@ -96,7 +96,11 @@ function LoginForm() {
 
       <Divider label="or continue with email" />
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      {/* noValidate: without it, a malformed address in the type="email" field trips the
+          browser's own validation bubble on submit and silently short-circuits
+          handleSubmit before our custom fieldErrors ever run — so the inline message
+          below the field would never actually appear. */}
+      <form onSubmit={handleSubmit} noValidate className="space-y-4">
         <label className="block">
           <span className="mb-1 block text-sm font-medium text-black/60">Email</span>
           <input
