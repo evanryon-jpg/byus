@@ -9,6 +9,7 @@ import { query } from '@/lib/db';
 import { hashPassword, createSessionToken, getSessionCookieOptions, SESSION_COOKIE_NAME } from '@/lib/auth';
 import { checkRateLimit, rateLimitResponse, getClientIp } from '@/lib/rate-limit';
 import { sendVerificationEmail } from '@/lib/email';
+import { attributeReferral } from '@/lib/referrals';
 
 const VERIFY_TOKEN_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -24,7 +25,7 @@ const DISPLAY_NAME_MAX = 100;
 const PASSWORD_MAX = 72;
 
 export async function POST(request) {
-  const { email, password, role, displayName, termsAccepted, website } = await request.json();
+  const { email, password, role, displayName, termsAccepted, website, referralCode } = await request.json();
 
   // --- Honeypot ---
   // "website" is a hidden field real users never see or fill in. A non-empty value
@@ -93,6 +94,8 @@ export async function POST(request) {
     [email.toLowerCase(), passwordHash, role, displayName || null, verifyTokenHash, verifyExpiresAt]
   );
   const user = result.rows[0];
+
+  await attributeReferral(referralCode, user.id);
 
   // --- Best-effort verification email — a delivery hiccup shouldn't block signup ---
   try {
