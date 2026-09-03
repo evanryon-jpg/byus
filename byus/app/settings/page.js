@@ -34,6 +34,7 @@ export default function SettingsPage() {
 
       <AvatarCard user={user} onChanged={(profile_image_url) => setUser({ ...user, profile_image_url })} />
       <ProfileCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
+      <ReferralCard />
       <PasswordCard />
     </div>
   );
@@ -195,6 +196,82 @@ function ProfileCard({ user, onChanged }) {
           )}
         </div>
       </form>
+    </section>
+  );
+}
+
+function ReferralCard() {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  async function load() {
+    try {
+      const res = await fetch('/api/me/referral');
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Could not load your referral link.');
+      setData(result);
+    } catch (err) {
+      setError(err.message || 'Could not load your referral link.');
+    }
+  }
+
+  async function handleCopy() {
+    if (!data?.referralLink) return;
+    try {
+      await navigator.clipboard.writeText(data.referralLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setError('Could not copy — select and copy the link manually.');
+    }
+  }
+
+  return (
+    <section className="mt-6 rounded-2xl border border-black/5 bg-white p-6">
+      <h2 className="font-semibold">Refer a friend</h2>
+      <p className="mt-1 text-sm text-black/50">
+        Share your link. When someone signs up and subscribes to a creator, you both get a
+        free month.
+      </p>
+
+      {error && <p className="mt-3 text-xs text-red-600">{error}</p>}
+
+      {data && (
+        <>
+          <div className="mt-4 flex items-center gap-2">
+            <input
+              type="text"
+              readOnly
+              value={data.referralLink}
+              onClick={(e) => e.target.select()}
+              className="w-full rounded-lg border border-black/10 bg-black/[0.02] px-3 py-2 text-sm text-black/70"
+            />
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="shrink-0 rounded-full bg-[#146359] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0f4d45]"
+            >
+              {copied ? 'Copied!' : 'Copy link'}
+            </button>
+          </div>
+
+          <div className="mt-4 flex gap-6 text-sm">
+            <div>
+              <span className="font-semibold text-black">{data.referredCount}</span>{' '}
+              <span className="text-black/50">{data.referredCount === 1 ? 'friend' : 'friends'} referred</span>
+            </div>
+            <div>
+              <span className="font-semibold text-black">{data.rewardedCount}</span>{' '}
+              <span className="text-black/50">free {data.rewardedCount === 1 ? 'month' : 'months'} earned</span>
+            </div>
+          </div>
+        </>
+      )}
     </section>
   );
 }
