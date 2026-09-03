@@ -22,6 +22,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { withTransaction } from '@/lib/db';
 import stripe from '@/lib/stripe';
+import { rewardReferrer } from '@/lib/referrals';
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -82,7 +83,7 @@ export async function POST(request) {
           // The WHERE on the conflict branch is the ordering guard: if a newer event already
           // updated this row (e.g. a later status change beat this one to the database), this
           // write loses and the newer state is left standing.
-          await client.query(
+          const upserted = await client.query(
             `INSERT INTO subscriptions
                (fan_id, creator_id, tier_id, stripe_subscription_id, status, current_period_end, stripe_event_created_at)
              VALUES ($1, $2, $3, $4, 'active', to_timestamp($5), to_timestamp($6))
@@ -91,7 +92,8 @@ export async function POST(request) {
                    current_period_end = to_timestamp($5),
                    stripe_event_created_at = to_timestamp($6)
                WHERE subscriptions.stripe_event_created_at IS NULL
-                  OR subscriptions.stripe_event_created_at <= to_timestamp($6)`,
+                  OR subscriptions.stripe_event_created_at <= to_timestamp($6)
+             RETURNING id`,
             [
               fan_id,
               creator_id,
@@ -101,6 +103,25 @@ export async function POST(request) {
               event.created,
             ]
           );
+
+          // If this fan subscribed through a friend's referral link, this is their first
+          // real payment going through — grant the referrer their free-month credit now.
+          // Runs on its own connection (rewardReferrer talks to Stripe, which shouldn't
+          // happen inside an open DB transaction) and is wrapped so a hiccup here — a
+          // Stripe API error, say — can't fail the whole webhook and put the fan's own
+          // subscription activation into a retry loop. rewardReferrer's own 'pending' ->
+          // 'rewarded' guard means a retry of this event can never double-credit.
+          const subscriptionRowId = upserted.rows[0]?.id;
+          if (subscriptionRowId) {
+            try {
+              const priceCents = stripeSubscription.items?.data?.[0]?.price?.unit_amount;
+              if (typeof priceCents === 'number') {
+                await rewardReferrer({ fanUserId: fan_id, subscriptionRowId, priceCents });
+              }
+            } catch (err) {
+              console.error('Referral reward failed (subscription still activated):', err);
+            }
+          }
           break;
         }
 
