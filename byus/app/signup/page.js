@@ -117,7 +117,11 @@ function SignupForm() {
 
       <Divider label="or sign up with email" />
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      {/* noValidate: without it, a malformed address in the type="email" field trips the
+          browser's own validation bubble on submit and silently short-circuits
+          handleSubmit before our custom fieldErrors (and the terms-checkbox banner)
+          ever run — so none of the polished inline messaging below would actually show. */}
+      <form onSubmit={handleSubmit} noValidate className="space-y-4">
         <Field label="Display name">
           <input
             className="input"
