@@ -10,6 +10,7 @@ import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import stripe, { PLATFORM_FEE_PERCENT } from '@/lib/stripe';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { getReferralDiscount } from '@/lib/referrals';
 
 export async function POST(request) {
   const session = await getCurrentUser();
@@ -91,6 +92,12 @@ export async function POST(request) {
 
     const origin = request.headers.get('origin') || process.env.APP_URL;
 
+    // If this fan signed up through someone's referral link and hasn't already had a
+    // referral reward on some other subscription, their first month here is free — see
+    // lib/referrals.js. This is a real Stripe discount applied at checkout, not
+    // something faked client-side, so it shows up correctly on their invoice too.
+    const discounts = await getReferralDiscount(session.userId);
+
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: 'subscription',
       customer: customerId,
@@ -99,6 +106,7 @@ export async function POST(request) {
       // the fan just paid for actually lives. ?subscribed=true triggers a welcome banner there.
       success_url: `${origin}/creator/${tier.creator_id}?subscribed=true`,
       cancel_url: `${origin}/creator/${tier.creator_id}`,
+      ...(discounts ? { discounts } : {}),
       subscription_data: {
         application_fee_percent: PLATFORM_FEE_PERCENT,
         transfer_data: {
