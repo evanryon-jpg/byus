@@ -19,6 +19,11 @@ function SignupForm() {
   const rawNext = searchParams.get('next') || '';
   const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '';
 
+  // A referral link looks like /signup?ref=CODE — carried through to the signup POST
+  // body (for email signup) and appended to the OAuth hrefs below (for Google/Apple
+  // signup), so however someone completes the form, the referral still gets recorded.
+  const referralCode = searchParams.get('ref') || '';
+
   const [role, setRole] = useState(defaultRole);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,8 +36,8 @@ function SignupForm() {
   const [error, setError] = useState(searchParams.get('error') || '');
   const [loading, setLoading] = useState(false);
 
-  const googleHref = `/api/auth/google?role=${role}${next ? `&next=${encodeURIComponent(next)}` : ''}`;
-  const appleHref = `/api/auth/apple?role=${role}${next ? `&next=${encodeURIComponent(next)}` : ''}`;
+  const googleHref = `/api/auth/google?role=${role}${next ? `&next=${encodeURIComponent(next)}` : ''}${referralCode ? `&ref=${encodeURIComponent(referralCode)}` : ''}`;
+  const appleHref = `/api/auth/apple?role=${role}${next ? `&next=${encodeURIComponent(next)}` : ''}${referralCode ? `&ref=${encodeURIComponent(referralCode)}` : ''}`;
 
   function validate() {
     const errors = {};
@@ -59,7 +64,15 @@ function SignupForm() {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, role, displayName, termsAccepted, website }),
+        body: JSON.stringify({
+          email,
+          password,
+          role,
+          displayName,
+          termsAccepted,
+          website,
+          referralCode: referralCode || undefined,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
