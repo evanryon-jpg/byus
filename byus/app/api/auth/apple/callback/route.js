@@ -13,6 +13,7 @@ import { query } from '@/lib/db';
 import { createSessionToken, getSessionCookieOptions, SESSION_COOKIE_NAME } from '@/lib/auth';
 import { checkRateLimit, rateLimitResponse, getClientIp } from '@/lib/rate-limit';
 import { generateAppleClientSecret, verifyAppleIdToken } from '@/lib/apple-auth';
+import { attributeReferral } from '@/lib/referrals';
 
 const STATE_COOKIE_NAME = 'byus_oauth_state';
 const GENERIC_ERROR = 'Something went wrong signing in with Apple. Please try again.';
@@ -74,6 +75,7 @@ export async function POST(request) {
     typeof saved.next === 'string' && saved.next.startsWith('/') && !saved.next.startsWith('//')
       ? saved.next
       : '';
+  const referralCode = typeof saved.referralCode === 'string' ? saved.referralCode : '';
 
   // --- Exchange the authorization code for tokens ---
   let tokenData;
@@ -178,6 +180,7 @@ export async function POST(request) {
           [email, role, displayName, payload.sub]
         );
         user = created.rows[0];
+        await attributeReferral(referralCode, user.id);
       }
     }
   } catch (err) {
