@@ -15,6 +15,10 @@ import { isAdmin } from '@/lib/admin';
 
 const MONTHS_OF_HISTORY = 12;
 const RECENT_CREATORS_LIMIT = 25;
+const RECENT_DISPUTES_LIMIT = 25;
+// Stripe's terminal dispute statuses -- everything else ('needs_response',
+// 'under_review', 'warning_needs_response', etc.) still needs a human to look at it.
+const CLOSED_DISPUTE_STATUSES = ['won', 'lost'];
 
 export async function GET() {
   const session = await getCurrentUser();
@@ -23,7 +27,7 @@ export async function GET() {
   }
 
   try {
-    const [counts, activeSubs, lifetime, monthlyResult, recentCreators] = await Promise.all([
+    const [counts, activeSubs, lifetime, monthlyResult, recentCreators, openDisputes, recentDisputes] = await Promise.all([
       query(
         `SELECT
            COUNT(*) FILTER (WHERE role = 'creator')::int AS creator_count,
@@ -86,6 +90,22 @@ export async function GET() {
          LIMIT $1`,
         [RECENT_CREATORS_LIMIT]
       ),
+      query(
+        `SELECT COUNT(*)::int AS count FROM stripe_disputes WHERE status != ALL($1::text[])`,
+        [CLOSED_DISPUTE_STATUSES]
+      ),
+      query(
+        `SELECT
+           d.id, d.amount_cents, d.currency, d.reason, d.status, d.opened_at, d.closed_at,
+           creator.display_name AS creator_name, creator.email AS creator_email,
+           fan.display_name AS fan_name, fan.email AS fan_email
+         FROM stripe_disputes d
+         LEFT JOIN users creator ON creator.id = d.creator_id
+         LEFT JOIN users fan ON fan.id = d.fan_id
+         ORDER BY d.opened_at DESC
+         LIMIT $1`,
+        [RECENT_DISPUTES_LIMIT]
+      ),
     ]);
 
     const monthly = monthlyResult.rows.map((row) => ({
@@ -106,14 +126,30 @@ export async function GET() {
       lifetimeGrossCents: Number(row.lifetime_gross_cents),
     }));
 
+    const disputes = recentDisputes.rows.map((row) => ({
+      id: row.id,
+      amountCents: row.amount_cents,
+      currency: row.currency,
+      reason: row.reason,
+      status: row.status,
+      openedAt: row.opened_at,
+      closedAt: row.closed_at,
+      creatorName: row.creator_name,
+      creatorEmail: row.creator_email,
+      fanName: row.fan_name,
+      fanEmail: row.fan_email,
+    }));
+
     return NextResponse.json({
       creatorCount: counts.rows[0].creator_count,
       fanCount: counts.rows[0].fan_count,
       activeSubscriberCount: activeSubs.rows[0].count,
       lifetimeGrossCents: Number(lifetime.rows[0].gross_cents),
       lifetimePlatformFeeCents: Number(lifetime.rows[0].platform_fee_cents),
+      openDisputeCount: openDisputes.rows[0].count,
       monthly,
       creators,
+      disputes,
     });
   } catch (err) {
     console.error('admin/overview GET failed:', err);
