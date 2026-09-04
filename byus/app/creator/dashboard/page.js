@@ -62,6 +62,8 @@ export default function CreatorDashboard() {
 
       {user && !user.email_verified && <VerifyEmailBanner email={user.email} />}
 
+      <PageUrlCard />
+
       {!(stripeConnected && hasTier && hasPost) && (
         <GettingStartedChecklist stripeConnected={stripeConnected} hasTier={hasTier} hasPost={hasPost} />
       )}
@@ -110,6 +112,138 @@ export default function CreatorDashboard() {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+// A short, memorable /creator/<slug> URL the creator can claim in place of their raw
+// UUID link. Self-fetching, like the referral card on Settings -- loads its own state
+// on mount rather than threading it through the parent. Starts in edit mode when no
+// slug is claimed yet (there's nothing to show), and in display mode once one is.
+function PageUrlCard() {
+  const [data, setData] = useState(null);
+  const [value, setValue] = useState('');
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  async function load() {
+    const res = await fetch('/api/creator/slug');
+    if (res.ok) {
+      const result = await res.json();
+      setData(result);
+      setValue(result.slug || '');
+      setEditing(!result.claimed);
+    }
+  }
+
+  async function handleSave(e) {
+    e.preventDefault();
+    setError('');
+    setSaving(true);
+    try {
+      const res = await fetch('/api/creator/slug', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug: value }),
+      });
+      const result = await res.json();
+      if (!res.ok) {
+        setError(result.error || 'Could not save this URL.');
+        return;
+      }
+      setData(result);
+      setEditing(false);
+    } catch {
+      setError('Network error — please try again.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleCopy() {
+    if (!data?.profileUrl) return;
+    try {
+      await navigator.clipboard.writeText(data.profileUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setError('Could not copy — select and copy the link manually.');
+    }
+  }
+
+  if (!data) return null;
+
+  return (
+    <div className="mt-6 rounded-2xl border border-black/5 bg-white p-6">
+      <h2 className="font-semibold">Your page URL</h2>
+      <p className="mt-1 text-sm text-black/50">
+        Claim a short, memorable link fans can actually remember and share.
+      </p>
+
+      {!editing ? (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <span className="rounded-lg border border-black/10 bg-black/[0.02] px-3 py-2 text-sm text-black/70">
+            {data.profileUrl}
+          </span>
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="rounded-full bg-[#146359] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0f4d45]"
+          >
+            {copied ? 'Copied!' : 'Copy link'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="text-sm font-medium text-[#146359] hover:text-[#0f4d45]"
+          >
+            Change
+          </button>
+        </div>
+      ) : (
+        <form onSubmit={handleSave} className="mt-4 flex flex-wrap items-center gap-2">
+          <span className="text-sm text-black/40">byusapp.com/creator/</span>
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => setValue(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+            placeholder="yourname"
+            minLength={3}
+            maxLength={30}
+            required
+            className="w-48 rounded-lg border border-black/10 px-3 py-2 text-sm"
+          />
+          <button
+            disabled={saving}
+            className="rounded-full bg-[#146359] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          >
+            {saving ? 'Saving…' : data.claimed ? 'Save' : 'Claim this URL'}
+          </button>
+          {data.claimed && (
+            <button
+              type="button"
+              onClick={() => {
+                setEditing(false);
+                setValue(data.slug || '');
+                setError('');
+              }}
+              className="text-sm text-black/50 hover:text-black/70"
+            >
+              Cancel
+            </button>
+          )}
+        </form>
+      )}
+      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+      <p className="mt-2 text-xs text-black/40">
+        3–30 characters — lowercase letters, numbers, and hyphens only.
+      </p>
     </div>
   );
 }
