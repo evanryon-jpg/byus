@@ -120,6 +120,11 @@ function CreatorProfile() {
                 >
                   {subscribing === t.id ? 'Redirecting…' : 'Subscribe'}
                 </button>
+                {/* Sits right under the button that actually leads to a payment form — the
+                    one place on this page where a trust signal matters most. */}
+                <p className="mt-2 text-center text-[11px] text-black/40">
+                  🔒 Secured by Stripe — ByUs never sees your card
+                </p>
               </div>
             ))}
           </div>
