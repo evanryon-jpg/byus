@@ -25,10 +25,15 @@ export const dynamic = 'force-dynamic';
 // lifetime total crosses the discount threshold their rate drops for good.
 
 import { NextResponse } from 'next/server';
-import { withTransaction } from '@/lib/db';
+import { query, withTransaction } from '@/lib/db';
 import stripe from '@/lib/stripe';
 import { rewardReferrer } from '@/lib/referrals';
-import { recordEarningAndCheckFeeTier, syncActiveSubscriptionsToFeePercent } from '@/lib/fees';
+import { sendWelcomeSubscriptionEmail } from '@/lib/email';
+import {
+  recordEarningAndCheckFeeTier,
+  syncActiveSubscriptionsToFeePercent,
+  syncAllActiveSubscriptionsToCurrentEffectiveFee,
+} from '@/lib/fees';
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -69,9 +74,15 @@ export async function POST(request) {
     }
 
     // Set inside the transaction below (only when this invoice just crossed a creator over
-    // the fee-discount threshold), read after it commits — talking to the Stripe API to sync
-    // their live subscriptions doesn't belong inside an open DB transaction/lock.
+    // their personal fee-discount threshold, and/or crossed the platform over one of its
+    // own milestones), read after it commits — talking to the Stripe API to sync live
+    // subscriptions doesn't belong inside an open DB transaction/lock.
     let feeTierCrossing = null;
+    let platformMilestoneCrossed = false;
+    // Set inside the transaction when a checkout just activated a brand-new subscription,
+    // read after commit — like the fee-tier sync above, an email send is a network call
+    // and doesn't belong inside an open DB transaction/lock.
+    let newSubscriptionWelcome = null;
 
     await withTransaction(async (client) => {
       // Idempotency: claim this event ID first, in the same transaction as the state change
@@ -144,6 +155,7 @@ export async function POST(request) {
             } catch (err) {
               console.error('Referral reward failed (subscription still activated):', err);
             }
+            newSubscriptionWelcome = { fanId: fan_id, creatorId: creator_id };
           }
           break;
         }
@@ -210,13 +222,16 @@ export async function POST(request) {
           // is what the fan was actually charged (after any referral discount), i.e. the real
           // gross revenue this invoice brought the creator.
           if (invoiceCreatorId && invoice.amount_paid > 0) {
-            const newFeePercent = await recordEarningAndCheckFeeTier(client, {
+            const result = await recordEarningAndCheckFeeTier(client, {
               creatorId: invoiceCreatorId,
               stripeInvoiceId: invoice.id,
               amountCents: invoice.amount_paid,
             });
-            if (newFeePercent) {
-              feeTierCrossing = { creatorId: invoiceCreatorId, feePercent: newFeePercent };
+            if (result?.personalTierChange) {
+              feeTierCrossing = { creatorId: invoiceCreatorId, feePercent: result.personalTierChange };
+            }
+            if (result?.crossedMilestones?.length > 0) {
+              platformMilestoneCrossed = true;
             }
           }
           break;
@@ -238,6 +253,38 @@ export async function POST(request) {
         await syncActiveSubscriptionsToFeePercent(feeTierCrossing.creatorId, feeTierCrossing.feePercent);
       } catch (err) {
         console.error('Failed to sync discounted fee percent to Stripe subscriptions:', err);
+      }
+    }
+
+    // A platform milestone lowers EVERY creator's effective rate at once, so this resync
+    // covers every active subscription across the whole platform, not just one creator's —
+    // see lib/fees.js. Same best-effort reasoning as the sync above.
+    if (platformMilestoneCrossed) {
+      try {
+        await syncAllActiveSubscriptionsToCurrentEffectiveFee();
+      } catch (err) {
+        console.error('Failed to sync platform milestone fee to Stripe subscriptions:', err);
+      }
+    }
+
+    // Best-effort welcome email for a brand-new subscription — never blocks or fails the
+    // webhook; the subscription itself is already active either way.
+    if (newSubscriptionWelcome) {
+      try {
+        const [fanResult, creatorResult] = await Promise.all([
+          query('SELECT email FROM users WHERE id = $1', [newSubscriptionWelcome.fanId]),
+          query('SELECT display_name, slug FROM users WHERE id = $1', [newSubscriptionWelcome.creatorId]),
+        ]);
+        const fan = fanResult.rows[0];
+        const creator = creatorResult.rows[0];
+        if (fan?.email && creator) {
+          await sendWelcomeSubscriptionEmail(fan.email, {
+            creatorName: creator.display_name || 'this creator',
+            creatorUrl: `${process.env.APP_URL}/creator/${creator.slug || newSubscriptionWelcome.creatorId}`,
+          });
+        }
+      } catch (err) {
+        console.error('Failed to send welcome subscription email:', err);
       }
     }
   } catch (err) {
