@@ -9,6 +9,8 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
+import { getPlatformMilestoneReductionPoints, applyPlatformMilestoneReduction } from '@/lib/fees';
+import { isAdmin } from '@/lib/admin';
 
 // Matches the cap used at signup — keep both in sync since they constrain the same column.
 const DISPLAY_NAME_MAX = 100;
@@ -20,6 +22,18 @@ const BIO_MAX = 1000;
 // expose it directly, point the client at our own public proxy route instead.
 function withAvatarUrl(user) {
   return { ...user, profile_image_url: user.profile_image_url ? `/api/avatar/${user.id}` : null };
+}
+
+// Adds the fee this user is actually being charged right now: their personal tier minus
+// whatever platform-wide milestone bonus is currently in effect (see lib/fees.js) — the
+// dashboard shows this, not the raw platform_fee_percent column, so a creator's "you keep
+// X%" preview always matches what Stripe is really billing.
+async function withEffectiveFee(user) {
+  const reductionPoints = await getPlatformMilestoneReductionPoints(query);
+  return {
+    ...user,
+    effective_fee_percent: applyPlatformMilestoneReduction(user.platform_fee_percent, reductionPoints),
+  };
 }
 
 // Validate + clean up a creator's category tags: trim, lowercase, dedupe,
@@ -63,7 +77,7 @@ export async function GET() {
   try {
     const result = await query(
       `SELECT id, email, role, display_name, bio, profile_image_url,
-              stripe_connect_onboarded, tags, email_verified, platform_fee_percent
+              stripe_connect_onboarded, tags, email_verified, platform_fee_percent, notify_new_posts
        FROM users WHERE id = $1`,
       [session.userId]
     );
@@ -72,7 +86,8 @@ export async function GET() {
       return NextResponse.json({ error: 'User not found.' }, { status: 404 });
     }
 
-    return NextResponse.json({ user: withAvatarUrl(user) });
+    const enriched = await withEffectiveFee(withAvatarUrl(user));
+    return NextResponse.json({ user: { ...enriched, is_admin: isAdmin(session) } });
   } catch (err) {
     console.error('me GET failed:', err);
     return NextResponse.json(
@@ -88,7 +103,7 @@ export async function PATCH(request) {
     return NextResponse.json({ error: 'Not logged in.' }, { status: 401 });
   }
 
-  const { display_name, bio, tags } = await request.json();
+  const { display_name, bio, tags, notify_new_posts } = await request.json();
 
   const fields = [];
   const values = [];
@@ -126,6 +141,10 @@ export async function PATCH(request) {
     fields.push(`tags = $${i++}`);
     values.push(normalized.tags);
   }
+  if (notify_new_posts !== undefined) {
+    fields.push(`notify_new_posts = $${i++}`);
+    values.push(Boolean(notify_new_posts));
+  }
 
   if (fields.length === 0) {
     return NextResponse.json({ error: 'Nothing to update.' }, { status: 400 });
@@ -135,11 +154,12 @@ export async function PATCH(request) {
     values.push(session.userId);
     const result = await query(
       `UPDATE users SET ${fields.join(', ')} WHERE id = $${i}
-       RETURNING id, email, role, display_name, bio, profile_image_url, stripe_connect_onboarded, tags, email_verified, platform_fee_percent`,
+       RETURNING id, email, role, display_name, bio, profile_image_url, stripe_connect_onboarded, tags, email_verified, platform_fee_percent, notify_new_posts`,
       values
     );
 
-    return NextResponse.json({ user: withAvatarUrl(result.rows[0]) });
+    const enriched = await withEffectiveFee(withAvatarUrl(result.rows[0]));
+    return NextResponse.json({ user: { ...enriched, is_admin: isAdmin(session) } });
   } catch (err) {
     console.error('me PATCH failed:', err);
     return NextResponse.json(
