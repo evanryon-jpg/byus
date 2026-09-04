@@ -1,6 +1,7 @@
 import { getCurrentUser } from '@/lib/session';
 import FAQSection from './components/FAQSection';
 import CreatorSearch from './components/CreatorSearch';
+import PlatformGoalGauge from './components/PlatformGoalGauge';
 
 // Server component so the hero and closing CTAs can tell whether someone is already
 // logged in -- an existing creator or fan should never be invited to sign up again,
@@ -12,6 +13,7 @@ export default async function HomePage() {
     <div>
       <Hero user={session} />
       <StatsBand />
+      <PlatformGoalGauge />
       <Features />
       <HowItWorks />
       <FAQSection />
