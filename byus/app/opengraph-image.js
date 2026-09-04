@@ -60,7 +60,7 @@ export default async function Image() {
             color: 'rgba(0,0,0,0.55)',
           }}
         >
-          90% direct payouts &middot; flat 10% fee &middot; cancel anytime
+          90%+ direct payouts &middot; fee drops as you grow &middot; cancel anytime
         </div>
       </div>
     ),
