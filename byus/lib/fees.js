@@ -1,20 +1,19 @@
-// Two independent, stacking discounts on top of every creator's platform fee, both
-// permanent (a slow month or a platform slowdown never pushes either one back up):
+// One fee discount, permanent (a slow month never pushes it back up):
 //
-// 1. Personal tier -- every creator starts at STANDARD_FEE_PERCENT; once the total of
-//    every successful invoice they've ever been paid crosses FEE_DISCOUNT_THRESHOLD_CENTS,
-//    their own stored rate (`users.platform_fee_percent`) drops to DISCOUNTED_FEE_PERCENT
-//    for good. Unchanged from the original tiered-fee feature.
-// 2. Platform milestone bonus -- ByUs's own lifetime fee income (summed across every
-//    creator, using the rate actually applied to each invoice) unlocks a further
-//    reduction for EVERY creator at once, in `reduction_points`, each time it crosses one
-//    of the thresholds seeded in `platform_milestones`. This is applied on top of #1 at
-//    the point a fee is actually used (Stripe, the earnings ledger, dashboard displays) --
-//    it never gets written back into `platform_fee_percent` itself, which stays exactly
-//    "this creator's personal-tier rate." Keeping the two separate means a creator who
-//    crosses their own $2k threshold AFTER a platform milestone already lowered
-//    everyone's effective rate can never see their fee tick back UP to a flat
-//    DISCOUNTED_FEE_PERCENT -- the milestone bonus still applies on top either way.
+// Personal tier -- every creator starts at STANDARD_FEE_PERCENT; once the total of every
+// successful invoice they've ever been paid crosses FEE_DISCOUNT_THRESHOLD_CENTS, their
+// own stored rate (`users.platform_fee_percent`) drops to DISCOUNTED_FEE_PERCENT for good.
+//
+// There used to be a second, stacking discount here -- a platform-wide milestone bonus
+// that lowered every creator's fee further as ByUs's own revenue grew. It's retired:
+// DISCOUNTED_FEE_PERCENT (7%) is already the lowest rate that reliably covers Stripe's own
+// processing, Connect account, and payout fees (see lib/stripe.js), so there was no room
+// left to stack anything on top of it. getPlatformMilestoneReductionPoints() below always
+// returns 0 now, making applyPlatformMilestoneReduction() a no-op everywhere it's still
+// called -- kept as a no-op rather than ripped out so every call site (subscribe route,
+// /api/me, creator earnings) keeps working unchanged. The `platform_milestones` table and
+// its crossings live on purely as a celebratory "best month so far" stat on the homepage
+// gauge -- see app/components/PlatformGoalGauge.jsx -- with no effect on billing.
 //
 // Both crossings are detected inside the Stripe webhook (see
 // app/api/webhooks/stripe/route.js, case 'invoice.payment_succeeded'), the only place a
@@ -34,12 +33,18 @@ const MILESTONE_POINTS_SQL = `
   SELECT COALESCE(SUM(reduction_points), 0)::int AS points
   FROM platform_milestones WHERE crossed_at IS NOT NULL`;
 
-// Total reduction points currently in effect platform-wide. `queryFn` is anything with
-// the `(text, params) => Promise<{rows}>` shape -- the shared pool's `query` export for a
-// one-off read, or `client.query.bind(client)` to read inside an open transaction.
+// Retired: platform-wide milestones no longer reduce anyone's fee. 7% (== the existing
+// personal-tier rate, and == MIN_FEE_PERCENT in lib/stripe.js) is the sustainable floor --
+// Stripe's own processing, Connect account, and payout fees come out of ByUs's side of
+// every charge, and stacking further reductions on top of the personal tier didn't leave
+// enough margin to cover that. Always returns 0, so every applyPlatformMilestoneReduction
+// call below is a no-op and every creator is billed their personal-tier rate, full stop.
+// The `platform_milestones` table and its crossings still feed the homepage gauge as a
+// celebratory "best month so far" stat -- see app/components/PlatformGoalGauge.jsx and
+// checkPlatformMilestones() below -- they just no longer touch billing. `queryFn` is kept
+// as a parameter, unused, so every call site below still works without changes.
 export async function getPlatformMilestoneReductionPoints(queryFn) {
-  const result = await queryFn(MILESTONE_POINTS_SQL);
-  return result.rows[0].points;
+  return 0;
 }
 
 // A creator's actual, chargeable fee: their personal-tier rate minus the platform's
@@ -112,26 +117,32 @@ export async function recordEarningAndCheckFeeTier(client, { creatorId, stripeIn
   return { personalTierChange, crossedMilestones };
 }
 
-// Checks whether ByUs's own lifetime fee income -- summed across every creator's
-// earnings, using the effective rate actually applied to each invoice -- has just crossed
-// one or more platform milestones. Runs inside the same transaction as the earnings
-// insert that might have pushed it over. The UPDATE ... WHERE crossed_at IS NULL is what
-// makes each milestone crossable exactly once (two payments landing at nearly the same
-// instant can't both claim it) -- no separate row lock needed. Returns the milestones (if
-// any) newly crossed by this call.
+// Checks whether ByUs's own BEST CALENDAR MONTH of fee income -- summed across every
+// creator's earnings for whichever month was highest, using the effective rate actually
+// applied to each invoice -- has just crossed one or more platform milestones. Runs
+// inside the same transaction as the earnings insert that might have pushed it over. The
+// inner query groups by month and takes the max, which naturally includes the current
+// (still accumulating) month, so a milestone can be crossed mid-month. The
+// UPDATE ... WHERE crossed_at IS NULL is what makes each milestone crossable exactly once
+// (two payments landing at nearly the same instant can't both claim it) -- no separate row
+// lock needed. Returns the milestones (if any) newly crossed by this call.
 async function checkPlatformMilestones(client) {
-  const totalResult = await client.query(
-    `SELECT COALESCE(ROUND(SUM(amount_cents * fee_percent_applied) / 100.0), 0)::bigint AS total
-     FROM creator_earnings`
+  const peakResult = await client.query(
+    `SELECT COALESCE(MAX(month_total), 0)::bigint AS peak
+     FROM (
+       SELECT ROUND(SUM(amount_cents * fee_percent_applied) / 100.0) AS month_total
+       FROM creator_earnings
+       GROUP BY date_trunc('month', created_at)
+     ) monthly`
   );
-  const platformFeeIncomeCents = Number(totalResult.rows[0].total);
+  const platformBestMonthCents = Number(peakResult.rows[0].peak);
 
   const crossedResult = await client.query(
     `UPDATE platform_milestones
      SET crossed_at = now()
      WHERE crossed_at IS NULL AND threshold_cents <= $1
      RETURNING threshold_cents, reduction_points`,
-    [platformFeeIncomeCents]
+    [platformBestMonthCents]
   );
   return crossedResult.rows.map((row) => ({
     thresholdCents: Number(row.threshold_cents),
