@@ -29,26 +29,29 @@ import { DISCOUNTED_FEE_PERCENT, FEE_DISCOUNT_THRESHOLD_CENTS } from './stripe';
 export async function recordEarningAndCheckFeeTier(client, { creatorId, stripeInvoiceId, amountCents }) {
   if (!creatorId || !stripeInvoiceId || !(amountCents > 0)) return null;
 
-  const inserted = await client.query(
-    `INSERT INTO creator_earnings (creator_id, stripe_invoice_id, amount_cents)
-     VALUES ($1, $2, $3)
-     ON CONFLICT (stripe_invoice_id) DO NOTHING
-     RETURNING id`,
-    [creatorId, stripeInvoiceId, amountCents]
-  );
-  if (inserted.rows.length === 0) return null; // already recorded — redelivered event
-
-  // Lock the creator's row for the rest of this transaction so two of their invoices
-  // landing in overlapping webhook deliveries can't both read the pre-crossing total and
-  // both think they're the one that needs to flip it.
+  // Lock the creator's row before recording anything, for two reasons at once: it stops
+  // two of their invoices landing in overlapping webhook deliveries from both reading the
+  // pre-crossing total and both thinking they're the one that needs to flip it, and the
+  // fee percent it reads is the rate that actually applied to THIS invoice — stamped onto
+  // the ledger row below so later fee-tier changes never distort this payment's historical
+  // net-earnings math.
   const creatorResult = await client.query(
     `SELECT platform_fee_percent FROM users WHERE id = $1 FOR UPDATE`,
     [creatorId]
   );
   const currentFeePercent = creatorResult.rows[0]?.platform_fee_percent;
-  if (currentFeePercent === undefined || currentFeePercent <= DISCOUNTED_FEE_PERCENT) {
-    return null; // not a creator row, or already at (or below) the discounted rate
-  }
+  if (currentFeePercent === undefined) return null; // not a creator row
+
+  const inserted = await client.query(
+    `INSERT INTO creator_earnings (creator_id, stripe_invoice_id, amount_cents, fee_percent_applied)
+     VALUES ($1, $2, $3, $4)
+     ON CONFLICT (stripe_invoice_id) DO NOTHING
+     RETURNING id`,
+    [creatorId, stripeInvoiceId, amountCents, currentFeePercent]
+  );
+  if (inserted.rows.length === 0) return null; // already recorded — redelivered event
+
+  if (currentFeePercent <= DISCOUNTED_FEE_PERCENT) return null; // already at (or below) the discounted rate
 
   const totalResult = await client.query(
     `SELECT COALESCE(SUM(amount_cents), 0)::bigint AS total FROM creator_earnings WHERE creator_id = $1`,
