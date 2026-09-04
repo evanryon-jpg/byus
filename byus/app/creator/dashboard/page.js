@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import VerifyEmailBanner from '../../components/VerifyEmailBanner';
 import EarningsSection from '../../components/EarningsSection';
+import PayoutsSection from '../../components/PayoutsSection';
 
 export default function CreatorDashboard() {
   const [user, setUser] = useState(null);
@@ -77,7 +78,7 @@ export default function CreatorDashboard() {
         tiers={tiers}
         onCreated={load}
         stripeConnected={stripeConnected}
-        platformFeePercent={user?.platform_fee_percent ?? 10}
+        platformFeePercent={user?.effective_fee_percent ?? user?.platform_fee_percent ?? 10}
       />
 
       {/* Posts */}
@@ -98,6 +99,7 @@ export default function CreatorDashboard() {
           <>
             <p className="mt-2 text-sm text-green-700">✓ Stripe connected — you're ready to earn.</p>
             <EarningsSection />
+            <PayoutsSection />
           </>
         ) : (
           <>
