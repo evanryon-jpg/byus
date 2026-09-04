@@ -232,12 +232,110 @@ function CreatorProfile() {
                   </div>
                 )}
                 <p className="mt-2 text-sm text-black/70">{p.body}</p>
+                {p.poll && <PollBlock postId={p.id} poll={p.poll} />}
               </>
             )}
           </li>
         ))}
         {posts.length === 0 && <p className="text-sm text-black/40">No posts yet.</p>}
       </ul>
+    </div>
+  );
+}
+
+// Votes before results: anyone who hasn't voted yet sees plain option buttons; once
+// they have (myVote is set, either from the initial load or right after they click),
+// it switches to a read-only percentage-bar view with their own choice highlighted.
+// Keeps its own local copy of the poll so a vote updates instantly without reloading
+// the whole feed.
+function PollBlock({ postId, poll: initialPoll }) {
+  const router = useRouter();
+  const [poll, setPoll] = useState(initialPoll);
+  const [voting, setVoting] = useState(null);
+  const [error, setError] = useState('');
+
+  async function handleVote(optionIndex) {
+    setError('');
+    setVoting(optionIndex);
+    try {
+      const res = await fetch(`/api/posts/${postId}/vote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ optionIndex }),
+      });
+      if (res.status === 401) {
+        // Not logged in — same pattern as subscribing: send them to log in and land
+        // right back on this page instead of just failing silently.
+        router.push(`/login?next=${encodeURIComponent(window.location.pathname)}`);
+        return;
+      }
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Could not record your vote.');
+        return;
+      }
+      setPoll(data.poll);
+    } catch {
+      setError('Network error — please try again.');
+    } finally {
+      setVoting(null);
+    }
+  }
+
+  const total = poll.votes.reduce((sum, v) => sum + v, 0);
+  const hasVoted = poll.myVote !== null && poll.myVote !== undefined;
+
+  if (!hasVoted) {
+    return (
+      <div className="mt-3 space-y-2">
+        {poll.options.map((option, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => handleVote(i)}
+            disabled={voting !== null}
+            className="block w-full rounded-lg border border-[#146359]/25 px-3 py-2 text-left text-sm font-medium text-[#146359] hover:bg-[#146359]/5 disabled:opacity-50"
+          >
+            {voting === i ? 'Voting…' : option}
+          </button>
+        ))}
+        {error && <p className="text-xs text-red-600">{error}</p>}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 space-y-1.5">
+      {poll.options.map((option, i) => {
+        const count = poll.votes[i] || 0;
+        const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+        const mine = poll.myVote === i;
+        return (
+          <button
+            key={i}
+            type="button"
+            onClick={() => handleVote(i)}
+            disabled={voting !== null}
+            className="block w-full text-left text-sm disabled:opacity-50"
+          >
+            <div className={`flex justify-between ${mine ? 'font-semibold text-[#146359]' : 'text-black/60'}`}>
+              <span>
+                {option}
+                {mine && ' ✓'}
+              </span>
+              <span className="text-black/40">{pct}%</span>
+            </div>
+            <div className="mt-0.5 h-1.5 w-full overflow-hidden rounded-full bg-black/5">
+              <div
+                className={`h-full rounded-full ${mine ? 'bg-[#146359]' : 'bg-[#146359]/40'}`}
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+          </button>
+        );
+      })}
+      <p className="text-xs text-black/30">{total} vote{total === 1 ? '' : 's'} — tap an option to change your vote</p>
+      {error && <p className="text-xs text-red-600">{error}</p>}
     </div>
   );
 }
