@@ -3,17 +3,24 @@
 import { useEffect, useState } from 'react';
 import { formatCompactUSD } from '@/lib/format';
 
-// Public growth gauge for the homepage: tracks ByUs's own lifetime fee income (not
-// creators' gross revenue -- what the platform itself has actually earned) against 4
-// milestones. Crossing one permanently lowers EVERY creator's effective fee, for good --
-// see lib/fees.js. Self-fetching and public (no session needed), same pattern as the
-// other dashboard cards, just reading from /api/platform/milestones instead.
+// Public growth gauge for the homepage: a celebratory stat tracking ByUs's own BEST
+// CALENDAR MONTH of fee income yet (not creators' gross revenue -- what the platform
+// itself has actually earned in its strongest month so far) against a ladder of
+// milestones. This USED to also drive a fee-reduction mechanic -- crossing a milestone
+// permanently lowered every creator's rate -- but that's retired (see lib/fees.js):
+// DISCOUNTED_FEE_PERCENT (7%) is already the lowest rate that covers Stripe's own cut, so
+// there was no room left to stack further cuts on top of it. Every `reduction_points`
+// value in `platform_milestones` is now purely cosmetic; crossing a checkpoint here is
+// just "thank you, we hit a number," nothing changes on anyone's bill. Self-fetching and
+// public (no session needed), same pattern as the other dashboard cards, just reading
+// from /api/platform/milestones instead.
 //
 // A meter, per the dataviz skill's figure contract: the fill carries state, the unfilled
 // track is a lighter step of the same hue so progress reads across the whole bar. Ticks
 // at each milestone double as the "meter" and the story -- unlike a plain progress bar,
-// each checkpoint is a real, named event (a fee cut for every creator), so it gets its
-// own marker and label rather than being folded into a single continuous fill.
+// each checkpoint is a real, named event (a fee cut for every creator, or the final growth
+// goal), so it gets its own marker and label rather than being folded into a single
+// continuous fill.
 const TEAL = '#146359';
 const TRACK = 'rgba(20,99,89,0.12)'; // a lighter step of the same teal, not a flat gray
 const GOLD = '#C9A961';
@@ -31,16 +38,15 @@ export default function PlatformGoalGauge() {
 
   if (error || !data) return null;
 
-  const { platformFeeIncomeCents, milestones } = data;
+  const { platformBestMonthCents, milestones } = data;
   if (milestones.length === 0) return null;
 
   const maxThreshold = milestones[milestones.length - 1].thresholdCents;
   const crossedCount = milestones.filter((m) => m.crossedAt).length;
-  const totalReductionPoints = milestones.reduce((sum, m) => sum + (m.crossedAt ? m.reductionPoints : 0), 0);
   const nextMilestone = milestones.find((m) => !m.crossedAt);
   const allCrossed = !nextMilestone;
 
-  const progressPct = Math.min(100, (platformFeeIncomeCents / maxThreshold) * 100);
+  const progressPct = Math.min(100, (platformBestMonthCents / maxThreshold) * 100);
 
   // SVG geometry -- a single horizontal track with a tick + label per milestone,
   // positioned proportionally to its dollar threshold along the track.
@@ -56,7 +62,9 @@ export default function PlatformGoalGauge() {
 
   function formatMilestoneLabel(cents) {
     const dollars = cents / 100;
-    return dollars >= 1000 ? `$${Math.round(dollars / 1000)}K` : `$${dollars}`;
+    if (dollars >= 1_000_000) return `$${Math.round(dollars / 1_000_000)}M`;
+    if (dollars >= 1000) return `$${Math.round(dollars / 1000)}K`;
+    return `$${dollars}`;
   }
 
   return (
@@ -65,24 +73,24 @@ export default function PlatformGoalGauge() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full bg-[#C9A961]/15 px-3 py-1 text-xs font-semibold tracking-wide text-[#8a6b2f]">
-              ByUs growth goal
+              ByUs growth
             </span>
             <h2 className="mt-3 font-display text-2xl font-semibold text-[#1A1A1A] sm:text-3xl">
               {allCrossed
                 ? "We've hit every milestone — thank you."
-                : 'Every milestone permanently lowers every creator’s fee'}
+                : "Every creator here is part of this number"}
             </h2>
             <p className="mt-2 max-w-xl text-sm text-black/55">
               {allCrossed
-                ? `ByUs's own lifetime revenue has crossed all ${milestones.length} milestones — every creator's fee is now ${totalReductionPoints} points lower than it started, for good.`
-                : "As ByUs's own lifetime revenue crosses each milestone below, every creator's platform fee drops another point — permanently, for every creator, on top of their own personal discount."}
+                ? `ByUs's best month has crossed all ${milestones.length} milestones on this board — built entirely by the creators here and the fans who support them.`
+                : "This tracks ByUs's best single month of fee income yet — built entirely by the creators here and the fans who support them. Every checkpoint below is a number we've hit together."}
             </p>
           </div>
-          {totalReductionPoints > 0 && (
+          {crossedCount > 0 && (
             <div className="shrink-0 rounded-2xl bg-[#146359]/10 px-4 py-3 text-center">
-              <div className="font-display text-2xl font-semibold text-[#146359]">-{totalReductionPoints}pt</div>
+              <div className="font-display text-2xl font-semibold text-[#146359]">{crossedCount}/{milestones.length}</div>
               <div className="text-[11px] font-medium uppercase tracking-wide text-[#146359]/70">
-                off every fee so far
+                milestones hit
               </div>
             </div>
           )}
@@ -94,7 +102,7 @@ export default function PlatformGoalGauge() {
             width="100%"
             style={{ minWidth: 480 }}
             role="img"
-            aria-label={`ByUs has earned ${formatCompactUSD(platformFeeIncomeCents)} lifetime, toward ${milestones.length} growth milestones`}
+            aria-label={`ByUs's best month so far is ${formatCompactUSD(platformBestMonthCents)}, toward ${milestones.length} growth milestones`}
           >
             {/* Track */}
             <rect x={padX} y={trackY} width={trackWidth} height={trackHeight} rx={trackHeight / 2} fill={TRACK} />
@@ -143,15 +151,17 @@ export default function PlatformGoalGauge() {
                   >
                     {formatMilestoneLabel(m.thresholdCents)}
                   </text>
-                  <text
-                    x={x}
-                    y={trackY + trackHeight + 40}
-                    textAnchor="middle"
-                    fontSize="10"
-                    fill="#898781"
-                  >
-                    -{m.reductionPoints}pt
-                  </text>
+                  {crossed && (
+                    <text
+                      x={x}
+                      y={trackY + trackHeight + 40}
+                      textAnchor="middle"
+                      fontSize="10"
+                      fill="#898781"
+                    >
+                      hit
+                    </text>
+                  )}
                 </g>
               );
             })}
@@ -160,13 +170,13 @@ export default function PlatformGoalGauge() {
 
         <p className="mt-2 text-sm text-black/55">
           {allCrossed ? (
-            <>ByUs has earned {formatCompactUSD(platformFeeIncomeCents)} lifetime.</>
+            <>ByUs's best month so far: {formatCompactUSD(platformBestMonthCents)}.</>
           ) : (
             <>
-              {formatCompactUSD(platformFeeIncomeCents)} raised so far — {formatCompactUSD(
-                nextMilestone.thresholdCents - platformFeeIncomeCents
+              Our best month so far: {formatCompactUSD(platformBestMonthCents)} — {formatCompactUSD(
+                nextMilestone.thresholdCents - platformBestMonthCents
               )}{' '}
-              to go until the next milestone drops every creator's fee another point.
+              more in a single month to hit our next milestone.
             </>
           )}
         </p>
