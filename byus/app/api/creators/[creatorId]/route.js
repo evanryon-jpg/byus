@@ -8,6 +8,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { signPlaybackToken } from '@/lib/mux-jwt';
+import { getPollVoteCounts, getMyPollVotes, buildPollPayload } from '@/lib/polls';
 
 export async function GET(request, { params }) {
   const { creatorId } = params;
@@ -66,10 +67,17 @@ export async function GET(request, { params }) {
     }
 
     const postsResult = await query(
-      `SELECT id, title, body, media_url, visibility, created_at
+      `SELECT id, title, body, media_url, visibility, poll_options, created_at
        FROM posts WHERE creator_id = $1 ORDER BY created_at DESC`,
       [id]
     );
+
+    // Poll results/vote-state only ever matter for posts the visitor can actually see —
+    // but it's simpler and cheap enough to just compute for every poll post here and let
+    // the per-post gate below decide whether to hand it out.
+    const pollPostIds = postsResult.rows.filter((p) => p.poll_options).map((p) => p.id);
+    const voteCounts = await getPollVoteCounts(pollPostIds);
+    const myVotes = await getMyPollVotes(pollPostIds, session?.userId);
 
     // Gate content here, server-side — never trust the client to hide this on its own.
     // media_url in the DB is a private Blob pathname; unlocked posts get pointed at
@@ -84,6 +92,7 @@ export async function GET(request, { params }) {
         locked: isLocked,
         body: isLocked ? null : post.body,
         media_url: isLocked || !post.media_url ? null : `/api/posts/${post.id}/media`,
+        poll: isLocked ? null : buildPollPayload(post, voteCounts[post.id], myVotes[post.id]),
       };
     });
 
