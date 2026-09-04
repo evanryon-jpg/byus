@@ -3,17 +3,22 @@
 import { useEffect, useState } from 'react';
 import { formatCompactUSD } from '@/lib/format';
 
-// Public growth gauge for the homepage: tracks ByUs's own lifetime fee income (not
-// creators' gross revenue -- what the platform itself has actually earned) against 4
-// milestones. Crossing one permanently lowers EVERY creator's effective fee, for good --
-// see lib/fees.js. Self-fetching and public (no session needed), same pattern as the
-// other dashboard cards, just reading from /api/platform/milestones instead.
+// Public growth gauge for the homepage: tracks ByUs's own BEST CALENDAR MONTH of fee
+// income yet (not creators' gross revenue -- what the platform itself has actually earned
+// in its strongest month so far) against a ladder of milestones. Crossing most of them
+// permanently lowers EVERY creator's effective fee, for good -- see lib/fees.js. The last
+// milestone on the ladder can carry reduction_points = 0: a "north star" marker with no
+// further fee cut attached, once the fee floor has already been reached by the earlier
+// ones -- shown the same way, just labeled "Goal" instead of a point value. Self-fetching
+// and public (no session needed), same pattern as the other dashboard cards, just reading
+// from /api/platform/milestones instead.
 //
 // A meter, per the dataviz skill's figure contract: the fill carries state, the unfilled
 // track is a lighter step of the same hue so progress reads across the whole bar. Ticks
 // at each milestone double as the "meter" and the story -- unlike a plain progress bar,
-// each checkpoint is a real, named event (a fee cut for every creator), so it gets its
-// own marker and label rather than being folded into a single continuous fill.
+// each checkpoint is a real, named event (a fee cut for every creator, or the final growth
+// goal), so it gets its own marker and label rather than being folded into a single
+// continuous fill.
 const TEAL = '#146359';
 const TRACK = 'rgba(20,99,89,0.12)'; // a lighter step of the same teal, not a flat gray
 const GOLD = '#C9A961';
@@ -31,7 +36,7 @@ export default function PlatformGoalGauge() {
 
   if (error || !data) return null;
 
-  const { platformFeeIncomeCents, milestones } = data;
+  const { platformBestMonthCents, milestones } = data;
   if (milestones.length === 0) return null;
 
   const maxThreshold = milestones[milestones.length - 1].thresholdCents;
@@ -40,7 +45,7 @@ export default function PlatformGoalGauge() {
   const nextMilestone = milestones.find((m) => !m.crossedAt);
   const allCrossed = !nextMilestone;
 
-  const progressPct = Math.min(100, (platformFeeIncomeCents / maxThreshold) * 100);
+  const progressPct = Math.min(100, (platformBestMonthCents / maxThreshold) * 100);
 
   // SVG geometry -- a single horizontal track with a tick + label per milestone,
   // positioned proportionally to its dollar threshold along the track.
@@ -72,12 +77,12 @@ export default function PlatformGoalGauge() {
             <h2 className="mt-3 font-display text-2xl font-semibold text-[#1A1A1A] sm:text-3xl">
               {allCrossed
                 ? "We've hit every milestone — thank you."
-                : 'Every milestone permanently lowers every creator’s fee'}
+                : 'Every fee-drop milestone lowers every creator’s fee, for good'}
             </h2>
             <p className="mt-2 max-w-xl text-sm text-black/55">
               {allCrossed
-                ? `ByUs's own lifetime revenue has crossed all ${milestones.length} milestones — every creator's fee is now ${totalReductionPoints} points lower than it started, for good.`
-                : "As ByUs's own lifetime revenue crosses each milestone below, every creator's platform fee drops another point — permanently, for every creator, on top of their own personal discount."}
+                ? `ByUs's best month has crossed all ${milestones.length} milestones — every creator's fee is now ${totalReductionPoints} points lower than it started, for good.`
+                : "As ByUs's best single month of fee income crosses each checkpoint below, every creator's platform fee drops another point — permanently, on top of their own personal discount. Once the fee floor is reached, later checkpoints are just how far we're aiming next."}
             </p>
           </div>
           {totalReductionPoints > 0 && (
@@ -96,7 +101,7 @@ export default function PlatformGoalGauge() {
             width="100%"
             style={{ minWidth: 480 }}
             role="img"
-            aria-label={`ByUs has earned ${formatCompactUSD(platformFeeIncomeCents)} lifetime, toward ${milestones.length} growth milestones`}
+            aria-label={`ByUs's best month so far is ${formatCompactUSD(platformBestMonthCents)}, toward ${milestones.length} growth milestones`}
           >
             {/* Track */}
             <rect x={padX} y={trackY} width={trackWidth} height={trackHeight} rx={trackHeight / 2} fill={TRACK} />
@@ -152,7 +157,7 @@ export default function PlatformGoalGauge() {
                     fontSize="10"
                     fill="#898781"
                   >
-                    -{m.reductionPoints}pt
+                    {m.reductionPoints > 0 ? `-${m.reductionPoints}pt` : 'goal'}
                   </text>
                 </g>
               );
@@ -162,13 +167,13 @@ export default function PlatformGoalGauge() {
 
         <p className="mt-2 text-sm text-black/55">
           {allCrossed ? (
-            <>ByUs has earned {formatCompactUSD(platformFeeIncomeCents)} lifetime.</>
+            <>ByUs's best month so far: {formatCompactUSD(platformBestMonthCents)}.</>
           ) : (
             <>
-              {formatCompactUSD(platformFeeIncomeCents)} raised so far — {formatCompactUSD(
-                nextMilestone.thresholdCents - platformFeeIncomeCents
+              Our best month so far: {formatCompactUSD(platformBestMonthCents)} — {formatCompactUSD(
+                nextMilestone.thresholdCents - platformBestMonthCents
               )}{' '}
-              to go until the next milestone drops every creator's fee another point.
+              more in a single month to {nextMilestone.reductionPoints > 0 ? "unlock the next fee drop" : "hit our next goal"}.
             </>
           )}
         </p>
