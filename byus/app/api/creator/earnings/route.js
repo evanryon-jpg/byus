@@ -15,6 +15,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { STANDARD_FEE_PERCENT, DISCOUNTED_FEE_PERCENT, FEE_DISCOUNT_THRESHOLD_CENTS } from '@/lib/stripe';
+import { getPlatformMilestoneReductionPoints, applyPlatformMilestoneReduction } from '@/lib/fees';
 
 const MONTHS_OF_HISTORY = 12;
 
@@ -25,8 +26,9 @@ export async function GET() {
   }
 
   try {
-    const [feeResult, lifetimeResult, subscriberResult, monthlyResult] = await Promise.all([
+    const [feeResult, reductionPoints, lifetimeResult, subscriberResult, monthlyResult] = await Promise.all([
       query('SELECT platform_fee_percent FROM users WHERE id = $1', [session.userId]),
+      getPlatformMilestoneReductionPoints(query),
       query(
         `SELECT
            COALESCE(SUM(amount_cents), 0)::bigint AS gross_cents,
@@ -82,8 +84,12 @@ export async function GET() {
       newSubscribers: Number(row.new_subscribers),
     }));
 
+    const personalTierFeePercent = feeResult.rows[0]?.platform_fee_percent ?? STANDARD_FEE_PERCENT;
+
     return NextResponse.json({
-      feePercent: feeResult.rows[0]?.platform_fee_percent ?? STANDARD_FEE_PERCENT,
+      feePercent: personalTierFeePercent,
+      effectiveFeePercent: applyPlatformMilestoneReduction(personalTierFeePercent, reductionPoints),
+      platformReductionPoints: reductionPoints,
       discountedFeePercent: DISCOUNTED_FEE_PERCENT,
       thresholdCents: FEE_DISCOUNT_THRESHOLD_CENTS,
       lifetimeGrossCents: Number(lifetimeResult.rows[0].gross_cents),
