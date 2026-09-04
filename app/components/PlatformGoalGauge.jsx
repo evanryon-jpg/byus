@@ -3,14 +3,16 @@
 import { useEffect, useState } from 'react';
 import { formatCompactUSD } from '@/lib/format';
 
-// Public growth gauge for the homepage: tracks ByUs's own BEST CALENDAR MONTH of fee
-// income yet (not creators' gross revenue -- what the platform itself has actually earned
-// in its strongest month so far) against a ladder of milestones. Crossing most of them
-// permanently lowers EVERY creator's effective fee, for good -- see lib/fees.js. The last
-// milestone on the ladder can carry reduction_points = 0: a "north star" marker with no
-// further fee cut attached, once the fee floor has already been reached by the earlier
-// ones -- shown the same way, just labeled "Goal" instead of a point value. Self-fetching
-// and public (no session needed), same pattern as the other dashboard cards, just reading
+// Public growth gauge for the homepage: a celebratory stat tracking ByUs's own BEST
+// CALENDAR MONTH of fee income yet (not creators' gross revenue -- what the platform
+// itself has actually earned in its strongest month so far) against a ladder of
+// milestones. This USED to also drive a fee-reduction mechanic -- crossing a milestone
+// permanently lowered every creator's rate -- but that's retired (see lib/fees.js):
+// DISCOUNTED_FEE_PERCENT (7%) is already the lowest rate that covers Stripe's own cut, so
+// there was no room left to stack further cuts on top of it. Every `reduction_points`
+// value in `platform_milestones` is now purely cosmetic; crossing a checkpoint here is
+// just "thank you, we hit a number," nothing changes on anyone's bill. Self-fetching and
+// public (no session needed), same pattern as the other dashboard cards, just reading
 // from /api/platform/milestones instead.
 //
 // A meter, per the dataviz skill's figure contract: the fill carries state, the unfilled
@@ -41,7 +43,6 @@ export default function PlatformGoalGauge() {
 
   const maxThreshold = milestones[milestones.length - 1].thresholdCents;
   const crossedCount = milestones.filter((m) => m.crossedAt).length;
-  const totalReductionPoints = milestones.reduce((sum, m) => sum + (m.crossedAt ? m.reductionPoints : 0), 0);
   const nextMilestone = milestones.find((m) => !m.crossedAt);
   const allCrossed = !nextMilestone;
 
@@ -72,24 +73,24 @@ export default function PlatformGoalGauge() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full bg-[#C9A961]/15 px-3 py-1 text-xs font-semibold tracking-wide text-[#8a6b2f]">
-              ByUs growth goal
+              ByUs growth
             </span>
             <h2 className="mt-3 font-display text-2xl font-semibold text-[#1A1A1A] sm:text-3xl">
               {allCrossed
                 ? "We've hit every milestone — thank you."
-                : 'Every fee-drop milestone lowers every creator’s fee, for good'}
+                : "Every creator here is part of this number"}
             </h2>
             <p className="mt-2 max-w-xl text-sm text-black/55">
               {allCrossed
-                ? `ByUs's best month has crossed all ${milestones.length} milestones — every creator's fee is now ${totalReductionPoints} points lower than it started, for good.`
-                : "As ByUs's best single month of fee income crosses each checkpoint below, every creator's platform fee drops another point — permanently, on top of their own personal discount. Once the fee floor is reached, later checkpoints are just how far we're aiming next."}
+                ? `ByUs's best month has crossed all ${milestones.length} milestones on this board — built entirely by the creators here and the fans who support them.`
+                : "This tracks ByUs's best single month of fee income yet — built entirely by the creators here and the fans who support them. Every checkpoint below is a number we've hit together."}
             </p>
           </div>
-          {totalReductionPoints > 0 && (
+          {crossedCount > 0 && (
             <div className="shrink-0 rounded-2xl bg-[#146359]/10 px-4 py-3 text-center">
-              <div className="font-display text-2xl font-semibold text-[#146359]">-{totalReductionPoints}pt</div>
+              <div className="font-display text-2xl font-semibold text-[#146359]">{crossedCount}/{milestones.length}</div>
               <div className="text-[11px] font-medium uppercase tracking-wide text-[#146359]/70">
-                off every fee so far
+                milestones hit
               </div>
             </div>
           )}
@@ -150,15 +151,17 @@ export default function PlatformGoalGauge() {
                   >
                     {formatMilestoneLabel(m.thresholdCents)}
                   </text>
-                  <text
-                    x={x}
-                    y={trackY + trackHeight + 40}
-                    textAnchor="middle"
-                    fontSize="10"
-                    fill="#898781"
-                  >
-                    {m.reductionPoints > 0 ? `-${m.reductionPoints}pt` : 'goal'}
-                  </text>
+                  {crossed && (
+                    <text
+                      x={x}
+                      y={trackY + trackHeight + 40}
+                      textAnchor="middle"
+                      fontSize="10"
+                      fill="#898781"
+                    >
+                      hit
+                    </text>
+                  )}
                 </g>
               );
             })}
@@ -173,7 +176,7 @@ export default function PlatformGoalGauge() {
               Our best month so far: {formatCompactUSD(platformBestMonthCents)} — {formatCompactUSD(
                 nextMilestone.thresholdCents - platformBestMonthCents
               )}{' '}
-              more in a single month to {nextMilestone.reductionPoints > 0 ? "unlock the next fee drop" : "hit our next goal"}.
+              more in a single month to hit our next milestone.
             </>
           )}
         </p>
