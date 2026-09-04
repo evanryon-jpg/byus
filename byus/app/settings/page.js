@@ -35,6 +35,7 @@ export default function SettingsPage() {
       <AvatarCard user={user} onChanged={(profile_image_url) => setUser({ ...user, profile_image_url })} />
       <ProfileCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
       <NotificationsCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
+      <SupportVisibilityCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
       <ReferralCard />
       <PasswordCard />
     </div>
@@ -241,6 +242,66 @@ function NotificationsCard({ user, onChanged }) {
           <span className="block text-sm font-medium text-[#1A1A1A]">New post emails</span>
           <span className="mt-0.5 block text-xs text-black/50">
             Get an email when a creator you're subscribed to publishes something new.
+          </span>
+        </span>
+        <input
+          type="checkbox"
+          checked={enabled}
+          disabled={saving}
+          onChange={handleToggle}
+          className="h-5 w-5 shrink-0 accent-[#146359]"
+        />
+      </label>
+      {status && <p className="mt-2 text-xs text-red-600">{status.text}</p>}
+    </section>
+  );
+}
+
+// Off by default -- this is the only setting that puts a fan's name and photo on a page
+// other people browse, so it should never turn on without them actively choosing it. One
+// account-level switch rather than a per-creator one: simpler to reason about, and a fan
+// who's fine being shown supporting one creator is very likely fine being shown on all of
+// them. See show_support_publicly in app/api/me/route.js and the "Top supporters" widget
+// on app/creator/[creatorId]/page.js for where this actually shows up.
+function SupportVisibilityCard({ user, onChanged }) {
+  const [enabled, setEnabled] = useState(user.show_support_publicly === true);
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState(null);
+
+  if (user.role !== 'fan') return null;
+
+  async function handleToggle() {
+    const next = !enabled;
+    setEnabled(next); // optimistic — this is a single boolean, not worth a pending state
+    setSaving(true);
+    setStatus(null);
+    try {
+      const res = await fetch('/api/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ show_support_publicly: next }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Could not save this setting.');
+      onChanged(result.user);
+    } catch (err) {
+      setEnabled(!next); // revert on failure
+      setStatus({ type: 'error', text: err.message || 'Could not save this setting.' });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <section className="mt-6 rounded-2xl border border-black/5 bg-white p-6">
+      <h2 className="font-semibold">Support visibility</h2>
+      <label className="mt-4 flex items-center justify-between gap-4">
+        <span>
+          <span className="block text-sm font-medium text-[#1A1A1A]">Show me as a top supporter</span>
+          <span className="mt-0.5 block text-xs text-black/50">
+            Your name and photo appear in the "Top supporters" row on the page of any
+            creator you're actively subscribed to. Off by default — nobody sees this
+            unless you turn it on.
           </span>
         </span>
         <input
