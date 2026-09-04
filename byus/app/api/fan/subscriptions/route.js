@@ -16,7 +16,7 @@ export async function GET() {
   try {
     const result = await query(
       `SELECT s.id, s.status, s.current_period_end,
-              u.display_name AS creator_name, u.id AS creator_id,
+              u.display_name AS creator_name, u.id AS creator_id, u.slug AS creator_slug,
               t.name AS tier_name, t.price_cents
        FROM subscriptions s
        JOIN users u ON u.id = s.creator_id
