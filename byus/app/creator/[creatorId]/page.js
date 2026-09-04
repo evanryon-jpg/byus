@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
+import LivePlayer from '../../components/LivePlayer';
 
 export default function CreatorProfilePage() {
   return (
@@ -69,7 +70,7 @@ function CreatorProfile() {
   if (loading) return <div className="p-12 text-center text-black/40">Loading…</div>;
   if (!data) return <div className="p-12 text-center text-black/40">Creator not found.</div>;
 
-  const { creator, tiers, posts, hasActiveSubscription } = data;
+  const { creator, tiers, posts, hasActiveSubscription, live } = data;
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
@@ -109,6 +110,38 @@ function CreatorProfile() {
               {link.label} ↗
             </a>
           ))}
+        </div>
+      )}
+
+      {/* Live stream — sits above tiers/feed since "live right now" is the single most
+          time-sensitive thing on this page when it's true. */}
+      {live?.isLive && (
+        <div className="mt-8">
+          <div className="mb-3 flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600">
+              <span className="h-1.5 w-1.5 rounded-full bg-red-500 motion-safe:animate-pulse" aria-hidden="true" />
+              LIVE
+            </span>
+            <span className="text-sm text-black/50">{creator.display_name} is streaming now</span>
+          </div>
+          {live.playbackId && live.playbackToken ? (
+            <LivePlayer playbackId={live.playbackId} playbackToken={live.playbackToken} />
+          ) : (
+            <div className="flex aspect-video w-full items-center justify-center rounded-2xl bg-black/5 px-6 text-center">
+              <p className="text-sm text-black/50">
+                {hasActiveSubscription
+                  ? "Setting up the stream — refresh in a moment."
+                  : tiers.length > 0
+                  ? (
+                    <>
+                      Subscribe to watch —{' '}
+                      <a href="#tiers" className="text-[#146359] underline">see tiers below</a>.
+                    </>
+                  )
+                  : 'Subscribe to watch this live stream.'}
+              </p>
+            </div>
+          )}
         </div>
       )}
 
