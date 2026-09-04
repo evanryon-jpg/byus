@@ -1,8 +1,9 @@
 export const dynamic = 'force-dynamic';
 
 // GET /api/creators/:creatorId
-// Public creator profile: basic info, their tiers, and their feed —
-// with subscribers-only posts hidden unless the requester has an active subscription.
+// Public creator profile: basic info, their tiers, their feed (subscribers-only posts
+// hidden unless the requester has an active subscription), and their top supporters
+// (opted-in fans only -- see the show_support_publicly query below).
 
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
@@ -72,6 +73,29 @@ export async function GET(request, { params }) {
       [id]
     );
 
+    // Top supporters: the longest-tenured active subscribers who've opted in (see
+    // show_support_publicly in app/api/me/route.js, off by default). Oldest subscription
+    // first, so this reads as "founding members" rather than a spending leaderboard --
+    // deliberately not ranked by dollars paid. Same active-subscription check as
+    // hasActiveSubscription above. Fans who haven't opted in never appear here, full stop.
+    const supportersResult = await query(
+      `SELECT u.id, u.display_name, u.profile_image_url, s.created_at AS since
+       FROM subscriptions s
+       JOIN users u ON u.id = s.fan_id
+       WHERE s.creator_id = $1 AND s.status = 'active'
+         AND (s.current_period_end IS NULL OR s.current_period_end > now())
+         AND u.show_support_publicly = true
+       ORDER BY s.created_at ASC
+       LIMIT 5`,
+      [id]
+    );
+    const topSupporters = supportersResult.rows.map((row) => ({
+      id: row.id,
+      displayName: row.display_name,
+      profileImageUrl: row.profile_image_url ? `/api/avatar/${row.id}` : null,
+      since: row.since,
+    }));
+
     // Poll results/vote-state only ever matter for posts the visitor can actually see —
     // but it's simpler and cheap enough to just compute for every poll post here and let
     // the per-post gate below decide whether to hand it out.
@@ -118,6 +142,7 @@ export async function GET(request, { params }) {
       hasActiveSubscription,
       posts,
       live,
+      topSupporters,
     });
   } catch (err) {
     console.error('creators/[creatorId] GET failed:', err);
