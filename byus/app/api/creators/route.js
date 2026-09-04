@@ -13,31 +13,46 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 
+// 'popular' needs a subscriber count to sort by, so it's a distinct query shape rather
+// than just an ORDER BY swap on the same SELECT.
+const SORTS = {
+  newest: 'u.created_at DESC',
+  popular: 'active_subscriber_count DESC, u.created_at DESC',
+};
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const q = (searchParams.get('q') || '').trim();
   const tag = (searchParams.get('tag') || '').trim();
+  const sort = SORTS[searchParams.get('sort')] ? searchParams.get('sort') : 'newest';
 
   try {
-    const conditions = [`role = 'creator'`];
+    const conditions = [`u.role = 'creator'`];
     const values = [];
     let i = 1;
 
     if (q) {
-      conditions.push(`(display_name ILIKE $${i} OR bio ILIKE $${i})`);
+      conditions.push(`(u.display_name ILIKE $${i} OR u.bio ILIKE $${i})`);
       values.push(`%${q}%`);
       i++;
     }
     if (tag) {
-      conditions.push(`$${i} = ANY(tags)`);
+      conditions.push(`$${i} = ANY(u.tags)`);
       values.push(tag);
       i++;
     }
 
     const [creatorsResult, tagsResult] = await Promise.all([
       query(
-        `SELECT id, display_name, bio, profile_image_url, tags, slug
-         FROM users WHERE ${conditions.join(' AND ')} ORDER BY created_at DESC`,
+        `SELECT u.id, u.display_name, u.bio, u.profile_image_url, u.tags, u.slug,
+                COALESCE(s.active_subscriber_count, 0)::int AS active_subscriber_count
+         FROM users u
+         LEFT JOIN (
+           SELECT creator_id, COUNT(*) AS active_subscriber_count
+           FROM subscriptions WHERE status = 'active' GROUP BY creator_id
+         ) s ON s.creator_id = u.id
+         WHERE ${conditions.join(' AND ')}
+         ORDER BY ${SORTS[sort]}`,
         values
       ),
       query(
