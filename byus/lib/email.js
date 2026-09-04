@@ -74,6 +74,78 @@ export async function sendPasswordResetEmail(to, resetUrl) {
   }
 }
 
+// Sent once, right when a fan's very first payment to a creator actually goes through
+// (the Stripe webhook's checkout.session.completed handler) — a receipt-adjacent "you're
+// in" moment, not a marketing email, so it's a single send with no batching concerns.
+export async function sendWelcomeSubscriptionEmail(to, { creatorName, creatorUrl }) {
+  const resend = getClient();
+  const safeCreatorName = escapeHtml(creatorName);
+  const { error } = await resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: `You're subscribed to ${creatorName} on ByUs`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; color: #1A1A1A;">
+        <h2 style="color:#146359;">You're in!</h2>
+        <p>Your subscription to <strong>${safeCreatorName}</strong> is active — subscriber-only posts, updates, and anything else they share with supporters are ready for you now.</p>
+        <p style="margin: 24px 0;">
+          <a href="${creatorUrl}" style="background:#146359;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;">Visit ${safeCreatorName}'s page</a>
+        </p>
+        <p style="color:#666;font-size:13px;">You can manage or cancel this subscription anytime from your ByUs dashboard.</p>
+        <p style="color:#999;font-size:12px;margin-top:24px;">Don't want emails like this? Turn off new-post notifications in your ByUs settings.</p>
+      </div>
+    `,
+  });
+  if (error) {
+    console.error('Resend send failed:', error);
+    throw new Error(error.message || 'Could not send the welcome email.');
+  }
+}
+
+// Emails a creator's active subscribers when they publish a new post — one individual
+// email per recipient (never one email with everyone in "to"), sent via the batch
+// endpoint like the creator-update broadcast below. Only sent to subscribers who haven't
+// turned this off (users.notify_new_posts).
+export async function sendNewPostEmail(recipients, { creatorName, creatorUrl, postTitle, postExcerpt }) {
+  if (recipients.length === 0) return 0;
+  const resend = getClient();
+
+  const safeCreatorName = escapeHtml(creatorName);
+  const safeTitle = postTitle ? escapeHtml(postTitle) : null;
+  const excerpt = postExcerpt.length > 240 ? `${postExcerpt.slice(0, 240)}…` : postExcerpt;
+  const html = `
+    <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; color: #1A1A1A;">
+      <p style="color:#146359; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:16px;">
+        New from ${safeCreatorName}
+      </p>
+      ${safeTitle ? `<h2 style="margin:0 0 8px;">${safeTitle}</h2>` : ''}
+      <p style="white-space:pre-wrap; line-height:1.6; font-size:15px; color:#333;">${escapeHtml(excerpt)}</p>
+      <p style="margin: 24px 0;">
+        <a href="${creatorUrl}" style="background:#146359;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;">See the full post</a>
+      </p>
+      <p style="color:#999;font-size:12px;margin-top:32px;">
+        You're getting this because you're subscribed to ${safeCreatorName} on ByUs.
+        Turn off new-post emails anytime in your ByUs settings.
+      </p>
+    </div>
+  `;
+
+  const subject = safeTitle ? `${creatorName}: ${postTitle}` : `New post from ${creatorName}`;
+
+  for (let i = 0; i < recipients.length; i += BATCH_CHUNK_SIZE) {
+    const chunk = recipients.slice(i, i + BATCH_CHUNK_SIZE);
+    const { error } = await resend.batch.send(
+      chunk.map((to) => ({ from: FROM_ADDRESS, to, subject, html }))
+    );
+    if (error) {
+      console.error('Resend batch send failed:', error);
+      throw new Error(error.message || 'Could not send the new-post email.');
+    }
+  }
+
+  return recipients.length;
+}
+
 // Emails a creator's own free-text update to a list of subscriber addresses, one
 // individual email per recipient (never one email with everyone in "to" -- that would
 // leak every subscriber's address to every other one). Sent via the batch endpoint so

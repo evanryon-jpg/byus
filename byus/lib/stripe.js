@@ -19,3 +19,9 @@ export default stripe;
 export const STANDARD_FEE_PERCENT = 10;
 export const DISCOUNTED_FEE_PERCENT = 7;
 export const FEE_DISCOUNT_THRESHOLD_CENTS = 200000; // $2,000 lifetime gross revenue
+
+// Floor for the platform-wide milestone bonus in lib/fees.js -- a creator's effective
+// fee (personal tier minus the platform's current milestone reduction) never drops below
+// this, no matter how many milestones ByUs itself has crossed. Keeps the platform
+// sustainable even at the top of the milestone ladder.
+export const MIN_FEE_PERCENT = 3;
