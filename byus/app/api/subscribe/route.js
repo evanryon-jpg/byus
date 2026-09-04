@@ -3,12 +3,14 @@ export const dynamic = 'force-dynamic';
 // POST /api/subscribe
 // Called when a fan clicks "Subscribe" on a creator's tier. Creates a Stripe Checkout
 // session that, on completion, charges the fan monthly and automatically splits the
-// payment: ByUs keeps PLATFORM_FEE_PERCENT, the rest goes to the creator's connected account.
+// payment: ByUs keeps the creator's current platform_fee_percent (10% to start, dropping
+// to 7% for good once their lifetime earnings cross the threshold — see lib/fees.js), the
+// rest goes to the creator's connected account.
 
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
-import stripe, { PLATFORM_FEE_PERCENT } from '@/lib/stripe';
+import stripe from '@/lib/stripe';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { getReferralDiscount } from '@/lib/referrals';
 
@@ -48,7 +50,8 @@ export async function POST(request) {
 
   try {
     const tierResult = await query(
-      `SELECT t.id, t.stripe_price_id, t.creator_id, u.stripe_connect_account_id, u.stripe_connect_onboarded
+      `SELECT t.id, t.stripe_price_id, t.creator_id, u.stripe_connect_account_id, u.stripe_connect_onboarded,
+              u.platform_fee_percent
        FROM subscription_tiers t
        JOIN users u ON u.id = t.creator_id
        WHERE t.id = $1 AND t.active = true`,
@@ -108,7 +111,7 @@ export async function POST(request) {
       cancel_url: `${origin}/creator/${tier.creator_id}`,
       ...(discounts ? { discounts } : {}),
       subscription_data: {
-        application_fee_percent: PLATFORM_FEE_PERCENT,
+        application_fee_percent: tier.platform_fee_percent,
         transfer_data: {
           destination: tier.stripe_connect_account_id,
         },
