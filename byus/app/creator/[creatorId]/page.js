@@ -200,16 +200,7 @@ function CreatorProfile() {
               <span className="shrink-0 text-xs text-black/40">{new Date(p.created_at).toLocaleDateString()}</span>
             </div>
             {p.locked ? (
-              <p className="mt-2 text-sm text-black/40">
-                {tiers.length > 0 ? (
-                  <a href="#tiers" className="text-[#146359] underline">
-                    Subscribe above to unlock this post
-                  </a>
-                ) : (
-                  'Subscribe to unlock this post'
-                )}
-                .
-              </p>
+              <LockedPostPreview hasTiers={tiers.length > 0} />
             ) : (
               <>
                 {p.media_url && (
@@ -336,6 +327,40 @@ function PollBlock({ postId, poll: initialPoll }) {
       })}
       <p className="text-xs text-black/30">{total} vote{total === 1 ? '' : 's'} — tap an option to change your vote</p>
       {error && <p className="text-xs text-red-600">{error}</p>}
+    </div>
+  );
+}
+
+// A locked post already shows its title and date in the header above (the API sends
+// those for every post — see app/api/creators/[creatorId]/route.js) -- this just gives
+// the body area some visual weight instead of collapsing to a single line of text. The
+// blur/texture below is decorative only, never a blurred version of the real body or
+// photo: the API never sends locked posts' body/media_url to a non-subscriber, so there's
+// nothing real here to show a preview of.
+function LockedPostPreview({ hasTiers }) {
+  return (
+    <div className="relative mt-3 overflow-hidden rounded-xl">
+      <div
+        className="pointer-events-none h-28 w-full bg-gradient-to-br from-[#146359]/10 via-black/5 to-[#C9A961]/10 blur-[2px]"
+        aria-hidden="true"
+      />
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-white/40 text-center backdrop-blur-sm">
+        <span
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-sm shadow-sm"
+          aria-hidden="true"
+        >
+          🔒
+        </span>
+        <p className="text-xs font-medium text-black/60">
+          {hasTiers ? (
+            <a href="#tiers" className="text-[#146359] underline">
+              Subscribe to view this post
+            </a>
+          ) : (
+            'Subscribers only'
+          )}
+        </p>
+      </div>
     </div>
   );
 }
