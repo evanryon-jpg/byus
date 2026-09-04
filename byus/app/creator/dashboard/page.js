@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import VerifyEmailBanner from '../../components/VerifyEmailBanner';
+import EarningsSection from '../../components/EarningsSection';
 
 export default function CreatorDashboard() {
   const [user, setUser] = useState(null);
@@ -96,7 +97,7 @@ export default function CreatorDashboard() {
         {user?.stripe_connect_onboarded ? (
           <>
             <p className="mt-2 text-sm text-green-700">✓ Stripe connected — you're ready to earn.</p>
-            <FeeTierCard />
+            <EarningsSection />
           </>
         ) : (
           <>
@@ -128,54 +129,6 @@ export default function CreatorDashboard() {
           core setup flow above. Works independently of Stripe; the gating that decides
           who can watch is "any active subscriber," same rule as subscriber-only posts. */}
       <LiveStreamSection />
-    </div>
-  );
-}
-
-// Shows where a creator sits on ByUs's platform fee: 10% to start, dropping to 7% for
-// good once their lifetime earnings here cross $2,000. Self-fetching, like the page-URL
-// card below -- loads its own state on mount rather than threading it through the parent,
-// since nothing else on the dashboard needs this data.
-function FeeTierCard() {
-  const [data, setData] = useState(null);
-
-  useEffect(() => {
-    fetch('/api/creator/earnings')
-      .then((res) => (res.ok ? res.json() : null))
-      .then(setData)
-      .catch(() => setData(null));
-  }, []);
-
-  if (!data) return null;
-
-  const { lifetimeEarningsCents, feePercent, discountedFeePercent, thresholdCents } = data;
-  const alreadyDiscounted = feePercent <= discountedFeePercent;
-  const progress = Math.min(1, lifetimeEarningsCents / thresholdCents);
-
-  return (
-    <div className="mt-4 rounded-xl bg-black/[0.03] p-4">
-      {alreadyDiscounted ? (
-        <p className="text-sm text-[#146359]">
-          🎉 You've unlocked ByUs's lowest rate — {feePercent}% platform fee, for good.
-        </p>
-      ) : (
-        <>
-          <p className="text-sm text-black/60">
-            You're on the {feePercent}% starter rate. Once your lifetime earnings on ByUs
-            cross ${(thresholdCents / 100).toLocaleString()}, your fee drops to {discountedFeePercent}%
-            permanently — for every subscriber, not just new ones.
-          </p>
-          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-black/10">
-            <div
-              className="h-full rounded-full bg-[#146359] transition-all"
-              style={{ width: `${progress * 100}%` }}
-            />
-          </div>
-          <p className="mt-1 text-xs text-black/40">
-            ${(lifetimeEarningsCents / 100).toFixed(2)} of ${(thresholdCents / 100).toLocaleString()} earned
-          </p>
-        </>
-      )}
     </div>
   );
 }
