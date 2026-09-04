@@ -112,6 +112,11 @@ export default function CreatorDashboard() {
           </>
         )}
       </div>
+
+      {/* Live streaming — its own section since it's an optional extra, not part of the
+          core setup flow above. Works independently of Stripe; the gating that decides
+          who can watch is "any active subscriber," same rule as subscriber-only posts. */}
+      <LiveStreamSection />
     </div>
   );
 }
@@ -244,6 +249,148 @@ function PageUrlCard() {
       <p className="mt-2 text-xs text-black/40">
         3–30 characters — lowercase letters, numbers, and hyphens only.
       </p>
+    </div>
+  );
+}
+
+// Self-fetching, same pattern as PageUrlCard above. Sets up (once) a reusable Mux live
+// stream and shows the RTMP URL + stream key a creator pastes into OBS/streaming
+// software, plus whether they're currently live. Status comes from Mux webhooks
+// updating the DB in the background, so this polls lightly while mounted rather than
+// requiring a manual refresh every time a creator starts or stops streaming.
+function LiveStreamSection() {
+  const [data, setData] = useState(null);
+  const [settingUp, setSettingUp] = useState(false);
+  const [showKey, setShowKey] = useState(false);
+  const [copied, setCopied] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    load();
+    const interval = setInterval(load, 30000); // catches "went live" / "went offline" without a manual refresh
+    return () => clearInterval(interval);
+  }, []);
+
+  async function load() {
+    const res = await fetch('/api/creator/live');
+    if (res.ok) setData(await res.json());
+  }
+
+  async function handleSetUp() {
+    setSettingUp(true);
+    setError('');
+    try {
+      const res = await fetch('/api/creator/live', { method: 'POST' });
+      const result = await res.json();
+      if (!res.ok) {
+        setError(result.error || 'Could not set up live streaming.');
+        return;
+      }
+      setData((prev) => ({ ...prev, ...result }));
+    } catch {
+      setError('Network error — please try again.');
+    } finally {
+      setSettingUp(false);
+    }
+  }
+
+  async function handleCopy(label, value) {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(label);
+      setTimeout(() => setCopied(''), 2000);
+    } catch {
+      setError('Could not copy — select and copy it manually.');
+    }
+  }
+
+  if (!data) return null;
+
+  return (
+    <div className="mt-6 rounded-2xl border border-black/5 bg-white p-6">
+      <div className="flex items-center gap-2">
+        <h2 className="font-semibold">Live streaming</h2>
+        {data.isLive && (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600">
+            <span className="h-1.5 w-1.5 rounded-full bg-red-500 motion-safe:animate-pulse" aria-hidden="true" />
+            LIVE
+          </span>
+        )}
+      </div>
+      <p className="mt-1 text-sm text-black/50">
+        Stream from OBS (or any RTMP software) straight to your page — gated to your active
+        subscribers, the same as a subscriber-only post.
+      </p>
+
+      {!data.configured ? (
+        <button
+          type="button"
+          onClick={handleSetUp}
+          disabled={settingUp}
+          className="mt-4 rounded-full bg-[#146359] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#0f4d45] disabled:opacity-50"
+        >
+          {settingUp ? 'Setting up…' : 'Set up live streaming'}
+        </button>
+      ) : (
+        <div className="mt-4 space-y-3 text-sm">
+          <Field
+            label="Server (RTMP URL)"
+            value={data.rtmpUrl}
+            onCopy={() => handleCopy('url', data.rtmpUrl)}
+            copied={copied === 'url'}
+          />
+          <div>
+            <p className="mb-1 font-medium text-black/70">Stream key</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <code className="rounded-lg border border-black/10 bg-black/[0.02] px-3 py-2 text-xs text-black/70">
+                {showKey ? data.streamKey : '•'.repeat(24)}
+              </code>
+              <button
+                type="button"
+                onClick={() => setShowKey((s) => !s)}
+                className="text-xs font-medium text-[#146359] hover:text-[#0f4d45]"
+              >
+                {showKey ? 'Hide' : 'Show'}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleCopy('key', data.streamKey)}
+                className="rounded-full border border-[#146359] px-3 py-1.5 text-xs font-semibold text-[#146359] hover:bg-[#146359]/5"
+              >
+                {copied === 'key' ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+            <p className="mt-1 text-xs text-black/40">
+              Treat this like a password — anyone with it can stream to your page.
+            </p>
+          </div>
+          <p className="text-xs text-black/40">
+            Paste both into OBS under Settings → Stream → Custom. Your page shows "LIVE" within a
+            few seconds of you starting to stream, and switches back automatically when you stop.
+          </p>
+        </div>
+      )}
+      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+    </div>
+  );
+}
+
+function Field({ label, value, onCopy, copied }) {
+  return (
+    <div>
+      <p className="mb-1 font-medium text-black/70">{label}</p>
+      <div className="flex flex-wrap items-center gap-2">
+        <code className="rounded-lg border border-black/10 bg-black/[0.02] px-3 py-2 text-xs text-black/70">
+          {value}
+        </code>
+        <button
+          type="button"
+          onClick={onCopy}
+          className="rounded-full border border-[#146359] px-3 py-1.5 text-xs font-semibold text-[#146359] hover:bg-[#146359]/5"
+        >
+          {copied ? 'Copied!' : 'Copy'}
+        </button>
+      </div>
     </div>
   );
 }
