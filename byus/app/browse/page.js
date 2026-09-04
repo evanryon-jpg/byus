@@ -100,7 +100,7 @@ export default function BrowsePage({ searchParams }) {
         {creators.map((c) => (
           <li key={c.id}>
             <a
-              href={`/creator/${c.id}`}
+              href={`/creator/${c.slug || c.id}`}
               className="flex items-center gap-4 rounded-2xl border border-black/5 bg-white p-6 hover:border-[#146359]/30"
             >
               {c.profile_image_url ? (
