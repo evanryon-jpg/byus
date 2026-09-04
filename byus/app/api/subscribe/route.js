@@ -13,6 +13,7 @@ import { getCurrentUser } from '@/lib/session';
 import stripe from '@/lib/stripe';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { getReferralDiscount } from '@/lib/referrals';
+import { getPlatformMilestoneReductionPoints, applyPlatformMilestoneReduction } from '@/lib/fees';
 
 export async function POST(request) {
   const session = await getCurrentUser();
@@ -101,6 +102,12 @@ export async function POST(request) {
     // something faked client-side, so it shows up correctly on their invoice too.
     const discounts = await getReferralDiscount(session.userId);
 
+    // A brand-new subscription should bill at whatever ByUs is actually charging right
+    // now — the creator's personal tier minus any platform-wide milestone bonus already
+    // in effect — not their raw personal-tier number. See lib/fees.js.
+    const reductionPoints = await getPlatformMilestoneReductionPoints(query);
+    const effectiveFeePercent = applyPlatformMilestoneReduction(tier.platform_fee_percent, reductionPoints);
+
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: 'subscription',
       customer: customerId,
@@ -111,7 +118,7 @@ export async function POST(request) {
       cancel_url: `${origin}/creator/${tier.creator_id}`,
       ...(discounts ? { discounts } : {}),
       subscription_data: {
-        application_fee_percent: tier.platform_fee_percent,
+        application_fee_percent: effectiveFeePercent,
         transfer_data: {
           destination: tier.stripe_connect_account_id,
         },
