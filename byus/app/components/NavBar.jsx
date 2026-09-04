@@ -98,7 +98,11 @@ export default function NavBar() {
   );
 
   return (
-    <nav className="border-b border-black/5 bg-white">
+    // Sticky so the logo and the primary Log in/Sign up CTA stay reachable while
+    // scrolling a long page (the homepage, browse, a creator's post feed) instead
+    // of scrolling away with the content. z-50 keeps it above the mobile dropdown
+    // panel and anything else on the page.
+    <nav className="sticky top-0 z-50 border-b border-black/5 bg-white">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
         <a href="/" className="text-xl font-bold text-[#146359]" onClick={() => setMenuOpen(false)}>
           ByUs
