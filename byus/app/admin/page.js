@@ -53,7 +53,17 @@ export default function AdminPage() {
     return <div className="p-12 text-center text-black/40">Could not load the platform overview.</div>;
   }
 
-  const { creatorCount, fanCount, activeSubscriberCount, lifetimeGrossCents, lifetimePlatformFeeCents, monthly, creators } = data;
+  const {
+    creatorCount,
+    fanCount,
+    activeSubscriberCount,
+    lifetimeGrossCents,
+    lifetimePlatformFeeCents,
+    openDisputeCount,
+    monthly,
+    creators,
+    disputes,
+  } = data;
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-12">
@@ -65,7 +75,12 @@ export default function AdminPage() {
         <StatTile label="Gross processed, lifetime" value={formatCompactUSD(lifetimeGrossCents)} />
         <StatTile label="Creators" value={creatorCount.toLocaleString()} />
         <StatTile label="Fans" value={fanCount.toLocaleString()} />
-        <StatTile label="Active subscriptions" value={activeSubscriberCount.toLocaleString()} className="col-span-2 sm:col-span-1" />
+        <StatTile label="Active subscriptions" value={activeSubscriberCount.toLocaleString()} />
+        <StatTile
+          label="Open disputes"
+          value={openDisputeCount.toLocaleString()}
+          flag={openDisputeCount > 0}
+        />
       </div>
 
       <div className="mt-6 space-y-4">
@@ -91,6 +106,59 @@ export default function AdminPage() {
               hoverColor="#a5854a"
             />
           </ChartCard>
+        </div>
+      </div>
+
+      <div className="mt-8 rounded-2xl border border-black/5 bg-white p-6">
+        <h2 className="font-semibold">Disputes</h2>
+        <p className="mt-1 text-sm text-black/50">
+          A fan's bank disputing a charge — most need a response through Stripe's own dispute
+          flow before they're resolved one way or the other.
+        </p>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full min-w-[640px] border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-black/10 text-left text-xs font-medium uppercase tracking-wide text-black/40">
+                <th className="py-2 pr-4">Fan</th>
+                <th className="py-2 pr-4">Creator</th>
+                <th className="py-2 pr-4 text-right">Amount</th>
+                <th className="py-2 pr-4">Reason</th>
+                <th className="py-2 pr-4">Status</th>
+                <th className="py-2 pr-4">Opened</th>
+              </tr>
+            </thead>
+            <tbody>
+              {disputes.map((d) => (
+                <tr key={d.id} className="border-b border-black/5">
+                  <td className="py-2.5 pr-4">
+                    <div className="font-medium text-[#1A1A1A]">{d.fanName || 'Unknown fan'}</div>
+                    <div className="text-xs text-black/40">{d.fanEmail || '—'}</div>
+                  </td>
+                  <td className="py-2.5 pr-4">
+                    <div className="font-medium text-[#1A1A1A]">{d.creatorName || 'Unknown creator'}</div>
+                    <div className="text-xs text-black/40">{d.creatorEmail || '—'}</div>
+                  </td>
+                  <td className="py-2.5 pr-4 text-right font-medium text-[#1A1A1A]" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                    {formatUSD(d.amountCents)}
+                  </td>
+                  <td className="py-2.5 pr-4 text-black/60">{d.reason ? formatDisputeLabel(d.reason) : '—'}</td>
+                  <td className="py-2.5 pr-4">
+                    <DisputeStatusBadge status={d.status} />
+                  </td>
+                  <td className="py-2.5 pr-4 text-black/60">
+                    {new Date(d.openedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                  </td>
+                </tr>
+              ))}
+              {disputes.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="py-6 text-center text-black/40">
+                    No disputes — nothing to review.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -148,13 +216,48 @@ export default function AdminPage() {
   );
 }
 
-function StatTile({ label, value, hero, className = '' }) {
+// `flag`: this number is something the owner should actually go look at (e.g. one or
+// more open disputes) -- shifts the tile to a warm border/value color instead of the
+// neutral default, the same "don't make them hunt for it" reasoning as the dashboard's
+// other status pills.
+function StatTile({ label, value, hero, flag, className = '' }) {
   return (
-    <div className={`rounded-xl border border-black/5 bg-white p-4 ${className}`}>
+    <div
+      className={`rounded-xl border p-4 ${
+        flag ? 'border-amber-300/60 bg-amber-50' : 'border-black/5 bg-white'
+      } ${className}`}
+    >
       <p className="text-xs text-black/50">{label}</p>
-      <p className={`mt-1 font-semibold text-[#1A1A1A] ${hero ? 'text-2xl' : 'text-xl'}`}>{value}</p>
+      <p
+        className={`mt-1 font-semibold ${flag ? 'text-amber-700' : 'text-[#1A1A1A]'} ${
+          hero ? 'text-2xl' : 'text-xl'
+        }`}
+      >
+        {value}
+      </p>
     </div>
   );
+}
+
+// Stripe's raw dispute status strings ('needs_response', 'warning_under_review', etc.)
+// aren't something to show a human as-is. Won/lost/refunded are the terminal states
+// (color-coded so they read as resolved at a glance); everything else still needs
+// action, so it stays amber rather than trying to enumerate every in-between status.
+function DisputeStatusBadge({ status }) {
+  const terminal = {
+    won: { label: 'Won', className: 'bg-green-50 text-green-700' },
+    lost: { label: 'Lost', className: 'bg-red-50 text-red-700' },
+    charge_refunded: { label: 'Refunded', className: 'bg-black/5 text-black/50' },
+  };
+  const config = terminal[status] || { label: formatDisputeLabel(status), className: 'bg-amber-50 text-amber-700' };
+  return <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${config.className}`}>{config.label}</span>;
+}
+
+function formatDisputeLabel(value) {
+  return value
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }
 
 function ChartCard({ title, subtitle, children }) {
