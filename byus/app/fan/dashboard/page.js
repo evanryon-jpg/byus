@@ -7,22 +7,42 @@ export default function FanDashboard() {
   const [user, setUser] = useState(null);
   const [subs, setSubs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [billingLoading, setBillingLoading] = useState(false);
   const [billingError, setBillingError] = useState('');
 
   useEffect(() => {
-    (async () => {
+    load();
+  }, []);
+
+  async function load() {
+    setLoading(true);
+    setLoadError(false);
+    try {
       const meRes = await fetch('/api/me');
-      if (!meRes.ok) {
+      if (meRes.status === 401) {
         window.location.href = '/login';
+        return;
+      }
+      if (!meRes.ok) {
+        // A real failure (500, etc) — distinct from "not logged in" above. Booting a
+        // logged-in fan to /login over a transient server hiccup would be worse than
+        // just showing a retry option.
+        setLoadError(true);
         return;
       }
       setUser((await meRes.json()).user);
       const subsRes = await fetch('/api/fan/subscriptions');
       if (subsRes.ok) setSubs((await subsRes.json()).subscriptions);
+    } catch {
+      // fetch() itself can throw (offline, DNS failure, dropped connection) — without this
+      // catch, setLoading(false) below would never run and the page would be stuck on
+      // "Loading…" forever instead of showing a retry option.
+      setLoadError(true);
+    } finally {
       setLoading(false);
-    })();
-  }, []);
+    }
+  }
 
   async function handleManageBilling() {
     setBillingLoading(true);
@@ -43,6 +63,19 @@ export default function FanDashboard() {
   }
 
   if (loading) return <div className="p-12 text-center text-black/40">Loading…</div>;
+  if (loadError) {
+    return (
+      <div className="mx-auto flex max-w-md flex-col items-center px-6 py-24 text-center">
+        <p className="text-black/60">Couldn't load your dashboard. Check your connection and try again.</p>
+        <button
+          onClick={load}
+          className="mt-4 rounded-full bg-[#146359] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#0f4d45]"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
 
   const hasBillableSub = subs.length > 0;
 
