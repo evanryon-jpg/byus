@@ -20,6 +20,7 @@ function CreatorProfile() {
   const justSubscribed = searchParams.get('subscribed') === 'true';
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [subscribing, setSubscribing] = useState(null);
   const [subscribeError, setSubscribeError] = useState('');
 
@@ -29,19 +30,33 @@ function CreatorProfile() {
 
   async function load() {
     setLoading(true);
-    const res = await fetch(`/api/creators/${creatorId}`);
-    if (res.ok) {
-      const result = await res.json();
-      setData(result);
-      // Old/already-shared links use the raw UUID. Once a creator claims a short slug,
-      // quietly swap the address bar over to it — the UUID link keeps working (the API
-      // above still resolves it), this just steers everyone toward the short one going
-      // forward without breaking anything already out there.
-      if (result.creator?.slug && result.creator.slug !== creatorId) {
-        router.replace(`/creator/${result.creator.slug}`);
+    setLoadError(false);
+    try {
+      const res = await fetch(`/api/creators/${creatorId}`);
+      if (res.ok) {
+        const result = await res.json();
+        setData(result);
+        // Old/already-shared links use the raw UUID. Once a creator claims a short slug,
+        // quietly swap the address bar over to it — the UUID link keeps working (the API
+        // above still resolves it), this just steers everyone toward the short one going
+        // forward without breaking anything already out there.
+        if (result.creator?.slug && result.creator.slug !== creatorId) {
+          router.replace(`/creator/${result.creator.slug}`);
+        }
+      } else if (res.status !== 404) {
+        // A real failure (500, etc) is distinct from "this creator doesn't exist" below —
+        // conflating the two would tell a visitor "not found" for what's actually a
+        // transient server hiccup, with no way to tell they should just retry.
+        setLoadError(true);
       }
+    } catch {
+      // fetch() itself can throw (offline, DNS failure, dropped connection) — without this
+      // catch, setLoading(false) below would never run and the page would be stuck on
+      // "Loading…" forever instead of showing a retry option.
+      setLoadError(true);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   async function handleSubscribe(tierId) {
@@ -68,6 +83,19 @@ function CreatorProfile() {
   }
 
   if (loading) return <div className="p-12 text-center text-black/40">Loading…</div>;
+  if (loadError) {
+    return (
+      <div className="mx-auto flex max-w-md flex-col items-center px-6 py-24 text-center">
+        <p className="text-black/60">Couldn't load this page. Check your connection and try again.</p>
+        <button
+          onClick={load}
+          className="mt-4 rounded-full bg-[#146359] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#0f4d45]"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
   if (!data) return <div className="p-12 text-center text-black/40">Creator not found.</div>;
 
   const { creator, tiers, posts, hasActiveSubscription, live, topSupporters } = data;
