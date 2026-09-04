@@ -4,12 +4,27 @@
 import { Resend } from 'resend';
 
 const FROM_ADDRESS = 'ByUs <noreply@byusapp.com>';
+// Resend's batch endpoint caps a single call at 100 emails -- larger sends just make
+// more calls, chunked into groups this size.
+const BATCH_CHUNK_SIZE = 100;
 
 function getClient() {
   if (!process.env.RESEND_API_KEY) {
     throw new Error('Email is not configured (missing RESEND_API_KEY).');
   }
   return new Resend(process.env.RESEND_API_KEY);
+}
+
+// The subject/message here come straight from a creator's own form input and get
+// dropped into an HTML email -- escape it so a stray "<" or "&" can't break the
+// layout (or worse, inject markup) in every recipient's inbox.
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 export async function sendVerificationEmail(to, verifyUrl) {
@@ -57,4 +72,40 @@ export async function sendPasswordResetEmail(to, resetUrl) {
     console.error('Resend send failed:', error);
     throw new Error(error.message || 'Could not send the password reset email.');
   }
+}
+
+// Emails a creator's own free-text update to a list of subscriber addresses, one
+// individual email per recipient (never one email with everyone in "to" -- that would
+// leak every subscriber's address to every other one). Sent via the batch endpoint so
+// a list of any size still costs one request per 100 recipients instead of one per
+// person. Returns the number of recipients actually queued for delivery.
+export async function sendCreatorUpdateEmail(recipients, { creatorName, subject, message }) {
+  if (recipients.length === 0) return 0;
+  const resend = getClient();
+
+  const safeCreatorName = escapeHtml(creatorName);
+  const html = `
+    <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; color: #1A1A1A;">
+      <p style="color:#146359; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:16px;">
+        Update from ${safeCreatorName}
+      </p>
+      <div style="white-space:pre-wrap; line-height:1.6; font-size:15px;">${escapeHtml(message)}</div>
+      <p style="color:#999;font-size:12px;margin-top:32px;">
+        You're getting this because you're subscribed to ${safeCreatorName} on ByUs.
+      </p>
+    </div>
+  `;
+
+  for (let i = 0; i < recipients.length; i += BATCH_CHUNK_SIZE) {
+    const chunk = recipients.slice(i, i + BATCH_CHUNK_SIZE);
+    const { error } = await resend.batch.send(
+      chunk.map((to) => ({ from: FROM_ADDRESS, to, subject, html }))
+    );
+    if (error) {
+      console.error('Resend batch send failed:', error);
+      throw new Error(error.message || 'Could not send the update email.');
+    }
+  }
+
+  return recipients.length;
 }
