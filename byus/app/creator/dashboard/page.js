@@ -318,8 +318,25 @@ function LiveStreamSection() {
         )}
       </div>
       <p className="mt-1 text-sm text-black/50">
-        Stream from OBS (or any RTMP software) straight to your page — gated to your active
-        subscribers, the same as a subscriber-only post.
+        Go live from your camera or screen using free streaming software — it shows up on your
+        page in real time, gated to your active subscribers, the same as a subscriber-only post.
+      </p>
+
+      {/* Most creators land here having never used streaming software before, so name the
+          tool, say what it is in one line, and hand them a download link before asking them
+          to do anything else. */}
+      <p className="mt-2 rounded-xl bg-black/[0.03] px-3 py-2 text-xs text-black/50">
+        Don't have streaming software yet? We recommend{' '}
+        <a
+          href="https://obsproject.com/download"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-[#146359] underline"
+        >
+          OBS Studio
+        </a>{' '}
+        — it's free and works on Mac, Windows, and Linux. It lets you point your camera, screen,
+        or both at a live broadcast and send it to your page.
       </p>
 
       {!data.configured ? (
@@ -332,9 +349,25 @@ function LiveStreamSection() {
           {settingUp ? 'Setting up…' : 'Set up live streaming'}
         </button>
       ) : (
-        <div className="mt-4 space-y-3 text-sm">
+        <div className="mt-4 space-y-4 text-sm">
+          {/* The two values below are meaningless out of context to a first-time streamer, so
+              lead with the numbered steps that tell them exactly where each one goes, instead
+              of assuming they already know what "Server" and "Stream key" refer to. */}
+          <ol className="list-decimal space-y-1.5 rounded-xl border border-black/5 bg-black/[0.02] px-4 py-3 pl-8 text-xs text-black/60 marker:text-black/30">
+            <li>Open OBS (or your streaming app) and go to Settings → Stream.</li>
+            <li>
+              Set "Service" to <span className="font-medium text-black/70">Custom</span>.
+            </li>
+            <li>Copy the Server and Stream Key below into the matching fields.</li>
+            <li>Click "Start Streaming" in OBS.</li>
+            <li>
+              Your page shows <span className="font-medium text-black/70">LIVE</span> within a
+              few seconds — no need to refresh, and it switches back automatically when you stop.
+            </li>
+          </ol>
+
           <Field
-            label="Server (RTMP URL)"
+            label="Server"
             value={data.rtmpUrl}
             onCopy={() => handleCopy('url', data.rtmpUrl)}
             copied={copied === 'url'}
@@ -364,10 +397,6 @@ function LiveStreamSection() {
               Treat this like a password — anyone with it can stream to your page.
             </p>
           </div>
-          <p className="text-xs text-black/40">
-            Paste both into OBS under Settings → Stream → Custom. Your page shows "LIVE" within a
-            few seconds of you starting to stream, and switches back automatically when you stop.
-          </p>
         </div>
       )}
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
