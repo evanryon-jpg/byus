@@ -43,7 +43,8 @@ function Hero({ user }) {
 
         <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-black/60">
           Type a creator's name below, or set up your own page in a couple of minutes.
-          Creators keep 90% of every payment — a flat 10% fee, nothing hidden.
+          Creators keep 90% of every payment to start — and 93% for good once they've
+          grown with us. Nothing hidden.
         </p>
 
         <CreatorSearch />
@@ -64,7 +65,7 @@ function Hero({ user }) {
         </div>
 
         <p className="mt-8 text-sm text-black/45">
-          90% direct payouts&nbsp;&nbsp;·&nbsp;&nbsp;flat 10% fee&nbsp;&nbsp;·&nbsp;&nbsp;cancel anytime
+          90%+ direct payouts&nbsp;&nbsp;·&nbsp;&nbsp;fee drops as you grow&nbsp;&nbsp;·&nbsp;&nbsp;cancel anytime
         </p>
 
         <AvatarCluster />
@@ -105,8 +106,8 @@ function AvatarCluster() {
 
 function StatsBand() {
   const stats = [
-    { value: '90%', label: 'kept by the creator, every renewal' },
-    { value: '10%', label: 'flat platform fee — nothing hidden' },
+    { value: '90%', label: "kept by the creator, every renewal — 93% once they've grown with us" },
+    { value: '10% → 7%', label: 'platform fee, drops for good as a creator grows — nothing hidden' },
     { value: '$0', label: 'to start; no listing or setup cost' },
   ];
   return (
@@ -131,8 +132,7 @@ function Features() {
           Everything a membership needs, nothing it doesn&rsquo;t
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-black/55">
-          No churn dashboards to configure, no fee tiers to decode — just the parts that
-          make a subscription work.
+          No churn dashboards to configure — just the parts that make a subscription work.
         </p>
       </div>
 
@@ -141,7 +141,7 @@ function Features() {
           icon={<PayoutIcon />}
           accent="teal"
           title="Direct payouts"
-          body="Each creator connects their own Stripe Express account and receives 90% of every charge, automatically, on every renewal."
+          body="Each creator connects their own Stripe Express account and receives 90% of every charge automatically — rising to 93% for good once they've grown with us."
         />
         <Feature
           icon={<TiersIcon />}
