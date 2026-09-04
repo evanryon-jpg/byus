@@ -264,6 +264,9 @@ function ClosingCta({ user }) {
             Browse creators
           </a>
         </div>
+        {!user && (
+          <p className="mt-5 text-xs text-white/50">🔒 Payments secured by Stripe</p>
+        )}
       </div>
     </section>
   );
