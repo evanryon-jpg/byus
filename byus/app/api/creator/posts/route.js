@@ -7,6 +7,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { getPollVoteCounts, buildPollPayload } from '@/lib/polls';
+import { sendNewPostEmail } from '@/lib/email';
 
 const TITLE_MAX = 200;
 const BODY_MAX = 20000;
@@ -125,6 +126,17 @@ export async function POST(request) {
     );
 
     const post = result.rows[0];
+
+    // Best-effort — a notification failure should never mean the post itself didn't get
+    // created. Goes out to every active subscriber who hasn't turned this off, regardless
+    // of whether the post is public or subscribers-only (they're already paying to stay
+    // in the loop either way, same audience the broadcast feature uses).
+    try {
+      await notifySubscribersOfNewPost(session.userId, post);
+    } catch (err) {
+      console.error('New-post notification failed (post still created):', err);
+    }
+
     return NextResponse.json({
       post: {
         ...post,
@@ -139,4 +151,32 @@ export async function POST(request) {
       { status: 500 }
     );
   }
+}
+
+async function notifySubscribersOfNewPost(creatorId, post) {
+  const [creatorResult, subscribersResult] = await Promise.all([
+    query('SELECT display_name, slug FROM users WHERE id = $1', [creatorId]),
+    query(
+      `SELECT u.email FROM subscriptions s
+       JOIN users u ON u.id = s.fan_id
+       WHERE s.creator_id = $1 AND s.status = 'active'
+         AND (s.current_period_end IS NULL OR s.current_period_end > now())
+         AND u.notify_new_posts = true`,
+      [creatorId]
+    ),
+  ]);
+
+  const recipients = subscribersResult.rows.map((row) => row.email).filter(Boolean);
+  if (recipients.length === 0) return;
+
+  const creator = creatorResult.rows[0];
+  const creatorName = creator?.display_name || 'Your creator';
+  const creatorUrl = `${process.env.APP_URL}/creator/${creator?.slug || creatorId}`;
+
+  await sendNewPostEmail(recipients, {
+    creatorName,
+    creatorUrl,
+    postTitle: post.title,
+    postExcerpt: post.body,
+  });
 }
