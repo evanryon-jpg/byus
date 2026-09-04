@@ -66,6 +66,11 @@ export default function NavBar() {
           <a href="/settings" className="block hover:text-[#146359]" onClick={() => setMenuOpen(false)}>
             Settings
           </a>
+          {user?.is_admin && (
+            <a href="/admin" className="block hover:text-[#146359]" onClick={() => setMenuOpen(false)}>
+              Admin
+            </a>
+          )}
           <button
             type="button"
             onClick={handleLogout}
