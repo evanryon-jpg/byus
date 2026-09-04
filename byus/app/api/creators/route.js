@@ -36,7 +36,7 @@ export async function GET(request) {
 
     const [creatorsResult, tagsResult] = await Promise.all([
       query(
-        `SELECT id, display_name, bio, profile_image_url, tags
+        `SELECT id, display_name, bio, profile_image_url, tags, slug
          FROM users WHERE ${conditions.join(' AND ')} ORDER BY created_at DESC`,
         values
       ),
