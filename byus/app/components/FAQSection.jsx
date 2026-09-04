@@ -9,8 +9,8 @@ import { useState } from 'react';
 // answers are plain text so search engines and no-JS visitors still get them.
 const FAQS = [
   {
-    q: 'How does the 90/10 split actually work?',
-    a: "Creators keep 90% of every payment a fan sends, paid straight into the creator's own Stripe account. ByUs takes a flat 10% platform fee — no extra processing, currency conversion, or payout charges stacked on top of that.",
+    q: 'How does the platform fee work?',
+    a: "Creators keep 90% of every payment a fan sends, paid straight into the creator's own Stripe account. ByUs's fee starts at 10% and drops permanently to 7% once a creator's lifetime earnings on ByUs pass $2,000 — no extra processing, currency conversion, or payout charges stacked on top of that.",
   },
   {
     q: 'When and how do creators get paid?',
@@ -26,7 +26,7 @@ const FAQS = [
   },
   {
     q: 'Does it cost anything to become a creator?',
-    a: "No. Setting up a page is free, with no listing or setup fee. ByUs only makes money through the 10% fee, and only when a creator actually gets paid.",
+    a: "No. Setting up a page is free, with no listing or setup fee. ByUs only makes money through its platform fee (10%, dropping to 7% for good as a creator grows), and only when a creator actually gets paid.",
   },
   {
     q: 'Can a creator offer more than one tier?',
