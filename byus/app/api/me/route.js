@@ -63,7 +63,7 @@ export async function GET() {
   try {
     const result = await query(
       `SELECT id, email, role, display_name, bio, profile_image_url,
-              stripe_connect_onboarded, tags, email_verified
+              stripe_connect_onboarded, tags, email_verified, platform_fee_percent
        FROM users WHERE id = $1`,
       [session.userId]
     );
@@ -135,7 +135,7 @@ export async function PATCH(request) {
     values.push(session.userId);
     const result = await query(
       `UPDATE users SET ${fields.join(', ')} WHERE id = $${i}
-       RETURNING id, email, role, display_name, bio, profile_image_url, stripe_connect_onboarded, tags, email_verified`,
+       RETURNING id, email, role, display_name, bio, profile_image_url, stripe_connect_onboarded, tags, email_verified, platform_fee_percent`,
       values
     );
 
