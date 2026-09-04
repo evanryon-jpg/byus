@@ -70,7 +70,7 @@ function CreatorProfile() {
   if (loading) return <div className="p-12 text-center text-black/40">Loading…</div>;
   if (!data) return <div className="p-12 text-center text-black/40">Creator not found.</div>;
 
-  const { creator, tiers, posts, hasActiveSubscription, live } = data;
+  const { creator, tiers, posts, hasActiveSubscription, live, topSupporters } = data;
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
@@ -112,6 +112,8 @@ function CreatorProfile() {
           ))}
         </div>
       )}
+
+      <TopSupporters supporters={topSupporters} hasTiers={tiers.length > 0} />
 
       {/* Live stream — sits above tiers/feed since "live right now" is the single most
           time-sensitive thing on this page when it's true. */}
@@ -232,6 +234,75 @@ function CreatorProfile() {
       </ul>
     </div>
   );
+}
+
+// Top supporters: the longest-tenured active subscribers who've chosen to be shown here
+// (show_support_publicly, off by default -- see Settings). Ranked by how long they've
+// supported this creator, not by how much they've paid -- a founding-member feel rather
+// than a spending leaderboard. When nobody has opted in yet -- whether because there are
+// no subscribers at all, or there are but none have turned this on -- this shows an open
+// invite slot instead of just disappearing, so a brand-new creator's page still has
+// somewhere for their first supporter to show up. The invite copy deliberately doesn't
+// claim "no one has subscribed yet" (that could be false); it only ever claims the slot
+// itself is open.
+function TopSupporters({ supporters, hasTiers }) {
+  const hasSupporters = supporters && supporters.length > 0;
+
+  return (
+    <div className="mt-8 flex items-center gap-4 rounded-2xl border border-black/5 bg-white p-4">
+      <div className="flex -space-x-3">
+        {hasSupporters ? (
+          supporters.map((s) => (
+            <div key={s.id} title={`${s.displayName || 'A supporter'} — since ${formatMonthYear(s.since)}`}>
+              {s.profileImageUrl ? (
+                <Image
+                  src={s.profileImageUrl}
+                  alt={`${s.displayName || 'A supporter'}'s profile photo`}
+                  width={40}
+                  height={40}
+                  className="h-10 w-10 rounded-full border-2 border-white object-cover"
+                />
+              ) : (
+                <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-[#146359]/10 text-sm font-semibold text-[#146359]">
+                  {(s.displayName || '?').trim().charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
+          ))
+        ) : (
+          <div
+            className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-dashed border-black/20 text-black/30"
+            aria-hidden="true"
+          >
+            +
+          </div>
+        )}
+      </div>
+      <div className="min-w-0">
+        <p className="text-sm font-semibold text-[#1A1A1A]">Top supporters</p>
+        <p className="text-xs text-black/50">
+          {hasSupporters
+            ? `${supporters.length} supporter${supporters.length === 1 ? '' : 's'} shown here by their own choice.`
+            : hasTiers ? (
+              <>
+                This spot is open —{' '}
+                <a href="#tiers" className="text-[#146359] underline">
+                  be the first supporter shown here
+                </a>
+                .
+              </>
+            ) : (
+              'This spot is open for this creator’s first supporter.'
+            )}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function formatMonthYear(dateString) {
+  if (!dateString) return 'recently';
+  return new Date(dateString).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
 }
 
 // Votes before results: anyone who hasn't voted yet sees plain option buttons; once
