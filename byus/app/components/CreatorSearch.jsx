@@ -106,7 +106,7 @@ export default function CreatorSearch() {
             results.map((c) => (
               <a
                 key={c.id}
-                href={`/creator/${c.id}`}
+                href={`/creator/${c.slug || c.id}`}
                 className="flex items-center gap-3 px-6 py-3 transition hover:bg-brand-teal/5"
               >
                 {c.profile_image_url ? (
