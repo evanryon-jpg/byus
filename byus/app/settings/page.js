@@ -34,6 +34,7 @@ export default function SettingsPage() {
 
       <AvatarCard user={user} onChanged={(profile_image_url) => setUser({ ...user, profile_image_url })} />
       <ProfileCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
+      <NotificationsCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
       <ReferralCard />
       <PasswordCard />
     </div>
@@ -196,6 +197,61 @@ function ProfileCard({ user, onChanged }) {
           )}
         </div>
       </form>
+    </section>
+  );
+}
+
+// New-post email notifications only ever go to fans (creators don't get emailed about
+// their own posts), so this only shows for that role — a creator would have no use for
+// a toggle that controls nothing on their account.
+function NotificationsCard({ user, onChanged }) {
+  const [enabled, setEnabled] = useState(user.notify_new_posts !== false);
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState(null);
+
+  if (user.role !== 'fan') return null;
+
+  async function handleToggle() {
+    const next = !enabled;
+    setEnabled(next); // optimistic — this is a single boolean, not worth a pending state
+    setSaving(true);
+    setStatus(null);
+    try {
+      const res = await fetch('/api/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notify_new_posts: next }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Could not save this setting.');
+      onChanged(result.user);
+    } catch (err) {
+      setEnabled(!next); // revert on failure
+      setStatus({ type: 'error', text: err.message || 'Could not save this setting.' });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <section className="mt-6 rounded-2xl border border-black/5 bg-white p-6">
+      <h2 className="font-semibold">Notifications</h2>
+      <label className="mt-4 flex items-center justify-between gap-4">
+        <span>
+          <span className="block text-sm font-medium text-[#1A1A1A]">New post emails</span>
+          <span className="mt-0.5 block text-xs text-black/50">
+            Get an email when a creator you're subscribed to publishes something new.
+          </span>
+        </span>
+        <input
+          type="checkbox"
+          checked={enabled}
+          disabled={saving}
+          onChange={handleToggle}
+          className="h-5 w-5 shrink-0 accent-[#146359]"
+        />
+      </label>
+      {status && <p className="mt-2 text-xs text-red-600">{status.text}</p>}
     </section>
   );
 }
