@@ -13,14 +13,21 @@ export async function GET(request, { params }) {
   const session = await getCurrentUser(); // may be null if the visitor isn't logged in — that's fine
 
   try {
+    // Links can point at a creator by their raw UUID (old/already-shared links, or any
+    // creator who hasn't claimed a vanity URL) or by their slug (new short links). A UUID
+    // always matches the id column directly; anything else can only ever be a slug.
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(creatorId);
     const creatorResult = await query(
-      `SELECT id, display_name, bio, profile_image_url, social_links FROM users WHERE id = $1 AND role = 'creator'`,
+      isUuid
+        ? `SELECT id, display_name, bio, profile_image_url, social_links, slug FROM users WHERE id = $1 AND role = 'creator'`
+        : `SELECT id, display_name, bio, profile_image_url, social_links, slug FROM users WHERE slug = $1 AND role = 'creator'`,
       [creatorId]
     );
     const creatorRow = creatorResult.rows[0];
     if (!creatorRow) {
       return NextResponse.json({ error: 'Creator not found.' }, { status: 404 });
     }
+    const id = creatorRow.id; // resolved UUID — everything below queries by this, not the raw param
     // profile_image_url in the DB is a private Blob pathname — point the
     // client at our own public proxy route instead of exposing it directly.
     const creator = {
@@ -32,7 +39,7 @@ export async function GET(request, { params }) {
     const tiersResult = await query(
       `SELECT id, name, description, price_cents FROM subscription_tiers
        WHERE creator_id = $1 AND active = true ORDER BY price_cents ASC`,
-      [creatorId]
+      [id]
     );
 
     // Does the visitor have an active subscription to THIS creator?
@@ -45,7 +52,7 @@ export async function GET(request, { params }) {
         `SELECT id FROM subscriptions
          WHERE fan_id = $1 AND creator_id = $2 AND status = 'active'
            AND (current_period_end IS NULL OR current_period_end > now())`,
-        [session.userId, creatorId]
+        [session.userId, id]
       );
       hasActiveSubscription = subResult.rows.length > 0;
     }
@@ -53,7 +60,7 @@ export async function GET(request, { params }) {
     const postsResult = await query(
       `SELECT id, title, body, media_url, visibility, created_at
        FROM posts WHERE creator_id = $1 ORDER BY created_at DESC`,
-      [creatorId]
+      [id]
     );
 
     // Gate content here, server-side — never trust the client to hide this on its own.
