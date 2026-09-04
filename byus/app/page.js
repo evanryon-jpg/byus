@@ -2,6 +2,8 @@ import { getCurrentUser } from '@/lib/session';
 import FAQSection from './components/FAQSection';
 import CreatorSearch from './components/CreatorSearch';
 import PlatformGoalGauge from './components/PlatformGoalGauge';
+import FeaturedCreators from './components/FeaturedCreators';
+import EarningsCalculator from './components/EarningsCalculator';
 
 // Server component so the hero and closing CTAs can tell whether someone is already
 // logged in -- an existing creator or fan should never be invited to sign up again,
@@ -12,7 +14,9 @@ export default async function HomePage() {
   return (
     <div>
       <Hero user={session} />
+      <FeaturedCreators />
       <StatsBand />
+      <EarningsCalculator />
       <PlatformGoalGauge />
       <Features />
       <HowItWorks />
@@ -109,7 +113,10 @@ function AvatarCluster() {
 function StatsBand() {
   const stats = [
     { value: '90%', label: "kept by the creator, every renewal — 93% once they've grown with us" },
-    { value: '10% → 7%', label: 'platform fee, drops for good as a creator grows — nothing hidden' },
+    {
+      value: '10% → 7%',
+      label: 'platform fee — drops for good after $2,000 lifetime earnings; Stripe’s own processing comes out of our cut, never billed to you separately',
+    },
     { value: '$0', label: 'to start; no listing or setup cost' },
   ];
   return (
