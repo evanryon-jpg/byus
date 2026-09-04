@@ -12,6 +12,7 @@ export default function CreatorDashboard() {
   const [posts, setPosts] = useState([]);
   const [links, setLinks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [connecting, setConnecting] = useState(false);
 
   useEffect(() => {
@@ -20,23 +21,39 @@ export default function CreatorDashboard() {
 
   async function load() {
     setLoading(true);
-    const meRes = await fetch('/api/me');
-    if (!meRes.ok) {
-      window.location.href = '/login';
-      return;
-    }
-    const { user } = await meRes.json();
-    setUser(user);
+    setLoadError(false);
+    try {
+      const meRes = await fetch('/api/me');
+      if (meRes.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
+      if (!meRes.ok) {
+        // A real failure (500, etc) — distinct from "not logged in" above. Booting a
+        // logged-in creator to /login over a transient server hiccup would be worse than
+        // just showing a retry option.
+        setLoadError(true);
+        return;
+      }
+      const { user } = await meRes.json();
+      setUser(user);
 
-    const [tiersRes, postsRes, linksRes] = await Promise.all([
-      fetch('/api/creator/tiers'),
-      fetch('/api/creator/posts'),
-      fetch('/api/creator/links'),
-    ]);
-    if (tiersRes.ok) setTiers((await tiersRes.json()).tiers);
-    if (postsRes.ok) setPosts((await postsRes.json()).posts);
-    if (linksRes.ok) setLinks((await linksRes.json()).links);
-    setLoading(false);
+      const [tiersRes, postsRes, linksRes] = await Promise.all([
+        fetch('/api/creator/tiers'),
+        fetch('/api/creator/posts'),
+        fetch('/api/creator/links'),
+      ]);
+      if (tiersRes.ok) setTiers((await tiersRes.json()).tiers);
+      if (postsRes.ok) setPosts((await postsRes.json()).posts);
+      if (linksRes.ok) setLinks((await linksRes.json()).links);
+    } catch {
+      // fetch() itself can throw (offline, DNS failure, dropped connection) — without this
+      // catch, setLoading(false) below would never run and the page would be stuck on
+      // "Loading…" forever instead of showing a retry option.
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleConnectStripe() {
@@ -52,6 +69,19 @@ export default function CreatorDashboard() {
   }
 
   if (loading) return <div className="p-12 text-center text-black/40">Loading…</div>;
+  if (loadError) {
+    return (
+      <div className="mx-auto flex max-w-md flex-col items-center px-6 py-24 text-center">
+        <p className="text-black/60">Couldn't load your dashboard. Check your connection and try again.</p>
+        <button
+          onClick={load}
+          className="mt-4 rounded-full bg-[#146359] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#0f4d45]"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
 
   const stripeConnected = Boolean(user?.stripe_connect_onboarded);
   const hasTier = tiers.length > 0;
