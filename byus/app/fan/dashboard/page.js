@@ -77,7 +77,7 @@ export default function FanDashboard() {
         {subs.map((s) => (
           <li key={s.id}>
             <a
-              href={`/creator/${s.creator_id}`}
+              href={`/creator/${s.creator_slug || s.creator_id}`}
               className="flex items-center justify-between rounded-2xl border border-black/5 bg-white p-5 hover:border-[#146359]/30"
             >
               <div>
