@@ -29,7 +29,17 @@ function CreatorProfile() {
   async function load() {
     setLoading(true);
     const res = await fetch(`/api/creators/${creatorId}`);
-    if (res.ok) setData(await res.json());
+    if (res.ok) {
+      const result = await res.json();
+      setData(result);
+      // Old/already-shared links use the raw UUID. Once a creator claims a short slug,
+      // quietly swap the address bar over to it — the UUID link keeps working (the API
+      // above still resolves it), this just steers everyone toward the short one going
+      // forward without breaking anything already out there.
+      if (result.creator?.slug && result.creator.slug !== creatorId) {
+        router.replace(`/creator/${result.creator.slug}`);
+      }
+    }
     setLoading(false);
   }
 
