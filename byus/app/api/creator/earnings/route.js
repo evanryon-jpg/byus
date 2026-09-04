@@ -1,15 +1,22 @@
 export const dynamic = 'force-dynamic';
 
 // GET /api/creator/earnings
-// Read-only summary of the logged-in creator's lifetime gross revenue on ByUs and where
-// that puts them on the platform fee tier — powers the small progress indicator on the
-// creator dashboard. Purely informational: the actual fee (and the moment it drops) is
-// decided in lib/fees.js, triggered off real Stripe payments in the webhook, never here.
+// The creator's real earnings view: lifetime gross/net revenue, where that puts them on
+// the platform fee tier, current active subscriber count, and a 12-month trailing series
+// (gross, net, and new subscribers per month) for the dashboard's charts. Purely
+// informational — the actual fee (and the moment it drops) is decided in lib/fees.js,
+// triggered off real Stripe payments in the webhook, never here.
+//
+// Net-per-month uses fee_percent_applied, the rate that actually applied to each invoice
+// at the time it was paid (see lib/fees.js) — not the creator's current rate — so a past
+// month's net figure never shifts just because the creator's fee later dropped.
 
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { STANDARD_FEE_PERCENT, DISCOUNTED_FEE_PERCENT, FEE_DISCOUNT_THRESHOLD_CENTS } from '@/lib/stripe';
+
+const MONTHS_OF_HISTORY = 12;
 
 export async function GET() {
   const session = await getCurrentUser();
@@ -18,19 +25,73 @@ export async function GET() {
   }
 
   try {
-    const [feeResult, earningsResult] = await Promise.all([
+    const [feeResult, lifetimeResult, subscriberResult, monthlyResult] = await Promise.all([
       query('SELECT platform_fee_percent FROM users WHERE id = $1', [session.userId]),
       query(
-        'SELECT COALESCE(SUM(amount_cents), 0)::bigint AS total FROM creator_earnings WHERE creator_id = $1',
+        `SELECT
+           COALESCE(SUM(amount_cents), 0)::bigint AS gross_cents,
+           COALESCE(ROUND(SUM(amount_cents * (100 - fee_percent_applied)) / 100.0), 0)::bigint AS net_cents
+         FROM creator_earnings
+         WHERE creator_id = $1`,
         [session.userId]
+      ),
+      query(`SELECT COUNT(*)::int AS count FROM subscriptions WHERE creator_id = $1 AND status = 'active'`, [
+        session.userId,
+      ]),
+      // Zero-filled trailing 12 months (oldest first), even for a creator with no rows yet
+      // — the chart always gets a full, evenly-spaced x-axis to render against.
+      query(
+        `WITH months AS (
+           SELECT date_trunc('month', now()) - (n || ' months')::interval AS month_start
+           FROM generate_series(0, $2::int - 1) AS n
+         ),
+         earnings_by_month AS (
+           SELECT
+             date_trunc('month', created_at) AS month_start,
+             SUM(amount_cents) AS gross_cents,
+             ROUND(SUM(amount_cents * (100 - fee_percent_applied)) / 100.0) AS net_cents
+           FROM creator_earnings
+           WHERE creator_id = $1
+             AND created_at >= date_trunc('month', now()) - ($2::int - 1 || ' months')::interval
+           GROUP BY 1
+         ),
+         subs_by_month AS (
+           SELECT date_trunc('month', created_at) AS month_start, COUNT(*) AS new_subscribers
+           FROM subscriptions
+           WHERE creator_id = $1
+             AND created_at >= date_trunc('month', now()) - ($2::int - 1 || ' months')::interval
+           GROUP BY 1
+         )
+         SELECT
+           to_char(m.month_start, 'YYYY-MM') AS month,
+           COALESCE(e.gross_cents, 0)::bigint AS gross_cents,
+           COALESCE(e.net_cents, 0)::bigint AS net_cents,
+           COALESCE(s.new_subscribers, 0)::bigint AS new_subscribers
+         FROM months m
+         LEFT JOIN earnings_by_month e ON e.month_start = m.month_start
+         LEFT JOIN subs_by_month s ON s.month_start = m.month_start
+         ORDER BY m.month_start ASC`,
+        [session.userId, MONTHS_OF_HISTORY]
       ),
     ]);
 
+    const monthly = monthlyResult.rows.map((row) => ({
+      month: row.month,
+      grossCents: Number(row.gross_cents),
+      netCents: Number(row.net_cents),
+      newSubscribers: Number(row.new_subscribers),
+    }));
+
     return NextResponse.json({
-      lifetimeEarningsCents: Number(earningsResult.rows[0].total),
       feePercent: feeResult.rows[0]?.platform_fee_percent ?? STANDARD_FEE_PERCENT,
       discountedFeePercent: DISCOUNTED_FEE_PERCENT,
       thresholdCents: FEE_DISCOUNT_THRESHOLD_CENTS,
+      lifetimeGrossCents: Number(lifetimeResult.rows[0].gross_cents),
+      lifetimeNetCents: Number(lifetimeResult.rows[0].net_cents),
+      // Kept for backward compatibility with anything still reading the old field name.
+      lifetimeEarningsCents: Number(lifetimeResult.rows[0].gross_cents),
+      activeSubscriberCount: subscriberResult.rows[0]?.count ?? 0,
+      monthly,
     });
   } catch (err) {
     console.error('creator/earnings GET failed:', err);
