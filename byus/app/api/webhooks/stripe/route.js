@@ -17,7 +17,18 @@ export const dynamic = 'force-dynamic';
 // Setup: in the Stripe Dashboard, add a "Your account"-scoped webhook endpoint pointing to
 //   https://yourdomain.com/api/webhooks/stripe
 // and subscribe it to: checkout.session.completed, customer.subscription.deleted,
-// customer.subscription.updated, invoice.payment_failed, invoice.payment_succeeded
+// customer.subscription.updated, invoice.payment_failed, invoice.payment_succeeded,
+// charge.dispute.created, charge.dispute.closed
+//
+// charge.dispute.created / charge.dispute.closed: a fan's bank disputing a charge (a
+// chargeback) is otherwise invisible to this app -- Stripe knows immediately, but nothing
+// previously told our database, so a disputed subscription just sat there marked 'active'
+// forever with no record anything was wrong. These log every dispute into
+// `stripe_disputes` (linked back to the subscription/creator/fan where resolvable) so it
+// shows up on the admin overview instead of silently existing only in the Stripe
+// Dashboard. Deliberately does NOT auto-cancel the subscription on its own -- a dispute
+// can still be won, and Stripe already sends its own customer.subscription.updated /
+// .deleted events if the subscription's status actually changes as a result.
 //
 // invoice.payment_succeeded also does double duty as the platform's earnings ledger and
 // tiered-fee trigger — see lib/fees.js. Every successful invoice (the first one included,
@@ -71,6 +82,24 @@ export async function POST(request) {
     if (event.type === 'invoice.payment_succeeded' && event.data.object.subscription) {
       const invoiceSubscription = await stripe.subscriptions.retrieve(event.data.object.subscription);
       invoiceCreatorId = invoiceSubscription.metadata?.creator_id || null;
+    }
+
+    // A Dispute object only carries a charge ID, not which subscription (and therefore
+    // which creator/fan) it belongs to -- resolve that by walking charge -> invoice ->
+    // subscription, same "do the Stripe round trips before opening a DB transaction"
+    // reasoning as above. Best-effort: if any lookup fails or this charge simply isn't
+    // tied to a subscription, the dispute still gets recorded below, just without a link.
+    let disputeSubscriptionStripeId = null;
+    if (event.type === 'charge.dispute.created') {
+      try {
+        const charge = await stripe.charges.retrieve(event.data.object.charge);
+        if (charge.invoice) {
+          const invoice = await stripe.invoices.retrieve(charge.invoice);
+          disputeSubscriptionStripeId = invoice.subscription || null;
+        }
+      } catch (err) {
+        console.error('Could not resolve subscription for disputed charge:', err);
+      }
     }
 
     // Set inside the transaction below (only when this invoice just crossed a creator over
@@ -234,6 +263,60 @@ export async function POST(request) {
               platformMilestoneCrossed = true;
             }
           }
+          break;
+        }
+
+        case 'charge.dispute.created': {
+          const dispute = event.data.object;
+          let subscriptionId = null;
+          let creatorId = null;
+          let fanId = null;
+          if (disputeSubscriptionStripeId) {
+            const subResult = await client.query(
+              `SELECT id, creator_id, fan_id FROM subscriptions WHERE stripe_subscription_id = $1`,
+              [disputeSubscriptionStripeId]
+            );
+            const sub = subResult.rows[0];
+            if (sub) {
+              subscriptionId = sub.id;
+              creatorId = sub.creator_id;
+              fanId = sub.fan_id;
+            }
+          }
+          await client.query(
+            `INSERT INTO stripe_disputes
+               (stripe_dispute_id, stripe_charge_id, subscription_id, creator_id, fan_id,
+                amount_cents, currency, reason, status, opened_at, stripe_event_created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, to_timestamp($10), to_timestamp($10))
+             ON CONFLICT (stripe_dispute_id) DO NOTHING`,
+            [
+              dispute.id,
+              dispute.charge,
+              subscriptionId,
+              creatorId,
+              fanId,
+              dispute.amount,
+              dispute.currency,
+              dispute.reason || null,
+              dispute.status,
+              event.created,
+            ]
+          );
+          break;
+        }
+
+        case 'charge.dispute.closed': {
+          // Fires once the dispute is resolved -- dispute.status is 'won' or 'lost' by
+          // this point. Same ordering guard as the other handlers: a late/out-of-order
+          // delivery can never overwrite a newer status with a stale one.
+          const dispute = event.data.object;
+          await client.query(
+            `UPDATE stripe_disputes
+             SET status = $1, closed_at = to_timestamp($2), stripe_event_created_at = to_timestamp($2)
+             WHERE stripe_dispute_id = $3
+               AND (stripe_event_created_at IS NULL OR stripe_event_created_at <= to_timestamp($2))`,
+            [dispute.status, event.created, dispute.id]
+          );
           break;
         }
 
