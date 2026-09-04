@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
+import { signPlaybackToken } from '@/lib/mux-jwt';
 
 export async function GET(request, { params }) {
   const { creatorId } = params;
@@ -19,8 +20,10 @@ export async function GET(request, { params }) {
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(creatorId);
     const creatorResult = await query(
       isUuid
-        ? `SELECT id, display_name, bio, profile_image_url, social_links, slug FROM users WHERE id = $1 AND role = 'creator'`
-        : `SELECT id, display_name, bio, profile_image_url, social_links, slug FROM users WHERE slug = $1 AND role = 'creator'`,
+        ? `SELECT id, display_name, bio, profile_image_url, social_links, slug, is_live, mux_playback_id
+           FROM users WHERE id = $1 AND role = 'creator'`
+        : `SELECT id, display_name, bio, profile_image_url, social_links, slug, is_live, mux_playback_id
+           FROM users WHERE slug = $1 AND role = 'creator'`,
       [creatorId]
     );
     const creatorRow = creatorResult.rows[0];
@@ -28,12 +31,17 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'Creator not found.' }, { status: 404 });
     }
     const id = creatorRow.id; // resolved UUID — everything below queries by this, not the raw param
-    // profile_image_url in the DB is a private Blob pathname — point the
-    // client at our own public proxy route instead of exposing it directly.
+    // profile_image_url in the DB is a private Blob pathname — point the client at our
+    // own public proxy route instead of exposing it directly. Built explicitly (not a
+    // spread of creatorRow) so mux_playback_id never leaks into the public payload —
+    // it only ever goes out inside `live` below, and only to someone who can watch.
     const creator = {
-      ...creatorRow,
+      id: creatorRow.id,
+      display_name: creatorRow.display_name,
+      bio: creatorRow.bio,
       profile_image_url: creatorRow.profile_image_url ? `/api/avatar/${creatorRow.id}` : null,
       social_links: creatorRow.social_links || [],
+      slug: creatorRow.slug,
     };
 
     const tiersResult = await query(
@@ -79,11 +87,28 @@ export async function GET(request, { params }) {
       };
     });
 
+    // Live status is public (fans should see "live now" as a reason to subscribe), but
+    // the actual playback credentials are only ever handed to someone who's already
+    // confirmed as an active subscriber — same gating rule as subscriber-only posts
+    // above, just applied to a signed Mux token instead of a media URL.
+    let live = { isLive: Boolean(creatorRow.is_live) };
+    if (creatorRow.is_live && creatorRow.mux_playback_id && hasActiveSubscription) {
+      try {
+        live.playbackId = creatorRow.mux_playback_id;
+        live.playbackToken = signPlaybackToken(creatorRow.mux_playback_id);
+      } catch (err) {
+        // Mux signing keys not configured yet — still true that they're live, just
+        // can't hand out a working player until that's set up.
+        console.error('failed to sign live playback token:', err);
+      }
+    }
+
     return NextResponse.json({
       creator,
       tiers: tiersResult.rows,
       hasActiveSubscription,
       posts,
+      live,
     });
   } catch (err) {
     console.error('creators/[creatorId] GET failed:', err);
