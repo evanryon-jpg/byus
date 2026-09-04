@@ -77,6 +77,9 @@ export default function CreatorDashboard() {
       {/* Posts */}
       <PostSection posts={posts} onCreated={load} />
 
+      {/* Message subscribers directly by email */}
+      <BroadcastSection />
+
       {/* Links */}
       <LinksSection links={links} onSaved={setLinks} />
 
@@ -420,6 +423,95 @@ function Field({ label, value, onCopy, copied }) {
           {copied ? 'Copied!' : 'Copy'}
         </button>
       </div>
+    </div>
+  );
+}
+
+// Self-fetching, same pattern as PageUrlCard/LiveStreamSection. Emails every active
+// subscriber a free-text update -- no scheduling, no drafts, just "write something,
+// send it" for creators who want to reach people who might not check the page daily.
+function BroadcastSection() {
+  const [subscriberCount, setSubscriberCount] = useState(null);
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
+  const [sent, setSent] = useState(null);
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  async function load() {
+    const res = await fetch('/api/creator/broadcast');
+    if (res.ok) setSubscriberCount((await res.json()).subscriberCount);
+  }
+
+  async function handleSend(e) {
+    e.preventDefault();
+    setError('');
+    setSent(null);
+    setSending(true);
+    try {
+      const res = await fetch('/api/creator/broadcast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subject, message }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Could not send this update.');
+        return;
+      }
+      setSent(data.sent);
+      setSubject('');
+      setMessage('');
+    } catch {
+      setError('Network error — please try again.');
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <div className="mt-8 rounded-2xl border border-black/5 bg-white p-6">
+      <h2 className="font-semibold">Message your subscribers</h2>
+      <p className="mt-1 text-sm text-black/50">
+        {subscriberCount === null
+          ? 'Send a quick update by email — good for anyone who might not check your page every day.'
+          : subscriberCount === 0
+          ? "You don't have any active subscribers yet — updates will be ready to send once you do."
+          : `Sends an email to your ${subscriberCount} active subscriber${subscriberCount === 1 ? '' : 's'}.`}
+      </p>
+
+      <form onSubmit={handleSend} className="mt-4 space-y-3">
+        <input
+          placeholder="Subject (optional)"
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+          maxLength={150}
+          className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm"
+        />
+        <textarea
+          placeholder="What do you want to tell your subscribers?"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          required
+          rows={4}
+          maxLength={5000}
+          className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm"
+        />
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        {sent !== null && !error && (
+          <p className="text-sm text-green-700">Sent to {sent} subscriber{sent === 1 ? '' : 's'}.</p>
+        )}
+        <button
+          disabled={sending || subscriberCount === 0}
+          className="rounded-full bg-[#146359] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+        >
+          {sending ? 'Sending…' : 'Send update'}
+        </button>
+      </form>
     </div>
   );
 }
@@ -1098,8 +1190,22 @@ function PostSection({ posts, onCreated }) {
   const [body, setBody] = useState('');
   const [visibility, setVisibility] = useState('public');
   const [file, setFile] = useState(null);
+  const [isPoll, setIsPoll] = useState(false);
+  const [pollOptions, setPollOptions] = useState(['', '']);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+
+  function updatePollOption(i, value) {
+    setPollOptions((prev) => prev.map((o, idx) => (idx === i ? value : o)));
+  }
+
+  function addPollOption() {
+    setPollOptions((prev) => (prev.length >= 4 ? prev : [...prev, '']));
+  }
+
+  function removePollOption(i) {
+    setPollOptions((prev) => (prev.length <= 2 ? prev : prev.filter((_, idx) => idx !== i)));
+  }
 
   async function handleCreate(e) {
     e.preventDefault();
@@ -1124,7 +1230,13 @@ function PostSection({ posts, onCreated }) {
       const res = await fetch('/api/creator/posts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, body, mediaUrl, visibility }),
+        body: JSON.stringify({
+          title,
+          body,
+          mediaUrl,
+          visibility,
+          pollOptions: isPoll ? pollOptions : undefined,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -1132,7 +1244,8 @@ function PostSection({ posts, onCreated }) {
         setSaving(false);
         return;
       }
-      setTitle(''); setBody(''); setVisibility('public'); setFile(null); setOpen(false);
+      setTitle(''); setBody(''); setVisibility('public'); setFile(null);
+      setIsPoll(false); setPollOptions(['', '']); setOpen(false);
       onCreated();
     } catch (err) {
       setError('Something went wrong. Try again.');
@@ -1190,6 +1303,47 @@ function PostSection({ posts, onCreated }) {
             <option value="public">Public</option>
             <option value="subscribers_only">Subscribers only</option>
           </select>
+
+          <label className="flex items-center gap-2 text-sm text-black/60">
+            <input type="checkbox" checked={isPoll} onChange={(e) => setIsPoll(e.target.checked)} />
+            Add a poll (fans vote from a few options — your post text above is the question)
+          </label>
+
+          {isPoll && (
+            <div className="space-y-2 rounded-lg border border-black/10 bg-black/[0.02] p-3">
+              {pollOptions.map((option, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <input
+                    placeholder={`Option ${i + 1}`}
+                    value={option}
+                    onChange={(e) => updatePollOption(i, e.target.value)}
+                    maxLength={80}
+                    required={isPoll}
+                    className="w-full rounded-lg border border-black/10 bg-white px-3 py-2 text-sm"
+                  />
+                  {pollOptions.length > 2 && (
+                    <button
+                      type="button"
+                      onClick={() => removePollOption(i)}
+                      className="shrink-0 text-xs font-medium text-black/40 hover:text-red-600"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              ))}
+              {pollOptions.length < 4 && (
+                <button
+                  type="button"
+                  onClick={addPollOption}
+                  className="text-xs font-medium text-[#146359] hover:text-[#0f4d45]"
+                >
+                  + Add option
+                </button>
+              )}
+            </div>
+          )}
+
           {error && <p className="text-sm text-red-600">{error}</p>}
           <button disabled={saving} className="rounded-full bg-[#146359] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
             {saving ? (file ? 'Uploading…' : 'Posting…') : 'Post'}
@@ -1271,7 +1425,14 @@ function PostRow({ post, onChanged }) {
   return (
     <li className="rounded-xl bg-black/5 p-4">
       <div className="flex justify-between">
-        <span className="font-medium">{post.title || '(untitled)'}</span>
+        <span className="font-medium">
+          {post.title || '(untitled)'}
+          {post.poll && (
+            <span className="ml-2 rounded-full bg-[#146359]/10 px-2 py-0.5 text-xs font-medium text-[#146359]">
+              Poll
+            </span>
+          )}
+        </span>
         <span className="text-xs uppercase tracking-wide text-black/40">
           {post.visibility === 'subscribers_only' ? 'Subscribers only' : 'Public'}
         </span>
@@ -1292,6 +1453,7 @@ function PostRow({ post, onChanged }) {
         </div>
       )}
       <p className="mt-1 text-sm text-black/60">{post.body}</p>
+      {post.poll && <PollTally poll={post.poll} />}
       <div className="mt-2 flex gap-4 text-xs font-medium">
         <button onClick={() => setEditing(true)} className="text-[#146359] hover:text-[#0f4d45]">
           Edit
@@ -1301,5 +1463,31 @@ function PostRow({ post, onChanged }) {
         </button>
       </div>
     </li>
+  );
+}
+
+// Read-only results view for a creator looking at their own poll -- no voting controls
+// here, they're not a participant, just a percentage bar per option and the total.
+function PollTally({ poll }) {
+  const total = poll.votes.reduce((sum, v) => sum + v, 0);
+  return (
+    <div className="mt-2 space-y-1.5">
+      {poll.options.map((option, i) => {
+        const count = poll.votes[i] || 0;
+        const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+        return (
+          <div key={i} className="text-xs">
+            <div className="flex justify-between text-black/60">
+              <span>{option}</span>
+              <span className="text-black/40">{count} ({pct}%)</span>
+            </div>
+            <div className="mt-0.5 h-1.5 w-full overflow-hidden rounded-full bg-black/5">
+              <div className="h-full rounded-full bg-[#146359]/60" style={{ width: `${pct}%` }} />
+            </div>
+          </div>
+        );
+      })}
+      <p className="text-xs text-black/30">{total} vote{total === 1 ? '' : 's'}</p>
+    </div>
   );
 }
