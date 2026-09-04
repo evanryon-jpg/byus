@@ -20,10 +20,14 @@ const SITE_URL = process.env.APP_URL || 'https://byus-ten.vercel.app';
 export default async function Image({ params }) {
   // Same badge mark as the homepage's share card -- keeps every ByUs link,
   // whether it's the homepage or one creator's page, recognizable as the same
-  // brand at a glance in a crowded feed or DM thread.
-  const iconData = await fetch(new URL('../../icon.png', import.meta.url)).then((res) =>
-    res.arrayBuffer()
-  );
+  // brand at a glance in a crowded feed or DM thread. The site-wide
+  // app/opengraph-image.js can read this file straight off disk via
+  // `new URL('./icon.png', import.meta.url)` because it opts into the edge
+  // runtime; that trick doesn't resolve to a fetchable URL under the Node.js
+  // runtime this route needs for its DB lookup, so fetch the same file over
+  // HTTP instead -- `app/icon.png` is already served publicly at /icon.png
+  // as Next's favicon convention.
+  const iconData = await fetch(`${SITE_URL}/icon.png`).then((res) => res.arrayBuffer());
   const iconDataUri = `data:image/png;base64,${Buffer.from(iconData).toString('base64')}`;
 
   const creator = await resolveCreator(params.creatorId, 'id, display_name, bio, profile_image_url');
