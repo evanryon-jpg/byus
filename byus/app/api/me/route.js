@@ -1,7 +1,10 @@
 export const dynamic = 'force-dynamic';
 
 // GET   /api/me  -> return the currently logged-in user's basic info, or 401 if not logged in.
-// PATCH /api/me  -> update display_name / bio / tags for the currently logged-in user.
+// PATCH /api/me  -> update display_name / bio / tags / notify_new_posts / show_support_publicly
+// for the currently logged-in user. show_support_publicly is fan-only in practice (a creator
+// has no subscriptions of their own to show up in), off by default -- see
+// app/api/creators/[creatorId]/route.js for where it's actually read back out.
 // Used by the frontend to decide what to render (creator dashboard vs fan view, etc)
 // and by the settings page to edit a profile. `tags` are the creator categories
 // shown as filter chips on the public Browse page.
@@ -77,7 +80,8 @@ export async function GET() {
   try {
     const result = await query(
       `SELECT id, email, role, display_name, bio, profile_image_url,
-              stripe_connect_onboarded, tags, email_verified, platform_fee_percent, notify_new_posts
+              stripe_connect_onboarded, tags, email_verified, platform_fee_percent, notify_new_posts,
+              show_support_publicly
        FROM users WHERE id = $1`,
       [session.userId]
     );
@@ -103,7 +107,7 @@ export async function PATCH(request) {
     return NextResponse.json({ error: 'Not logged in.' }, { status: 401 });
   }
 
-  const { display_name, bio, tags, notify_new_posts } = await request.json();
+  const { display_name, bio, tags, notify_new_posts, show_support_publicly } = await request.json();
 
   const fields = [];
   const values = [];
@@ -145,6 +149,10 @@ export async function PATCH(request) {
     fields.push(`notify_new_posts = $${i++}`);
     values.push(Boolean(notify_new_posts));
   }
+  if (show_support_publicly !== undefined) {
+    fields.push(`show_support_publicly = $${i++}`);
+    values.push(Boolean(show_support_publicly));
+  }
 
   if (fields.length === 0) {
     return NextResponse.json({ error: 'Nothing to update.' }, { status: 400 });
@@ -154,7 +162,7 @@ export async function PATCH(request) {
     values.push(session.userId);
     const result = await query(
       `UPDATE users SET ${fields.join(', ')} WHERE id = $${i}
-       RETURNING id, email, role, display_name, bio, profile_image_url, stripe_connect_onboarded, tags, email_verified, platform_fee_percent, notify_new_posts`,
+       RETURNING id, email, role, display_name, bio, profile_image_url, stripe_connect_onboarded, tags, email_verified, platform_fee_percent, notify_new_posts, show_support_publicly`,
       values
     );
 
