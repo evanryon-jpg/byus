@@ -72,7 +72,12 @@ export default function CreatorDashboard() {
       <AiSetupSection stripeConnected={stripeConnected} onProfileSaved={setUser} onTierAdded={load} />
 
       {/* Tiers — build these first; Stripe is the last step, once the page is worth publishing */}
-      <TierSection tiers={tiers} onCreated={load} stripeConnected={stripeConnected} />
+      <TierSection
+        tiers={tiers}
+        onCreated={load}
+        stripeConnected={stripeConnected}
+        platformFeePercent={user?.platform_fee_percent ?? 10}
+      />
 
       {/* Posts */}
       <PostSection posts={posts} onCreated={load} />
@@ -89,7 +94,10 @@ export default function CreatorDashboard() {
       <div className="mt-8 rounded-2xl border border-black/5 bg-white p-6">
         <h2 className="font-semibold">Payments</h2>
         {user?.stripe_connect_onboarded ? (
-          <p className="mt-2 text-sm text-green-700">✓ Stripe connected — you're ready to earn.</p>
+          <>
+            <p className="mt-2 text-sm text-green-700">✓ Stripe connected — you're ready to earn.</p>
+            <FeeTierCard />
+          </>
         ) : (
           <>
             <p className="mt-2 text-sm text-black/60">
@@ -120,6 +128,54 @@ export default function CreatorDashboard() {
           core setup flow above. Works independently of Stripe; the gating that decides
           who can watch is "any active subscriber," same rule as subscriber-only posts. */}
       <LiveStreamSection />
+    </div>
+  );
+}
+
+// Shows where a creator sits on ByUs's platform fee: 10% to start, dropping to 7% for
+// good once their lifetime earnings here cross $2,000. Self-fetching, like the page-URL
+// card below -- loads its own state on mount rather than threading it through the parent,
+// since nothing else on the dashboard needs this data.
+function FeeTierCard() {
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    fetch('/api/creator/earnings')
+      .then((res) => (res.ok ? res.json() : null))
+      .then(setData)
+      .catch(() => setData(null));
+  }, []);
+
+  if (!data) return null;
+
+  const { lifetimeEarningsCents, feePercent, discountedFeePercent, thresholdCents } = data;
+  const alreadyDiscounted = feePercent <= discountedFeePercent;
+  const progress = Math.min(1, lifetimeEarningsCents / thresholdCents);
+
+  return (
+    <div className="mt-4 rounded-xl bg-black/[0.03] p-4">
+      {alreadyDiscounted ? (
+        <p className="text-sm text-[#146359]">
+          🎉 You've unlocked ByUs's lowest rate — {feePercent}% platform fee, for good.
+        </p>
+      ) : (
+        <>
+          <p className="text-sm text-black/60">
+            You're on the {feePercent}% starter rate. Once your lifetime earnings on ByUs
+            cross ${(thresholdCents / 100).toLocaleString()}, your fee drops to {discountedFeePercent}%
+            permanently — for every subscriber, not just new ones.
+          </p>
+          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-black/10">
+            <div
+              className="h-full rounded-full bg-[#146359] transition-all"
+              style={{ width: `${progress * 100}%` }}
+            />
+          </div>
+          <p className="mt-1 text-xs text-black/40">
+            ${(lifetimeEarningsCents / 100).toFixed(2)} of ${(thresholdCents / 100).toLocaleString()} earned
+          </p>
+        </>
+      )}
     </div>
   );
 }
@@ -724,12 +780,7 @@ const TIER_PRESETS = [
   { label: 'VIP', name: 'VIP', price: '25.00', description: 'Everything in Fan club, plus first access to new work.' },
 ];
 
-// Flat platform fee, mirrored from lib/stripe's PLATFORM_FEE_PERCENT (a server-only
-// module, so the number is restated here) — used only to show a creator what they'd
-// keep while they're typing a price, never to compute anything that touches money.
-const PLATFORM_FEE_PERCENT = 10;
-
-function TierSection({ tiers, onCreated, stripeConnected }) {
+function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -794,7 +845,7 @@ function TierSection({ tiers, onCreated, stripeConnected }) {
   }
 
   const previewPriceCents = Math.round((parseFloat(price) || 0) * 100);
-  const previewKeptCents = Math.round(previewPriceCents * (1 - PLATFORM_FEE_PERCENT / 100));
+  const previewKeptCents = Math.round(previewPriceCents * (1 - platformFeePercent / 100));
 
   return (
     <div className="mt-8 rounded-2xl border border-black/5 bg-white p-6">
@@ -872,7 +923,7 @@ function TierSection({ tiers, onCreated, stripeConnected }) {
                   className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm" />
                 {previewPriceCents > 0 && (
                   <p className="mt-1 text-xs text-black/40">
-                    You keep ${(previewKeptCents / 100).toFixed(2)}/mo ({100 - PLATFORM_FEE_PERCENT}% — flat {PLATFORM_FEE_PERCENT}% fee)
+                    You keep ${(previewKeptCents / 100).toFixed(2)}/mo ({100 - platformFeePercent}% — {platformFeePercent}% ByUs fee)
                   </p>
                 )}
               </div>
