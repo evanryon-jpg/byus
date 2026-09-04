@@ -18,11 +18,17 @@ export const dynamic = 'force-dynamic';
 //   https://yourdomain.com/api/webhooks/stripe
 // and subscribe it to: checkout.session.completed, customer.subscription.deleted,
 // customer.subscription.updated, invoice.payment_failed, invoice.payment_succeeded
+//
+// invoice.payment_succeeded also does double duty as the platform's earnings ledger and
+// tiered-fee trigger — see lib/fees.js. Every successful invoice (the first one included,
+// not just recovery charges) gets logged against the creator it paid, and once their
+// lifetime total crosses the discount threshold their rate drops for good.
 
 import { NextResponse } from 'next/server';
 import { withTransaction } from '@/lib/db';
 import stripe from '@/lib/stripe';
 import { rewardReferrer } from '@/lib/referrals';
+import { recordEarningAndCheckFeeTier, syncActiveSubscriptionsToFeePercent } from '@/lib/fees';
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -49,6 +55,23 @@ export async function POST(request) {
     if (event.type === 'checkout.session.completed' && event.data.object.mode === 'subscription') {
       stripeSubscription = await stripe.subscriptions.retrieve(event.data.object.subscription);
     }
+
+    // Same reasoning as above: fetching the creator_id off the Subscription (where /api/subscribe
+    // put it, in subscription_data.metadata — Checkout Sessions and Invoices don't carry it
+    // themselves) needs a Stripe round trip, and needs to happen before this invoice's earnings
+    // can be recorded. Reading it here also means the earnings ledger doesn't depend on our own
+    // `subscriptions` row already existing yet — Stripe doesn't guarantee this event arrives
+    // after checkout.session.completed has been processed on our side.
+    let invoiceCreatorId = null;
+    if (event.type === 'invoice.payment_succeeded' && event.data.object.subscription) {
+      const invoiceSubscription = await stripe.subscriptions.retrieve(event.data.object.subscription);
+      invoiceCreatorId = invoiceSubscription.metadata?.creator_id || null;
+    }
+
+    // Set inside the transaction below (only when this invoice just crossed a creator over
+    // the fee-discount threshold), read after it commits — talking to the Stripe API to sync
+    // their live subscriptions doesn't belong inside an open DB transaction/lock.
+    let feeTierCrossing = null;
 
     await withTransaction(async (client) => {
       // Idempotency: claim this event ID first, in the same transaction as the state change
@@ -181,6 +204,21 @@ export async function POST(request) {
               [event.created, invoice.subscription]
             );
           }
+
+          // Log this payment against the creator's lifetime earnings, and flip their stored
+          // fee rate if it just crossed the discount threshold — see lib/fees.js. amount_paid
+          // is what the fan was actually charged (after any referral discount), i.e. the real
+          // gross revenue this invoice brought the creator.
+          if (invoiceCreatorId && invoice.amount_paid > 0) {
+            const newFeePercent = await recordEarningAndCheckFeeTier(client, {
+              creatorId: invoiceCreatorId,
+              stripeInvoiceId: invoice.id,
+              amountCents: invoice.amount_paid,
+            });
+            if (newFeePercent) {
+              feeTierCrossing = { creatorId: invoiceCreatorId, feePercent: newFeePercent };
+            }
+          }
           break;
         }
 
@@ -189,6 +227,19 @@ export async function POST(request) {
           break;
       }
     });
+
+    // Outside the transaction, same pattern as the referral reward above: this creator just
+    // crossed the discount threshold, so re-point every one of their currently live Stripe
+    // subscriptions at the new (lower) fee — not just whoever subscribes next. Best-effort;
+    // our own database already has the discount recorded either way, so a Stripe hiccup here
+    // can't undo it or fail the webhook / trigger a retry loop.
+    if (feeTierCrossing) {
+      try {
+        await syncActiveSubscriptionsToFeePercent(feeTierCrossing.creatorId, feeTierCrossing.feePercent);
+      } catch (err) {
+        console.error('Failed to sync discounted fee percent to Stripe subscriptions:', err);
+      }
+    }
   } catch (err) {
     console.error(`Error handling webhook event ${event.type}:`, err);
     // Return 500 so Stripe retries — better to reprocess than silently drop a payment event.
