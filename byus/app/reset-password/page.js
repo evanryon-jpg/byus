@@ -66,7 +66,7 @@ function ResetPasswordForm() {
       <h1 className="text-2xl font-bold">Reset your password</h1>
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
         <label className="block">
-          <span className="mb-1 block text-sm font-medium text-brand-ink/70">New password</span>
+          <span className="mb-1 block text-sm font-medium text-brand-ink/80">New password</span>
           <input
             type="password"
             required
@@ -77,7 +77,7 @@ function ResetPasswordForm() {
           />
         </label>
         <label className="block">
-          <span className="mb-1 block text-sm font-medium text-brand-ink/70">Confirm new password</span>
+          <span className="mb-1 block text-sm font-medium text-brand-ink/80">Confirm new password</span>
           <input
             type="password"
             required
@@ -105,7 +105,7 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<div className="p-12 text-center text-brand-ink/40">Loading…</div>}>
+    <Suspense fallback={<div className="p-12 text-center text-brand-ink/60">Loading…</div>}>
       <ResetPasswordForm />
     </Suspense>
   );
