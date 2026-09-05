@@ -60,7 +60,7 @@ function VerifyEmailContent() {
             ✓
           </div>
           <h1 className="mt-4 font-display text-2xl font-semibold text-[#2B2420]">Email verified</h1>
-          <p className="mt-3 text-brand-ink/72">
+          <p className="mt-3 text-brand-ink/70">
             Your email address is confirmed. You&rsquo;re all set to use ByUs.
           </p>
           <a
@@ -75,8 +75,8 @@ function VerifyEmailContent() {
       {status === 'error' && (
         <>
           <h1 className="font-display text-2xl font-semibold text-[#2B2420]">Verification failed</h1>
-          <p className="mt-3 text-brand-ink/72">{error}</p>
-          <p className="mt-6 text-sm text-brand-ink/62">
+          <p className="mt-3 text-brand-ink/70">{error}</p>
+          <p className="mt-6 text-sm text-brand-ink/60">
             You can request a new verification link from your dashboard.
           </p>
         </>
