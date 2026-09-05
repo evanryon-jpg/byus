@@ -1,17 +1,30 @@
 import './globals.css';
-import { Fraunces } from 'next/font/google';
+import { Fraunces, Karla } from 'next/font/google';
 import NavBar from './components/NavBar';
 import Footer from './components/Footer';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
-// Warm serif for headlines only — pairs with the default sans body text to give the
-// brand some editorial warmth instead of reading as a generic SaaS product.
+// Warm serif for headlines only — pairs with the Karla body text below to give the
+// brand some editorial warmth instead of reading as a generic SaaS product. 700/800
+// added on top of the original 500/600 so hero headlines can go bolder without pulling
+// in every weight the family offers.
 const fraunces = Fraunces({
   subsets: ['latin'],
-  weight: ['500', '600'],
+  weight: ['500', '600', '700', '800'],
   style: ['normal', 'italic'],
   variable: '--font-display',
+  display: 'swap',
+});
+
+// Body font for everything that isn't a headline. Warmer and a little more
+// characterful than a generic system sans stack, without tipping into the
+// "safe SaaS default" territory of Inter/Geist -- keeps the site from reading
+// as a template.
+const karla = Karla({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-body',
   display: 'swap',
 });
 
@@ -44,7 +57,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={fraunces.variable}>
+    <html lang="en" className={`${fraunces.variable} ${karla.variable}`}>
       <body className="flex min-h-screen flex-col bg-[#E8DCC4] text-[#2B2420] antialiased">
         <NavBar />
         <main className="flex-1">{children}</main>

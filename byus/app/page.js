@@ -33,80 +33,126 @@ function Hero({ user }) {
     <section className="relative overflow-hidden">
       {/* Soft warm gradient blobs — decorative only, sit behind the copy */}
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -top-24 left-1/2 h-[36rem] w-[36rem] -translate-x-[60%] rounded-full bg-brand-gold/10 blur-3xl" />
+        <div className="absolute -top-24 left-1/4 h-[36rem] w-[36rem] -translate-x-1/2 rounded-full bg-brand-gold/10 blur-3xl" />
         <div className="absolute -top-10 right-0 h-[28rem] w-[28rem] translate-x-1/3 rounded-full bg-brand-teal/[0.06] blur-3xl" />
-        <div className="absolute top-40 left-1/2 h-72 w-72 -translate-x-1/4 rounded-full bg-brand-clay/[0.06] blur-3xl" />
       </div>
 
-      <div className="mx-auto max-w-4xl px-6 pt-20 pb-16 text-center">
-        <span className="inline-flex items-center gap-2 rounded-full bg-brand-gold/15 px-4 py-1.5 text-xs font-semibold tracking-wide text-[#8a6b2f]">
-          Made for creators, built around fairness
-        </span>
+      {/* Asymmetric split — copy/search on the left, a live preview of what a
+          creator's page actually looks like on the right, so the hero answers
+          "what am I building/joining" instead of just describing it. */}
+      <div className="mx-auto max-w-6xl px-6 pt-20 pb-24">
+        <div className="grid items-center gap-14 lg:grid-cols-[1.05fr_0.95fr]">
+          <div>
+            <span className="inline-flex -rotate-2 items-center gap-2 rounded border border-dashed border-brand-clay bg-[#F5E9D8] px-4 py-1.5 font-display text-xs font-semibold italic tracking-wide text-[#B5613F]">
+              Made for creators, built around fairness
+            </span>
 
-        <h1 className="mt-6 font-display text-5xl font-semibold leading-[1.1] tracking-tight text-[#2B2420] sm:text-6xl">
-          Connect with your favorite creators
-        </h1>
+            <h1 className="mt-6 font-display text-4xl font-extrabold leading-[1.08] tracking-tight text-[#2B2420] sm:text-5xl lg:text-[3.25rem]">
+              Connect with your{' '}
+              <span className="relative inline-block whitespace-nowrap">
+                favorite
+                <svg
+                  className="absolute -bottom-1.5 left-0 w-full"
+                  height="10"
+                  viewBox="0 0 200 10"
+                  preserveAspectRatio="none"
+                  aria-hidden="true"
+                >
+                  <path d="M2 6 Q 50 1, 100 5 T 198 6" stroke="#C9A961" strokeWidth="4" fill="none" strokeLinecap="round" />
+                </svg>
+              </span>{' '}
+              creators
+            </h1>
 
-        <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-brand-ink/72">
-          Type a creator's name below, or set up your own page in a couple of minutes.
-          Creators keep 90% of every payment to start — and 93% for good once they've
-          grown with us. Nothing hidden.
-        </p>
+            <p className="mt-6 max-w-lg text-lg leading-relaxed text-brand-ink/72">
+              Type a creator's name below, or set up your own page in a couple of minutes.
+              Creators keep 90% of every payment to start — and 93% for good once they've
+              grown with us. Nothing hidden.
+            </p>
 
-        <CreatorSearch />
+            <CreatorSearch />
 
-        <div className="mt-6 flex flex-wrap justify-center gap-4">
-          {user ? (
-            <a
-              href={dashboardHref}
-              className="text-sm font-semibold text-brand-teal hover:underline"
-            >
-              {user.role === 'creator' ? 'Go to your dashboard' : 'Your subscriptions'} →
-            </a>
-          ) : (
-            <a href="/signup?role=creator" className="text-sm font-semibold text-brand-teal hover:underline">
-              Are you a creator? Start your own page →
-            </a>
-          )}
+            <div className="mt-5 flex flex-wrap gap-4">
+              {user ? (
+                <a
+                  href={dashboardHref}
+                  className="text-sm font-semibold text-brand-teal hover:underline"
+                >
+                  {user.role === 'creator' ? 'Go to your dashboard' : 'Your subscriptions'} →
+                </a>
+              ) : (
+                <a href="/signup?role=creator" className="text-sm font-semibold text-brand-teal hover:underline">
+                  Are you a creator? Start your own page →
+                </a>
+              )}
+            </div>
+
+            <p className="mt-8 text-sm text-brand-ink/62">
+              90%+ direct payouts&nbsp;&nbsp;·&nbsp;&nbsp;fee drops as you grow&nbsp;&nbsp;·&nbsp;&nbsp;cancel anytime
+            </p>
+          </div>
+
+          <ProfilePreview />
         </div>
-
-        <p className="mt-8 text-sm text-brand-ink/62">
-          90%+ direct payouts&nbsp;&nbsp;·&nbsp;&nbsp;fee drops as you grow&nbsp;&nbsp;·&nbsp;&nbsp;cancel anytime
-        </p>
-
-        <TierFan />
       </div>
     </section>
   );
 }
 
-// Purely decorative fanned stack of small "tier cards" -- our own motif for "there's a
-// tier for every kind of supporter," standing in for the product itself (subscription
-// tiers) rather than a generic row of overlapping user avatars. Each card gets a faint
-// header line so the shape reads as a tiny membership card, not just a colored tile.
-function TierFan() {
-  const cards = [
-    { color: 'bg-brand-clay', rotate: '-rotate-6' },
-    { color: 'bg-brand-gold', rotate: '-rotate-2' },
-    { color: 'bg-brand-teal', rotate: 'rotate-2' },
-    { color: 'bg-brand-teal/60', rotate: 'rotate-6' },
+// A purely decorative stand-in for a real creator's page -- shows a fan what they're
+// about to get (banner, tiers, pick of one "most popular" plan) instead of the old
+// fanned-swatch motif that only gestured at "there's a tier for every kind of
+// supporter." Not tied to any real creator or account.
+function ProfilePreview() {
+  const tiers = [
+    { name: 'Supporter', price: '$5.00/mo' },
+    { name: 'Fan club', price: '$10.00/mo', popular: true },
+    { name: 'VIP', price: '$25.00/mo' },
   ];
+
   return (
-    <div className="mt-12 flex flex-col items-center gap-3">
-      <div className="flex">
-        {cards.map((c, i) => (
-          <span
-            key={i}
-            className={`relative h-12 w-9 ${i > 0 ? '-ml-4' : ''} ${c.rotate} rounded-md border-2 border-[#E8DCC4] ${c.color} shadow-sm`}
-            aria-hidden="true"
-          >
-            <span className="absolute inset-x-1.5 top-2.5 h-px bg-white/40" />
-          </span>
-        ))}
+    <div className="mx-auto w-full max-w-sm rotate-1 rounded-2xl border border-brand-ink/20 bg-brand-paper shadow-xl shadow-brand-ink/10">
+      <div
+        className="h-20 rounded-t-2xl"
+        style={{
+          background: 'repeating-linear-gradient(115deg, #C97C5D 0 60px, #C9A961 60px 120px, #146359 120px 180px)',
+        }}
+        aria-hidden="true"
+      />
+      <div className="-mt-8 px-6 pb-6">
+        <div className="flex h-14 w-14 -rotate-3 items-center justify-center rounded-2xl border-4 border-brand-paper bg-[#0f4d45] font-display text-2xl font-bold text-[#F5E9D8]">
+          M
+        </div>
+        <p className="mt-3 font-display text-lg font-bold text-[#2B2420]">Mara Lindqvist</p>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {['TikTok', 'YouTube', 'Instagram'].map((s) => (
+            <span
+              key={s}
+              className="rounded border border-brand-ink/20 bg-[#F5E9D8] px-2 py-1 text-[11px] font-bold text-brand-ink/65"
+            >
+              {s} ↗
+            </span>
+          ))}
+        </div>
+        <div className="mt-5 space-y-2">
+          {tiers.map((t) => (
+            <div
+              key={t.name}
+              className={`relative flex items-center justify-between rounded-lg border px-3.5 py-2.5 text-sm ${
+                t.popular ? 'border-brand-gold bg-brand-gold/15' : 'border-brand-ink/15'
+              }`}
+            >
+              {t.popular && (
+                <span className="absolute -top-2.5 right-3 rotate-3 rounded bg-brand-clay px-2 py-0.5 text-[9.5px] font-extrabold uppercase tracking-wide text-[#F5E9D8]">
+                  Most popular
+                </span>
+              )}
+              <span className="font-semibold text-[#2B2420]">{t.name}</span>
+              <span className="font-semibold tabular-nums text-brand-teal">{t.price}</span>
+            </div>
+          ))}
+        </div>
       </div>
-      <p className="text-xs font-medium uppercase tracking-wide text-brand-ink/60">
-        A tier for every kind of supporter
-      </p>
     </div>
   );
 }
@@ -120,13 +166,18 @@ function StatsBand() {
     },
     { value: '$0', label: 'to start; no listing or setup cost' },
   ];
+  const tilts = ['-rotate-[1.1deg]', 'rotate-[0.8deg]', '-rotate-[0.6deg]'];
+
   return (
-    <section className="border-y border-brand-ink/5 bg-brand-paper">
-      <div className="mx-auto grid max-w-4xl gap-8 px-6 py-12 text-center sm:grid-cols-3">
-        {stats.map((s) => (
-          <div key={s.label}>
-            <div className="font-display text-4xl font-semibold text-brand-teal">{s.value}</div>
-            <p className="mt-2 text-sm text-brand-ink/68">{s.label}</p>
+    <section className="border-y border-brand-ink/10 bg-brand-paper">
+      <div className="mx-auto grid max-w-4xl gap-6 px-6 py-14 sm:grid-cols-3">
+        {stats.map((s, i) => (
+          <div
+            key={s.label}
+            className={`rounded-xl border border-brand-ink/20 bg-[#F5E9D8] px-6 py-6 text-center ${tilts[i % tilts.length]}`}
+          >
+            <div className="font-display text-4xl font-bold tabular-nums text-brand-teal">{s.value}</div>
+            <p className="mt-2 text-sm leading-relaxed text-brand-ink/68">{s.label}</p>
           </div>
         ))}
       </div>
@@ -146,25 +197,31 @@ function Features() {
         </p>
       </div>
 
-      <div className="mt-14 grid gap-6 sm:grid-cols-3">
+      {/* Asymmetric rhythm instead of three uniform boxes -- Direct payouts gets the
+          big 2/3 slot since Stripe Express payouts are the actual differentiator,
+          the other two stack beside it rather than competing for equal weight. */}
+      <div className="mt-14 grid gap-6 lg:grid-cols-[2fr_1fr]">
         <Feature
+          big
           icon={<PayoutIcon />}
           accent="teal"
           title="Direct payouts"
-          body="Each creator connects their own Stripe Express account and receives 90% of every charge automatically — rising to 93% for good once they've grown with us."
+          body="Each creator connects their own Stripe Express account and receives 90% of every charge automatically — rising to 93% for good once they've grown with us. This is the whole model, so it gets the room to say it plainly."
         />
-        <Feature
-          icon={<TiersIcon />}
-          accent="gold"
-          title="Tiered memberships"
-          body="Build one or more monthly tiers with custom names, descriptions, and prices. Fans pick what fits."
-        />
-        <Feature
-          icon={<LockIcon />}
-          accent="clay"
-          title="Gated content"
-          body="Post public or subscribers-only updates. Access turns off the moment a subscription lapses or is canceled."
-        />
+        <div className="flex flex-col gap-6">
+          <Feature
+            icon={<TiersIcon />}
+            accent="gold"
+            title="Tiered memberships"
+            body="Build one or more monthly tiers with custom names, descriptions, and prices. Fans pick what fits."
+          />
+          <Feature
+            icon={<LockIcon />}
+            accent="clay"
+            title="Gated content"
+            body="Post public or subscribers-only updates. Access turns off the moment a subscription lapses or is canceled."
+          />
+        </div>
       </div>
     </section>
   );
@@ -176,15 +233,23 @@ const accentClasses = {
   clay: { bg: 'bg-brand-clay/15', text: 'text-brand-clay' },
 };
 
-function Feature({ icon, accent, title, body }) {
+function Feature({ icon, accent, title, body, big }) {
   const c = accentClasses[accent];
   return (
-    <div className="group rounded-2xl border border-brand-ink/5 bg-brand-paper p-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-      <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${c.bg} ${c.text}`}>
+    <div
+      className={`group rounded-2xl border bg-brand-paper text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+        big ? 'flex h-full flex-col justify-center border-brand-teal/30 p-8' : 'border-brand-ink/15 p-6'
+      }`}
+    >
+      <div
+        className={`flex items-center justify-center rounded-xl ${c.bg} ${c.text} ${
+          big ? 'h-14 w-14' : 'h-11 w-11'
+        }`}
+      >
         {icon}
       </div>
-      <h3 className="mt-4 font-semibold text-[#2B2420]">{title}</h3>
-      <p className="mt-2 text-sm leading-relaxed text-brand-ink/72">{body}</p>
+      <h3 className={`mt-4 font-semibold text-[#2B2420] ${big ? 'text-xl' : ''}`}>{title}</h3>
+      <p className={`mt-2 leading-relaxed text-brand-ink/72 ${big ? 'max-w-md text-base' : 'text-sm'}`}>{body}</p>
     </div>
   );
 }
