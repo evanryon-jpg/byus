@@ -27,7 +27,7 @@ export async function GET() {
   }
 
   try {
-    const [feeResult, reductionPoints, lifetimeResult, subscriberResult, monthlyResult] = await Promise.all([
+    const [feeResult, reductionPoints, lifetimeResult, subscriberResult, churnResult, monthlyResult] = await Promise.all([
       query('SELECT platform_fee_percent FROM users WHERE id = $1', [session.userId]),
       getPlatformMilestoneReductionPoints(query),
       query(
@@ -41,6 +41,16 @@ export async function GET() {
       query(`SELECT COUNT(*)::int AS count FROM subscriptions WHERE creator_id = $1 AND status = 'active'`, [
         session.userId,
       ]),
+      // Lifetime churn: of everyone who ever subscribed, how many have since canceled.
+      // A simple, honest lifetime ratio rather than a month-by-month rate, which would
+      // need a daily snapshot of "who was active" that this schema doesn't keep.
+      query(
+        `SELECT
+           COUNT(*)::int AS ever_subscribed,
+           COUNT(*) FILTER (WHERE status = 'canceled')::int AS ever_canceled
+         FROM subscriptions WHERE creator_id = $1`,
+        [session.userId]
+      ),
       // Zero-filled trailing 12 months (oldest first), even for a creator with no rows yet
       // — the chart always gets a full, evenly-spaced x-axis to render against.
       query(
@@ -64,15 +74,26 @@ export async function GET() {
            WHERE creator_id = $1
              AND created_at >= date_trunc('month', now()) - ($2::int - 1 || ' months')::interval
            GROUP BY 1
+         ),
+         cancellations_by_month AS (
+           -- updated_at is the best signal this schema has for "when did this subscription
+           -- actually cancel" -- it's the timestamp of the subscription's last status change.
+           SELECT date_trunc('month', updated_at) AS month_start, COUNT(*) AS canceled_subscribers
+           FROM subscriptions
+           WHERE creator_id = $1 AND status = 'canceled'
+             AND updated_at >= date_trunc('month', now()) - ($2::int - 1 || ' months')::interval
+           GROUP BY 1
          )
          SELECT
            to_char(m.month_start, 'YYYY-MM') AS month,
            COALESCE(e.gross_cents, 0)::bigint AS gross_cents,
            COALESCE(e.net_cents, 0)::bigint AS net_cents,
-           COALESCE(s.new_subscribers, 0)::bigint AS new_subscribers
+           COALESCE(s.new_subscribers, 0)::bigint AS new_subscribers,
+           COALESCE(c.canceled_subscribers, 0)::bigint AS canceled_subscribers
          FROM months m
          LEFT JOIN earnings_by_month e ON e.month_start = m.month_start
          LEFT JOIN subs_by_month s ON s.month_start = m.month_start
+         LEFT JOIN cancellations_by_month c ON c.month_start = m.month_start
          ORDER BY m.month_start ASC`,
         [session.userId, MONTHS_OF_HISTORY]
       ),
@@ -83,7 +104,13 @@ export async function GET() {
       grossCents: Number(row.gross_cents),
       netCents: Number(row.net_cents),
       newSubscribers: Number(row.new_subscribers),
+      canceledSubscribers: Number(row.canceled_subscribers),
+      netNewSubscribers: Number(row.new_subscribers) - Number(row.canceled_subscribers),
     }));
+
+    const everSubscribed = churnResult.rows[0]?.ever_subscribed ?? 0;
+    const everCanceled = churnResult.rows[0]?.ever_canceled ?? 0;
+    const churnRatePercent = everSubscribed > 0 ? Math.round((everCanceled / everSubscribed) * 1000) / 10 : 0;
 
     const personalTierFeePercent = feeResult.rows[0]?.platform_fee_percent ?? STANDARD_FEE_PERCENT;
     // The fee tier is decided by THIS CALENDAR MONTH's earnings, not lifetime — `monthly`
@@ -103,6 +130,8 @@ export async function GET() {
       // Kept for backward compatibility with anything still reading the old field name.
       lifetimeEarningsCents: Number(lifetimeResult.rows[0].gross_cents),
       activeSubscriberCount: subscriberResult.rows[0]?.count ?? 0,
+      everSubscribedCount: everSubscribed,
+      churnRatePercent,
       monthly,
     });
   } catch (err) {
