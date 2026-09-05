@@ -117,6 +117,9 @@ export default function CreatorDashboard() {
       {/* Message subscribers directly by email */}
       <BroadcastSection />
 
+      {/* Monthly support goal — shown as a progress bar on the public page */}
+      <GoalSection initialGoalCents={user?.support_goal_cents} onSaved={setUser} />
+
       {/* Links */}
       <LinksSection links={links} onSaved={setLinks} />
 
@@ -770,6 +773,8 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent }) 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
+  const [annualPrice, setAnnualPrice] = useState('');
+  const [welcomeMessage, setWelcomeMessage] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [quickSetupError, setQuickSetupError] = useState('');
@@ -787,10 +792,11 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent }) 
     setError('');
     setSaving(true);
     const priceCents = Math.round(parseFloat(price) * 100);
+    const annualPriceCents = annualPrice.trim() ? Math.round(parseFloat(annualPrice) * 100) : null;
     const res = await fetch('/api/creator/tiers', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, description, priceCents }),
+      body: JSON.stringify({ name, description, priceCents, annualPriceCents, welcomeMessage }),
     });
     const data = await res.json();
     setSaving(false);
@@ -798,7 +804,7 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent }) 
       setError(data.error);
       return;
     }
-    setName(''); setDescription(''); setPrice(''); setOpen(false);
+    setName(''); setDescription(''); setPrice(''); setAnnualPrice(''); setWelcomeMessage(''); setOpen(false);
     onCreated();
   }
 
@@ -912,6 +918,35 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent }) 
                   </p>
                 )}
               </div>
+              <div>
+                <input
+                  placeholder="Annual price (optional, e.g. 100.00)"
+                  type="number"
+                  step="0.01"
+                  min="1"
+                  value={annualPrice}
+                  onChange={(e) => setAnnualPrice(e.target.value)}
+                  className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
+                />
+                <p className="mt-1 text-xs text-brand-ink/40">
+                  Lets fans pay yearly instead of monthly — a discount off 12× the monthly price is
+                  the usual way to make it worth choosing. Leave blank to only offer monthly.
+                </p>
+              </div>
+              <div>
+                <textarea
+                  placeholder="Welcome message for new subscribers (optional)"
+                  value={welcomeMessage}
+                  onChange={(e) => setWelcomeMessage(e.target.value)}
+                  rows={2}
+                  maxLength={500}
+                  className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
+                />
+                <p className="mt-1 text-xs text-brand-ink/40">
+                  Shown right after someone subscribes to this tier — a thank-you, a link, whatever
+                  you'd want a brand-new supporter to see first.
+                </p>
+              </div>
               {!stripeConnected && (
                 <p className="text-xs text-brand-ink/40">
                   Saves as a draft — hidden from your profile until Stripe is connected.
@@ -955,6 +990,7 @@ function TierRow({ tier, onChanged }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(tier.name);
   const [description, setDescription] = useState(tier.description || '');
+  const [welcomeMessage, setWelcomeMessage] = useState(tier.welcome_message || '');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [working, setWorking] = useState(false);
@@ -966,7 +1002,7 @@ function TierRow({ tier, onChanged }) {
     const res = await fetch(`/api/creator/tiers/${tier.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, description }),
+      body: JSON.stringify({ name, description, welcomeMessage }),
     });
     const data = await res.json();
     setSaving(false);
@@ -1009,8 +1045,13 @@ function TierRow({ tier, onChanged }) {
             className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm" />
           <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description (optional)"
             className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm" />
+          <textarea value={welcomeMessage} onChange={(e) => setWelcomeMessage(e.target.value)}
+            placeholder="Welcome message for new subscribers (optional)" rows={2} maxLength={500}
+            className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm" />
           <p className="text-xs text-brand-ink/40">
-            Price is fixed at ${(tier.price_cents / 100).toFixed(2)}/mo. To charge something different, deactivate this tier and create a new one.
+            Price is fixed at ${(tier.price_cents / 100).toFixed(2)}/mo
+            {tier.annual_price_cents ? ` (or $${(tier.annual_price_cents / 100).toFixed(2)}/yr)` : ''}.
+            To charge something different, deactivate this tier and create a new one.
           </p>
           {error && <p className="text-sm text-red-600">{error}</p>}
           <div className="flex gap-3">
@@ -1047,6 +1088,76 @@ function TierRow({ tier, onChanged }) {
         </button>
       </div>
     </li>
+  );
+}
+
+// A single optional monthly earnings goal, shown as a progress bar on the public profile
+// (see app/creator/[creatorId]/page.js's SupportGoalBar) — set here, cleared by saving an
+// empty field. Progress resets every calendar month, same window as the fee-tier threshold
+// in lib/fees.js, and counts both subscription revenue and tips (both write to
+// creator_earnings).
+function GoalSection({ initialGoalCents, onSaved }) {
+  const [goal, setGoal] = useState(
+    Number.isInteger(initialGoalCents) ? (initialGoalCents / 100).toString() : ''
+  );
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState('');
+
+  async function handleSave(e) {
+    e.preventDefault();
+    setError('');
+    setSaved(false);
+    setSaving(true);
+    const trimmed = goal.trim();
+    const cents = trimmed === '' ? null : Math.round(parseFloat(trimmed) * 100);
+    if (cents !== null && (!Number.isFinite(cents) || cents < 100)) {
+      setError('Enter a goal of at least $1, or leave blank to remove it.');
+      setSaving(false);
+      return;
+    }
+    const res = await fetch('/api/me', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ support_goal_cents: cents }),
+    });
+    const data = await res.json();
+    setSaving(false);
+    if (!res.ok) {
+      setError(data.error || 'Could not save your goal.');
+      return;
+    }
+    setSaved(true);
+    onSaved(data.user);
+  }
+
+  return (
+    <div className="mt-8 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
+      <h2 className="font-semibold">Monthly support goal</h2>
+      <p className="mt-1 text-sm text-brand-ink/50">
+        Show a progress bar on your public page toward a monthly earnings goal — resets on the 1st.
+        Leave blank to hide it.
+      </p>
+      <form onSubmit={handleSave} className="mt-3 flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-1">
+          <span className="text-sm text-brand-ink/40">$</span>
+          <input
+            type="number"
+            min="1"
+            step="1"
+            placeholder="e.g. 500"
+            value={goal}
+            onChange={(e) => { setGoal(e.target.value); setSaved(false); }}
+            className="w-28 rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
+          />
+        </div>
+        <button disabled={saving} className="rounded-full bg-[#146359] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+          {saving ? 'Saving…' : 'Save'}
+        </button>
+        {saved && <span className="text-sm text-green-700">Saved.</span>}
+      </form>
+      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+    </div>
   );
 }
 
