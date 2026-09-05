@@ -102,6 +102,13 @@ const limiters = {
     limiter: Ratelimit.slidingWindow(8, '24 h'),
     prefix: 'rl:ai-setup',
   }),
+  // Guards starting a one-time tip checkout — same shape of risk as subscribe (a paid
+  // Stripe API call per attempt), so it gets the same allowance.
+  tip: new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(20, '1 h'),
+    prefix: 'rl:tip',
+  }),
 };
 
 // Best-effort client IP. Vercel always sets x-forwarded-for in production; the
