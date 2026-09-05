@@ -15,15 +15,17 @@ import Image from 'next/image';
 // never competes with the page's real content for a screen reader.
 export default function PhotoCollageBackground({ src, priority = true }) {
   return (
-    // Capped width: the height classes below are tuned against a phone-width photo,
-    // and a fixed height stretched across a full ultra-wide desktop window turns into
-    // a much wider-than-tall crop window than the same banner on a phone -- object-cover
-    // then has to zoom in further to fill that width, cropping away far more of the
-    // photo's vertical extent (heads/hands can end up cropped out entirely). Capping the
-    // width keeps the crop ratio close to what it looks like on a phone at every
-    // breakpoint, instead of stretching thinner as the window gets wider.
+    // A fixed height per breakpoint (the original design here) means the crop window's
+    // aspect ratio keeps getting wider as the viewport grows -- width scales with the
+    // screen, height doesn't -- so object-cover has to zoom in further and further on a
+    // wide desktop window than it does on a phone, cropping away far more of the photo's
+    // vertical extent (heads/hands can end up cropped out entirely) even with a capped
+    // max-width. Locking the box to a single aspect-ratio instead of a per-breakpoint
+    // height means width and height always scale together, so the crop looks the same
+    // shape at every screen size -- phone, tablet, or a full desktop monitor -- matching
+    // whatever looked right on a phone, which is what this ratio is tuned against.
     <div className="mx-auto max-w-4xl">
-      <div className="relative h-40 w-full overflow-hidden sm:h-52 md:h-64" aria-hidden="true">
+      <div className="relative aspect-[12/5] w-full overflow-hidden" aria-hidden="true">
         <Image
           src={src}
           alt=""
