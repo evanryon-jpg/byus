@@ -64,10 +64,10 @@ export default function BrowsePage({ searchParams }) {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search by name or bio…"
-          className="w-full rounded-full border border-black/10 px-4 py-2 text-sm focus:border-[#146359]/40 focus:outline-none sm:flex-1"
+          className="w-full rounded-full border border-brand-ink/10 px-4 py-2 text-sm focus:border-[#146359]/40 focus:outline-none sm:flex-1"
         />
 
-        <div className="flex shrink-0 items-center gap-1 self-start rounded-full bg-black/5 p-1 text-xs font-medium sm:self-auto">
+        <div className="flex shrink-0 items-center gap-1 self-start rounded-full bg-brand-ink/5 p-1 text-xs font-medium sm:self-auto">
           {SORT_OPTIONS.map((opt) => (
             <button
               key={opt.value}
@@ -75,7 +75,7 @@ export default function BrowsePage({ searchParams }) {
               onClick={() => setSort(opt.value)}
               aria-pressed={sort === opt.value}
               className={`rounded-full px-3 py-1.5 ${
-                sort === opt.value ? 'bg-white text-[#146359] shadow-sm' : 'text-black/50 hover:text-black/70'
+                sort === opt.value ? 'bg-brand-paper text-[#146359] shadow-sm' : 'text-brand-ink/50 hover:text-brand-ink/70'
               }`}
             >
               {opt.label}
@@ -107,7 +107,7 @@ export default function BrowsePage({ searchParams }) {
                 setQ('');
                 setTag('');
               }}
-              className="text-xs font-medium text-black/40 hover:text-black/60"
+              className="text-xs font-medium text-brand-ink/40 hover:text-brand-ink/60"
             >
               Clear filters
             </button>
@@ -115,19 +115,19 @@ export default function BrowsePage({ searchParams }) {
         </div>
       )}
 
-      {loading && <p className="mt-6 text-black/40">Loading…</p>}
+      {loading && <p className="mt-6 text-brand-ink/40">Loading…</p>}
       {!loading && creators.length === 0 && isFiltered && (
-        <p className="mt-6 text-black/40">No creators match your search.</p>
+        <p className="mt-6 text-brand-ink/40">No creators match your search.</p>
       )}
       {!loading && creators.length === 0 && !isFiltered && (
-        <p className="mt-6 text-black/40">No creators yet — check back soon.</p>
+        <p className="mt-6 text-brand-ink/40">No creators yet — check back soon.</p>
       )}
       <ul className="mt-6 grid gap-4 sm:grid-cols-2">
         {creators.map((c) => (
           <li key={c.id}>
             <a
               href={`/creator/${c.slug || c.id}`}
-              className="flex items-center gap-4 rounded-2xl border border-black/5 bg-white p-6 hover:border-[#146359]/30"
+              className="flex items-center gap-4 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6 hover:border-[#146359]/30"
             >
               {c.profile_image_url ? (
                 <Image
@@ -146,16 +146,16 @@ export default function BrowsePage({ searchParams }) {
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold">{c.display_name || 'Unnamed creator'}</h3>
                   {c.active_subscriber_count > 0 && (
-                    <span className="shrink-0 text-xs font-medium text-black/40">
+                    <span className="shrink-0 text-xs font-medium text-brand-ink/40">
                       {c.active_subscriber_count.toLocaleString()} subscriber{c.active_subscriber_count === 1 ? '' : 's'}
                     </span>
                   )}
                 </div>
-                {c.bio && <p className="mt-1 text-sm text-black/50 line-clamp-2">{c.bio}</p>}
+                {c.bio && <p className="mt-1 text-sm text-brand-ink/50 line-clamp-2">{c.bio}</p>}
                 {c.tags && c.tags.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1">
                     {c.tags.map((t) => (
-                      <span key={t} className="rounded-full bg-black/5 px-2 py-0.5 text-[11px] text-black/50">
+                      <span key={t} className="rounded-full bg-brand-ink/5 px-2 py-0.5 text-[11px] text-brand-ink/50">
                         {t}
                       </span>
                     ))}
