@@ -11,6 +11,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { get } from '@vercel/blob';
 import { query } from '@/lib/db';
+import { isValidPresetAvatarId } from '@/lib/preset-avatars';
 
 export async function GET(request, { params }) {
   const { userId } = params;
@@ -20,6 +21,17 @@ export async function GET(request, { params }) {
     const pathname = result.rows[0]?.profile_image_url;
     if (!pathname) {
       return NextResponse.json({ error: 'No profile photo.' }, { status: 404 });
+    }
+
+    // A preset avatar isn't in Blob storage at all -- it's one of the static
+    // illustrations in public/images/avatars -- so send the browser straight
+    // there instead of trying to look it up as a blob pathname.
+    if (pathname.startsWith('preset:')) {
+      const id = pathname.slice('preset:'.length);
+      if (!isValidPresetAvatarId(id)) {
+        return NextResponse.json({ error: 'No profile photo.' }, { status: 404 });
+      }
+      return NextResponse.redirect(new URL(`/images/avatars/${id}.svg`, request.url));
     }
 
     const blob = await get(pathname, { access: 'private' });
