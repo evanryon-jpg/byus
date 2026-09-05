@@ -9,13 +9,15 @@ import Image from 'next/image';
 // needed to see the results that were just promised.
 const SORT_OPTIONS = [
   { value: 'newest', label: 'Newest' },
+  { value: 'trending', label: 'Trending' },
   { value: 'popular', label: 'Most popular' },
 ];
+const SORT_VALUES = SORT_OPTIONS.map((opt) => opt.value);
 
 export default function BrowsePage({ searchParams }) {
   const initialQ = typeof searchParams?.q === 'string' ? searchParams.q : '';
   const initialTag = typeof searchParams?.tag === 'string' ? searchParams.tag : '';
-  const initialSort = searchParams?.sort === 'popular' ? 'popular' : 'newest';
+  const initialSort = SORT_VALUES.includes(searchParams?.sort) ? searchParams.sort : 'newest';
 
   const [creators, setCreators] = useState([]);
   const [availableTags, setAvailableTags] = useState([]);
