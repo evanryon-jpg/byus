@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="p-12 text-center text-black/40">Loading…</div>}>
+    <Suspense fallback={<div className="p-12 text-center text-brand-ink/40">Loading…</div>}>
       <LoginForm />
     </Suspense>
   );
@@ -70,7 +70,7 @@ function LoginForm() {
 
       <a
         href={googleHref}
-        className="mt-6 flex w-full items-center justify-center gap-3 rounded-full border border-black/10 bg-white py-3 font-semibold text-[#1A1A1A] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+        className="mt-6 flex w-full items-center justify-center gap-3 rounded-full border border-brand-ink/10 bg-brand-paper py-3 font-semibold text-[#2B2420] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
       >
         <GoogleIcon />
         Continue with Google
@@ -82,7 +82,7 @@ function LoginForm() {
         <AppleIcon />
         Continue with Apple
       </a>
-      <p className="mt-3 text-center text-xs text-black/40">
+      <p className="mt-3 text-center text-xs text-brand-ink/40">
         By continuing, you agree to our{' '}
         <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline">
           Terms of Service
@@ -102,7 +102,7 @@ function LoginForm() {
           below the field would never actually appear. */}
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
         <label className="block">
-          <span className="mb-1 block text-sm font-medium text-black/60">Email</span>
+          <span className="mb-1 block text-sm font-medium text-brand-ink/60">Email</span>
           <input
             type="email"
             value={email}
@@ -114,14 +114,14 @@ function LoginForm() {
             className={`w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${
               fieldErrors.email
                 ? 'border-red-400 focus:ring-red-300'
-                : 'border-black/10 focus:ring-[#146359]'
+                : 'border-brand-ink/10 focus:ring-[#146359]'
             }`}
           />
           {fieldErrors.email && <p className="mt-1 text-xs text-red-600">{fieldErrors.email}</p>}
         </label>
         <label className="block">
           <div className="mb-1 flex items-center justify-between">
-            <span className="text-sm font-medium text-black/60">Password</span>
+            <span className="text-sm font-medium text-brand-ink/60">Password</span>
             <a href="/forgot-password" className="text-xs text-[#146359] underline">
               Forgot password?
             </a>
@@ -137,7 +137,7 @@ function LoginForm() {
             className={`w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${
               fieldErrors.password
                 ? 'border-red-400 focus:ring-red-300'
-                : 'border-black/10 focus:ring-[#146359]'
+                : 'border-brand-ink/10 focus:ring-[#146359]'
             }`}
           />
           {fieldErrors.password && <p className="mt-1 text-xs text-red-600">{fieldErrors.password}</p>}
@@ -153,7 +153,7 @@ function LoginForm() {
           {loading ? 'Logging in…' : 'Log in'}
         </button>
       </form>
-      <p className="mt-6 text-center text-sm text-black/50">
+      <p className="mt-6 text-center text-sm text-brand-ink/50">
         No account yet?{' '}
         <a href={next ? `/signup?next=${encodeURIComponent(next)}` : '/signup'} className="text-[#146359] underline">
           Sign up
@@ -166,9 +166,9 @@ function LoginForm() {
 function Divider({ label }) {
   return (
     <div className="my-6 flex items-center gap-3">
-      <div className="h-px flex-1 bg-black/10" />
-      <span className="text-xs font-medium uppercase tracking-wide text-black/35">{label}</span>
-      <div className="h-px flex-1 bg-black/10" />
+      <div className="h-px flex-1 bg-brand-ink/10" />
+      <span className="text-xs font-medium uppercase tracking-wide text-brand-ink/35">{label}</span>
+      <div className="h-px flex-1 bg-brand-ink/10" />
     </div>
   );
 }
