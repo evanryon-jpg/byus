@@ -80,12 +80,16 @@ export async function DELETE() {
 
     await query('UPDATE users SET profile_image_url = NULL WHERE id = $1', [session.userId]);
 
-    // Best-effort blob cleanup, same reasoning as the old-avatar cleanup in POST below —
-    // an orphaned blob costs storage, not correctness, and the row update already succeeded.
-    try {
-      await del(pathname);
-    } catch (err) {
-      console.error(`Avatar blob cleanup failed for user ${session.userId} (non-fatal):`, err);
+    // A preset avatar (see /api/me/avatar/preset) has no blob behind it — only
+    // clean up Blob storage for an actual uploaded photo. Best-effort either way,
+    // same reasoning as the old-avatar cleanup in POST below: an orphaned blob
+    // costs storage, not correctness, and the row update already succeeded.
+    if (!pathname.startsWith('preset:')) {
+      try {
+        await del(pathname);
+      } catch (err) {
+        console.error(`Avatar blob cleanup failed for user ${session.userId} (non-fatal):`, err);
+      }
     }
 
     return NextResponse.json({ profile_image_url: null });
@@ -147,8 +151,8 @@ export async function POST(request) {
 
     // Best-effort cleanup of the old avatar — an orphaned blob costs storage,
     // not correctness, so a failure here should never block the upload that
-    // already succeeded.
-    if (previousPathname) {
+    // already succeeded. A preset avatar has no blob behind it, so skip it.
+    if (previousPathname && !previousPathname.startsWith('preset:')) {
       try {
         await del(previousPathname);
       } catch (err) {
