@@ -120,6 +120,9 @@ export default function CreatorDashboard() {
       {/* Monthly support goal — shown as a progress bar on the public page */}
       <GoalSection initialGoalCents={user?.support_goal_cents} onSaved={setUser} />
 
+      {/* Recent one-time tips, with any message a fan left — hides itself until there's at least one */}
+      <RecentTipsSection />
+
       {/* Links */}
       <LinksSection links={links} onSaved={setLinks} />
 
@@ -178,7 +181,7 @@ function PageUrlCard() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState(''); // '' | 'profile' | 'tip' -- which button last showed "Copied!"
 
   useEffect(() => {
     load();
@@ -218,12 +221,12 @@ function PageUrlCard() {
     }
   }
 
-  async function handleCopy() {
-    if (!data?.profileUrl) return;
+  async function handleCopy(url, kind) {
+    if (!url) return;
     try {
-      await navigator.clipboard.writeText(data.profileUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(url);
+      setCopied(kind);
+      setTimeout(() => setCopied(''), 2000);
     } catch {
       setError('Could not copy — select and copy the link manually.');
     }
@@ -245,10 +248,10 @@ function PageUrlCard() {
           </span>
           <button
             type="button"
-            onClick={handleCopy}
+            onClick={() => handleCopy(data.profileUrl, 'profile')}
             className="rounded-full bg-[#146359] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0f4d45]"
           >
-            {copied ? 'Copied!' : 'Copy link'}
+            {copied === 'profile' ? 'Copied!' : 'Copy link'}
           </button>
           <button
             type="button"
@@ -256,6 +259,13 @@ function PageUrlCard() {
             className="text-sm font-medium text-[#146359] hover:text-[#0f4d45]"
           >
             Change
+          </button>
+          <button
+            type="button"
+            onClick={() => handleCopy(`${data.profileUrl}/tip`, 'tip')}
+            className="rounded-full border border-[#C9A961]/40 bg-[#C9A961]/10 px-4 py-2 text-sm font-semibold text-[#8a6b2f] hover:bg-[#C9A961]/20"
+          >
+            {copied === 'tip' ? 'Copied!' : '☕ Copy tip link'}
           </button>
         </div>
       ) : (
@@ -1159,6 +1169,49 @@ function GoalSection({ initialGoalCents, onSaved }) {
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
     </div>
   );
+}
+
+// Recent one-time tips, message included when a fan left one -- self-fetching, same
+// pattern as PageUrlCard/LiveStreamSection above. Fan names only show up here if that fan
+// has opted into show_support_publicly (see /api/creator/tips); the message itself is
+// always shown since it's private correspondence from the fan to this creator, not a
+// public credit.
+function RecentTipsSection() {
+  const [tips, setTips] = useState(null);
+
+  useEffect(() => {
+    (async () => {
+      const res = await fetch('/api/creator/tips');
+      if (res.ok) setTips((await res.json()).tips);
+    })();
+  }, []);
+
+  if (!tips || tips.length === 0) return null;
+
+  return (
+    <div className="mt-8 rounded-2xl border border-[#C9A961]/25 bg-[#C9A961]/5 p-6">
+      <h2 className="font-semibold">☕ Recent tips</h2>
+      <p className="mt-1 text-sm text-brand-ink/50">One-time tips from fans, newest first.</p>
+      <ul className="mt-4 space-y-3">
+        {tips.map((tip) => (
+          <li key={tip.id} className="rounded-xl bg-brand-paper p-3">
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="font-semibold text-[#8a6b2f]">${(tip.amountCents / 100).toFixed(2)}</span>
+              <span className="text-xs text-brand-ink/40">
+                {tip.fanDisplayName || 'A supporter'} · {formatRelativeDate(tip.createdAt)}
+              </span>
+            </div>
+            {tip.message && <p className="mt-1 text-sm text-brand-ink/70">“{tip.message}”</p>}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function formatRelativeDate(dateString) {
+  if (!dateString) return '';
+  return new Date(dateString).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
 // Any link works here -- TikTok, YouTube, Instagram, a personal site, whatever a creator
