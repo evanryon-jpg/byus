@@ -38,8 +38,13 @@ export default function EarningsSection() {
     lifetimeGrossCents,
     lifetimeNetCents,
     activeSubscriberCount,
+    everSubscribedCount,
+    churnRatePercent,
     monthly,
   } = data;
+
+  const thisMonth = monthly[monthly.length - 1];
+  const netNewThisMonth = thisMonth?.netNewSubscribers ?? 0;
 
   const isDiscountedThisMonth = feePercent <= discountedFeePercent;
   const progress = Math.min(1, monthToDateGrossCents / thresholdCents);
@@ -94,8 +99,19 @@ export default function EarningsSection() {
         <StatTile
           label="Active subscribers"
           value={activeSubscriberCount.toLocaleString()}
-          className="col-span-2 sm:col-span-1"
         />
+        {everSubscribedCount > 0 && (
+          <>
+            <StatTile
+              label="Net growth this month"
+              value={`${netNewThisMonth > 0 ? '+' : ''}${netNewThisMonth.toLocaleString()}`}
+            />
+            <StatTile
+              label="Lifetime churn"
+              value={`${churnRatePercent}%`}
+            />
+          </>
+        )}
       </div>
 
       {hasAnyActivity ? (
@@ -111,6 +127,13 @@ export default function EarningsSection() {
               formatAxisTick={(n) => n.toLocaleString()}
             />
           </ChartCard>
+          {everSubscribedCount > 0 && (
+            <p className="text-xs text-brand-ink/60">
+              Lifetime churn is the share of everyone who's ever subscribed who has since
+              canceled ({everSubscribedCount.toLocaleString()} total). Net growth is new
+              subscribers minus cancellations for the month shown.
+            </p>
+          )}
         </>
       ) : (
         <div className="rounded-xl border border-dashed border-brand-ink/10 px-4 py-8 text-center">
