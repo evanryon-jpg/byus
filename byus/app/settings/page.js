@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { CREATOR_CATEGORIES } from '@/lib/categories';
+import { PRESET_AVATAR_IDS } from '@/lib/preset-avatars';
 
 export default function SettingsPage() {
   const [user, setUser] = useState(null);
@@ -48,6 +49,28 @@ function AvatarCard({ user, onChanged }) {
   const [uploading, setUploading] = useState(false);
   const [removing, setRemoving] = useState(false);
   const [error, setError] = useState('');
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [settingPreset, setSettingPreset] = useState(null); // the id currently being applied, or null
+
+  async function handlePickPreset(presetId) {
+    setSettingPreset(presetId);
+    setError('');
+    try {
+      const res = await fetch('/api/me/avatar/preset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ presetId }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Could not set this avatar.');
+      onChanged(result.profile_image_url);
+      setPickerOpen(false);
+    } catch (err) {
+      setError(err.message || 'Could not set this avatar. Try again.');
+    } finally {
+      setSettingPreset(null);
+    }
+  }
 
   async function handleFileChange(e) {
     const file = e.target.files?.[0];
@@ -115,6 +138,14 @@ function AvatarCard({ user, onChanged }) {
             >
               {uploading ? 'Uploading…' : 'Upload photo'}
             </button>
+            <button
+              type="button"
+              onClick={() => setPickerOpen((open) => !open)}
+              disabled={busy}
+              className="rounded-full border border-brand-ink/15 px-4 py-2 text-sm font-medium text-brand-ink/70 hover:border-brand-ink/30 hover:text-brand-ink disabled:opacity-50"
+            >
+              Choose an avatar
+            </button>
             {user.profile_image_url && (
               <button
                 type="button"
@@ -126,7 +157,9 @@ function AvatarCard({ user, onChanged }) {
               </button>
             )}
           </div>
-          <p className="mt-2 text-xs text-brand-ink/60">PNG, JPEG, WEBP, or GIF. Max 5MB.</p>
+          <p className="mt-2 text-xs text-brand-ink/60">
+            Upload your own, or pick one of ours. PNG, JPEG, WEBP, or GIF uploads, max 5MB.
+          </p>
           {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
         </div>
         <input
@@ -137,6 +170,33 @@ function AvatarCard({ user, onChanged }) {
           className="hidden"
         />
       </div>
+
+      {pickerOpen && (
+        <div className="mt-5 border-t border-brand-ink/10 pt-5">
+          <p className="text-xs font-medium text-brand-ink/60">Pick an avatar</p>
+          <div className="mt-3 grid grid-cols-5 gap-3 sm:grid-cols-8">
+            {PRESET_AVATAR_IDS.map((id) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => handlePickPreset(id)}
+                disabled={settingPreset !== null}
+                aria-label={`Use this avatar`}
+                className="aspect-square overflow-hidden rounded-full ring-2 ring-transparent transition hover:ring-[#146359]/50 disabled:opacity-50"
+              >
+                {/* Plain <img>, not next/image -- these are small built-in static
+                    assets, not remote/user content, so there's nothing next/image's
+                    optimizer would meaningfully add here. */}
+                <img
+                  src={`/images/avatars/${id}.svg`}
+                  alt=""
+                  className={`h-full w-full object-cover ${settingPreset === id ? 'opacity-50' : ''}`}
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   );
 }
