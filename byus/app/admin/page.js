@@ -141,11 +141,11 @@ export default function AdminPage() {
                   <td className="py-2.5 pr-4 text-right font-medium text-[#2B2420]" style={{ fontVariantNumeric: 'tabular-nums' }}>
                     {formatUSD(d.amountCents)}
                   </td>
-                  <td className="py-2.5 pr-4 text-brand-ink/72">{d.reason ? formatDisputeLabel(d.reason) : '—'}</td>
+                  <td className="py-2.5 pr-4 text-brand-ink/70">{d.reason ? formatDisputeLabel(d.reason) : '—'}</td>
                   <td className="py-2.5 pr-4">
                     <DisputeStatusBadge status={d.status} />
                   </td>
-                  <td className="py-2.5 pr-4 text-brand-ink/72">
+                  <td className="py-2.5 pr-4 text-brand-ink/70">
                     {new Date(d.openedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
                   </td>
                 </tr>
@@ -185,7 +185,7 @@ export default function AdminPage() {
                     <div className="font-medium text-[#2B2420]">{c.displayName || 'Unnamed creator'}</div>
                     <div className="text-xs text-brand-ink/60">{c.email}</div>
                   </td>
-                  <td className="py-2.5 pr-4 text-brand-ink/72">
+                  <td className="py-2.5 pr-4 text-brand-ink/70">
                     {new Date(c.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
                   </td>
                   <td className="py-2.5 pr-4">
@@ -195,7 +195,7 @@ export default function AdminPage() {
                       <span className="rounded-full bg-brand-ink/5 px-2 py-0.5 text-xs font-medium text-brand-ink/60">Not connected</span>
                     )}
                   </td>
-                  <td className="py-2.5 pr-4 text-brand-ink/72">{c.platformFeePercent}%</td>
+                  <td className="py-2.5 pr-4 text-brand-ink/70">{c.platformFeePercent}%</td>
                   <td className="py-2.5 pr-4 text-right font-medium text-[#2B2420]" style={{ fontVariantNumeric: 'tabular-nums' }}>
                     {formatUSD(c.lifetimeGrossCents)}
                   </td>
