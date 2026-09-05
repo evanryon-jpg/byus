@@ -68,7 +68,7 @@ export default function CreatorSearch() {
         </label>
         <div className="relative">
           <svg
-            className="pointer-events-none absolute left-6 top-1/2 h-5 w-5 -translate-y-1/2 text-brand-ink/30"
+            className="pointer-events-none absolute left-6 top-1/2 h-5 w-5 -translate-y-1/2 text-brand-ink/50"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -97,10 +97,10 @@ export default function CreatorSearch() {
       {showDropdown && (
         <div className="absolute inset-x-0 top-[calc(100%+0.5rem)] z-20 overflow-hidden rounded-2xl border border-brand-ink/5 bg-brand-paper shadow-xl shadow-brand-ink/10">
           {loading && (
-            <p className="px-6 py-4 text-sm text-brand-ink/40">Searching…</p>
+            <p className="px-6 py-4 text-sm text-brand-ink/60">Searching…</p>
           )}
           {!loading && results.length === 0 && (
-            <p className="px-6 py-4 text-sm text-brand-ink/40">No creators match "{q.trim()}".</p>
+            <p className="px-6 py-4 text-sm text-brand-ink/60">No creators match "{q.trim()}".</p>
           )}
           {!loading &&
             results.map((c) => (
@@ -125,7 +125,7 @@ export default function CreatorSearch() {
                   <p className="truncate text-sm font-semibold text-[#2B2420]">
                     {c.display_name || 'Unnamed creator'}
                   </p>
-                  {c.bio && <p className="truncate text-xs text-brand-ink/45">{c.bio}</p>}
+                  {c.bio && <p className="truncate text-xs text-brand-ink/62">{c.bio}</p>}
                 </div>
               </a>
             ))}

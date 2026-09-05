@@ -60,7 +60,7 @@ export default function EarningsSection() {
           </p>
         ) : (
           <>
-            <p className="text-sm text-brand-ink/60">
+            <p className="text-sm text-brand-ink/72">
               You're on the {feePercent}% rate. Cross ${(thresholdCents / 100).toLocaleString()} in
               earnings this month and your fee drops to {discountedFeePercent}% for the rest of the
               month — for every subscriber, not just new ones.
@@ -71,12 +71,12 @@ export default function EarningsSection() {
                 style={{ width: `${progress * 100}%` }}
               />
             </div>
-            <p className="mt-1 text-xs text-brand-ink/40">
+            <p className="mt-1 text-xs text-brand-ink/60">
               ${(monthToDateGrossCents / 100).toFixed(2)} of ${(thresholdCents / 100).toLocaleString()} this month
             </p>
           </>
         )}
-        <p className="mt-2 text-xs text-brand-ink/40">
+        <p className="mt-2 text-xs text-brand-ink/60">
           Based on what you earn each month, not lifetime — it resets on the 1st.
         </p>
         {hasPlatformBonus && (
@@ -114,7 +114,7 @@ export default function EarningsSection() {
         </>
       ) : (
         <div className="rounded-xl border border-dashed border-brand-ink/10 px-4 py-8 text-center">
-          <p className="text-sm text-brand-ink/50">
+          <p className="text-sm text-brand-ink/65">
             Your revenue and subscriber growth will show up here once fans start subscribing.
           </p>
         </div>
@@ -129,7 +129,7 @@ export default function EarningsSection() {
 function StatTile({ label, value, hero, className = '' }) {
   return (
     <div className={`rounded-xl border border-brand-ink/5 bg-brand-paper p-4 ${className}`}>
-      <p className="text-xs text-brand-ink/50">{label}</p>
+      <p className="text-xs text-brand-ink/65">{label}</p>
       <p className={`mt-1 font-semibold text-[#2B2420] ${hero ? 'text-2xl' : 'text-xl'}`}>{value}</p>
     </div>
   );
@@ -140,7 +140,7 @@ function ChartCard({ title, subtitle, children }) {
     <div className="rounded-xl border border-brand-ink/5 bg-brand-paper p-4">
       <div className="flex items-baseline justify-between">
         <h3 className="text-sm font-semibold text-[#2B2420]">{title}</h3>
-        <span className="text-xs text-brand-ink/40">{subtitle}</span>
+        <span className="text-xs text-brand-ink/60">{subtitle}</span>
       </div>
       {/* Wide content scrolls inside its own container rather than the page -- the
           12-slot chart stays comfortably spaced even on a narrow phone screen. */}

@@ -47,7 +47,7 @@ export default function FAQSection() {
         <h2 className="text-center font-display text-3xl font-semibold text-[#2B2420]">
           Questions, answered
         </h2>
-        <p className="mx-auto mt-3 max-w-xl text-center text-brand-ink/55">
+        <p className="mx-auto mt-3 max-w-xl text-center text-brand-ink/68">
           The things people usually want to know before they connect a card or a bank
           account.
         </p>
@@ -75,7 +75,7 @@ export default function FAQSection() {
                   </span>
                 </button>
                 {open && (
-                  <p className="pb-5 pr-8 text-sm leading-relaxed text-brand-ink/60">
+                  <p className="pb-5 pr-8 text-sm leading-relaxed text-brand-ink/72">
                     {item.a}
                   </p>
                 )}

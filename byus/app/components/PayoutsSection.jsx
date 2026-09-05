@@ -43,7 +43,7 @@ export default function PayoutsSection() {
         )}
       </div>
 
-      <p className="mt-1 text-xs text-brand-ink/50">
+      <p className="mt-1 text-xs text-brand-ink/65">
         Every payment lands directly in your connected Stripe account, so Stripe — not
         ByUs — issues your 1099-K each year once you cross the reporting threshold.
         This is your paper trail on our side: a year-by-year breakdown you can hand to
@@ -52,13 +52,13 @@ export default function PayoutsSection() {
 
       {years.length === 0 ? (
         <div className="mt-4 rounded-lg border border-dashed border-brand-ink/10 px-4 py-6 text-center">
-          <p className="text-sm text-brand-ink/50">Your yearly breakdown will show up here once you've been paid.</p>
+          <p className="text-sm text-brand-ink/65">Your yearly breakdown will show up here once you've been paid.</p>
         </div>
       ) : (
         <div className="mt-3 overflow-x-auto">
           <table className="w-full min-w-[480px] text-left text-sm">
             <thead>
-              <tr className="border-b border-brand-ink/5 text-xs text-brand-ink/40">
+              <tr className="border-b border-brand-ink/5 text-xs text-brand-ink/60">
                 <th className="py-2 pr-3 font-medium">Year</th>
                 <th className="py-2 pr-3 font-medium">Payments</th>
                 <th className="py-2 pr-3 font-medium tabular-nums">Gross</th>
@@ -71,9 +71,9 @@ export default function PayoutsSection() {
               {years.map((y) => (
                 <tr key={y.year} className="border-b border-brand-ink/5 last:border-0">
                   <td className="py-2 pr-3 font-medium text-[#2B2420]">{y.year}</td>
-                  <td className="py-2 pr-3 tabular-nums text-brand-ink/60">{y.paymentCount.toLocaleString()}</td>
-                  <td className="py-2 pr-3 tabular-nums text-brand-ink/60">{formatUSD(y.grossCents)}</td>
-                  <td className="py-2 pr-3 tabular-nums text-brand-ink/60">{formatUSD(y.feeCents)}</td>
+                  <td className="py-2 pr-3 tabular-nums text-brand-ink/72">{y.paymentCount.toLocaleString()}</td>
+                  <td className="py-2 pr-3 tabular-nums text-brand-ink/72">{formatUSD(y.grossCents)}</td>
+                  <td className="py-2 pr-3 tabular-nums text-brand-ink/72">{formatUSD(y.feeCents)}</td>
                   <td className="py-2 pr-3 tabular-nums font-semibold text-[#2B2420]">{formatUSD(y.netCents)}</td>
                   <td className="py-2 text-right">
                     <a
@@ -90,7 +90,7 @@ export default function PayoutsSection() {
         </div>
       )}
 
-      <p className="mt-3 text-[11px] text-brand-ink/35">
+      <p className="mt-3 text-[11px] text-brand-ink/55">
         Not tax advice — ByUs isn't a tax advisor or accountant. Talk to one about how
         this income should be reported for your situation.
       </p>

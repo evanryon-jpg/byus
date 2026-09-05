@@ -30,7 +30,7 @@ export default function FeaturedCreators() {
     <section className="mx-auto max-w-4xl px-6 py-4">
       <div className="text-center">
         <h2 className="font-display text-2xl font-semibold text-[#2B2420]">Creators on ByUs right now</h2>
-        <p className="mx-auto mt-2 max-w-xl text-sm text-brand-ink/55">
+        <p className="mx-auto mt-2 max-w-xl text-sm text-brand-ink/68">
           A few of the people already building a membership here.
         </p>
       </div>
@@ -56,7 +56,7 @@ export default function FeaturedCreators() {
             )}
             <div className="min-w-0">
               <h3 className="truncate font-semibold text-[#2B2420]">{c.display_name || 'Unnamed creator'}</h3>
-              {c.bio && <p className="mt-0.5 truncate text-xs text-brand-ink/50">{c.bio}</p>}
+              {c.bio && <p className="mt-0.5 truncate text-xs text-brand-ink/65">{c.bio}</p>}
             </div>
           </a>
         ))}
