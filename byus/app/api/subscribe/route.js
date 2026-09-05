@@ -44,15 +44,18 @@ export async function POST(request) {
     );
   }
 
-  const { tierId } = await request.json();
+  const { tierId, interval } = await request.json();
   if (!tierId) {
     return NextResponse.json({ error: 'tierId is required.' }, { status: 400 });
   }
+  // 'month' is the only price every tier is guaranteed to have; 'year' only works when the
+  // creator set an annual price (checked below, once the tier's own row is in hand).
+  const billingInterval = interval === 'year' ? 'year' : 'month';
 
   try {
     const tierResult = await query(
-      `SELECT t.id, t.stripe_price_id, t.creator_id, u.stripe_connect_account_id, u.stripe_connect_onboarded,
-              u.platform_fee_percent
+      `SELECT t.id, t.stripe_price_id, t.annual_price_cents, t.stripe_annual_price_id, t.creator_id,
+              u.stripe_connect_account_id, u.stripe_connect_onboarded, u.platform_fee_percent
        FROM subscription_tiers t
        JOIN users u ON u.id = t.creator_id
        WHERE t.id = $1 AND t.active = true`,
@@ -65,6 +68,10 @@ export async function POST(request) {
     if (!tier.stripe_connect_onboarded) {
       return NextResponse.json({ error: 'This creator has not finished payment setup yet.' }, { status: 400 });
     }
+    if (billingInterval === 'year' && !tier.stripe_annual_price_id) {
+      return NextResponse.json({ error: 'This tier does not offer annual billing.' }, { status: 400 });
+    }
+    const stripePriceId = billingInterval === 'year' ? tier.stripe_annual_price_id : tier.stripe_price_id;
 
     // Prevent subscribing to your own content, and prevent duplicate active subscriptions
     // to the same tier (fans should manage/cancel from their dashboard, not double-subscribe).
@@ -111,10 +118,11 @@ export async function POST(request) {
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: 'subscription',
       customer: customerId,
-      line_items: [{ price: tier.stripe_price_id, quantity: 1 }],
+      line_items: [{ price: stripePriceId, quantity: 1 }],
       // Back to the creator's own page, not a generic dashboard — that's where the content
-      // the fan just paid for actually lives. ?subscribed=true triggers a welcome banner there.
-      success_url: `${origin}/creator/${tier.creator_id}?subscribed=true`,
+      // the fan just paid for actually lives. ?subscribed=true triggers a welcome banner
+      // there, and &tier=<id> lets it look up that tier's own custom welcome message.
+      success_url: `${origin}/creator/${tier.creator_id}?subscribed=true&tier=${tier.id}`,
       cancel_url: `${origin}/creator/${tier.creator_id}`,
       ...(discounts ? { discounts } : {}),
       subscription_data: {
