@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function SignupPage() {
   return (
-    <Suspense fallback={<div className="p-12 text-center text-black/40">Loading…</div>}>
+    <Suspense fallback={<div className="p-12 text-center text-brand-ink/40">Loading…</div>}>
       <SignupForm />
     </Suspense>
   );
@@ -92,19 +92,19 @@ function SignupForm() {
     <div className="mx-auto max-w-md px-6 py-16">
       <h1 className="text-2xl font-bold">Create your account</h1>
 
-      <div className="mt-6 flex gap-2 rounded-full bg-black/5 p-1">
+      <div className="mt-6 flex gap-2 rounded-full bg-brand-ink/5 p-1">
         <RoleTab label="I'm a fan" active={role === 'fan'} onClick={() => setRole('fan')} />
         <RoleTab label="I'm a creator" active={role === 'creator'} onClick={() => setRole('creator')} />
       </div>
       {role === 'creator' && (
-        <p className="mt-3 text-xs text-black/50">
+        <p className="mt-3 text-xs text-brand-ink/50">
           Next you'll connect Stripe and set up a subscription tier — takes a couple of minutes, right after you sign up.
         </p>
       )}
 
       <a
         href={googleHref}
-        className="mt-6 flex w-full items-center justify-center gap-3 rounded-full border border-black/10 bg-white py-3 font-semibold text-[#1A1A1A] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+        className="mt-6 flex w-full items-center justify-center gap-3 rounded-full border border-brand-ink/10 bg-brand-paper py-3 font-semibold text-[#2B2420] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
       >
         <GoogleIcon />
         Continue with Google
@@ -116,7 +116,7 @@ function SignupForm() {
         <AppleIcon />
         Continue with Apple
       </a>
-      <p className="mt-3 text-center text-xs text-black/40">
+      <p className="mt-3 text-center text-xs text-brand-ink/40">
         By continuing, you agree to our{' '}
         <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline">
           Terms of Service
@@ -166,7 +166,7 @@ function SignupForm() {
             }}
             aria-invalid={Boolean(fieldErrors.password)}
           />
-          {!fieldErrors.password && <p className="mt-1 text-xs text-black/40">At least 8 characters.</p>}
+          {!fieldErrors.password && <p className="mt-1 text-xs text-brand-ink/40">At least 8 characters.</p>}
         </Field>
 
         {/* Honeypot — hidden from real users via CSS, but present in the DOM for bots
@@ -185,12 +185,12 @@ function SignupForm() {
           />
         </div>
 
-        <label className="flex items-start gap-2.5 text-sm text-black/70">
+        <label className="flex items-start gap-2.5 text-sm text-brand-ink/70">
           <input
             type="checkbox"
             checked={termsAccepted}
             onChange={(e) => setTermsAccepted(e.target.checked)}
-            className="mt-0.5 h-4 w-4 shrink-0 rounded border-black/20 text-[#146359] focus:ring-[#146359]"
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border-brand-ink/20 text-[#146359] focus:ring-[#146359]"
           />
           <span>
             I agree to the{' '}
@@ -216,7 +216,7 @@ function SignupForm() {
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-black/50">
+      <p className="mt-6 text-center text-sm text-brand-ink/50">
         Already have an account?{' '}
         <a href={next ? `/login?next=${encodeURIComponent(next)}` : '/login'} className="text-[#146359] underline">
           Log in
@@ -245,7 +245,7 @@ function RoleTab({ label, active, onClick }) {
       type="button"
       onClick={onClick}
       className={`flex-1 rounded-full py-2 text-sm font-medium transition ${
-        active ? 'bg-white shadow text-[#146359]' : 'text-black/50'
+        active ? 'bg-brand-paper shadow text-[#146359]' : 'text-brand-ink/50'
       }`}
     >
       {label}
@@ -256,7 +256,7 @@ function RoleTab({ label, active, onClick }) {
 function Field({ label, error, children }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-sm font-medium text-black/70">{label}</span>
+      <span className="mb-1 block text-sm font-medium text-brand-ink/70">{label}</span>
       {children}
       {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
     </label>
@@ -266,9 +266,9 @@ function Field({ label, error, children }) {
 function Divider({ label }) {
   return (
     <div className="my-6 flex items-center gap-3">
-      <div className="h-px flex-1 bg-black/10" />
-      <span className="text-xs font-medium uppercase tracking-wide text-black/35">{label}</span>
-      <div className="h-px flex-1 bg-black/10" />
+      <div className="h-px flex-1 bg-brand-ink/10" />
+      <span className="text-xs font-medium uppercase tracking-wide text-brand-ink/35">{label}</span>
+      <div className="h-px flex-1 bg-brand-ink/10" />
     </div>
   );
 }
