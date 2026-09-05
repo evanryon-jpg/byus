@@ -5,6 +5,8 @@ import Image from 'next/image';
 import VerifyEmailBanner from '../../components/VerifyEmailBanner';
 import EarningsSection from '../../components/EarningsSection';
 import PayoutsSection from '../../components/PayoutsSection';
+import { TRIAL_DAY_OPTIONS } from '@/lib/trials';
+import { MIN_DISCOUNT_PERCENT, MAX_DISCOUNT_PERCENT } from '@/lib/discounts';
 
 export default function CreatorDashboard() {
   const [user, setUser] = useState(null);
@@ -110,6 +112,11 @@ export default function CreatorDashboard() {
         stripeConnected={stripeConnected}
         platformFeePercent={user?.effective_fee_percent ?? user?.platform_fee_percent ?? 10}
       />
+
+      {/* Discount codes — a fan enters one at checkout for a percentage off their first
+          payment on a specific tier (or any tier). Only useful once there's at least one
+          tier to attach a code to. */}
+      {tiers.length > 0 && <DiscountSection tiers={tiers} />}
 
       {/* Posts */}
       <PostSection posts={posts} onCreated={load} />
@@ -785,6 +792,7 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent }) 
   const [price, setPrice] = useState('');
   const [annualPrice, setAnnualPrice] = useState('');
   const [welcomeMessage, setWelcomeMessage] = useState('');
+  const [trialDays, setTrialDays] = useState(0);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [quickSetupError, setQuickSetupError] = useState('');
@@ -806,7 +814,7 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent }) 
     const res = await fetch('/api/creator/tiers', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, description, priceCents, annualPriceCents, welcomeMessage }),
+      body: JSON.stringify({ name, description, priceCents, annualPriceCents, welcomeMessage, trialDays }),
     });
     const data = await res.json();
     setSaving(false);
@@ -814,7 +822,7 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent }) 
       setError(data.error);
       return;
     }
-    setName(''); setDescription(''); setPrice(''); setAnnualPrice(''); setWelcomeMessage(''); setOpen(false);
+    setName(''); setDescription(''); setPrice(''); setAnnualPrice(''); setWelcomeMessage(''); setTrialDays(0); setOpen(false);
     onCreated();
   }
 
@@ -957,6 +965,22 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent }) 
                   you'd want a brand-new supporter to see first.
                 </p>
               </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-brand-ink/65">Free trial</label>
+                <select
+                  value={trialDays}
+                  onChange={(e) => setTrialDays(Number(e.target.value))}
+                  className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
+                >
+                  {TRIAL_DAY_OPTIONS.map((d) => (
+                    <option key={d} value={d}>{d === 0 ? 'No trial' : `${d} days free`}</option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-brand-ink/60">
+                  A new subscriber isn't charged until the trial ends, then it renews at the price
+                  above automatically.
+                </p>
+              </div>
               {!stripeConnected && (
                 <p className="text-xs text-brand-ink/60">
                   Saves as a draft — hidden from your profile until Stripe is connected.
@@ -977,6 +1001,11 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent }) 
               <div className="rounded-2xl border border-brand-ink/5 bg-[#E8DCC4] p-6">
                 <h3 className="font-semibold">{name || 'Tier name'}</h3>
                 {description && <p className="mt-1 text-sm text-brand-ink/65">{description}</p>}
+                {trialDays > 0 && (
+                  <p className="mt-1 inline-block rounded-full bg-[#146359]/10 px-2 py-0.5 text-xs font-semibold text-[#146359]">
+                    {trialDays}-day free trial
+                  </p>
+                )}
                 <p className="mt-3 text-lg font-bold text-[#146359]">
                   ${(previewPriceCents / 100).toFixed(2)}
                   <span className="text-sm font-normal text-brand-ink/60">/mo</span>
@@ -1001,6 +1030,7 @@ function TierRow({ tier, onChanged }) {
   const [name, setName] = useState(tier.name);
   const [description, setDescription] = useState(tier.description || '');
   const [welcomeMessage, setWelcomeMessage] = useState(tier.welcome_message || '');
+  const [trialDays, setTrialDays] = useState(tier.trial_days ?? 0);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [working, setWorking] = useState(false);
@@ -1012,7 +1042,7 @@ function TierRow({ tier, onChanged }) {
     const res = await fetch(`/api/creator/tiers/${tier.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, description, welcomeMessage }),
+      body: JSON.stringify({ name, description, welcomeMessage, trialDays }),
     });
     const data = await res.json();
     setSaving(false);
@@ -1058,6 +1088,19 @@ function TierRow({ tier, onChanged }) {
           <textarea value={welcomeMessage} onChange={(e) => setWelcomeMessage(e.target.value)}
             placeholder="Welcome message for new subscribers (optional)" rows={2} maxLength={500}
             className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm" />
+          <div>
+            <label className="mb-1 block text-xs font-medium text-brand-ink/65">Free trial</label>
+            <select
+              value={trialDays}
+              onChange={(e) => setTrialDays(Number(e.target.value))}
+              className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
+            >
+              {TRIAL_DAY_OPTIONS.map((d) => (
+                <option key={d} value={d}>{d === 0 ? 'No trial' : `${d} days free`}</option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-brand-ink/60">Only affects new subscribers going forward.</p>
+          </div>
           <p className="text-xs text-brand-ink/60">
             Price is fixed at ${(tier.price_cents / 100).toFixed(2)}/mo
             {tier.annual_price_cents ? ` (or $${(tier.annual_price_cents / 100).toFixed(2)}/yr)` : ''}.
@@ -1089,6 +1132,11 @@ function TierRow({ tier, onChanged }) {
         <span className="text-[#146359] font-semibold">${(tier.price_cents / 100).toFixed(2)}/mo</span>
       </div>
       {tier.description && <p className="mt-1 text-sm text-brand-ink/65">{tier.description}</p>}
+      {tier.trial_days > 0 && (
+        <p className="mt-1 inline-block rounded-full bg-[#146359]/10 px-2 py-0.5 text-xs font-semibold text-[#146359]">
+          {tier.trial_days}-day free trial
+        </p>
+      )}
       <div className="mt-2 flex gap-4 text-xs font-medium">
         <button onClick={() => setEditing(true)} className="text-[#146359] hover:text-[#0f4d45]">
           Edit
@@ -1098,6 +1146,174 @@ function TierRow({ tier, onChanged }) {
         </button>
       </div>
     </li>
+  );
+}
+
+// A discount code is a percentage off a fan's FIRST payment on one tier (or any tier) —
+// entered at checkout via Stripe's own "Add promotion code" field. Backed by a real
+// Stripe Coupon + Promotion Code (see app/api/creator/discounts/route.js); this component
+// just lists and creates them. Capped well under 100% off — see lib/discounts.js for why.
+function DiscountSection({ tiers }) {
+  const [codes, setCodes] = useState([]);
+  const [loaded, setLoaded] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [tierId, setTierId] = useState('');
+  const [percentOff, setPercentOff] = useState(20);
+  const [customCode, setCustomCode] = useState('');
+  const [maxRedemptions, setMaxRedemptions] = useState('');
+  const [error, setError] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [workingId, setWorkingId] = useState(null);
+
+  async function load() {
+    const res = await fetch('/api/creator/discounts');
+    if (res.ok) setCodes((await res.json()).codes);
+    setLoaded(true);
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  async function handleCreate(e) {
+    e.preventDefault();
+    setError('');
+    setCreating(true);
+    const res = await fetch('/api/creator/discounts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tierId: tierId || null,
+        percentOff: Number(percentOff),
+        code: customCode.trim() || undefined,
+        maxRedemptions: maxRedemptions ? Number(maxRedemptions) : undefined,
+      }),
+    });
+    const data = await res.json();
+    setCreating(false);
+    if (!res.ok) {
+      setError(data.error || 'Could not create this code.');
+      return;
+    }
+    setCustomCode('');
+    setMaxRedemptions('');
+    setOpen(false);
+    load();
+  }
+
+  async function handleDeactivate(id) {
+    if (!confirm('Deactivate this code? Fans will no longer be able to use it.')) return;
+    setWorkingId(id);
+    const res = await fetch(`/api/creator/discounts/${id}`, { method: 'DELETE' });
+    setWorkingId(null);
+    if (res.ok) {
+      load();
+    } else {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error || 'Could not deactivate this code.');
+    }
+  }
+
+  return (
+    <div className="mt-8 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
+      <div className="flex items-center justify-between">
+        <h2 className="font-semibold">Discount codes</h2>
+        <button onClick={() => setOpen(!open)} className="text-sm font-medium text-[#146359]">
+          {open ? 'Cancel' : '+ New code'}
+        </button>
+      </div>
+      <p className="mt-2 text-sm text-brand-ink/60">
+        A percentage off a fan's first payment — they enter it at checkout. Never a full
+        100% off; the deepest a code goes is ByUs waiving its own fee.
+      </p>
+
+      {loaded && codes.length > 0 && (
+        <ul className="mt-4 space-y-2">
+          {codes.map((c) => (
+            <li key={c.id} className={`rounded-xl bg-brand-ink/5 p-4 ${c.active ? '' : 'opacity-50'}`}>
+              <div className="flex justify-between">
+                <span className="font-mono font-semibold">
+                  {c.code}
+                  {!c.active && (
+                    <span className="ml-2 font-sans text-xs font-normal uppercase tracking-wide text-brand-ink/60">
+                      Deactivated
+                    </span>
+                  )}
+                </span>
+                <span className="text-[#146359] font-semibold">{c.percentOff}% off</span>
+              </div>
+              <p className="mt-1 text-xs text-brand-ink/60">
+                {c.tierName ? `${c.tierName} tier only` : 'Any tier'} · used {c.timesRedeemed}
+                {c.maxRedemptions ? ` of ${c.maxRedemptions}` : ''} time{c.timesRedeemed === 1 ? '' : 's'}
+              </p>
+              {c.active && (
+                <button
+                  onClick={() => handleDeactivate(c.id)}
+                  disabled={workingId === c.id}
+                  className="mt-2 text-xs font-medium text-brand-ink/65 hover:text-red-600 disabled:opacity-50"
+                >
+                  {workingId === c.id ? 'Working…' : 'Deactivate'}
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      {loaded && codes.length === 0 && !open && (
+        <p className="mt-4 text-sm text-brand-ink/60">No discount codes yet.</p>
+      )}
+
+      {open && (
+        <form onSubmit={handleCreate} className="mt-4 space-y-3 border-t border-brand-ink/5 pt-4">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-brand-ink/65">Applies to</label>
+            <select
+              value={tierId}
+              onChange={(e) => setTierId(e.target.value)}
+              className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
+            >
+              <option value="">Any tier</option>
+              {tiers.map((t) => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-brand-ink/65">
+              Percent off first payment ({MIN_DISCOUNT_PERCENT}–{MAX_DISCOUNT_PERCENT}%)
+            </label>
+            <input
+              type="number"
+              min={MIN_DISCOUNT_PERCENT}
+              max={MAX_DISCOUNT_PERCENT}
+              value={percentOff}
+              onChange={(e) => setPercentOff(e.target.value)}
+              required
+              className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
+            />
+          </div>
+          <input
+            placeholder="Custom code (optional — e.g. WELCOME20)"
+            value={customCode}
+            onChange={(e) => setCustomCode(e.target.value.toUpperCase())}
+            maxLength={40}
+            className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
+          />
+          <input
+            type="number"
+            min="1"
+            placeholder="Max number of uses (optional — leave blank for unlimited)"
+            value={maxRedemptions}
+            onChange={(e) => setMaxRedemptions(e.target.value)}
+            className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
+          />
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <button disabled={creating} className="rounded-full bg-[#146359] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+            {creating ? 'Creating…' : 'Create code'}
+          </button>
+        </form>
+      )}
+    </div>
   );
 }
 
