@@ -1,11 +1,12 @@
 export const dynamic = 'force-dynamic';
 
 // GET /api/creator/earnings
-// The creator's real earnings view: lifetime gross/net revenue, where that puts them on
-// the platform fee tier, current active subscriber count, and a 12-month trailing series
-// (gross, net, and new subscribers per month) for the dashboard's charts. Purely
-// informational — the actual fee (and the moment it drops) is decided in lib/fees.js,
-// triggered off real Stripe payments in the webhook, never here.
+// The creator's real earnings view: lifetime gross/net revenue, where this MONTH's
+// earnings put them on the platform fee tier, current active subscriber count, and a
+// 12-month trailing series (gross, net, and new subscribers per month) for the dashboard's
+// charts. Purely informational — the actual fee (and the moment it moves, in either
+// direction) is decided in lib/fees.js, triggered off real Stripe payments in the webhook,
+// never here.
 //
 // Net-per-month uses fee_percent_applied, the rate that actually applied to each invoice
 // at the time it was paid (see lib/fees.js) — not the creator's current rate — so a past
@@ -85,6 +86,10 @@ export async function GET() {
     }));
 
     const personalTierFeePercent = feeResult.rows[0]?.platform_fee_percent ?? STANDARD_FEE_PERCENT;
+    // The fee tier is decided by THIS CALENDAR MONTH's earnings, not lifetime — `monthly`
+    // above is already a zero-filled trailing series ending on the current month, so its
+    // last entry is exactly that month-to-date figure. Reused here rather than a second query.
+    const monthToDateGrossCents = monthly.length > 0 ? monthly[monthly.length - 1].grossCents : 0;
 
     return NextResponse.json({
       feePercent: personalTierFeePercent,
@@ -92,6 +97,7 @@ export async function GET() {
       platformReductionPoints: reductionPoints,
       discountedFeePercent: DISCOUNTED_FEE_PERCENT,
       thresholdCents: FEE_DISCOUNT_THRESHOLD_CENTS,
+      monthToDateGrossCents,
       lifetimeGrossCents: Number(lifetimeResult.rows[0].gross_cents),
       lifetimeNetCents: Number(lifetimeResult.rows[0].net_cents),
       // Kept for backward compatibility with anything still reading the old field name.
