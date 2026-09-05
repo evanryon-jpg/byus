@@ -11,6 +11,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import stripe from '@/lib/stripe';
+import { TRIAL_DAY_OPTIONS } from '@/lib/trials';
 
 async function loadOwnedTier(tierId, userId) {
   const result = await query(
@@ -29,7 +30,7 @@ export async function PATCH(request, { params }) {
   }
 
   const { tierId } = params;
-  const { name, description, active, welcomeMessage } = await request.json();
+  const { name, description, active, welcomeMessage, trialDays } = await request.json();
 
   try {
     const tier = await loadOwnedTier(tierId, session.userId);
@@ -81,6 +82,19 @@ export async function PATCH(request, { params }) {
       fields.push(`welcome_message = $${i++}`);
       values.push(welcomeMessage || null);
     }
+    // Only ever affects checkouts started after this save -- Stripe already locked in
+    // the trial length (or lack of one) for anyone who subscribed under the old value,
+    // same as changing the welcome message doesn't touch already-subscribed fans.
+    if (trialDays !== undefined) {
+      if (!TRIAL_DAY_OPTIONS.includes(trialDays)) {
+        return NextResponse.json(
+          { error: `Trial length must be one of: ${TRIAL_DAY_OPTIONS.join(', ')} days.` },
+          { status: 400 }
+        );
+      }
+      fields.push(`trial_days = $${i++}`);
+      values.push(trialDays);
+    }
 
     if (fields.length === 0) {
       return NextResponse.json({ error: 'Nothing to update.' }, { status: 400 });
@@ -89,7 +103,8 @@ export async function PATCH(request, { params }) {
     values.push(tierId);
     const result = await query(
       `UPDATE subscription_tiers SET ${fields.join(', ')} WHERE id = $${i}
-       RETURNING id, name, description, price_cents, annual_price_cents, welcome_message, active, created_at`,
+       RETURNING id, name, description, price_cents, annual_price_cents, welcome_message, trial_days,
+                 stripe_product_id, active, created_at`,
       values
     );
 
