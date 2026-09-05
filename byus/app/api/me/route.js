@@ -81,7 +81,7 @@ export async function GET() {
     const result = await query(
       `SELECT id, email, role, display_name, bio, profile_image_url,
               stripe_connect_onboarded, tags, email_verified, platform_fee_percent, notify_new_posts,
-              show_support_publicly
+              show_support_publicly, support_goal_cents
        FROM users WHERE id = $1`,
       [session.userId]
     );
@@ -107,7 +107,8 @@ export async function PATCH(request) {
     return NextResponse.json({ error: 'Not logged in.' }, { status: 401 });
   }
 
-  const { display_name, bio, tags, notify_new_posts, show_support_publicly } = await request.json();
+  const { display_name, bio, tags, notify_new_posts, show_support_publicly, support_goal_cents } =
+    await request.json();
 
   const fields = [];
   const values = [];
@@ -153,6 +154,19 @@ export async function PATCH(request) {
     fields.push(`show_support_publicly = $${i++}`);
     values.push(Boolean(show_support_publicly));
   }
+  // A creator's monthly support goal, shown as a progress bar on their public page (see
+  // app/api/creators/[creatorId]/route.js) — null clears it and hides the bar entirely,
+  // which is also how a creator removes it once set.
+  if (support_goal_cents !== undefined) {
+    if (support_goal_cents !== null && (!Number.isInteger(support_goal_cents) || support_goal_cents < 100)) {
+      return NextResponse.json(
+        { error: 'Support goal must be at least $1.00, or left blank to remove it.' },
+        { status: 400 }
+      );
+    }
+    fields.push(`support_goal_cents = $${i++}`);
+    values.push(support_goal_cents);
+  }
 
   if (fields.length === 0) {
     return NextResponse.json({ error: 'Nothing to update.' }, { status: 400 });
@@ -162,7 +176,7 @@ export async function PATCH(request) {
     values.push(session.userId);
     const result = await query(
       `UPDATE users SET ${fields.join(', ')} WHERE id = $${i}
-       RETURNING id, email, role, display_name, bio, profile_image_url, stripe_connect_onboarded, tags, email_verified, platform_fee_percent, notify_new_posts, show_support_publicly`,
+       RETURNING id, email, role, display_name, bio, profile_image_url, stripe_connect_onboarded, tags, email_verified, platform_fee_percent, notify_new_posts, show_support_publicly, support_goal_cents`,
       values
     );
 
