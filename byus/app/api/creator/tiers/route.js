@@ -22,7 +22,7 @@ export async function GET() {
 
   try {
     const result = await query(
-      `SELECT id, name, description, price_cents, active, created_at
+      `SELECT id, name, description, price_cents, annual_price_cents, welcome_message, active, created_at
        FROM subscription_tiers WHERE creator_id = $1 ORDER BY price_cents ASC`,
       [session.userId]
     );
@@ -42,7 +42,7 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Only creators can create tiers.' }, { status: 403 });
   }
 
-  const { name, description, priceCents } = await request.json();
+  const { name, description, priceCents, annualPriceCents, welcomeMessage } = await request.json();
 
   if (!name || !Number.isInteger(priceCents) || priceCents < 100) {
     return NextResponse.json(
@@ -53,6 +53,30 @@ export async function POST(request) {
   if (priceCents > MAX_PRICE_CENTS) {
     return NextResponse.json(
       { error: `Price must be $${(MAX_PRICE_CENTS / 100).toFixed(2)} or less.` },
+      { status: 400 }
+    );
+  }
+
+  // Annual price is optional — a creator can offer a discounted yearly option alongside
+  // the required monthly price. Same immutability reasoning as the monthly Price below (see
+  // the PATCH handler's comment): once created, editing a tier can never change either price,
+  // only deactivate and recreate.
+  const hasAnnual = annualPriceCents !== undefined && annualPriceCents !== null;
+  if (hasAnnual && (!Number.isInteger(annualPriceCents) || annualPriceCents < 100)) {
+    return NextResponse.json(
+      { error: 'Annual price must be at least $1.00, or left blank.' },
+      { status: 400 }
+    );
+  }
+  if (hasAnnual && annualPriceCents > MAX_PRICE_CENTS * 12) {
+    return NextResponse.json(
+      { error: `Annual price must be $${((MAX_PRICE_CENTS * 12) / 100).toFixed(2)} or less.` },
+      { status: 400 }
+    );
+  }
+  if (welcomeMessage !== undefined && welcomeMessage !== null && welcomeMessage.length > 500) {
+    return NextResponse.json(
+      { error: 'Welcome message must be 500 characters or fewer.' },
       { status: 400 }
     );
   }
@@ -84,12 +108,36 @@ export async function POST(request) {
       recurring: { interval: 'month' },
     });
 
+    // A second recurring Price on the same Product, billed yearly, only when the creator
+    // set one — fans then choose monthly or annual at checkout (see /api/subscribe).
+    let annualPrice = null;
+    if (hasAnnual) {
+      annualPrice = await stripe.prices.create({
+        product: product.id,
+        unit_amount: annualPriceCents,
+        currency: 'usd',
+        recurring: { interval: 'year' },
+      });
+    }
+
     const result = await query(
       `INSERT INTO subscription_tiers
-         (creator_id, name, description, price_cents, stripe_price_id, stripe_product_id, active)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING id, name, description, price_cents, active, created_at`,
-      [session.userId, name, description || null, priceCents, price.id, product.id, startActive]
+         (creator_id, name, description, price_cents, stripe_price_id, stripe_product_id, active,
+          annual_price_cents, stripe_annual_price_id, welcome_message)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       RETURNING id, name, description, price_cents, annual_price_cents, welcome_message, active, created_at`,
+      [
+        session.userId,
+        name,
+        description || null,
+        priceCents,
+        price.id,
+        product.id,
+        startActive,
+        hasAnnual ? annualPriceCents : null,
+        annualPrice?.id || null,
+        welcomeMessage || null,
+      ]
     );
 
     return NextResponse.json({ tier: result.rows[0], draft: !startActive });
