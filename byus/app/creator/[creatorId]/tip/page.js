@@ -12,7 +12,7 @@ import Image from 'next/image';
 
 export default function TipPage() {
   return (
-    <Suspense fallback={<div className="p-12 text-center text-brand-ink/40">Loading…</div>}>
+    <Suspense fallback={<div className="p-12 text-center text-brand-ink/60">Loading…</div>}>
       <TipPageContent />
     </Suspense>
   );
@@ -99,13 +99,13 @@ function TipPageContent() {
   }
 
   if (loading) {
-    return <div className="p-16 text-center text-brand-ink/40">Loading…</div>;
+    return <div className="p-16 text-center text-brand-ink/60">Loading…</div>;
   }
 
   if (loadError || !creator) {
     return (
       <div className="mx-auto max-w-md px-6 py-20 text-center">
-        <p className="text-brand-ink/60">Could not find this creator.</p>
+        <p className="text-brand-ink/72">Could not find this creator.</p>
       </div>
     );
   }
@@ -130,7 +130,7 @@ function TipPageContent() {
         <h1 className="mt-4 font-display text-2xl font-semibold leading-tight text-[#2B2420]">
           ☕ Buy {creator.display_name} a coffee
         </h1>
-        <p className="mx-auto mt-2 max-w-xs text-sm text-brand-ink/50">
+        <p className="mx-auto mt-2 max-w-xs text-sm text-brand-ink/65">
           A one-time thank-you — no subscription, no commitment.
         </p>
 
@@ -139,7 +139,7 @@ function TipPageContent() {
             Thank you! Your tip is on its way to {creator.display_name}.
           </div>
         ) : !creator.stripe_connect_onboarded ? (
-          <p className="mt-6 rounded-xl bg-brand-ink/[0.03] p-4 text-sm text-brand-ink/50">
+          <p className="mt-6 rounded-xl bg-brand-ink/[0.03] p-4 text-sm text-brand-ink/65">
             {creator.display_name} hasn't finished setting up payments yet — check back soon.
           </p>
         ) : (
@@ -159,7 +159,7 @@ function TipPageContent() {
             </div>
 
             <form onSubmit={handleCustomSubmit} className="mt-4 flex items-center justify-center gap-1.5">
-              <span className="text-sm text-brand-ink/40">$</span>
+              <span className="text-sm text-brand-ink/60">$</span>
               <input
                 type="number"
                 min="1"
