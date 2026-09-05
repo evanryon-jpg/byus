@@ -24,12 +24,16 @@ import { getPlatformMilestoneReductionPoints, applyPlatformMilestoneReduction } 
 // Stripe metadata values cap at 500 chars; we cap well under that for a readable note.
 const MAX_TIP_MESSAGE_LENGTH = 300;
 
-// A tip can be started from the creator's full profile page or from their standalone
-// /tip page -- Stripe redirects back to whichever one the fan actually came from instead
-// of always landing on the full profile. Restricted to this shape (own-origin, only the
-// two known pages) so the checkout endpoint can never be turned into an open redirect.
+// A tip can be started from the creator's full profile page, their standalone /tip page,
+// or (for PLATFORM_CREATOR_ID specifically) the site-wide /support page -- Stripe redirects
+// back to whichever one the fan actually came from instead of always landing on the full
+// profile. Restricted to this exact allowlist (own-origin, only the known pages) so the
+// checkout endpoint can never be turned into an open redirect.
 function safeReturnPath(candidate, creatorId) {
   if (typeof candidate === 'string' && /^\/creator\/[A-Za-z0-9_-]+(\/tip)?$/.test(candidate)) {
+    return candidate;
+  }
+  if (candidate === '/support') {
     return candidate;
   }
   return `/creator/${creatorId}`;
