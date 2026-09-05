@@ -66,25 +66,25 @@ function ResetPasswordForm() {
       <h1 className="text-2xl font-bold">Reset your password</h1>
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
         <label className="block">
-          <span className="mb-1 block text-sm font-medium text-black/70">New password</span>
+          <span className="mb-1 block text-sm font-medium text-brand-ink/70">New password</span>
           <input
             type="password"
             required
             minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-xl border border-black/10 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#146359]"
+            className="w-full rounded-xl border border-brand-ink/10 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#146359]"
           />
         </label>
         <label className="block">
-          <span className="mb-1 block text-sm font-medium text-black/70">Confirm new password</span>
+          <span className="mb-1 block text-sm font-medium text-brand-ink/70">Confirm new password</span>
           <input
             type="password"
             required
             minLength={8}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full rounded-xl border border-black/10 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#146359]"
+            className="w-full rounded-xl border border-brand-ink/10 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#146359]"
           />
         </label>
 
@@ -105,7 +105,7 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<div className="p-12 text-center text-black/40">Loading…</div>}>
+    <Suspense fallback={<div className="p-12 text-center text-brand-ink/40">Loading…</div>}>
       <ResetPasswordForm />
     </Suspense>
   );
