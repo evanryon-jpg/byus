@@ -14,6 +14,7 @@ import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { getPlatformMilestoneReductionPoints, applyPlatformMilestoneReduction } from '@/lib/fees';
 import { isAdmin } from '@/lib/admin';
+import { publicAvatarUrl } from '@/lib/avatar-url';
 
 // Matches the cap used at signup — keep both in sync since they constrain the same column.
 const DISPLAY_NAME_MAX = 100;
@@ -21,10 +22,12 @@ const DISPLAY_NAME_MAX = 100;
 // value is both a layout hazard and a free place to dump arbitrary amounts of text.
 const BIO_MAX = 1000;
 
-// profile_image_url in the DB is a private Blob pathname (or null) — never
-// expose it directly, point the client at our own public proxy route instead.
+// profile_image_url in the DB is a private Blob pathname (or a `preset:<id>`
+// marker), never exposed directly — point the client at our own public proxy
+// route instead, versioned so switching photos actually changes the URL
+// (see lib/avatar-url.js).
 function withAvatarUrl(user) {
-  return { ...user, profile_image_url: user.profile_image_url ? `/api/avatar/${user.id}` : null };
+  return { ...user, profile_image_url: publicAvatarUrl(user.id, user.profile_image_url) };
 }
 
 // Adds the fee this user is actually being charged right now: their personal tier minus
