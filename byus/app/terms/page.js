@@ -9,10 +9,10 @@ const CONTACT_EMAIL = 'evanryon@yahoo.com';
 export default function TermsPage() {
   return (
     <div className="mx-auto max-w-2xl px-6 py-16">
-      <h1 className="font-display text-3xl font-semibold text-[#1A1A1A]">Terms of Service</h1>
-      <p className="mt-2 text-sm text-black/45">Last updated {LAST_UPDATED}</p>
+      <h1 className="font-display text-3xl font-semibold text-[#2B2420]">Terms of Service</h1>
+      <p className="mt-2 text-sm text-brand-ink/45">Last updated {LAST_UPDATED}</p>
 
-      <div className="mt-10 space-y-8 text-[15px] leading-relaxed text-black/75">
+      <div className="mt-10 space-y-8 text-[15px] leading-relaxed text-brand-ink/75">
         <Section title="1. Who these terms cover">
           <p>
             These terms govern your use of ByUs (&ldquo;ByUs,&rdquo; &ldquo;we,&rdquo; &ldquo;us&rdquo;),
@@ -125,7 +125,7 @@ export default function TermsPage() {
 function Section({ title, children }) {
   return (
     <section>
-      <h2 className="font-display text-lg font-semibold text-[#1A1A1A]">{title}</h2>
+      <h2 className="font-display text-lg font-semibold text-[#2B2420]">{title}</h2>
       <div className="mt-2">{children}</div>
     </section>
   );
