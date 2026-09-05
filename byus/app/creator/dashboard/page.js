@@ -68,11 +68,11 @@ export default function CreatorDashboard() {
     }
   }
 
-  if (loading) return <div className="p-12 text-center text-brand-ink/40">Loading…</div>;
+  if (loading) return <div className="p-12 text-center text-brand-ink/60">Loading…</div>;
   if (loadError) {
     return (
       <div className="mx-auto flex max-w-md flex-col items-center px-6 py-24 text-center">
-        <p className="text-brand-ink/60">Couldn't load your dashboard. Check your connection and try again.</p>
+        <p className="text-brand-ink/72">Couldn't load your dashboard. Check your connection and try again.</p>
         <button
           onClick={load}
           className="mt-4 rounded-full bg-[#146359] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#0f4d45]"
@@ -90,7 +90,7 @@ export default function CreatorDashboard() {
   return (
     <div className="mx-auto max-w-4xl px-6 py-12">
       <h1 className="text-2xl font-bold">Creator dashboard</h1>
-      <p className="text-brand-ink/50">Welcome back, {user?.display_name || user?.email}.</p>
+      <p className="text-brand-ink/65">Welcome back, {user?.display_name || user?.email}.</p>
 
       {user && !user.email_verified && <VerifyEmailBanner email={user.email} />}
 
@@ -139,17 +139,17 @@ export default function CreatorDashboard() {
           </>
         ) : (
           <>
-            <p className="mt-2 text-sm text-brand-ink/60">
+            <p className="mt-2 text-sm text-brand-ink/72">
               This is the last step: tap the button, and Stripe walks you through the rest.
               That's where your money gets paid out to — any draft tiers above go live the
               moment this is done.
             </p>
-            <p className="mt-2 text-xs text-brand-ink/40">
+            <p className="mt-2 text-xs text-brand-ink/60">
               Stripe Express is a secure, simplified checkout that lets you route money straight
               to your bank account without managing a full business profile.
             </p>
             {user && !user.email_verified ? (
-              <p className="mt-4 text-sm text-brand-ink/40">Verify your email above before connecting Stripe.</p>
+              <p className="mt-4 text-sm text-brand-ink/60">Verify your email above before connecting Stripe.</p>
             ) : (
               <button
                 onClick={handleConnectStripe}
@@ -237,13 +237,13 @@ function PageUrlCard() {
   return (
     <div className="mt-6 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
       <h2 className="font-semibold">Your page URL</h2>
-      <p className="mt-1 text-sm text-brand-ink/50">
+      <p className="mt-1 text-sm text-brand-ink/65">
         Claim a short, memorable link fans can actually remember and share.
       </p>
 
       {!editing ? (
         <div className="mt-4 flex flex-wrap items-center gap-2">
-          <span className="rounded-lg border border-brand-ink/10 bg-brand-ink/[0.02] px-3 py-2 text-sm text-brand-ink/70">
+          <span className="rounded-lg border border-brand-ink/10 bg-brand-ink/[0.02] px-3 py-2 text-sm text-brand-ink/80">
             {data.profileUrl}
           </span>
           <button
@@ -270,7 +270,7 @@ function PageUrlCard() {
         </div>
       ) : (
         <form onSubmit={handleSave} className="mt-4 flex flex-wrap items-center gap-2">
-          <span className="text-sm text-brand-ink/40">byusapp.com/creator/</span>
+          <span className="text-sm text-brand-ink/60">byusapp.com/creator/</span>
           <input
             type="text"
             value={value}
@@ -295,7 +295,7 @@ function PageUrlCard() {
                 setValue(data.slug || '');
                 setError('');
               }}
-              className="text-sm text-brand-ink/50 hover:text-brand-ink/70"
+              className="text-sm text-brand-ink/65 hover:text-brand-ink/80"
             >
               Cancel
             </button>
@@ -303,7 +303,7 @@ function PageUrlCard() {
         </form>
       )}
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-      <p className="mt-2 text-xs text-brand-ink/40">
+      <p className="mt-2 text-xs text-brand-ink/60">
         3–30 characters — lowercase letters, numbers, and hyphens only.
       </p>
     </div>
@@ -374,7 +374,7 @@ function LiveStreamSection() {
           </span>
         )}
       </div>
-      <p className="mt-1 text-sm text-brand-ink/50">
+      <p className="mt-1 text-sm text-brand-ink/65">
         Go live from your camera or screen using free streaming software — it shows up on your
         page in real time, gated to your active subscribers, the same as a subscriber-only post.
       </p>
@@ -382,7 +382,7 @@ function LiveStreamSection() {
       {/* Most creators land here having never used streaming software before, so name the
           tool, say what it is in one line, and hand them a download link before asking them
           to do anything else. */}
-      <p className="mt-2 rounded-xl bg-brand-ink/[0.03] px-3 py-2 text-xs text-brand-ink/50">
+      <p className="mt-2 rounded-xl bg-brand-ink/[0.03] px-3 py-2 text-xs text-brand-ink/65">
         Don't have streaming software yet? We recommend{' '}
         <a
           href="https://obsproject.com/download"
@@ -410,15 +410,15 @@ function LiveStreamSection() {
           {/* The two values below are meaningless out of context to a first-time streamer, so
               lead with the numbered steps that tell them exactly where each one goes, instead
               of assuming they already know what "Server" and "Stream key" refer to. */}
-          <ol className="list-decimal space-y-1.5 rounded-xl border border-brand-ink/5 bg-brand-ink/[0.02] px-4 py-3 pl-8 text-xs text-brand-ink/60 marker:text-brand-ink/30">
+          <ol className="list-decimal space-y-1.5 rounded-xl border border-brand-ink/5 bg-brand-ink/[0.02] px-4 py-3 pl-8 text-xs text-brand-ink/72 marker:text-brand-ink/50">
             <li>Open OBS (or your streaming app) and go to Settings → Stream.</li>
             <li>
-              Set "Service" to <span className="font-medium text-brand-ink/70">Custom</span>.
+              Set "Service" to <span className="font-medium text-brand-ink/80">Custom</span>.
             </li>
             <li>Copy the Server and Stream Key below into the matching fields.</li>
             <li>Click "Start Streaming" in OBS.</li>
             <li>
-              Your page shows <span className="font-medium text-brand-ink/70">LIVE</span> within a
+              Your page shows <span className="font-medium text-brand-ink/80">LIVE</span> within a
               few seconds — no need to refresh, and it switches back automatically when you stop.
             </li>
           </ol>
@@ -430,9 +430,9 @@ function LiveStreamSection() {
             copied={copied === 'url'}
           />
           <div>
-            <p className="mb-1 font-medium text-brand-ink/70">Stream key</p>
+            <p className="mb-1 font-medium text-brand-ink/80">Stream key</p>
             <div className="flex flex-wrap items-center gap-2">
-              <code className="rounded-lg border border-brand-ink/10 bg-brand-ink/[0.02] px-3 py-2 text-xs text-brand-ink/70">
+              <code className="rounded-lg border border-brand-ink/10 bg-brand-ink/[0.02] px-3 py-2 text-xs text-brand-ink/80">
                 {showKey ? data.streamKey : '•'.repeat(24)}
               </code>
               <button
@@ -450,7 +450,7 @@ function LiveStreamSection() {
                 {copied === 'key' ? 'Copied!' : 'Copy'}
               </button>
             </div>
-            <p className="mt-1 text-xs text-brand-ink/40">
+            <p className="mt-1 text-xs text-brand-ink/60">
               Treat this like a password — anyone with it can stream to your page.
             </p>
           </div>
@@ -464,9 +464,9 @@ function LiveStreamSection() {
 function Field({ label, value, onCopy, copied }) {
   return (
     <div>
-      <p className="mb-1 font-medium text-brand-ink/70">{label}</p>
+      <p className="mb-1 font-medium text-brand-ink/80">{label}</p>
       <div className="flex flex-wrap items-center gap-2">
-        <code className="rounded-lg border border-brand-ink/10 bg-brand-ink/[0.02] px-3 py-2 text-xs text-brand-ink/70">
+        <code className="rounded-lg border border-brand-ink/10 bg-brand-ink/[0.02] px-3 py-2 text-xs text-brand-ink/80">
           {value}
         </code>
         <button
@@ -530,7 +530,7 @@ function BroadcastSection() {
   return (
     <div className="mt-8 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
       <h2 className="font-semibold">Message your subscribers</h2>
-      <p className="mt-1 text-sm text-brand-ink/50">
+      <p className="mt-1 text-sm text-brand-ink/65">
         {subscriberCount === null
           ? 'Send a quick update by email — good for anyone who might not check your page every day.'
           : subscriberCount === 0
@@ -645,7 +645,7 @@ function AiSetupSection({ stripeConnected, onProfileSaved, onTierAdded }) {
   return (
     <div className="mt-6 rounded-2xl border border-[#146359]/15 bg-[#146359]/5 p-5">
       <h2 className="text-sm font-semibold text-[#146359]">AI setup assistant</h2>
-      <p className="mt-1 text-sm text-brand-ink/60">
+      <p className="mt-1 text-sm text-brand-ink/72">
         Describe what you make or post about and get a starter bio, categories, and tier ideas —
         review and use whichever ones fit.
       </p>
@@ -674,12 +674,12 @@ function AiSetupSection({ stripeConnected, onProfileSaved, onTierAdded }) {
       {suggestions && (
         <div className="mt-5 space-y-5 border-t border-[#146359]/15 pt-4">
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-brand-ink/40">Suggested bio</p>
-            <p className="mt-1 rounded-xl bg-brand-paper p-3 text-sm text-brand-ink/70">{suggestions.bio}</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-brand-ink/60">Suggested bio</p>
+            <p className="mt-1 rounded-xl bg-brand-paper p-3 text-sm text-brand-ink/80">{suggestions.bio}</p>
             {suggestions.tags?.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {suggestions.tags.map((t) => (
-                  <span key={t} className="rounded-full bg-brand-paper px-2.5 py-1 text-xs text-brand-ink/50">
+                  <span key={t} className="rounded-full bg-brand-paper px-2.5 py-1 text-xs text-brand-ink/65">
                     {t}
                   </span>
                 ))}
@@ -696,9 +696,9 @@ function AiSetupSection({ stripeConnected, onProfileSaved, onTierAdded }) {
           </div>
 
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-brand-ink/40">Suggested tiers</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-brand-ink/60">Suggested tiers</p>
             {!stripeConnected && (
-              <p className="mt-1 text-xs text-brand-ink/40">
+              <p className="mt-1 text-xs text-brand-ink/60">
                 Added as drafts — they'll go live once you connect Stripe below.
               </p>
             )}
@@ -706,10 +706,10 @@ function AiSetupSection({ stripeConnected, onProfileSaved, onTierAdded }) {
               {suggestions.tiers?.map((tier, i) => (
                 <div key={i} className="rounded-xl bg-brand-paper p-3">
                   <p className="text-sm font-semibold">{tier.name}</p>
-                  <p className="text-xs text-brand-ink/50">{tier.description}</p>
+                  <p className="text-xs text-brand-ink/65">{tier.description}</p>
                   <p className="mt-1 text-sm font-bold text-[#146359]">
                     ${(tier.priceCents / 100).toFixed(2)}
-                    <span className="text-xs font-normal text-brand-ink/40">/mo</span>
+                    <span className="text-xs font-normal text-brand-ink/60">/mo</span>
                   </p>
                   <button
                     type="button"
@@ -758,7 +758,7 @@ function GettingStartedChecklist({ stripeConnected, hasTier, hasPost }) {
             >
               {step.done ? '✓' : i + 1}
             </span>
-            <span className={step.done ? 'text-brand-ink/40 line-through' : 'font-medium text-brand-ink/80'}>
+            <span className={step.done ? 'text-brand-ink/60 line-through' : 'font-medium text-brand-ink/88'}>
               {step.label}
             </span>
           </li>
@@ -857,7 +857,7 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent }) 
         </button>
       </div>
       {!stripeConnected && (
-        <p className="mt-2 text-sm text-brand-ink/40">
+        <p className="mt-2 text-sm text-brand-ink/60">
           You can build tiers now — they'll save as drafts and go live once you connect Stripe
           below.
         </p>
@@ -865,7 +865,7 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent }) 
 
       {tiers.length === 0 && !open && (
         <div className="mt-2">
-          <p className="text-sm text-brand-ink/40">No tiers yet — start from a template, or use one to fill in the form:</p>
+          <p className="text-sm text-brand-ink/60">No tiers yet — start from a template, or use one to fill in the form:</p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {TIER_PRESETS.map((preset) => (
               <button
@@ -877,7 +877,7 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent }) 
                 {preset.label} — ${preset.price}/mo
               </button>
             ))}
-            <span className="text-xs text-brand-ink/30">or</span>
+            <span className="text-xs text-brand-ink/50">or</span>
             <button
               type="button"
               onClick={handleQuickSetup}
@@ -923,7 +923,7 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent }) 
                   onChange={(e) => setPrice(e.target.value)} required
                   className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm" />
                 {previewPriceCents > 0 && (
-                  <p className="mt-1 text-xs text-brand-ink/40">
+                  <p className="mt-1 text-xs text-brand-ink/60">
                     You keep ${(previewKeptCents / 100).toFixed(2)}/mo ({100 - platformFeePercent}% — {platformFeePercent}% ByUs fee)
                   </p>
                 )}
@@ -938,7 +938,7 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent }) 
                   onChange={(e) => setAnnualPrice(e.target.value)}
                   className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
                 />
-                <p className="mt-1 text-xs text-brand-ink/40">
+                <p className="mt-1 text-xs text-brand-ink/60">
                   Lets fans pay yearly instead of monthly — a discount off 12× the monthly price is
                   the usual way to make it worth choosing. Leave blank to only offer monthly.
                 </p>
@@ -952,13 +952,13 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent }) 
                   maxLength={500}
                   className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
                 />
-                <p className="mt-1 text-xs text-brand-ink/40">
+                <p className="mt-1 text-xs text-brand-ink/60">
                   Shown right after someone subscribes to this tier — a thank-you, a link, whatever
                   you'd want a brand-new supporter to see first.
                 </p>
               </div>
               {!stripeConnected && (
-                <p className="text-xs text-brand-ink/40">
+                <p className="text-xs text-brand-ink/60">
                   Saves as a draft — hidden from your profile until Stripe is connected.
                 </p>
               )}
@@ -971,17 +971,17 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent }) 
             {/* Live preview — the exact card fans see on the public profile page, so a
                 creator can see what they're publishing before they publish it. */}
             <div>
-              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-brand-ink/40">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-brand-ink/60">
                 How fans will see it
               </p>
-              <div className="rounded-2xl border border-brand-ink/5 bg-[#FAF8F4] p-6">
+              <div className="rounded-2xl border border-brand-ink/5 bg-[#E8DCC4] p-6">
                 <h3 className="font-semibold">{name || 'Tier name'}</h3>
-                {description && <p className="mt-1 text-sm text-brand-ink/50">{description}</p>}
+                {description && <p className="mt-1 text-sm text-brand-ink/65">{description}</p>}
                 <p className="mt-3 text-lg font-bold text-[#146359]">
                   ${(previewPriceCents / 100).toFixed(2)}
-                  <span className="text-sm font-normal text-brand-ink/40">/mo</span>
+                  <span className="text-sm font-normal text-brand-ink/60">/mo</span>
                 </p>
-                <p className="mt-1 text-xs text-brand-ink/40">
+                <p className="mt-1 text-xs text-brand-ink/60">
                   You keep ${(previewKeptCents / 100).toFixed(2)}/mo
                 </p>
                 <div className="mt-4 w-full rounded-full bg-[#146359] py-2 text-center text-sm font-semibold text-white opacity-90">
@@ -1058,7 +1058,7 @@ function TierRow({ tier, onChanged }) {
           <textarea value={welcomeMessage} onChange={(e) => setWelcomeMessage(e.target.value)}
             placeholder="Welcome message for new subscribers (optional)" rows={2} maxLength={500}
             className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm" />
-          <p className="text-xs text-brand-ink/40">
+          <p className="text-xs text-brand-ink/60">
             Price is fixed at ${(tier.price_cents / 100).toFixed(2)}/mo
             {tier.annual_price_cents ? ` (or $${(tier.annual_price_cents / 100).toFixed(2)}/yr)` : ''}.
             To charge something different, deactivate this tier and create a new one.
@@ -1068,7 +1068,7 @@ function TierRow({ tier, onChanged }) {
             <button disabled={saving} className="rounded-full bg-[#146359] px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-50">
               {saving ? 'Saving…' : 'Save'}
             </button>
-            <button type="button" onClick={() => setEditing(false)} className="text-sm text-brand-ink/50 hover:text-brand-ink/70">
+            <button type="button" onClick={() => setEditing(false)} className="text-sm text-brand-ink/65 hover:text-brand-ink/80">
               Cancel
             </button>
           </div>
@@ -1083,17 +1083,17 @@ function TierRow({ tier, onChanged }) {
         <span className="font-medium">
           {tier.name}
           {!tier.active && (
-            <span className="ml-2 text-xs font-normal uppercase tracking-wide text-brand-ink/40">Inactive</span>
+            <span className="ml-2 text-xs font-normal uppercase tracking-wide text-brand-ink/60">Inactive</span>
           )}
         </span>
         <span className="text-[#146359] font-semibold">${(tier.price_cents / 100).toFixed(2)}/mo</span>
       </div>
-      {tier.description && <p className="mt-1 text-sm text-brand-ink/50">{tier.description}</p>}
+      {tier.description && <p className="mt-1 text-sm text-brand-ink/65">{tier.description}</p>}
       <div className="mt-2 flex gap-4 text-xs font-medium">
         <button onClick={() => setEditing(true)} className="text-[#146359] hover:text-[#0f4d45]">
           Edit
         </button>
-        <button onClick={handleToggleActive} disabled={working} className="text-brand-ink/50 hover:text-red-600 disabled:opacity-50">
+        <button onClick={handleToggleActive} disabled={working} className="text-brand-ink/65 hover:text-red-600 disabled:opacity-50">
           {working ? 'Working…' : tier.active ? 'Deactivate' : 'Reactivate'}
         </button>
       </div>
@@ -1144,13 +1144,13 @@ function GoalSection({ initialGoalCents, onSaved }) {
   return (
     <div className="mt-8 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
       <h2 className="font-semibold">Monthly support goal</h2>
-      <p className="mt-1 text-sm text-brand-ink/50">
+      <p className="mt-1 text-sm text-brand-ink/65">
         Show a progress bar on your public page toward a monthly earnings goal — resets on the 1st.
         Leave blank to hide it.
       </p>
       <form onSubmit={handleSave} className="mt-3 flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-1">
-          <span className="text-sm text-brand-ink/40">$</span>
+          <span className="text-sm text-brand-ink/60">$</span>
           <input
             type="number"
             min="1"
@@ -1191,17 +1191,17 @@ function RecentTipsSection() {
   return (
     <div className="mt-8 rounded-2xl border border-[#C9A961]/25 bg-[#C9A961]/5 p-6">
       <h2 className="font-semibold">☕ Recent tips</h2>
-      <p className="mt-1 text-sm text-brand-ink/50">One-time tips from fans, newest first.</p>
+      <p className="mt-1 text-sm text-brand-ink/65">One-time tips from fans, newest first.</p>
       <ul className="mt-4 space-y-3">
         {tips.map((tip) => (
           <li key={tip.id} className="rounded-xl bg-brand-paper p-3">
             <div className="flex items-baseline justify-between gap-3">
               <span className="font-semibold text-[#8a6b2f]">${(tip.amountCents / 100).toFixed(2)}</span>
-              <span className="text-xs text-brand-ink/40">
+              <span className="text-xs text-brand-ink/60">
                 {tip.fanDisplayName || 'A supporter'} · {formatRelativeDate(tip.createdAt)}
               </span>
             </div>
-            {tip.message && <p className="mt-1 text-sm text-brand-ink/70">“{tip.message}”</p>}
+            {tip.message && <p className="mt-1 text-sm text-brand-ink/80">“{tip.message}”</p>}
           </li>
         ))}
       </ul>
@@ -1312,7 +1312,7 @@ function LinksSection({ links: savedLinks, onSaved }) {
   return (
     <div className="mt-8 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
       <h2 className="font-semibold">Links</h2>
-      <p className="mt-1 text-sm text-brand-ink/50">
+      <p className="mt-1 text-sm text-brand-ink/65">
         Tap where you already post — add your username, then save. Fans will see these on your profile.
       </p>
 
@@ -1355,7 +1355,7 @@ function LinksSection({ links: savedLinks, onSaved }) {
             <button
               type="button"
               onClick={() => removeRow(i)}
-              className="shrink-0 text-sm font-medium text-brand-ink/40 hover:text-red-600"
+              className="shrink-0 text-sm font-medium text-brand-ink/60 hover:text-red-600"
             >
               Remove
             </button>
@@ -1469,7 +1469,7 @@ function PostSection({ posts, onCreated }) {
       </div>
 
       {posts.length === 0 && !open && (
-        <p className="mt-2 text-sm text-brand-ink/40">
+        <p className="mt-2 text-sm text-brand-ink/60">
           No posts yet — your profile is visible without one, but a first post is what makes it
           feel active instead of empty when someone new shows up.
         </p>
@@ -1484,7 +1484,7 @@ function PostSection({ posts, onCreated }) {
       {open && (
         <form onSubmit={handleCreate} className="mt-4 space-y-3 border-t border-brand-ink/5 pt-4">
           {posts.length === 0 && (
-            <p className="text-sm text-brand-ink/50">
+            <p className="text-sm text-brand-ink/65">
               Write a quick welcome note to get started — who you are and what people can expect.
             </p>
           )}
@@ -1495,7 +1495,7 @@ function PostSection({ posts, onCreated }) {
             value={body} onChange={(e) => setBody(e.target.value)} required rows={4}
             className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm" />
           <div>
-            <label className="mb-1 block text-sm text-brand-ink/60">Image (optional)</label>
+            <label className="mb-1 block text-sm text-brand-ink/72">Image (optional)</label>
             <input
               type="file"
               accept="image/png,image/jpeg,image/webp,image/gif"
@@ -1509,7 +1509,7 @@ function PostSection({ posts, onCreated }) {
             <option value="subscribers_only">Subscribers only</option>
           </select>
 
-          <label className="flex items-center gap-2 text-sm text-brand-ink/60">
+          <label className="flex items-center gap-2 text-sm text-brand-ink/72">
             <input type="checkbox" checked={isPoll} onChange={(e) => setIsPoll(e.target.checked)} />
             Add a poll (fans vote from a few options — your post text above is the question)
           </label>
@@ -1530,7 +1530,7 @@ function PostSection({ posts, onCreated }) {
                     <button
                       type="button"
                       onClick={() => removePollOption(i)}
-                      className="shrink-0 text-xs font-medium text-brand-ink/40 hover:text-red-600"
+                      className="shrink-0 text-xs font-medium text-brand-ink/60 hover:text-red-600"
                     >
                       Remove
                     </button>
@@ -1618,7 +1618,7 @@ function PostRow({ post, onChanged }) {
             <button disabled={saving} className="rounded-full bg-[#146359] px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-50">
               {saving ? 'Saving…' : 'Save'}
             </button>
-            <button type="button" onClick={() => setEditing(false)} className="text-sm text-brand-ink/50 hover:text-brand-ink/70">
+            <button type="button" onClick={() => setEditing(false)} className="text-sm text-brand-ink/65 hover:text-brand-ink/80">
               Cancel
             </button>
           </div>
@@ -1638,7 +1638,7 @@ function PostRow({ post, onChanged }) {
             </span>
           )}
         </span>
-        <span className="text-xs uppercase tracking-wide text-brand-ink/40">
+        <span className="text-xs uppercase tracking-wide text-brand-ink/60">
           {post.visibility === 'subscribers_only' ? 'Subscribers only' : 'Public'}
         </span>
       </div>
@@ -1657,13 +1657,13 @@ function PostRow({ post, onChanged }) {
           />
         </div>
       )}
-      <p className="mt-1 text-sm text-brand-ink/60">{post.body}</p>
+      <p className="mt-1 text-sm text-brand-ink/72">{post.body}</p>
       {post.poll && <PollTally poll={post.poll} />}
       <div className="mt-2 flex gap-4 text-xs font-medium">
         <button onClick={() => setEditing(true)} className="text-[#146359] hover:text-[#0f4d45]">
           Edit
         </button>
-        <button onClick={handleDelete} disabled={deleting} className="text-brand-ink/50 hover:text-red-600 disabled:opacity-50">
+        <button onClick={handleDelete} disabled={deleting} className="text-brand-ink/65 hover:text-red-600 disabled:opacity-50">
           {deleting ? 'Deleting…' : 'Delete'}
         </button>
       </div>
@@ -1682,9 +1682,9 @@ function PollTally({ poll }) {
         const pct = total > 0 ? Math.round((count / total) * 100) : 0;
         return (
           <div key={i} className="text-xs">
-            <div className="flex justify-between text-brand-ink/60">
+            <div className="flex justify-between text-brand-ink/72">
               <span>{option}</span>
-              <span className="text-brand-ink/40">{count} ({pct}%)</span>
+              <span className="text-brand-ink/60">{count} ({pct}%)</span>
             </div>
             <div className="mt-0.5 h-1.5 w-full overflow-hidden rounded-full bg-brand-ink/5">
               <div className="h-full rounded-full bg-[#146359]/60" style={{ width: `${pct}%` }} />
@@ -1692,7 +1692,7 @@ function PollTally({ poll }) {
           </div>
         );
       })}
-      <p className="text-xs text-brand-ink/30">{total} vote{total === 1 ? '' : 's'}</p>
+      <p className="text-xs text-brand-ink/50">{total} vote{total === 1 ? '' : 's'}</p>
     </div>
   );
 }
