@@ -22,9 +22,11 @@ export async function GET(request, { params }) {
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(creatorId);
     const creatorResult = await query(
       isUuid
-        ? `SELECT id, display_name, bio, profile_image_url, social_links, slug, is_live, mux_playback_id
+        ? `SELECT id, display_name, bio, profile_image_url, social_links, slug, is_live, mux_playback_id,
+                  stripe_connect_onboarded, support_goal_cents
            FROM users WHERE id = $1 AND role = 'creator'`
-        : `SELECT id, display_name, bio, profile_image_url, social_links, slug, is_live, mux_playback_id
+        : `SELECT id, display_name, bio, profile_image_url, social_links, slug, is_live, mux_playback_id,
+                  stripe_connect_onboarded, support_goal_cents
            FROM users WHERE slug = $1 AND role = 'creator'`,
       [creatorId]
     );
@@ -44,10 +46,32 @@ export async function GET(request, { params }) {
       profile_image_url: creatorRow.profile_image_url ? `/api/avatar/${creatorRow.id}` : null,
       social_links: creatorRow.social_links || [],
       slug: creatorRow.slug,
+      // Whether tipping/subscribing is actually possible right now — both need a
+      // connected payout destination, and the frontend uses this to hide the tip widget
+      // for a creator who hasn't finished Stripe setup rather than showing a dead button.
+      stripe_connect_onboarded: Boolean(creatorRow.stripe_connect_onboarded),
     };
 
+    // A creator's optional monthly support goal (set in their dashboard) shown as a
+    // progress bar on this page. Resets every calendar month, same window as the fee-tier
+    // threshold in lib/fees.js — progress is this month's earnings across BOTH
+    // subscriptions and tips (both write to creator_earnings), not a lifetime total.
+    let goal = null;
+    if (creatorRow.support_goal_cents) {
+      const goalResult = await query(
+        `SELECT COALESCE(SUM(amount_cents), 0)::bigint AS total
+         FROM creator_earnings WHERE creator_id = $1 AND created_at >= date_trunc('month', now())`,
+        [id]
+      );
+      goal = {
+        goalCents: creatorRow.support_goal_cents,
+        progressCents: Number(goalResult.rows[0].total),
+      };
+    }
+
     const tiersResult = await query(
-      `SELECT id, name, description, price_cents FROM subscription_tiers
+      `SELECT id, name, description, price_cents, annual_price_cents, welcome_message
+       FROM subscription_tiers
        WHERE creator_id = $1 AND active = true ORDER BY price_cents ASC`,
       [id]
     );
@@ -143,6 +167,7 @@ export async function GET(request, { params }) {
       posts,
       live,
       topSupporters,
+      goal,
     });
   } catch (err) {
     console.error('creators/[creatorId] GET failed:', err);
