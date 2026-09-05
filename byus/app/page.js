@@ -17,10 +17,10 @@ export default async function HomePage() {
       <FeaturedCreators />
       <StatsBand />
       <EarningsCalculator />
-      <PlatformGoalGauge />
       <Features />
       <HowItWorks />
       <FAQSection />
+      <PlatformGoalGauge />
       <ClosingCta user={session} />
     </div>
   );
