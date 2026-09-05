@@ -70,7 +70,7 @@ export async function GET(request, { params }) {
     }
 
     const tiersResult = await query(
-      `SELECT id, name, description, price_cents, annual_price_cents, welcome_message
+      `SELECT id, name, description, price_cents, annual_price_cents, welcome_message, trial_days
        FROM subscription_tiers
        WHERE creator_id = $1 AND active = true ORDER BY price_cents ASC`,
       [id]
