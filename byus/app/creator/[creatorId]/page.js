@@ -18,11 +18,14 @@ function CreatorProfile() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const justSubscribed = searchParams.get('subscribed') === 'true';
+  const subscribedTierId = searchParams.get('tier');
+  const justTipped = searchParams.get('tipped') === 'true';
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [subscribing, setSubscribing] = useState(null);
   const [subscribeError, setSubscribeError] = useState('');
+  const [billingInterval, setBillingInterval] = useState('month'); // 'month' | 'year'
 
   useEffect(() => {
     load();
@@ -59,13 +62,13 @@ function CreatorProfile() {
     }
   }
 
-  async function handleSubscribe(tierId) {
+  async function handleSubscribe(tierId, interval) {
     setSubscribing(tierId);
     setSubscribeError('');
     const res = await fetch('/api/subscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tierId }),
+      body: JSON.stringify({ tierId, interval }),
     });
     const result = await res.json();
     if (result.url) {
@@ -98,13 +101,22 @@ function CreatorProfile() {
   }
   if (!data) return <div className="p-12 text-center text-brand-ink/40">Creator not found.</div>;
 
-  const { creator, tiers, posts, hasActiveSubscription, live, topSupporters } = data;
+  const { creator, tiers, posts, hasActiveSubscription, live, topSupporters, goal } = data;
+  const subscribedTier = subscribedTierId ? tiers.find((t) => t.id === subscribedTierId) : null;
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
       {justSubscribed && (
         <p className="mb-6 rounded-xl bg-green-50 px-4 py-3 text-sm text-green-700">
           🎉 You're in! Welcome to {creator.display_name}'s page — subscriber-only posts below are unlocked.
+          {subscribedTier?.welcome_message && (
+            <span className="mt-2 block text-green-800">{subscribedTier.welcome_message}</span>
+          )}
+        </p>
+      )}
+      {justTipped && (
+        <p className="mb-6 rounded-xl bg-[#C9A961]/15 px-4 py-3 text-sm text-[#8a6b2f]">
+          ☕ Thanks for the coffee! {creator.display_name} really appreciates the support.
         </p>
       )}
       <div className="flex items-center gap-4">
@@ -139,6 +151,12 @@ function CreatorProfile() {
             </a>
           ))}
         </div>
+      )}
+
+      {goal && <SupportGoalBar goal={goal} />}
+
+      {creator.stripe_connect_onboarded && (
+        <TipWidget creatorId={creator.id} creatorName={creator.display_name} />
       )}
 
       <TopSupporters supporters={topSupporters} hasTiers={tiers.length > 0} />
@@ -178,28 +196,61 @@ function CreatorProfile() {
       {/* Tiers */}
       <div id="tiers" className="scroll-mt-6">
         {!hasActiveSubscription && tiers.length > 0 && (
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            {tiers.map((t) => (
-              <div key={t.id} className="rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
-                <h3 className="font-semibold">{t.name}</h3>
-                {t.description && <p className="mt-1 text-sm text-brand-ink/50">{t.description}</p>}
-                <p className="mt-3 text-lg font-bold text-[#146359]">
-                  ${(t.price_cents / 100).toFixed(2)}<span className="text-sm font-normal text-brand-ink/40">/mo</span>
-                </p>
+          <div className="mt-8">
+            {tiers.some((t) => t.annual_price_cents) && (
+              <div className="mb-4 flex items-center justify-center gap-3 text-sm">
                 <button
-                  onClick={() => handleSubscribe(t.id)}
-                  disabled={subscribing === t.id}
-                  className="mt-4 w-full rounded-full bg-[#146359] py-2 text-sm font-semibold text-white hover:bg-[#0f4d45] disabled:opacity-50"
+                  type="button"
+                  onClick={() => setBillingInterval('month')}
+                  className={billingInterval === 'month' ? 'font-semibold text-[#146359]' : 'text-brand-ink/40'}
                 >
-                  {subscribing === t.id ? 'Redirecting…' : 'Subscribe'}
+                  Monthly
                 </button>
-                {/* Sits right under the button that actually leads to a payment form — the
-                    one place on this page where a trust signal matters most. */}
-                <p className="mt-2 text-center text-[11px] text-brand-ink/40">
-                  🔒 Secured by Stripe — ByUs never sees your card
-                </p>
+                <span className="text-brand-ink/20">/</span>
+                <button
+                  type="button"
+                  onClick={() => setBillingInterval('year')}
+                  className={billingInterval === 'year' ? 'font-semibold text-[#146359]' : 'text-brand-ink/40'}
+                >
+                  Annually
+                </button>
               </div>
-            ))}
+            )}
+            <div className="grid gap-4 sm:grid-cols-2">
+              {tiers.map((t) => {
+                const hasAnnual = Number.isInteger(t.annual_price_cents) && t.annual_price_cents > 0;
+                const useAnnual = billingInterval === 'year' && hasAnnual;
+                const displayCents = useAnnual ? t.annual_price_cents : t.price_cents;
+                const savingsCents = hasAnnual ? t.price_cents * 12 - t.annual_price_cents : 0;
+                return (
+                  <div key={t.id} className="rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
+                    <h3 className="font-semibold">{t.name}</h3>
+                    {t.description && <p className="mt-1 text-sm text-brand-ink/50">{t.description}</p>}
+                    <p className="mt-3 text-lg font-bold text-[#146359]">
+                      ${(displayCents / 100).toFixed(2)}
+                      <span className="text-sm font-normal text-brand-ink/40">{useAnnual ? '/yr' : '/mo'}</span>
+                    </p>
+                    {useAnnual && savingsCents > 0 && (
+                      <p className="mt-1 text-xs text-[#146359]">
+                        Save ${(savingsCents / 100).toFixed(2)}/yr vs. paying monthly
+                      </p>
+                    )}
+                    <button
+                      onClick={() => handleSubscribe(t.id, useAnnual ? 'year' : 'month')}
+                      disabled={subscribing === t.id}
+                      className="mt-4 w-full rounded-full bg-[#146359] py-2 text-sm font-semibold text-white hover:bg-[#0f4d45] disabled:opacity-50"
+                    >
+                      {subscribing === t.id ? 'Redirecting…' : 'Subscribe'}
+                    </button>
+                    {/* Sits right under the button that actually leads to a payment form — the
+                        one place on this page where a trust signal matters most. */}
+                    <p className="mt-2 text-center text-[11px] text-brand-ink/40">
+                      🔒 Secured by Stripe — ByUs never sees your card
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
         {!hasActiveSubscription && tiers.length === 0 && (
@@ -324,6 +375,115 @@ function TopSupporters({ supporters, hasTiers }) {
             )}
         </p>
       </div>
+    </div>
+  );
+}
+
+// A single monthly earnings goal, opt-in (set in the creator's dashboard, see
+// GoalSection in app/creator/dashboard/page.js) — resets every calendar month, same
+// window as the fee-tier threshold, and counts both subscriptions and tips.
+function SupportGoalBar({ goal }) {
+  const pct = Math.min(100, (goal.progressCents / goal.goalCents) * 100);
+  return (
+    <div className="mt-6 rounded-2xl border border-brand-ink/5 bg-brand-paper p-4">
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="text-sm font-semibold text-[#2B2420]">This month's goal</p>
+        <p className="text-xs text-brand-ink/50">
+          ${(goal.progressCents / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })} of $
+          {(goal.goalCents / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+        </p>
+      </div>
+      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-brand-ink/10">
+        <div className="h-full rounded-full bg-[#146359] transition-all" style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
+// One-time "buy a coffee" payment — no tier, no commitment, just a thank-you. Presets
+// cover the common cases; the custom field takes anything from $1 up to MAX_TIP_CENTS
+// (enforced server-side in /api/creators/:creatorId/tip).
+const TIP_PRESETS_CENTS = [300, 500, 1000];
+
+function TipWidget({ creatorId, creatorName }) {
+  const router = useRouter();
+  const [custom, setCustom] = useState('');
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
+
+  async function sendTip(cents) {
+    setError('');
+    setSending(true);
+    try {
+      const res = await fetch(`/api/creators/${creatorId}/tip`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amountCents: cents }),
+      });
+      const result = await res.json();
+      if (result.url) {
+        window.location.href = result.url; // redirect to Stripe Checkout
+        return;
+      }
+      if (res.status === 401) {
+        router.push(`/login?next=${encodeURIComponent(window.location.pathname)}`);
+        return;
+      }
+      setError(result.error || 'Could not start checkout. Try again.');
+    } catch {
+      setError('Network error — please try again.');
+    } finally {
+      setSending(false);
+    }
+  }
+
+  function handleCustomSubmit(e) {
+    e.preventDefault();
+    const cents = Math.round(parseFloat(custom) * 100);
+    if (!Number.isFinite(cents) || cents < 100) {
+      setError('Enter at least $1.00.');
+      return;
+    }
+    sendTip(cents);
+  }
+
+  return (
+    <div className="mt-6 rounded-2xl border border-[#C9A961]/25 bg-[#C9A961]/5 p-4">
+      <p className="text-sm font-semibold text-[#2B2420]">☕ Buy {creatorName} a coffee</p>
+      <p className="mt-1 text-xs text-brand-ink/50">A one-time thank-you — no subscription, no commitment.</p>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        {TIP_PRESETS_CENTS.map((cents) => (
+          <button
+            key={cents}
+            type="button"
+            onClick={() => sendTip(cents)}
+            disabled={sending}
+            className="rounded-full bg-[#C9A961] px-4 py-1.5 text-sm font-semibold text-white hover:bg-[#b3945a] disabled:opacity-50"
+          >
+            ${(cents / 100).toFixed(0)}
+          </button>
+        ))}
+        <form onSubmit={handleCustomSubmit} className="flex items-center gap-1.5">
+          <span className="text-sm text-brand-ink/40">$</span>
+          <input
+            type="number"
+            min="1"
+            step="1"
+            placeholder="Other"
+            value={custom}
+            onChange={(e) => setCustom(e.target.value)}
+            className="w-16 rounded-lg border border-brand-ink/10 px-2 py-1 text-sm"
+          />
+          <button
+            type="submit"
+            disabled={sending}
+            className="text-sm font-semibold text-[#8a6b2f] hover:underline disabled:opacity-50"
+          >
+            {sending ? 'Sending…' : 'Send'}
+          </button>
+        </form>
+      </div>
+      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
     </div>
   );
 }
