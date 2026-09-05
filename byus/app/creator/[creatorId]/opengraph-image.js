@@ -10,6 +10,7 @@ export const dynamic = 'force-dynamic';
 
 import { ImageResponse } from 'next/og';
 import { resolveCreator } from '@/lib/resolve-creator';
+import { publicAvatarUrl } from '@/lib/avatar-url';
 
 export const alt = 'Creator profile on ByUs';
 export const size = { width: 1200, height: 630 };
@@ -61,7 +62,8 @@ export default async function Image({ params }) {
   // profile_image_url in the DB is a private Blob pathname -- point Satori (the
   // renderer behind ImageResponse) at our own public avatar proxy instead, the
   // same one every other public-facing avatar on the site already goes through.
-  const avatarUrl = creator.profile_image_url ? `${SITE_URL}/api/avatar/${creator.id}` : null;
+  const avatarPath = publicAvatarUrl(creator.id, creator.profile_image_url);
+  const avatarUrl = avatarPath ? `${SITE_URL}${avatarPath}` : null;
 
   return new ImageResponse(
     (
