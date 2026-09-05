@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import { CREATOR_CATEGORIES } from '@/lib/categories';
 
 export default function SettingsPage() {
   const [user, setUser] = useState(null);
@@ -143,10 +144,23 @@ function AvatarCard({ user, onChanged }) {
 function ProfileCard({ user, onChanged }) {
   const [displayName, setDisplayName] = useState(user.display_name || '');
   const [bio, setBio] = useState(user.bio || '');
-  const [tagsText, setTagsText] = useState((user.tags || []).join(', '));
+  const [tags, setTags] = useState(user.tags || []);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState(null); // { type: 'ok' | 'error', text }
   const isCreator = user.role === 'creator';
+
+  // Categories are a fixed pick-list (see lib/categories.js) rather than free text --
+  // toggling just adds/removes from the selected set, capped at 8 to match what
+  // app/api/me/route.js enforces server-side.
+  function toggleTag(tag) {
+    setTags((current) =>
+      current.includes(tag)
+        ? current.filter((t) => t !== tag)
+        : current.length >= 8
+        ? current
+        : [...current, tag]
+    );
+  }
 
   async function handleSave(e) {
     e.preventDefault();
@@ -156,7 +170,7 @@ function ProfileCard({ user, onChanged }) {
     try {
       const body = { display_name: displayName, bio };
       if (isCreator) {
-        body.tags = tagsText.split(',').map((t) => t.trim()).filter(Boolean);
+        body.tags = tags;
       }
       const res = await fetch('/api/me', {
         method: 'PATCH',
@@ -200,15 +214,32 @@ function ProfileCard({ user, onChanged }) {
         {isCreator && (
           <div>
             <label className="text-sm font-medium">Categories</label>
-            <input
-              type="text"
-              value={tagsText}
-              onChange={(e) => setTagsText(e.target.value)}
-              placeholder="e.g. photography, cooking, fitness"
-              className="mt-1 w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
-            />
-            <p className="mt-1 text-xs text-brand-ink/60">
-              Comma-separated. Shown as filter chips on the Browse page — up to 8.
+            <div className="mt-2 flex flex-wrap gap-2">
+              {CREATOR_CATEGORIES.map((cat) => {
+                const active = tags.includes(cat);
+                const atCap = !active && tags.length >= 8;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => toggleTag(cat)}
+                    disabled={atCap}
+                    aria-pressed={active}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                      active
+                        ? 'border-[#146359] bg-[#146359] text-white'
+                        : atCap
+                        ? 'cursor-not-allowed border-brand-ink/10 text-brand-ink/30'
+                        : 'border-brand-ink/15 text-brand-ink/70 hover:border-[#146359]/40 hover:text-[#146359]'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-2 text-xs text-brand-ink/60">
+              Pick up to 8 — shown as filter chips on the Browse page. {tags.length}/8 selected.
             </p>
           </div>
         )}
