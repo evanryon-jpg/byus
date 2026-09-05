@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 
 export default function VerifyEmailPage() {
   return (
-    <Suspense fallback={<div className="p-12 text-center text-black/40">Loading…</div>}>
+    <Suspense fallback={<div className="p-12 text-center text-brand-ink/40">Loading…</div>}>
       <VerifyEmailContent />
     </Suspense>
   );
@@ -49,8 +49,8 @@ function VerifyEmailContent() {
     <div className="mx-auto max-w-md px-6 py-20 text-center">
       {status === 'verifying' && (
         <>
-          <h1 className="font-display text-2xl font-semibold text-[#1A1A1A]">Verifying your email…</h1>
-          <p className="mt-3 text-black/50">One moment.</p>
+          <h1 className="font-display text-2xl font-semibold text-[#2B2420]">Verifying your email…</h1>
+          <p className="mt-3 text-brand-ink/50">One moment.</p>
         </>
       )}
 
@@ -59,8 +59,8 @@ function VerifyEmailContent() {
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-teal/10 text-brand-teal">
             ✓
           </div>
-          <h1 className="mt-4 font-display text-2xl font-semibold text-[#1A1A1A]">Email verified</h1>
-          <p className="mt-3 text-black/60">
+          <h1 className="mt-4 font-display text-2xl font-semibold text-[#2B2420]">Email verified</h1>
+          <p className="mt-3 text-brand-ink/60">
             Your email address is confirmed. You&rsquo;re all set to use ByUs.
           </p>
           <a
@@ -74,9 +74,9 @@ function VerifyEmailContent() {
 
       {status === 'error' && (
         <>
-          <h1 className="font-display text-2xl font-semibold text-[#1A1A1A]">Verification failed</h1>
-          <p className="mt-3 text-black/60">{error}</p>
-          <p className="mt-6 text-sm text-black/45">
+          <h1 className="font-display text-2xl font-semibold text-[#2B2420]">Verification failed</h1>
+          <p className="mt-3 text-brand-ink/60">{error}</p>
+          <p className="mt-6 text-sm text-brand-ink/45">
             You can request a new verification link from your dashboard.
           </p>
         </>
