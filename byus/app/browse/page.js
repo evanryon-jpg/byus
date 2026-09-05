@@ -64,7 +64,7 @@ export default function BrowsePage({ searchParams }) {
           than another form to fill in. Sits above the heading rather than behind
           it so the search box and sort toggle stay fully legible. */}
       <section className="overflow-hidden border-b border-brand-ink/10">
-        <PhotoCollageBackground src="/images/collage/sign-language.jpg" />
+        <PhotoCollageBackground src="/images/collage/woodworking.jpg" />
         <div className="mx-auto max-w-4xl px-6 pt-10 pb-10">
           <h1 className="font-display text-3xl font-bold text-[#2B2420]">Browse creators</h1>
           <p className="mt-2 max-w-lg text-brand-ink/70">
