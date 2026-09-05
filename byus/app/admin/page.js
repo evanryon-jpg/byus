@@ -36,13 +36,13 @@ export default function AdminPage() {
   }, []);
 
   if (status === 'loading') {
-    return <div className="p-12 text-center text-black/40">Loading…</div>;
+    return <div className="p-12 text-center text-brand-ink/40">Loading…</div>;
   }
   if (status === 'forbidden') {
     return (
       <div className="mx-auto max-w-md px-6 py-24 text-center">
-        <h1 className="text-xl font-semibold text-[#1A1A1A]">Not authorized</h1>
-        <p className="mt-2 text-sm text-black/50">This page is only visible to the ByUs team.</p>
+        <h1 className="text-xl font-semibold text-[#2B2420]">Not authorized</h1>
+        <p className="mt-2 text-sm text-brand-ink/50">This page is only visible to the ByUs team.</p>
         <a href="/" className="mt-6 inline-block text-sm font-semibold text-[#146359] hover:underline">
           Back to ByUs →
         </a>
@@ -50,7 +50,7 @@ export default function AdminPage() {
     );
   }
   if (status === 'error' || !data) {
-    return <div className="p-12 text-center text-black/40">Could not load the platform overview.</div>;
+    return <div className="p-12 text-center text-brand-ink/40">Could not load the platform overview.</div>;
   }
 
   const {
@@ -68,7 +68,7 @@ export default function AdminPage() {
   return (
     <div className="mx-auto max-w-5xl px-6 py-12">
       <h1 className="text-2xl font-bold">Platform overview</h1>
-      <p className="text-black/50">What ByUs itself has earned, and how the platform is growing.</p>
+      <p className="text-brand-ink/50">What ByUs itself has earned, and how the platform is growing.</p>
 
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatTile label="ByUs revenue, lifetime" value={formatCompactUSD(lifetimePlatformFeeCents)} hero />
@@ -109,16 +109,16 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div className="mt-8 rounded-2xl border border-black/5 bg-white p-6">
+      <div className="mt-8 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
         <h2 className="font-semibold">Disputes</h2>
-        <p className="mt-1 text-sm text-black/50">
+        <p className="mt-1 text-sm text-brand-ink/50">
           A fan's bank disputing a charge — most need a response through Stripe's own dispute
           flow before they're resolved one way or the other.
         </p>
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[640px] border-collapse text-sm">
             <thead>
-              <tr className="border-b border-black/10 text-left text-xs font-medium uppercase tracking-wide text-black/40">
+              <tr className="border-b border-brand-ink/10 text-left text-xs font-medium uppercase tracking-wide text-brand-ink/40">
                 <th className="py-2 pr-4">Fan</th>
                 <th className="py-2 pr-4">Creator</th>
                 <th className="py-2 pr-4 text-right">Amount</th>
@@ -129,30 +129,30 @@ export default function AdminPage() {
             </thead>
             <tbody>
               {disputes.map((d) => (
-                <tr key={d.id} className="border-b border-black/5">
+                <tr key={d.id} className="border-b border-brand-ink/5">
                   <td className="py-2.5 pr-4">
-                    <div className="font-medium text-[#1A1A1A]">{d.fanName || 'Unknown fan'}</div>
-                    <div className="text-xs text-black/40">{d.fanEmail || '—'}</div>
+                    <div className="font-medium text-[#2B2420]">{d.fanName || 'Unknown fan'}</div>
+                    <div className="text-xs text-brand-ink/40">{d.fanEmail || '—'}</div>
                   </td>
                   <td className="py-2.5 pr-4">
-                    <div className="font-medium text-[#1A1A1A]">{d.creatorName || 'Unknown creator'}</div>
-                    <div className="text-xs text-black/40">{d.creatorEmail || '—'}</div>
+                    <div className="font-medium text-[#2B2420]">{d.creatorName || 'Unknown creator'}</div>
+                    <div className="text-xs text-brand-ink/40">{d.creatorEmail || '—'}</div>
                   </td>
-                  <td className="py-2.5 pr-4 text-right font-medium text-[#1A1A1A]" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                  <td className="py-2.5 pr-4 text-right font-medium text-[#2B2420]" style={{ fontVariantNumeric: 'tabular-nums' }}>
                     {formatUSD(d.amountCents)}
                   </td>
-                  <td className="py-2.5 pr-4 text-black/60">{d.reason ? formatDisputeLabel(d.reason) : '—'}</td>
+                  <td className="py-2.5 pr-4 text-brand-ink/60">{d.reason ? formatDisputeLabel(d.reason) : '—'}</td>
                   <td className="py-2.5 pr-4">
                     <DisputeStatusBadge status={d.status} />
                   </td>
-                  <td className="py-2.5 pr-4 text-black/60">
+                  <td className="py-2.5 pr-4 text-brand-ink/60">
                     {new Date(d.openedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
                   </td>
                 </tr>
               ))}
               {disputes.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-6 text-center text-black/40">
+                  <td colSpan={6} className="py-6 text-center text-brand-ink/40">
                     No disputes — nothing to review.
                   </td>
                 </tr>
@@ -162,15 +162,15 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div className="mt-8 rounded-2xl border border-black/5 bg-white p-6">
+      <div className="mt-8 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
         <h2 className="font-semibold">Recent creators</h2>
-        <p className="mt-1 text-sm text-black/50">
+        <p className="mt-1 text-sm text-brand-ink/50">
           Most recent signups first — worth a look if Stripe was never connected or earnings stayed at $0.
         </p>
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[640px] border-collapse text-sm">
             <thead>
-              <tr className="border-b border-black/10 text-left text-xs font-medium uppercase tracking-wide text-black/40">
+              <tr className="border-b border-brand-ink/10 text-left text-xs font-medium uppercase tracking-wide text-brand-ink/40">
                 <th className="py-2 pr-4">Creator</th>
                 <th className="py-2 pr-4">Joined</th>
                 <th className="py-2 pr-4">Stripe</th>
@@ -180,30 +180,30 @@ export default function AdminPage() {
             </thead>
             <tbody>
               {creators.map((c) => (
-                <tr key={c.id} className="border-b border-black/5">
+                <tr key={c.id} className="border-b border-brand-ink/5">
                   <td className="py-2.5 pr-4">
-                    <div className="font-medium text-[#1A1A1A]">{c.displayName || 'Unnamed creator'}</div>
-                    <div className="text-xs text-black/40">{c.email}</div>
+                    <div className="font-medium text-[#2B2420]">{c.displayName || 'Unnamed creator'}</div>
+                    <div className="text-xs text-brand-ink/40">{c.email}</div>
                   </td>
-                  <td className="py-2.5 pr-4 text-black/60">
+                  <td className="py-2.5 pr-4 text-brand-ink/60">
                     {new Date(c.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
                   </td>
                   <td className="py-2.5 pr-4">
                     {c.stripeConnectOnboarded ? (
                       <span className="rounded-full bg-[#146359]/10 px-2 py-0.5 text-xs font-medium text-[#146359]">Connected</span>
                     ) : (
-                      <span className="rounded-full bg-black/5 px-2 py-0.5 text-xs font-medium text-black/40">Not connected</span>
+                      <span className="rounded-full bg-brand-ink/5 px-2 py-0.5 text-xs font-medium text-brand-ink/40">Not connected</span>
                     )}
                   </td>
-                  <td className="py-2.5 pr-4 text-black/60">{c.platformFeePercent}%</td>
-                  <td className="py-2.5 pr-4 text-right font-medium text-[#1A1A1A]" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                  <td className="py-2.5 pr-4 text-brand-ink/60">{c.platformFeePercent}%</td>
+                  <td className="py-2.5 pr-4 text-right font-medium text-[#2B2420]" style={{ fontVariantNumeric: 'tabular-nums' }}>
                     {formatUSD(c.lifetimeGrossCents)}
                   </td>
                 </tr>
               ))}
               {creators.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-6 text-center text-black/40">
+                  <td colSpan={5} className="py-6 text-center text-brand-ink/40">
                     No creators have signed up yet.
                   </td>
                 </tr>
@@ -224,12 +224,12 @@ function StatTile({ label, value, hero, flag, className = '' }) {
   return (
     <div
       className={`rounded-xl border p-4 ${
-        flag ? 'border-amber-300/60 bg-amber-50' : 'border-black/5 bg-white'
+        flag ? 'border-amber-300/60 bg-amber-50' : 'border-brand-ink/5 bg-brand-paper'
       } ${className}`}
     >
-      <p className="text-xs text-black/50">{label}</p>
+      <p className="text-xs text-brand-ink/50">{label}</p>
       <p
-        className={`mt-1 font-semibold ${flag ? 'text-amber-700' : 'text-[#1A1A1A]'} ${
+        className={`mt-1 font-semibold ${flag ? 'text-amber-700' : 'text-[#2B2420]'} ${
           hero ? 'text-2xl' : 'text-xl'
         }`}
       >
@@ -247,7 +247,7 @@ function DisputeStatusBadge({ status }) {
   const terminal = {
     won: { label: 'Won', className: 'bg-green-50 text-green-700' },
     lost: { label: 'Lost', className: 'bg-red-50 text-red-700' },
-    charge_refunded: { label: 'Refunded', className: 'bg-black/5 text-black/50' },
+    charge_refunded: { label: 'Refunded', className: 'bg-brand-ink/5 text-brand-ink/50' },
   };
   const config = terminal[status] || { label: formatDisputeLabel(status), className: 'bg-amber-50 text-amber-700' };
   return <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${config.className}`}>{config.label}</span>;
@@ -262,10 +262,10 @@ function formatDisputeLabel(value) {
 
 function ChartCard({ title, subtitle, children }) {
   return (
-    <div className="rounded-xl border border-black/5 bg-white p-4">
+    <div className="rounded-xl border border-brand-ink/5 bg-brand-paper p-4">
       <div className="flex items-baseline justify-between">
-        <h3 className="text-sm font-semibold text-[#1A1A1A]">{title}</h3>
-        <span className="text-xs text-black/40">{subtitle}</span>
+        <h3 className="text-sm font-semibold text-[#2B2420]">{title}</h3>
+        <span className="text-xs text-brand-ink/40">{subtitle}</span>
       </div>
       <div className="mt-3 overflow-x-auto">{children}</div>
     </div>
