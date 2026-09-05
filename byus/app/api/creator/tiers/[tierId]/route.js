@@ -29,7 +29,7 @@ export async function PATCH(request, { params }) {
   }
 
   const { tierId } = params;
-  const { name, description, active } = await request.json();
+  const { name, description, active, welcomeMessage } = await request.json();
 
   try {
     const tier = await loadOwnedTier(tierId, session.userId);
@@ -71,6 +71,16 @@ export async function PATCH(request, { params }) {
       fields.push(`active = $${i++}`);
       values.push(active);
     }
+    if (typeof welcomeMessage === 'string') {
+      if (welcomeMessage.length > 500) {
+        return NextResponse.json(
+          { error: 'Welcome message must be 500 characters or fewer.' },
+          { status: 400 }
+        );
+      }
+      fields.push(`welcome_message = $${i++}`);
+      values.push(welcomeMessage || null);
+    }
 
     if (fields.length === 0) {
       return NextResponse.json({ error: 'Nothing to update.' }, { status: 400 });
@@ -79,7 +89,7 @@ export async function PATCH(request, { params }) {
     values.push(tierId);
     const result = await query(
       `UPDATE subscription_tiers SET ${fields.join(', ')} WHERE id = $${i}
-       RETURNING id, name, description, price_cents, active, created_at`,
+       RETURNING id, name, description, price_cents, annual_price_cents, welcome_message, active, created_at`,
       values
     );
 
