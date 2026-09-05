@@ -13,6 +13,7 @@ import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { del } from '@vercel/blob';
 import { isValidPresetAvatarId } from '@/lib/preset-avatars';
+import { publicAvatarUrl } from '@/lib/avatar-url';
 
 export async function POST(request) {
   const session = await getCurrentUser();
@@ -49,7 +50,7 @@ export async function POST(request) {
       }
     }
 
-    return NextResponse.json({ profile_image_url: `/api/avatar/${session.userId}` });
+    return NextResponse.json({ profile_image_url: publicAvatarUrl(session.userId, `preset:${presetId}`) });
   } catch (err) {
     console.error('me/avatar/preset POST failed:', err);
     return NextResponse.json(
