@@ -4,8 +4,8 @@ export const dynamic = 'force-dynamic';
 // Called when a fan clicks "Subscribe" on a creator's tier. Creates a Stripe Checkout
 // session that, on completion, charges the fan monthly and automatically splits the
 // payment: ByUs keeps the creator's current platform_fee_percent (10% to start, dropping
-// to 7% for good once their lifetime earnings cross the threshold — see lib/fees.js), the
-// rest goes to the creator's connected account.
+// to 7% for any calendar month their earnings cross $2,000 — see lib/fees.js), the rest
+// goes to the creator's connected account.
 
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
