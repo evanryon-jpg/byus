@@ -124,7 +124,7 @@ export default function MonthlyBarChart({
                   textAnchor="middle"
                   fontSize="11"
                   fontWeight="600"
-                  fill="#1A1A1A"
+                  fill="#2B2420"
                   pointerEvents="none"
                 >
                   {formatValue(value)}
