@@ -7,7 +7,7 @@ import LivePlayer from '../../components/LivePlayer';
 
 export default function CreatorProfilePage() {
   return (
-    <Suspense fallback={<div className="p-12 text-center text-brand-ink/40">Loading…</div>}>
+    <Suspense fallback={<div className="p-12 text-center text-brand-ink/60">Loading…</div>}>
       <CreatorProfile />
     </Suspense>
   );
@@ -94,11 +94,11 @@ function CreatorProfile() {
     setSubscribing(null);
   }
 
-  if (loading) return <div className="p-12 text-center text-brand-ink/40">Loading…</div>;
+  if (loading) return <div className="p-12 text-center text-brand-ink/60">Loading…</div>;
   if (loadError) {
     return (
       <div className="mx-auto flex max-w-md flex-col items-center px-6 py-24 text-center">
-        <p className="text-brand-ink/60">Couldn't load this page. Check your connection and try again.</p>
+        <p className="text-brand-ink/72">Couldn't load this page. Check your connection and try again.</p>
         <button
           onClick={load}
           className="mt-4 rounded-full bg-[#146359] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#0f4d45]"
@@ -108,7 +108,7 @@ function CreatorProfile() {
       </div>
     );
   }
-  if (!data) return <div className="p-12 text-center text-brand-ink/40">Creator not found.</div>;
+  if (!data) return <div className="p-12 text-center text-brand-ink/60">Creator not found.</div>;
 
   const { creator, tiers, posts, hasActiveSubscription, live, topSupporters, goal } = data;
   const subscribedTier = subscribedTierId ? tiers.find((t) => t.id === subscribedTierId) : null;
@@ -155,7 +155,7 @@ function CreatorProfile() {
         )}
         <h1 className="text-2xl font-bold">{creator.display_name}</h1>
       </div>
-      {creator.bio && <p className="mt-2 text-brand-ink/60">{creator.bio}</p>}
+      {creator.bio && <p className="mt-2 text-brand-ink/72">{creator.bio}</p>}
 
       {creator.social_links?.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-2">
@@ -190,13 +190,13 @@ function CreatorProfile() {
               <span className="h-1.5 w-1.5 rounded-full bg-red-500 motion-safe:animate-pulse" aria-hidden="true" />
               LIVE
             </span>
-            <span className="text-sm text-brand-ink/50">{creator.display_name} is streaming now</span>
+            <span className="text-sm text-brand-ink/65">{creator.display_name} is streaming now</span>
           </div>
           {live.playbackId && live.playbackToken ? (
             <LivePlayer playbackId={live.playbackId} playbackToken={live.playbackToken} />
           ) : (
             <div className="flex aspect-video w-full items-center justify-center rounded-2xl bg-brand-ink/5 px-6 text-center">
-              <p className="text-sm text-brand-ink/50">
+              <p className="text-sm text-brand-ink/65">
                 {hasActiveSubscription
                   ? "Setting up the stream — refresh in a moment."
                   : tiers.length > 0
@@ -222,15 +222,15 @@ function CreatorProfile() {
                 <button
                   type="button"
                   onClick={() => setBillingInterval('month')}
-                  className={billingInterval === 'month' ? 'font-semibold text-[#146359]' : 'text-brand-ink/40'}
+                  className={billingInterval === 'month' ? 'font-semibold text-[#146359]' : 'text-brand-ink/60'}
                 >
                   Monthly
                 </button>
-                <span className="text-brand-ink/20">/</span>
+                <span className="text-brand-ink/40">/</span>
                 <button
                   type="button"
                   onClick={() => setBillingInterval('year')}
-                  className={billingInterval === 'year' ? 'font-semibold text-[#146359]' : 'text-brand-ink/40'}
+                  className={billingInterval === 'year' ? 'font-semibold text-[#146359]' : 'text-brand-ink/60'}
                 >
                   Annually
                 </button>
@@ -245,10 +245,10 @@ function CreatorProfile() {
                 return (
                   <div key={t.id} className="rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
                     <h3 className="font-semibold">{t.name}</h3>
-                    {t.description && <p className="mt-1 text-sm text-brand-ink/50">{t.description}</p>}
+                    {t.description && <p className="mt-1 text-sm text-brand-ink/65">{t.description}</p>}
                     <p className="mt-3 text-lg font-bold text-[#146359]">
                       ${(displayCents / 100).toFixed(2)}
-                      <span className="text-sm font-normal text-brand-ink/40">{useAnnual ? '/yr' : '/mo'}</span>
+                      <span className="text-sm font-normal text-brand-ink/60">{useAnnual ? '/yr' : '/mo'}</span>
                     </p>
                     {useAnnual && savingsCents > 0 && (
                       <p className="mt-1 text-xs text-[#146359]">
@@ -264,7 +264,7 @@ function CreatorProfile() {
                     </button>
                     {/* Sits right under the button that actually leads to a payment form — the
                         one place on this page where a trust signal matters most. */}
-                    <p className="mt-2 text-center text-[11px] text-brand-ink/40">
+                    <p className="mt-2 text-center text-[11px] text-brand-ink/60">
                       🔒 Secured by Stripe — ByUs never sees your card
                     </p>
                   </div>
@@ -274,7 +274,7 @@ function CreatorProfile() {
           </div>
         )}
         {!hasActiveSubscription && tiers.length === 0 && (
-          <p className="mt-8 rounded-xl bg-brand-ink/5 px-4 py-3 text-sm text-brand-ink/50">
+          <p className="mt-8 rounded-xl bg-brand-ink/5 px-4 py-3 text-sm text-brand-ink/65">
             {creator.display_name} hasn't published any subscription tiers yet — check back soon.
           </p>
         )}
@@ -310,7 +310,7 @@ function CreatorProfile() {
                 <h3 className="truncate font-medium">{p.title || '(untitled)'}</h3>
                 <StatusBadge locked={p.locked} />
               </div>
-              <span className="shrink-0 text-xs text-brand-ink/40">{new Date(p.created_at).toLocaleDateString()}</span>
+              <span className="shrink-0 text-xs text-brand-ink/60">{new Date(p.created_at).toLocaleDateString()}</span>
             </div>
             {p.locked ? (
               <LockedPostPreview hasTiers={tiers.length > 0} />
@@ -335,15 +335,15 @@ function CreatorProfile() {
                     />
                   </div>
                 )}
-                <p className="mt-2 text-sm text-brand-ink/70">{p.body}</p>
+                <p className="mt-2 text-sm text-brand-ink/80">{p.body}</p>
                 {p.poll && <PollBlock postId={p.id} poll={p.poll} />}
               </>
             )}
           </li>
         ))}
-        {posts.length === 0 && <p className="text-sm text-brand-ink/40">No posts yet.</p>}
+        {posts.length === 0 && <p className="text-sm text-brand-ink/60">No posts yet.</p>}
         {posts.length > 0 && filteredPosts.length === 0 && (
-          <p className="text-sm text-brand-ink/40">No posts match your filters.</p>
+          <p className="text-sm text-brand-ink/60">No posts match your filters.</p>
         )}
       </ul>
     </div>
@@ -377,7 +377,7 @@ function PostFilters({ typeFilter, onTypeFilter, accessFilter, onAccessFilter, s
   return (
     <div className="mt-4 space-y-3">
       <div className="relative">
-        <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-brand-ink/30" aria-hidden="true">
+        <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-brand-ink/50" aria-hidden="true">
           🔍
         </span>
         <input
@@ -386,7 +386,7 @@ function PostFilters({ typeFilter, onTypeFilter, accessFilter, onAccessFilter, s
           onChange={(e) => onSearch(e.target.value)}
           placeholder="Search posts"
           aria-label="Search posts"
-          className="w-full rounded-full border border-brand-ink/10 bg-brand-paper py-2 pl-9 pr-4 text-sm placeholder:text-brand-ink/30 focus:border-[#146359]/40 focus:outline-none"
+          className="w-full rounded-full border border-brand-ink/10 bg-brand-paper py-2 pl-9 pr-4 text-sm placeholder:text-brand-ink/50 focus:border-[#146359]/40 focus:outline-none"
         />
       </div>
       <div className="flex flex-wrap items-center gap-1.5">
@@ -414,7 +414,7 @@ function FilterChip({ active, onClick, children }) {
       className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
         active
           ? 'border-[#146359] bg-[#146359] text-white'
-          : 'border-brand-ink/10 text-brand-ink/50 hover:bg-brand-ink/5'
+          : 'border-brand-ink/10 text-brand-ink/65 hover:bg-brand-ink/5'
       }`}
     >
       {children}
@@ -457,7 +457,7 @@ function TopSupporters({ supporters, hasTiers }) {
           ))
         ) : (
           <div
-            className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-dashed border-brand-ink/20 text-brand-ink/30"
+            className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-dashed border-brand-ink/20 text-brand-ink/50"
             aria-hidden="true"
           >
             +
@@ -466,7 +466,7 @@ function TopSupporters({ supporters, hasTiers }) {
       </div>
       <div className="min-w-0">
         <p className="text-sm font-semibold text-[#2B2420]">Top supporters</p>
-        <p className="text-xs text-brand-ink/50">
+        <p className="text-xs text-brand-ink/65">
           {hasSupporters
             ? `${supporters.length} supporter${supporters.length === 1 ? '' : 's'} shown here by their own choice.`
             : hasTiers ? (
@@ -495,7 +495,7 @@ function SupportGoalBar({ goal }) {
     <div className="mt-6 rounded-2xl border border-brand-ink/5 bg-brand-paper p-4">
       <div className="flex items-baseline justify-between gap-3">
         <p className="text-sm font-semibold text-[#2B2420]">This month's goal</p>
-        <p className="text-xs text-brand-ink/50">
+        <p className="text-xs text-brand-ink/65">
           ${(goal.progressCents / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })} of $
           {(goal.goalCents / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}
         </p>
@@ -559,7 +559,7 @@ function TipWidget({ creatorId, creatorName }) {
   return (
     <div className="mt-6 rounded-2xl border border-[#C9A961]/25 bg-[#C9A961]/5 p-4">
       <p className="text-sm font-semibold text-[#2B2420]">☕ Buy {creatorName} a coffee</p>
-      <p className="mt-1 text-xs text-brand-ink/50">A one-time thank-you — no subscription, no commitment.</p>
+      <p className="mt-1 text-xs text-brand-ink/65">A one-time thank-you — no subscription, no commitment.</p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {TIP_PRESETS_CENTS.map((cents) => (
           <button
@@ -573,7 +573,7 @@ function TipWidget({ creatorId, creatorName }) {
           </button>
         ))}
         <form onSubmit={handleCustomSubmit} className="flex items-center gap-1.5">
-          <span className="text-sm text-brand-ink/40">$</span>
+          <span className="text-sm text-brand-ink/60">$</span>
           <input
             type="number"
             min="1"
@@ -694,12 +694,12 @@ function PollBlock({ postId, poll: initialPoll }) {
             disabled={voting !== null}
             className="block w-full text-left text-sm disabled:opacity-50"
           >
-            <div className={`flex justify-between ${mine ? 'font-semibold text-[#146359]' : 'text-brand-ink/60'}`}>
+            <div className={`flex justify-between ${mine ? 'font-semibold text-[#146359]' : 'text-brand-ink/72'}`}>
               <span>
                 {option}
                 {mine && ' ✓'}
               </span>
-              <span className="text-brand-ink/40">{pct}%</span>
+              <span className="text-brand-ink/60">{pct}%</span>
             </div>
             <div className="mt-0.5 h-1.5 w-full overflow-hidden rounded-full bg-brand-ink/5">
               <div
@@ -710,7 +710,7 @@ function PollBlock({ postId, poll: initialPoll }) {
           </button>
         );
       })}
-      <p className="text-xs text-brand-ink/30">{total} vote{total === 1 ? '' : 's'} — tap an option to change your vote</p>
+      <p className="text-xs text-brand-ink/50">{total} vote{total === 1 ? '' : 's'} — tap an option to change your vote</p>
       {error && <p className="text-xs text-red-600">{error}</p>}
     </div>
   );
@@ -736,7 +736,7 @@ function LockedPostPreview({ hasTiers }) {
         >
           🔒
         </span>
-        <p className="text-xs font-medium text-brand-ink/60">
+        <p className="text-xs font-medium text-brand-ink/72">
           {hasTiers ? (
             <a href="#tiers" className="text-[#146359] underline">
               Subscribe to view this post
@@ -757,7 +757,7 @@ function LockedPostPreview({ hasTiers }) {
 function StatusBadge({ locked }) {
   if (locked) {
     return (
-      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-ink/5 px-2 py-0.5 text-[11px] font-medium text-brand-ink/50">
+      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-ink/5 px-2 py-0.5 text-[11px] font-medium text-brand-ink/65">
         🔒 Subscribers only
       </span>
     );

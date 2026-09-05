@@ -43,7 +43,7 @@ export default async function Image({ params }) {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: '#FAF8F4',
+            backgroundColor: '#E8DCC4',
           }}
         >
           <img src={iconDataUri} width={100} height={100} style={{ display: 'flex', marginBottom: 32 }} />
@@ -72,7 +72,7 @@ export default async function Image({ params }) {
           display: 'flex',
           flexDirection: 'column',
           padding: '72px 88px',
-          backgroundColor: '#FAF8F4',
+          backgroundColor: '#E8DCC4',
           backgroundImage:
             'radial-gradient(circle at 15% 20%, rgba(201,169,97,0.22) 0%, rgba(201,169,97,0) 45%), radial-gradient(circle at 88% 82%, rgba(20,99,89,0.14) 0%, rgba(20,99,89,0) 45%)',
         }}
