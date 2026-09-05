@@ -105,7 +105,7 @@ function TipPageContent() {
   if (loadError || !creator) {
     return (
       <div className="mx-auto max-w-md px-6 py-20 text-center">
-        <p className="text-brand-ink/72">Could not find this creator.</p>
+        <p className="text-brand-ink/70">Could not find this creator.</p>
       </div>
     );
   }
