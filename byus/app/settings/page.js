@@ -24,13 +24,13 @@ export default function SettingsPage() {
     setLoading(false);
   }
 
-  if (loading) return <div className="p-12 text-center text-black/40">Loading…</div>;
+  if (loading) return <div className="p-12 text-center text-brand-ink/40">Loading…</div>;
   if (!user) return null;
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-12">
       <h1 className="text-2xl font-bold">Settings</h1>
-      <p className="mt-1 text-sm text-black/50">{user.email}</p>
+      <p className="mt-1 text-sm text-brand-ink/50">{user.email}</p>
 
       <AvatarCard user={user} onChanged={(profile_image_url) => setUser({ ...user, profile_image_url })} />
       <ProfileCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
@@ -71,7 +71,7 @@ function AvatarCard({ user, onChanged }) {
   const initial = (user.display_name || user.email || '?').trim().charAt(0).toUpperCase();
 
   return (
-    <section className="mt-6 rounded-2xl border border-black/5 bg-white p-6">
+    <section className="mt-6 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
       <h2 className="font-semibold">Profile photo</h2>
       <div className="mt-4 flex items-center gap-5">
         {user.profile_image_url ? (
@@ -96,7 +96,7 @@ function AvatarCard({ user, onChanged }) {
           >
             {uploading ? 'Uploading…' : 'Upload photo'}
           </button>
-          <p className="mt-2 text-xs text-black/40">PNG, JPEG, WEBP, or GIF. Max 5MB.</p>
+          <p className="mt-2 text-xs text-brand-ink/40">PNG, JPEG, WEBP, or GIF. Max 5MB.</p>
           {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
         </div>
         <input
@@ -146,7 +146,7 @@ function ProfileCard({ user, onChanged }) {
   }
 
   return (
-    <section className="mt-6 rounded-2xl border border-black/5 bg-white p-6">
+    <section className="mt-6 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
       <h2 className="font-semibold">Profile</h2>
       <form onSubmit={handleSave} className="mt-4 space-y-4">
         <div>
@@ -156,7 +156,7 @@ function ProfileCard({ user, onChanged }) {
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
             required
-            className="mt-1 w-full rounded-lg border border-black/10 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
           />
         </div>
         <div>
@@ -165,7 +165,7 @@ function ProfileCard({ user, onChanged }) {
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             rows={4}
-            className="mt-1 w-full rounded-lg border border-black/10 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
           />
         </div>
         {isCreator && (
@@ -176,9 +176,9 @@ function ProfileCard({ user, onChanged }) {
               value={tagsText}
               onChange={(e) => setTagsText(e.target.value)}
               placeholder="e.g. photography, cooking, fitness"
-              className="mt-1 w-full rounded-lg border border-black/10 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
             />
-            <p className="mt-1 text-xs text-black/40">
+            <p className="mt-1 text-xs text-brand-ink/40">
               Comma-separated. Shown as filter chips on the Browse page — up to 8.
             </p>
           </div>
@@ -235,12 +235,12 @@ function NotificationsCard({ user, onChanged }) {
   }
 
   return (
-    <section className="mt-6 rounded-2xl border border-black/5 bg-white p-6">
+    <section className="mt-6 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
       <h2 className="font-semibold">Notifications</h2>
       <label className="mt-4 flex items-center justify-between gap-4">
         <span>
-          <span className="block text-sm font-medium text-[#1A1A1A]">New post emails</span>
-          <span className="mt-0.5 block text-xs text-black/50">
+          <span className="block text-sm font-medium text-[#2B2420]">New post emails</span>
+          <span className="mt-0.5 block text-xs text-brand-ink/50">
             Get an email when a creator you're subscribed to publishes something new.
           </span>
         </span>
@@ -293,12 +293,12 @@ function SupportVisibilityCard({ user, onChanged }) {
   }
 
   return (
-    <section className="mt-6 rounded-2xl border border-black/5 bg-white p-6">
+    <section className="mt-6 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
       <h2 className="font-semibold">Support visibility</h2>
       <label className="mt-4 flex items-center justify-between gap-4">
         <span>
-          <span className="block text-sm font-medium text-[#1A1A1A]">Show me as a top supporter</span>
-          <span className="mt-0.5 block text-xs text-black/50">
+          <span className="block text-sm font-medium text-[#2B2420]">Show me as a top supporter</span>
+          <span className="mt-0.5 block text-xs text-brand-ink/50">
             Your name and photo appear in the "Top supporters" row on the page of any
             creator you're actively subscribed to. Off by default — nobody sees this
             unless you turn it on.
@@ -349,9 +349,9 @@ function ReferralCard() {
   }
 
   return (
-    <section className="mt-6 rounded-2xl border border-black/5 bg-white p-6">
+    <section className="mt-6 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
       <h2 className="font-semibold">Refer a friend</h2>
-      <p className="mt-1 text-sm text-black/50">
+      <p className="mt-1 text-sm text-brand-ink/50">
         Share your link. When someone signs up and subscribes to a creator, you both get a
         free month.
       </p>
@@ -366,7 +366,7 @@ function ReferralCard() {
               readOnly
               value={data.referralLink}
               onClick={(e) => e.target.select()}
-              className="w-full rounded-lg border border-black/10 bg-black/[0.02] px-3 py-2 text-sm text-black/70"
+              className="w-full rounded-lg border border-brand-ink/10 bg-brand-ink/[0.02] px-3 py-2 text-sm text-brand-ink/70"
             />
             <button
               type="button"
@@ -379,12 +379,12 @@ function ReferralCard() {
 
           <div className="mt-4 flex gap-6 text-sm">
             <div>
-              <span className="font-semibold text-black">{data.referredCount}</span>{' '}
-              <span className="text-black/50">{data.referredCount === 1 ? 'friend' : 'friends'} referred</span>
+              <span className="font-semibold text-brand-ink">{data.referredCount}</span>{' '}
+              <span className="text-brand-ink/50">{data.referredCount === 1 ? 'friend' : 'friends'} referred</span>
             </div>
             <div>
-              <span className="font-semibold text-black">{data.rewardedCount}</span>{' '}
-              <span className="text-black/50">free {data.rewardedCount === 1 ? 'month' : 'months'} earned</span>
+              <span className="font-semibold text-brand-ink">{data.rewardedCount}</span>{' '}
+              <span className="text-brand-ink/50">free {data.rewardedCount === 1 ? 'month' : 'months'} earned</span>
             </div>
           </div>
         </>
@@ -430,7 +430,7 @@ function PasswordCard() {
   }
 
   return (
-    <section className="mt-6 rounded-2xl border border-black/5 bg-white p-6">
+    <section className="mt-6 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
       <h2 className="font-semibold">Password</h2>
       <form onSubmit={handleSave} className="mt-4 space-y-4">
         <div>
@@ -440,7 +440,7 @@ function PasswordCard() {
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
             required
-            className="mt-1 w-full rounded-lg border border-black/10 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
           />
         </div>
         <div>
@@ -451,7 +451,7 @@ function PasswordCard() {
             onChange={(e) => setNewPassword(e.target.value)}
             required
             minLength={8}
-            className="mt-1 w-full rounded-lg border border-black/10 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
           />
         </div>
         <div>
@@ -462,7 +462,7 @@ function PasswordCard() {
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
             minLength={8}
-            className="mt-1 w-full rounded-lg border border-black/10 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
           />
         </div>
         <div className="flex items-center gap-3">
