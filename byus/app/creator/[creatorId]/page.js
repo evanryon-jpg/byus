@@ -408,6 +408,8 @@ const TIP_PRESETS_CENTS = [300, 500, 1000];
 function TipWidget({ creatorId, creatorName }) {
   const router = useRouter();
   const [custom, setCustom] = useState('');
+  const [message, setMessage] = useState('');
+  const [showMessage, setShowMessage] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
 
@@ -418,7 +420,7 @@ function TipWidget({ creatorId, creatorName }) {
       const res = await fetch(`/api/creators/${creatorId}/tip`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amountCents: cents }),
+        body: JSON.stringify({ amountCents: cents, message }),
       });
       const result = await res.json();
       if (result.url) {
@@ -483,6 +485,23 @@ function TipWidget({ creatorId, creatorName }) {
           </button>
         </form>
       </div>
+      {showMessage ? (
+        <textarea
+          value={message}
+          onChange={(e) => setMessage(e.target.value.slice(0, 300))}
+          placeholder={`Say something to ${creatorName} (optional, only they'll see it)`}
+          rows={2}
+          className="mt-3 w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={() => setShowMessage(true)}
+          className="mt-3 text-xs font-medium text-[#8a6b2f] hover:underline"
+        >
+          + Add a message
+        </button>
+      )}
       {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
     </div>
   );
