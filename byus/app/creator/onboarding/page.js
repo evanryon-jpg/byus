@@ -97,7 +97,7 @@ function OnboardingStatus() {
         <>
           <Spinner />
           <h1 className="mt-6 text-2xl font-bold">Finishing up your Stripe setup…</h1>
-          <p className="mt-2 text-sm text-brand-ink/50">This usually takes just a few seconds. Don't close this tab.</p>
+          <p className="mt-2 text-sm text-brand-ink/65">This usually takes just a few seconds. Don't close this tab.</p>
         </>
       )}
 
@@ -105,7 +105,7 @@ function OnboardingStatus() {
         <>
           <Spinner />
           <h1 className="mt-6 text-2xl font-bold">Reconnecting to Stripe…</h1>
-          <p className="mt-2 text-sm text-brand-ink/50">
+          <p className="mt-2 text-sm text-brand-ink/65">
             Your last onboarding link expired — sending you back to Stripe.
           </p>
         </>
@@ -117,7 +117,7 @@ function OnboardingStatus() {
             ✓
           </div>
           <h1 className="mt-6 text-2xl font-bold">You're all set!</h1>
-          <p className="mt-2 text-sm text-brand-ink/50">
+          <p className="mt-2 text-sm text-brand-ink/65">
             Stripe has confirmed your account. You can now create paid tiers and start earning.
           </p>
           <a
@@ -132,7 +132,7 @@ function OnboardingStatus() {
       {status === 'timeout' && (
         <>
           <h1 className="text-2xl font-bold">Still finishing up</h1>
-          <p className="mt-2 text-sm text-brand-ink/50">
+          <p className="mt-2 text-sm text-brand-ink/65">
             Stripe hasn't confirmed your account yet. This can occasionally take a few minutes —
             your dashboard will update automatically once it does.
           </p>
@@ -180,7 +180,7 @@ function Spinner() {
 
 export default function OnboardingPage() {
   return (
-    <Suspense fallback={<div className="p-12 text-center text-brand-ink/40">Loading…</div>}>
+    <Suspense fallback={<div className="p-12 text-center text-brand-ink/60">Loading…</div>}>
       <OnboardingStatus />
     </Suspense>
   );
