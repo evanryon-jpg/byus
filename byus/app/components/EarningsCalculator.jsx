@@ -16,7 +16,10 @@ export default function EarningsCalculator() {
   const [subscribers, setSubscribers] = useState(50);
   const [price, setPrice] = useState(8);
   const [tier, setTier] = useState('starter'); // 'starter' | 'grown'
-  const [showComparison, setShowComparison] = useState(false);
+  // Defaults to visible now -- this comparison is the platform's actual value
+  // proposition (you keep more than a flat 12% competitor takes) and was easy to
+  // miss tucked behind an unchecked box.
+  const [showComparison, setShowComparison] = useState(true);
 
   const feePercent = tier === 'grown' ? GROWN_FEE_PERCENT : STARTER_FEE_PERCENT;
   const grossCents = Math.round(subscribers * price * 100);
@@ -29,11 +32,11 @@ export default function EarningsCalculator() {
 
   return (
     <section className="mx-auto max-w-4xl px-6 py-4">
-      <div className="rounded-3xl border border-brand-ink/5 bg-brand-paper p-6 sm:p-8">
-        <span className="inline-flex items-center gap-2 rounded-full bg-brand-teal/10 px-3 py-1 text-xs font-semibold tracking-wide text-brand-teal">
+      <div className="rounded-3xl border border-brand-ink/20 bg-brand-paper p-6 sm:p-10">
+        <span className="inline-flex items-center gap-2 rounded-md bg-brand-teal/10 px-3 py-1 text-xs font-semibold tracking-wide text-brand-teal">
           Earnings calculator
         </span>
-        <h2 className="mt-3 font-display text-2xl font-semibold text-[#2B2420] sm:text-3xl">
+        <h2 className="mt-3 font-display text-2xl font-bold text-[#2B2420] sm:text-3xl">
           See what you&rsquo;d actually keep
         </h2>
         <p className="mt-2 max-w-xl text-sm text-brand-ink/68">
@@ -41,7 +44,9 @@ export default function EarningsCalculator() {
           every charge, not a rough estimate.
         </p>
 
-        <div className="mt-8 grid gap-8 sm:grid-cols-2">
+        {/* Dashboard-style split: inputs on the left, the payout outcome as its own
+            bordered card on the right with the hero number given real size. */}
+        <div className="mt-8 grid gap-10 sm:grid-cols-2">
           {/* Inputs */}
           <div className="space-y-6">
             <SliderField
@@ -65,7 +70,7 @@ export default function EarningsCalculator() {
 
             <div>
               <p className="text-xs font-medium uppercase tracking-wide text-brand-ink/60">Your fee tier</p>
-              <div className="mt-2 flex items-center gap-1 rounded-full bg-brand-ink/5 p-1 text-xs font-medium">
+              <div className="mt-2 flex items-center gap-1 rounded-full border border-brand-ink/15 bg-[#F5E9D8] p-1 text-xs font-medium">
                 <TierButton active={tier === 'starter'} onClick={() => setTier('starter')}>
                   Just starting — {STARTER_FEE_PERCENT}%
                 </TierButton>
@@ -87,20 +92,21 @@ export default function EarningsCalculator() {
           </div>
 
           {/* Outputs */}
-          <div className="space-y-3 rounded-2xl bg-brand-ink/[0.03] p-5">
+          <div className="space-y-3 rounded-2xl border border-brand-ink/20 bg-[#F5E9D8] p-5 sm:p-6">
             <OutputRow label="Monthly gross revenue" value={grossCents} />
             <OutputRow label={`ByUs platform fee (${feePercent}%)`} value={-feeCents} muted />
-            <div className="my-1 h-px bg-brand-ink/10" />
+            <div className="my-1 h-px bg-brand-ink/15" />
             <OutputRow label="You keep, every month" value={netCents} hero />
 
             {showComparison && (
-              <div className="mt-4 rounded-xl bg-brand-gold/10 p-4">
+              <div className="mt-4 rounded-xl border border-dashed border-brand-gold bg-brand-gold/10 p-4">
                 <p className="text-sm text-[#8a6b2f]">
                   A flat {COMPETITOR_FEE_PERCENT}% competitor would take{' '}
-                  <strong>{fmt(competitorFeeCents)}</strong>, leaving you {fmt(competitorNetCents)}.
+                  <strong className="tabular-nums">{fmt(competitorFeeCents)}</strong>, leaving you{' '}
+                  <span className="tabular-nums">{fmt(competitorNetCents)}</span>.
                 </p>
                 <p className="mt-1 text-sm font-semibold text-[#8a6b2f]">
-                  You keep {fmt(extraKeptCents)} more per month with ByUs.
+                  You keep <span className="tabular-nums">{fmt(extraKeptCents)}</span> more per month with ByUs.
                 </p>
               </div>
             )}
@@ -131,7 +137,7 @@ function SliderField({ label, value, min, max, step, onChange, display }) {
     <div>
       <div className="flex items-baseline justify-between">
         <label className="text-xs font-medium uppercase tracking-wide text-brand-ink/60">{label}</label>
-        <span className="font-display text-lg font-semibold text-[#2B2420]">{display}</span>
+        <span className="font-display text-lg font-semibold tabular-nums text-[#2B2420]">{display}</span>
       </div>
       <input
         type="range"
@@ -163,15 +169,15 @@ function TierButton({ active, onClick, children }) {
 
 function OutputRow({ label, value, hero, muted }) {
   return (
-    <div className="flex items-baseline justify-between gap-3">
-      <span className={`text-sm ${hero ? 'font-semibold text-[#2B2420]' : 'text-brand-ink/68'}`}>{label}</span>
+    <div className={`flex items-baseline justify-between gap-3 ${hero ? 'pt-2' : ''}`}>
+      <span className={`text-sm ${hero ? 'font-bold text-[#2B2420]' : 'text-brand-ink/68'}`}>{label}</span>
       <span
         className={
           hero
-            ? 'font-display text-2xl font-semibold text-brand-teal'
+            ? 'font-display text-3xl font-extrabold tabular-nums text-brand-teal sm:text-4xl'
             : muted
-            ? 'text-sm text-brand-ink/62'
-            : 'text-sm font-medium text-[#2B2420]'
+            ? 'text-sm tabular-nums text-brand-ink/62'
+            : 'text-sm font-medium tabular-nums text-[#2B2420]'
         }
       >
         {fmt(value)}

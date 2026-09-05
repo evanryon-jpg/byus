@@ -61,14 +61,14 @@ export default function CreatorSearch() {
   const showDropdown = open && q.trim().length > 0;
 
   return (
-    <div ref={containerRef} className="relative mx-auto mt-10 max-w-xl text-left">
+    <div ref={containerRef} className="relative mt-8 max-w-xl text-left">
       <form onSubmit={handleSubmit}>
         <label htmlFor="hero-search" className="sr-only">
           Search for a creator
         </label>
         <div className="relative">
           <svg
-            className="pointer-events-none absolute left-6 top-1/2 h-5 w-5 -translate-y-1/2 text-brand-ink/50"
+            className="pointer-events-none absolute left-5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-brand-ink/55"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -89,7 +89,7 @@ export default function CreatorSearch() {
             }}
             onFocus={() => setOpen(true)}
             placeholder="Type a creator's name…"
-            className="w-full rounded-full border border-brand-ink/10 bg-brand-paper py-5 pl-14 pr-6 text-lg shadow-lg shadow-brand-ink/5 outline-none transition focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20"
+            className="w-full rounded-xl border border-brand-ink/20 bg-brand-paper py-4 pl-12 pr-5 text-base shadow-sm outline-none transition focus:border-brand-clay focus:ring-2 focus:ring-brand-clay/15"
           />
         </div>
       </form>

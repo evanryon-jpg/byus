@@ -54,27 +54,43 @@ export default function NavBar() {
   // never drift out of sync.
   const links = (
     <>
-      <a href="/browse" className="block hover:text-[#146359]" onClick={() => setMenuOpen(false)}>
+      <a
+        href="/browse"
+        className="block rounded-lg px-3 py-2 hover:bg-[#146359]/5 hover:text-[#146359]"
+        onClick={() => setMenuOpen(false)}
+      >
         Browse creators
       </a>
 
       {status === 'in' && (
         <>
-          <a href={dashboardHref} className="block hover:text-[#146359]" onClick={() => setMenuOpen(false)}>
+          <a
+            href={dashboardHref}
+            className="block rounded-lg px-3 py-2 hover:bg-[#146359]/5 hover:text-[#146359]"
+            onClick={() => setMenuOpen(false)}
+          >
             Dashboard
           </a>
-          <a href="/settings" className="block hover:text-[#146359]" onClick={() => setMenuOpen(false)}>
+          <a
+            href="/settings"
+            className="block rounded-lg px-3 py-2 hover:bg-[#146359]/5 hover:text-[#146359]"
+            onClick={() => setMenuOpen(false)}
+          >
             Settings
           </a>
           {user?.is_admin && (
-            <a href="/admin" className="block hover:text-[#146359]" onClick={() => setMenuOpen(false)}>
+            <a
+              href="/admin"
+              className="block rounded-lg px-3 py-2 hover:bg-[#146359]/5 hover:text-[#146359]"
+              onClick={() => setMenuOpen(false)}
+            >
               Admin
             </a>
           )}
           <button
             type="button"
             onClick={handleLogout}
-            className="w-full rounded-full border border-[#146359] px-4 py-2.5 text-left text-[#146359] hover:bg-[#146359]/5 sm:w-auto sm:text-center"
+            className="w-full rounded-full border border-[#146359] px-4 py-2.5 text-left text-[#146359] hover:bg-[#146359]/5 sm:ml-2 sm:w-auto sm:text-center"
           >
             Log out
           </button>
@@ -83,12 +99,16 @@ export default function NavBar() {
 
       {status === 'out' && (
         <>
-          <a href="/login" className="block hover:text-[#146359]" onClick={() => setMenuOpen(false)}>
+          <a
+            href="/login"
+            className="block rounded-lg px-3 py-2 hover:bg-[#146359]/5 hover:text-[#146359]"
+            onClick={() => setMenuOpen(false)}
+          >
             Log in
           </a>
           <a
             href="/signup"
-            className="block rounded-full bg-[#146359] px-4 py-2.5 text-center text-white hover:bg-[#0f4d45] sm:inline-block"
+            className="block rounded-full bg-[#146359] px-4 py-2.5 text-center text-white hover:bg-[#0f4d45] sm:ml-2 sm:inline-block"
             onClick={() => setMenuOpen(false)}
           >
             Sign up
@@ -109,12 +129,17 @@ export default function NavBar() {
     // panel and anything else on the page.
     <nav className="sticky top-0 z-50 border-b border-brand-ink/5 bg-brand-paper">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-        <a href="/" className="text-xl font-bold text-[#146359]" onClick={() => setMenuOpen(false)}>
+        <a
+          href="/"
+          className="flex items-center gap-2 text-xl font-bold text-[#146359]"
+          onClick={() => setMenuOpen(false)}
+        >
+          <span className="inline-block h-4 w-4 -rotate-6 rounded-[3px] bg-brand-clay" aria-hidden="true" />
           ByUs
         </a>
 
         {/* Full inline nav from the small-tablet breakpoint up. */}
-        <div className="hidden items-center gap-6 text-sm font-medium sm:flex">{links}</div>
+        <div className="hidden items-center gap-1 text-sm font-medium sm:flex">{links}</div>
 
         {/* Hamburger toggle below that — 44px tap target, matches the site's other pill controls. */}
         <button
@@ -122,7 +147,7 @@ export default function NavBar() {
           onClick={() => setMenuOpen((open) => !open)}
           aria-expanded={menuOpen}
           aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-          className="flex h-11 w-11 items-center justify-center rounded-full text-[#146359] hover:bg-[#146359]/5 sm:hidden"
+          className="flex h-11 w-11 items-center justify-center rounded-lg border border-brand-ink/15 text-[#146359] hover:bg-[#146359]/5 sm:hidden"
         >
           {menuOpen ? (
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
@@ -139,9 +164,12 @@ export default function NavBar() {
         </button>
       </div>
 
-      {/* Mobile dropdown panel. */}
+      {/* Mobile dropdown panel. Given real visual weight (its own warm background,
+          a shadow, and padded rows) instead of blending into the nav bar above it --
+          previously it opened as a few plain lines of text that were easy to miss
+          tapping into on a small screen. */}
       {menuOpen && (
-        <div className="space-y-1 border-t border-brand-ink/5 px-6 py-4 text-sm font-medium sm:hidden">
+        <div className="space-y-1 border-t border-brand-ink/15 bg-[#F5E9D8] px-4 py-4 text-sm font-semibold shadow-lg sm:hidden">
           {links}
         </div>
       )}
