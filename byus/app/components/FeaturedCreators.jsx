@@ -29,8 +29,8 @@ export default function FeaturedCreators() {
   return (
     <section className="mx-auto max-w-4xl px-6 py-4">
       <div className="text-center">
-        <h2 className="font-display text-2xl font-semibold text-[#1A1A1A]">Creators on ByUs right now</h2>
-        <p className="mx-auto mt-2 max-w-xl text-sm text-black/55">
+        <h2 className="font-display text-2xl font-semibold text-[#2B2420]">Creators on ByUs right now</h2>
+        <p className="mx-auto mt-2 max-w-xl text-sm text-brand-ink/55">
           A few of the people already building a membership here.
         </p>
       </div>
@@ -39,7 +39,7 @@ export default function FeaturedCreators() {
           <a
             key={c.id}
             href={`/creator/${c.slug || c.id}`}
-            className="flex items-center gap-3 rounded-2xl border border-black/5 bg-white p-4 transition hover:-translate-y-0.5 hover:border-brand-teal/30 hover:shadow-md"
+            className="flex items-center gap-3 rounded-2xl border border-brand-ink/5 bg-brand-paper p-4 transition hover:-translate-y-0.5 hover:border-brand-teal/30 hover:shadow-md"
           >
             {c.profile_image_url ? (
               <Image
@@ -55,8 +55,8 @@ export default function FeaturedCreators() {
               </div>
             )}
             <div className="min-w-0">
-              <h3 className="truncate font-semibold text-[#1A1A1A]">{c.display_name || 'Unnamed creator'}</h3>
-              {c.bio && <p className="mt-0.5 truncate text-xs text-black/50">{c.bio}</p>}
+              <h3 className="truncate font-semibold text-[#2B2420]">{c.display_name || 'Unnamed creator'}</h3>
+              {c.bio && <p className="mt-0.5 truncate text-xs text-brand-ink/50">{c.bio}</p>}
             </div>
           </a>
         ))}

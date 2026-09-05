@@ -44,15 +44,15 @@ export default function FAQSection() {
   return (
     <section>
       <div className="mx-auto max-w-3xl px-6 py-24">
-        <h2 className="text-center font-display text-3xl font-semibold text-[#1A1A1A]">
+        <h2 className="text-center font-display text-3xl font-semibold text-[#2B2420]">
           Questions, answered
         </h2>
-        <p className="mx-auto mt-3 max-w-xl text-center text-black/55">
+        <p className="mx-auto mt-3 max-w-xl text-center text-brand-ink/55">
           The things people usually want to know before they connect a card or a bank
           account.
         </p>
 
-        <div className="mt-12 divide-y divide-black/10 border-y border-black/10">
+        <div className="mt-12 divide-y divide-brand-ink/10 border-y border-brand-ink/10">
           {FAQS.map((item, i) => {
             const open = openIndex === i;
             return (
@@ -63,7 +63,7 @@ export default function FAQSection() {
                   aria-expanded={open}
                   className="flex w-full items-center justify-between gap-4 py-5 text-left"
                 >
-                  <span className="font-semibold text-[#1A1A1A]">{item.q}</span>
+                  <span className="font-semibold text-[#2B2420]">{item.q}</span>
                   <span
                     className={`shrink-0 text-brand-teal transition-transform ${open ? 'rotate-45' : ''}`}
                     aria-hidden="true"
@@ -75,7 +75,7 @@ export default function FAQSection() {
                   </span>
                 </button>
                 {open && (
-                  <p className="pb-5 pr-8 text-sm leading-relaxed text-black/60">
+                  <p className="pb-5 pr-8 text-sm leading-relaxed text-brand-ink/60">
                     {item.a}
                   </p>
                 )}

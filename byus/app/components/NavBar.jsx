@@ -97,7 +97,7 @@ export default function NavBar() {
       )}
 
       {status === 'loading' && (
-        <span className="text-[#1A1A1A]/30" aria-hidden="true">···</span>
+        <span className="text-[#2B2420]/30" aria-hidden="true">···</span>
       )}
     </>
   );
@@ -107,7 +107,7 @@ export default function NavBar() {
     // scrolling a long page (the homepage, browse, a creator's post feed) instead
     // of scrolling away with the content. z-50 keeps it above the mobile dropdown
     // panel and anything else on the page.
-    <nav className="sticky top-0 z-50 border-b border-black/5 bg-white">
+    <nav className="sticky top-0 z-50 border-b border-brand-ink/5 bg-brand-paper">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
         <a href="/" className="text-xl font-bold text-[#146359]" onClick={() => setMenuOpen(false)}>
           ByUs
@@ -141,7 +141,7 @@ export default function NavBar() {
 
       {/* Mobile dropdown panel. */}
       {menuOpen && (
-        <div className="space-y-1 border-t border-black/5 px-6 py-4 text-sm font-medium sm:hidden">
+        <div className="space-y-1 border-t border-brand-ink/5 px-6 py-4 text-sm font-medium sm:hidden">
           {links}
         </div>
       )}

@@ -52,7 +52,7 @@ export default function EarningsSection() {
       {/* Fee tier — your own personal tier (10% -> 7% for any month you cross $2k, back to
           10% the next month if you don't), plus whatever ByUs's own growth milestones have
           knocked off on top of that for everyone. */}
-      <div className="rounded-xl bg-black/[0.03] p-4">
+      <div className="rounded-xl bg-brand-ink/[0.03] p-4">
         {isDiscountedThisMonth ? (
           <p className="text-sm text-[#146359]">
             🎉 You've crossed ${(thresholdCents / 100).toLocaleString()} in earnings this month —
@@ -60,23 +60,23 @@ export default function EarningsSection() {
           </p>
         ) : (
           <>
-            <p className="text-sm text-black/60">
+            <p className="text-sm text-brand-ink/60">
               You're on the {feePercent}% rate. Cross ${(thresholdCents / 100).toLocaleString()} in
               earnings this month and your fee drops to {discountedFeePercent}% for the rest of the
               month — for every subscriber, not just new ones.
             </p>
-            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-black/10">
+            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-brand-ink/10">
               <div
                 className="h-full rounded-full bg-[#146359] transition-all"
                 style={{ width: `${progress * 100}%` }}
               />
             </div>
-            <p className="mt-1 text-xs text-black/40">
+            <p className="mt-1 text-xs text-brand-ink/40">
               ${(monthToDateGrossCents / 100).toFixed(2)} of ${(thresholdCents / 100).toLocaleString()} this month
             </p>
           </>
         )}
-        <p className="mt-2 text-xs text-black/40">
+        <p className="mt-2 text-xs text-brand-ink/40">
           Based on what you earn each month, not lifetime — it resets on the 1st.
         </p>
         {hasPlatformBonus && (
@@ -113,8 +113,8 @@ export default function EarningsSection() {
           </ChartCard>
         </>
       ) : (
-        <div className="rounded-xl border border-dashed border-black/10 px-4 py-8 text-center">
-          <p className="text-sm text-black/50">
+        <div className="rounded-xl border border-dashed border-brand-ink/10 px-4 py-8 text-center">
+          <p className="text-sm text-brand-ink/50">
             Your revenue and subscriber growth will show up here once fans start subscribing.
           </p>
         </div>
@@ -128,19 +128,19 @@ export default function EarningsSection() {
 // that's for columns of aligned numbers, not a standalone display value).
 function StatTile({ label, value, hero, className = '' }) {
   return (
-    <div className={`rounded-xl border border-black/5 bg-white p-4 ${className}`}>
-      <p className="text-xs text-black/50">{label}</p>
-      <p className={`mt-1 font-semibold text-[#1A1A1A] ${hero ? 'text-2xl' : 'text-xl'}`}>{value}</p>
+    <div className={`rounded-xl border border-brand-ink/5 bg-brand-paper p-4 ${className}`}>
+      <p className="text-xs text-brand-ink/50">{label}</p>
+      <p className={`mt-1 font-semibold text-[#2B2420] ${hero ? 'text-2xl' : 'text-xl'}`}>{value}</p>
     </div>
   );
 }
 
 function ChartCard({ title, subtitle, children }) {
   return (
-    <div className="rounded-xl border border-black/5 bg-white p-4">
+    <div className="rounded-xl border border-brand-ink/5 bg-brand-paper p-4">
       <div className="flex items-baseline justify-between">
-        <h3 className="text-sm font-semibold text-[#1A1A1A]">{title}</h3>
-        <span className="text-xs text-black/40">{subtitle}</span>
+        <h3 className="text-sm font-semibold text-[#2B2420]">{title}</h3>
+        <span className="text-xs text-brand-ink/40">{subtitle}</span>
       </div>
       {/* Wide content scrolls inside its own container rather than the page -- the
           12-slot chart stays comfortably spaced even on a narrow phone screen. */}

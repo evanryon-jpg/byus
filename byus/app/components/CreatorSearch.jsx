@@ -68,7 +68,7 @@ export default function CreatorSearch() {
         </label>
         <div className="relative">
           <svg
-            className="pointer-events-none absolute left-6 top-1/2 h-5 w-5 -translate-y-1/2 text-black/30"
+            className="pointer-events-none absolute left-6 top-1/2 h-5 w-5 -translate-y-1/2 text-brand-ink/30"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -89,18 +89,18 @@ export default function CreatorSearch() {
             }}
             onFocus={() => setOpen(true)}
             placeholder="Type a creator's name…"
-            className="w-full rounded-full border border-black/10 bg-white py-5 pl-14 pr-6 text-lg shadow-lg shadow-black/5 outline-none transition focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20"
+            className="w-full rounded-full border border-brand-ink/10 bg-brand-paper py-5 pl-14 pr-6 text-lg shadow-lg shadow-brand-ink/5 outline-none transition focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/20"
           />
         </div>
       </form>
 
       {showDropdown && (
-        <div className="absolute inset-x-0 top-[calc(100%+0.5rem)] z-20 overflow-hidden rounded-2xl border border-black/5 bg-white shadow-xl shadow-black/10">
+        <div className="absolute inset-x-0 top-[calc(100%+0.5rem)] z-20 overflow-hidden rounded-2xl border border-brand-ink/5 bg-brand-paper shadow-xl shadow-brand-ink/10">
           {loading && (
-            <p className="px-6 py-4 text-sm text-black/40">Searching…</p>
+            <p className="px-6 py-4 text-sm text-brand-ink/40">Searching…</p>
           )}
           {!loading && results.length === 0 && (
-            <p className="px-6 py-4 text-sm text-black/40">No creators match "{q.trim()}".</p>
+            <p className="px-6 py-4 text-sm text-brand-ink/40">No creators match "{q.trim()}".</p>
           )}
           {!loading &&
             results.map((c) => (
@@ -122,17 +122,17 @@ export default function CreatorSearch() {
                   </div>
                 )}
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-[#1A1A1A]">
+                  <p className="truncate text-sm font-semibold text-[#2B2420]">
                     {c.display_name || 'Unnamed creator'}
                   </p>
-                  {c.bio && <p className="truncate text-xs text-black/45">{c.bio}</p>}
+                  {c.bio && <p className="truncate text-xs text-brand-ink/45">{c.bio}</p>}
                 </div>
               </a>
             ))}
           {!loading && (
             <a
               href={`/browse?q=${encodeURIComponent(q.trim())}`}
-              className="block border-t border-black/5 px-6 py-3 text-center text-sm font-semibold text-brand-teal hover:bg-brand-teal/5"
+              className="block border-t border-brand-ink/5 px-6 py-3 text-center text-sm font-semibold text-brand-teal hover:bg-brand-teal/5"
             >
               See all results →
             </a>

@@ -69,18 +69,18 @@ export default function PlatformGoalGauge() {
 
   return (
     <section className="mx-auto max-w-4xl px-6 py-4">
-      <div className="rounded-3xl border border-black/5 bg-white p-6 sm:p-8">
+      <div className="rounded-3xl border border-brand-ink/5 bg-brand-paper p-6 sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full bg-[#C9A961]/15 px-3 py-1 text-xs font-semibold tracking-wide text-[#8a6b2f]">
               ByUs growth
             </span>
-            <h2 className="mt-3 font-display text-2xl font-semibold text-[#1A1A1A] sm:text-3xl">
+            <h2 className="mt-3 font-display text-2xl font-semibold text-[#2B2420] sm:text-3xl">
               {allCrossed
                 ? "We've hit every milestone — thank you."
                 : "Every creator here is part of this number"}
             </h2>
-            <p className="mt-2 max-w-xl text-sm text-black/55">
+            <p className="mt-2 max-w-xl text-sm text-brand-ink/55">
               {allCrossed
                 ? `ByUs's best month has crossed all ${milestones.length} milestones on this board — built entirely by the creators here and the fans who support them.`
                 : "This tracks ByUs's best single month of fee income yet — built entirely by the creators here and the fans who support them. Every checkpoint below is a number we've hit together."}
@@ -147,7 +147,7 @@ export default function PlatformGoalGauge() {
                     textAnchor="middle"
                     fontSize="12"
                     fontWeight={crossed ? '600' : '500'}
-                    fill={crossed ? '#1A1A1A' : '#898781'}
+                    fill={crossed ? '#2B2420' : '#898781'}
                   >
                     {formatMilestoneLabel(m.thresholdCents)}
                   </text>
@@ -168,7 +168,7 @@ export default function PlatformGoalGauge() {
           </svg>
         </div>
 
-        <p className="mt-2 text-sm text-black/55">
+        <p className="mt-2 text-sm text-brand-ink/55">
           {allCrossed ? (
             <>ByUs's best month so far: {formatCompactUSD(platformBestMonthCents)}.</>
           ) : (

@@ -29,14 +29,14 @@ export default function EarningsCalculator() {
 
   return (
     <section className="mx-auto max-w-4xl px-6 py-4">
-      <div className="rounded-3xl border border-black/5 bg-white p-6 sm:p-8">
+      <div className="rounded-3xl border border-brand-ink/5 bg-brand-paper p-6 sm:p-8">
         <span className="inline-flex items-center gap-2 rounded-full bg-brand-teal/10 px-3 py-1 text-xs font-semibold tracking-wide text-brand-teal">
           Earnings calculator
         </span>
-        <h2 className="mt-3 font-display text-2xl font-semibold text-[#1A1A1A] sm:text-3xl">
+        <h2 className="mt-3 font-display text-2xl font-semibold text-[#2B2420] sm:text-3xl">
           See what you&rsquo;d actually keep
         </h2>
-        <p className="mt-2 max-w-xl text-sm text-black/55">
+        <p className="mt-2 max-w-xl text-sm text-brand-ink/55">
           Move the sliders to your numbers — this runs the same fee math ByUs applies to
           every charge, not a rough estimate.
         </p>
@@ -64,8 +64,8 @@ export default function EarningsCalculator() {
             />
 
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-black/40">Your fee tier</p>
-              <div className="mt-2 flex items-center gap-1 rounded-full bg-black/5 p-1 text-xs font-medium">
+              <p className="text-xs font-medium uppercase tracking-wide text-brand-ink/40">Your fee tier</p>
+              <div className="mt-2 flex items-center gap-1 rounded-full bg-brand-ink/5 p-1 text-xs font-medium">
                 <TierButton active={tier === 'starter'} onClick={() => setTier('starter')}>
                   Just starting — {STARTER_FEE_PERCENT}%
                 </TierButton>
@@ -75,22 +75,22 @@ export default function EarningsCalculator() {
               </div>
             </div>
 
-            <label className="flex items-center gap-2 text-sm text-black/60">
+            <label className="flex items-center gap-2 text-sm text-brand-ink/60">
               <input
                 type="checkbox"
                 checked={showComparison}
                 onChange={(e) => setShowComparison(e.target.checked)}
-                className="h-4 w-4 rounded border-black/20 text-brand-teal focus:ring-brand-teal/40"
+                className="h-4 w-4 rounded border-brand-ink/20 text-brand-teal focus:ring-brand-teal/40"
               />
               Compare to a flat {COMPETITOR_FEE_PERCENT}% competitor fee
             </label>
           </div>
 
           {/* Outputs */}
-          <div className="space-y-3 rounded-2xl bg-black/[0.03] p-5">
+          <div className="space-y-3 rounded-2xl bg-brand-ink/[0.03] p-5">
             <OutputRow label="Monthly gross revenue" value={grossCents} />
             <OutputRow label={`ByUs platform fee (${feePercent}%)`} value={-feeCents} muted />
-            <div className="my-1 h-px bg-black/10" />
+            <div className="my-1 h-px bg-brand-ink/10" />
             <OutputRow label="You keep, every month" value={netCents} hero />
 
             {showComparison && (
@@ -107,7 +107,7 @@ export default function EarningsCalculator() {
           </div>
         </div>
 
-        <p className="mt-6 text-xs text-black/35">
+        <p className="mt-6 text-xs text-brand-ink/35">
           Estimate only — assumes every subscriber renews and doesn&rsquo;t account for the
           rare failed or refunded charge. Real payouts land in your own Stripe account on
           Stripe&rsquo;s standard schedule.
@@ -130,8 +130,8 @@ function SliderField({ label, value, min, max, step, onChange, display }) {
   return (
     <div>
       <div className="flex items-baseline justify-between">
-        <label className="text-xs font-medium uppercase tracking-wide text-black/40">{label}</label>
-        <span className="font-display text-lg font-semibold text-[#1A1A1A]">{display}</span>
+        <label className="text-xs font-medium uppercase tracking-wide text-brand-ink/40">{label}</label>
+        <span className="font-display text-lg font-semibold text-[#2B2420]">{display}</span>
       </div>
       <input
         type="range"
@@ -153,7 +153,7 @@ function TierButton({ active, onClick, children }) {
       onClick={onClick}
       aria-pressed={active}
       className={`flex-1 rounded-full px-3 py-1.5 transition ${
-        active ? 'bg-white text-brand-teal shadow-sm' : 'text-black/50 hover:text-black/70'
+        active ? 'bg-brand-paper text-brand-teal shadow-sm' : 'text-brand-ink/50 hover:text-brand-ink/70'
       }`}
     >
       {children}
@@ -164,14 +164,14 @@ function TierButton({ active, onClick, children }) {
 function OutputRow({ label, value, hero, muted }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
-      <span className={`text-sm ${hero ? 'font-semibold text-[#1A1A1A]' : 'text-black/55'}`}>{label}</span>
+      <span className={`text-sm ${hero ? 'font-semibold text-[#2B2420]' : 'text-brand-ink/55'}`}>{label}</span>
       <span
         className={
           hero
             ? 'font-display text-2xl font-semibold text-brand-teal'
             : muted
-            ? 'text-sm text-black/45'
-            : 'text-sm font-medium text-[#1A1A1A]'
+            ? 'text-sm text-brand-ink/45'
+            : 'text-sm font-medium text-[#2B2420]'
         }
       >
         {fmt(value)}
