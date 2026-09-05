@@ -7,6 +7,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import stripe from '@/lib/stripe';
+import { TRIAL_DAY_OPTIONS } from '@/lib/trials';
 
 // Stripe itself caps unit_amount well above this, but there's no legitimate reason for
 // a creator subscription tier to cost more than $2,000/month — bounding it here catches
@@ -22,7 +23,8 @@ export async function GET() {
 
   try {
     const result = await query(
-      `SELECT id, name, description, price_cents, annual_price_cents, welcome_message, active, created_at
+      `SELECT id, name, description, price_cents, annual_price_cents, welcome_message, trial_days,
+              stripe_product_id, active, created_at
        FROM subscription_tiers WHERE creator_id = $1 ORDER BY price_cents ASC`,
       [session.userId]
     );
@@ -42,7 +44,16 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Only creators can create tiers.' }, { status: 403 });
   }
 
-  const { name, description, priceCents, annualPriceCents, welcomeMessage } = await request.json();
+  const { name, description, priceCents, annualPriceCents, welcomeMessage, trialDays } = await request.json();
+
+  // 0 (no trial) unless the creator picked one of the fixed lengths below.
+  const resolvedTrialDays = trialDays === undefined || trialDays === null ? 0 : trialDays;
+  if (!TRIAL_DAY_OPTIONS.includes(resolvedTrialDays)) {
+    return NextResponse.json(
+      { error: `Trial length must be one of: ${TRIAL_DAY_OPTIONS.join(', ')} days.` },
+      { status: 400 }
+    );
+  }
 
   if (!name || !Number.isInteger(priceCents) || priceCents < 100) {
     return NextResponse.json(
@@ -123,9 +134,10 @@ export async function POST(request) {
     const result = await query(
       `INSERT INTO subscription_tiers
          (creator_id, name, description, price_cents, stripe_price_id, stripe_product_id, active,
-          annual_price_cents, stripe_annual_price_id, welcome_message)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-       RETURNING id, name, description, price_cents, annual_price_cents, welcome_message, active, created_at`,
+          annual_price_cents, stripe_annual_price_id, welcome_message, trial_days)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+       RETURNING id, name, description, price_cents, annual_price_cents, welcome_message, trial_days,
+                 stripe_product_id, active, created_at`,
       [
         session.userId,
         name,
@@ -137,6 +149,7 @@ export async function POST(request) {
         hasAnnual ? annualPriceCents : null,
         annualPrice?.id || null,
         welcomeMessage || null,
+        resolvedTrialDays,
       ]
     );
 
