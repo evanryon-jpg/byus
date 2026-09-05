@@ -45,6 +45,7 @@ export default function SettingsPage() {
 function AvatarCard({ user, onChanged }) {
   const fileRef = useRef(null);
   const [uploading, setUploading] = useState(false);
+  const [removing, setRemoving] = useState(false);
   const [error, setError] = useState('');
 
   async function handleFileChange(e) {
@@ -68,7 +69,23 @@ function AvatarCard({ user, onChanged }) {
     }
   }
 
+  async function handleRemove() {
+    setRemoving(true);
+    setError('');
+    try {
+      const res = await fetch('/api/me/avatar', { method: 'DELETE' });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Could not remove this photo.');
+      onChanged(null);
+    } catch (err) {
+      setError(err.message || 'Could not remove this photo. Try again.');
+    } finally {
+      setRemoving(false);
+    }
+  }
+
   const initial = (user.display_name || user.email || '?').trim().charAt(0).toUpperCase();
+  const busy = uploading || removing;
 
   return (
     <section className="mt-6 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
@@ -88,14 +105,26 @@ function AvatarCard({ user, onChanged }) {
           </div>
         )}
         <div>
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            disabled={uploading}
-            className="rounded-full border border-[#146359] px-4 py-2 text-sm font-medium text-[#146359] hover:bg-[#146359]/5 disabled:opacity-50"
-          >
-            {uploading ? 'Uploading…' : 'Upload photo'}
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={busy}
+              className="rounded-full border border-[#146359] px-4 py-2 text-sm font-medium text-[#146359] hover:bg-[#146359]/5 disabled:opacity-50"
+            >
+              {uploading ? 'Uploading…' : 'Upload photo'}
+            </button>
+            {user.profile_image_url && (
+              <button
+                type="button"
+                onClick={handleRemove}
+                disabled={busy}
+                className="text-sm font-medium text-brand-ink/60 hover:text-brand-ink disabled:opacity-50"
+              >
+                {removing ? 'Removing…' : 'Remove photo'}
+              </button>
+            )}
+          </div>
           <p className="mt-2 text-xs text-brand-ink/60">PNG, JPEG, WEBP, or GIF. Max 5MB.</p>
           {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
         </div>
