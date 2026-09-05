@@ -5,7 +5,7 @@ export default function NotFound() {
       <h1 className="mt-4 font-display text-2xl font-semibold text-[#2B2420]">
         This page doesn&rsquo;t exist
       </h1>
-      <p className="mt-3 text-brand-ink/55">
+      <p className="mt-3 text-brand-ink/68">
         The page you&rsquo;re looking for was moved, renamed, or never existed.
       </p>
       <div className="mt-8 flex flex-wrap justify-center gap-4">

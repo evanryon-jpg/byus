@@ -47,7 +47,7 @@ function Hero({ user }) {
           Connect with your favorite creators
         </h1>
 
-        <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-brand-ink/60">
+        <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-brand-ink/72">
           Type a creator's name below, or set up your own page in a couple of minutes.
           Creators keep 90% of every payment to start — and 93% for good once they've
           grown with us. Nothing hidden.
@@ -70,7 +70,7 @@ function Hero({ user }) {
           )}
         </div>
 
-        <p className="mt-8 text-sm text-brand-ink/45">
+        <p className="mt-8 text-sm text-brand-ink/62">
           90%+ direct payouts&nbsp;&nbsp;·&nbsp;&nbsp;fee drops as you grow&nbsp;&nbsp;·&nbsp;&nbsp;cancel anytime
         </p>
 
@@ -97,14 +97,14 @@ function TierFan() {
         {cards.map((c, i) => (
           <span
             key={i}
-            className={`relative h-12 w-9 ${i > 0 ? '-ml-4' : ''} ${c.rotate} rounded-md border-2 border-[#FAF8F4] ${c.color} shadow-sm`}
+            className={`relative h-12 w-9 ${i > 0 ? '-ml-4' : ''} ${c.rotate} rounded-md border-2 border-[#E8DCC4] ${c.color} shadow-sm`}
             aria-hidden="true"
           >
             <span className="absolute inset-x-1.5 top-2.5 h-px bg-white/40" />
           </span>
         ))}
       </div>
-      <p className="text-xs font-medium uppercase tracking-wide text-brand-ink/40">
+      <p className="text-xs font-medium uppercase tracking-wide text-brand-ink/60">
         A tier for every kind of supporter
       </p>
     </div>
@@ -126,7 +126,7 @@ function StatsBand() {
         {stats.map((s) => (
           <div key={s.label}>
             <div className="font-display text-4xl font-semibold text-brand-teal">{s.value}</div>
-            <p className="mt-2 text-sm text-brand-ink/55">{s.label}</p>
+            <p className="mt-2 text-sm text-brand-ink/68">{s.label}</p>
           </div>
         ))}
       </div>
@@ -141,7 +141,7 @@ function Features() {
         <h2 className="font-display text-3xl font-semibold text-[#2B2420]">
           Everything a membership needs, nothing it doesn&rsquo;t
         </h2>
-        <p className="mx-auto mt-3 max-w-xl text-brand-ink/55">
+        <p className="mx-auto mt-3 max-w-xl text-brand-ink/68">
           No churn dashboards to configure — just the parts that make a subscription work.
         </p>
       </div>
@@ -184,7 +184,7 @@ function Feature({ icon, accent, title, body }) {
         {icon}
       </div>
       <h3 className="mt-4 font-semibold text-[#2B2420]">{title}</h3>
-      <p className="mt-2 text-sm leading-relaxed text-brand-ink/60">{body}</p>
+      <p className="mt-2 text-sm leading-relaxed text-brand-ink/72">{body}</p>
     </div>
   );
 }
@@ -219,10 +219,10 @@ function HowItWorks() {
             <div key={s.n} className="relative text-left">
               <span className="font-display text-3xl font-semibold text-brand-gold/70">{s.n}</span>
               <h3 className="mt-3 font-semibold text-[#2B2420]">{s.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-brand-ink/60">{s.body}</p>
+              <p className="mt-2 text-sm leading-relaxed text-brand-ink/72">{s.body}</p>
               {i < steps.length - 1 && (
                 <span
-                  className="absolute right-[-1.25rem] top-2 hidden text-brand-ink/15 sm:block"
+                  className="absolute right-[-1.25rem] top-2 hidden text-brand-ink/35 sm:block"
                   aria-hidden="true"
                 >
                   &rarr;

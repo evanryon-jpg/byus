@@ -8,7 +8,7 @@ export default function manifest() {
     description: 'Support creators you love. Creators keep 90% of every payment.',
     start_url: '/',
     display: 'standalone',
-    background_color: '#FAF8F4',
+    background_color: '#E8DCC4',
     theme_color: '#146359',
     icons: [
       {
