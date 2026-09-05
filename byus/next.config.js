@@ -45,6 +45,20 @@ const nextConfig = {
       },
     ];
   },
+  images: {
+    // The preset avatars (app/api/avatar/[userId]/route.js redirects there for
+    // anyone who picked one in Settings instead of uploading a photo) are SVGs,
+    // and next/image refuses to run its optimizer on SVG sources at all unless
+    // this is turned on -- otherwise every <Image src={profile_image_url}> across
+    // the app (browse, creator pages, dashboards, settings) just renders blank
+    // for that user. Safe here because these are our own static, script-free
+    // generated illustrations, never user-uploaded SVGs -- and contentSecurityPolicy
+    // below is Next's recommended extra belt-and-suspenders: it sandboxes whatever
+    // the optimizer serves and blocks any script execution in it regardless.
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+  },
 };
 
 module.exports = nextConfig;
