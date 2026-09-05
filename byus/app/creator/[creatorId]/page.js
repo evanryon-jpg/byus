@@ -26,6 +26,15 @@ function CreatorProfile() {
   const [subscribing, setSubscribing] = useState(null);
   const [subscribeError, setSubscribeError] = useState('');
   const [billingInterval, setBillingInterval] = useState('month'); // 'month' | 'year'
+  // Ko-fi's "Posts" tab is really just this feed with a type filter, an access filter,
+  // and a search box layered on top — see PostFilters below. All three are client-side
+  // over the posts this response already included, so there's no extra request per
+  // filter change, and search only ever matches what's already visible to this viewer
+  // (a locked post's body/media_url are never sent to a non-subscriber in the first
+  // place, so there's nothing private to leak through the search box).
+  const [postTypeFilter, setPostTypeFilter] = useState('all'); // 'all' | 'text' | 'image' | 'poll'
+  const [postAccessFilter, setPostAccessFilter] = useState('all'); // 'all' | 'public' | 'locked'
+  const [postSearch, setPostSearch] = useState('');
 
   useEffect(() => {
     load();
@@ -103,6 +112,17 @@ function CreatorProfile() {
 
   const { creator, tiers, posts, hasActiveSubscription, live, topSupporters, goal } = data;
   const subscribedTier = subscribedTierId ? tiers.find((t) => t.id === subscribedTierId) : null;
+  const filteredPosts = posts.filter((p) => {
+    if (postTypeFilter !== 'all' && getPostType(p) !== postTypeFilter) return false;
+    if (postAccessFilter === 'public' && p.locked) return false;
+    if (postAccessFilter === 'locked' && !p.locked) return false;
+    if (postSearch.trim()) {
+      const q = postSearch.trim().toLowerCase();
+      const haystack = `${p.title || ''} ${p.body || ''}`.toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+    return true;
+  });
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
@@ -270,8 +290,20 @@ function CreatorProfile() {
 
       {/* Feed */}
       <h2 className="mt-12 font-semibold">Posts</h2>
+      {/* Filters only earn their keep once there's actually something to sift through —
+          a brand-new creator with one or two posts doesn't need a search box. */}
+      {posts.length > 3 && (
+        <PostFilters
+          typeFilter={postTypeFilter}
+          onTypeFilter={setPostTypeFilter}
+          accessFilter={postAccessFilter}
+          onAccessFilter={setPostAccessFilter}
+          search={postSearch}
+          onSearch={setPostSearch}
+        />
+      )}
       <ul className="mt-4 space-y-4">
-        {posts.map((p) => (
+        {filteredPosts.map((p) => (
           <li key={p.id} className="rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -310,8 +342,83 @@ function CreatorProfile() {
           </li>
         ))}
         {posts.length === 0 && <p className="text-sm text-brand-ink/40">No posts yet.</p>}
+        {posts.length > 0 && filteredPosts.length === 0 && (
+          <p className="text-sm text-brand-ink/40">No posts match your filters.</p>
+        )}
       </ul>
     </div>
+  );
+}
+
+// A post's "type" isn't a stored column — it's derived the same way the feed already
+// renders each post: a poll block if it has one, a photo if it has media, plain text
+// otherwise. Keeping it derived means this can never drift out of sync with what a
+// visitor actually sees.
+function getPostType(post) {
+  if (post.poll) return 'poll';
+  if (post.media_url) return 'image';
+  return 'text';
+}
+
+const POST_TYPE_FILTERS = [
+  { value: 'all', label: 'All' },
+  { value: 'text', label: '📝 Updates' },
+  { value: 'image', label: '🖼️ Photos' },
+  { value: 'poll', label: '📊 Polls' },
+];
+
+const POST_ACCESS_FILTERS = [
+  { value: 'all', label: 'All' },
+  { value: 'public', label: '🌐 Public' },
+  { value: 'locked', label: '🔒 Members-only' },
+];
+
+function PostFilters({ typeFilter, onTypeFilter, accessFilter, onAccessFilter, search, onSearch }) {
+  return (
+    <div className="mt-4 space-y-3">
+      <div className="relative">
+        <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-brand-ink/30" aria-hidden="true">
+          🔍
+        </span>
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => onSearch(e.target.value)}
+          placeholder="Search posts"
+          aria-label="Search posts"
+          className="w-full rounded-full border border-brand-ink/10 bg-brand-paper py-2 pl-9 pr-4 text-sm placeholder:text-brand-ink/30 focus:border-[#146359]/40 focus:outline-none"
+        />
+      </div>
+      <div className="flex flex-wrap items-center gap-1.5">
+        {POST_TYPE_FILTERS.map((f) => (
+          <FilterChip key={f.value} active={typeFilter === f.value} onClick={() => onTypeFilter(f.value)}>
+            {f.label}
+          </FilterChip>
+        ))}
+        <span className="mx-1 hidden h-4 w-px bg-brand-ink/10 sm:inline-block" aria-hidden="true" />
+        {POST_ACCESS_FILTERS.map((f) => (
+          <FilterChip key={f.value} active={accessFilter === f.value} onClick={() => onAccessFilter(f.value)}>
+            {f.label}
+          </FilterChip>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function FilterChip({ active, onClick, children }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+        active
+          ? 'border-[#146359] bg-[#146359] text-white'
+          : 'border-brand-ink/10 text-brand-ink/50 hover:bg-brand-ink/5'
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 
