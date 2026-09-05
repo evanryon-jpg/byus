@@ -9,6 +9,7 @@ export default function Footer() {
           <a href="/support" className="hover:text-brand-ink/80">Support ByUs</a>
           <a href="/terms" className="hover:text-brand-ink/80">Terms of Service</a>
           <a href="/privacy" className="hover:text-brand-ink/80">Privacy Policy</a>
+          <a href="/photo-credits" className="hover:text-brand-ink/80">Photo Credits</a>
           <a href="mailto:evanryon@yahoo.com" className="hover:text-brand-ink/80">
             evanryon@yahoo.com
           </a>
