@@ -1,8 +1,12 @@
-// One fee discount, permanent (a slow month never pushes it back up):
+// One fee discount, re-evaluated every month:
 //
-// Personal tier -- every creator starts at STANDARD_FEE_PERCENT; once the total of every
-// successful invoice they've ever been paid crosses FEE_DISCOUNT_THRESHOLD_CENTS, their
-// own stored rate (`users.platform_fee_percent`) drops to DISCOUNTED_FEE_PERCENT for good.
+// Personal tier -- every creator starts at STANDARD_FEE_PERCENT; for any calendar month
+// their earnings on ByUs reach FEE_DISCOUNT_THRESHOLD_CENTS, their own stored rate
+// (`users.platform_fee_percent`) drops to DISCOUNTED_FEE_PERCENT for the rest of that month.
+// It moves back to STANDARD_FEE_PERCENT as soon as a new month starts without crossing the
+// threshold again -- this is a month-to-month rate, not a one-time lifetime unlock, so a
+// creator trickling to $2,000 over a full year no longer locks in a permanent discount that
+// doesn't match their actual volume.
 //
 // There used to be a second, stacking discount here -- a platform-wide milestone bonus
 // that lowered every creator's fee further as ByUs's own revenue grew. It's retired:
@@ -24,6 +28,7 @@
 import { query } from './db';
 import stripe from './stripe';
 import {
+  STANDARD_FEE_PERCENT,
   DISCOUNTED_FEE_PERCENT,
   FEE_DISCOUNT_THRESHOLD_CENTS,
   MIN_FEE_PERCENT,
@@ -58,14 +63,15 @@ export function applyPlatformMilestoneReduction(basePercent, reductionPoints) {
 // belt-and-suspenders guard on top of the webhook's own per-event idempotency claim —
 // stamped with the EFFECTIVE rate actually charged (personal tier minus whatever
 // milestone bonus already existed before this invoice), so historical net-earnings math
-// stays accurate no matter how either discount moves later. Then checks both crossings
-// this payment might have triggered. Returns null when nothing changed (duplicate
-// delivery, not a creator, or neither discount moved), otherwise
-// `{ personalTierChange, crossedMilestones }` — personalTierChange is the creator's new
-// personal-tier percent when THEIR OWN threshold just crossed (null otherwise), and
-// crossedMilestones is the list of platform milestones (if any) newly crossed by this
-// payment. The caller syncs whichever of those actually happened to Stripe once the
-// transaction is safely committed.
+// stays accurate no matter how either discount moves later. Then recomputes the personal
+// tier off THIS CALENDAR MONTH's earnings so far (including the invoice just recorded) and
+// checks the platform-wide milestone crossings this payment might have triggered. Returns
+// null when nothing changed (duplicate delivery, not a creator, or neither discount moved),
+// otherwise `{ personalTierChange, crossedMilestones }` — personalTierChange is the
+// creator's new personal-tier percent when this month's total just crossed (or fell back
+// below) the threshold (null otherwise), and crossedMilestones is the list of platform
+// milestones (if any) newly crossed by this payment. The caller syncs whichever of those
+// actually happened to Stripe once the transaction is safely committed.
 export async function recordEarningAndCheckFeeTier(client, { creatorId, stripeInvoiceId, amountCents }) {
   if (!creatorId || !stripeInvoiceId || !(amountCents > 0)) return null;
 
@@ -95,20 +101,28 @@ export async function recordEarningAndCheckFeeTier(client, { creatorId, stripeIn
   );
   if (inserted.rows.length === 0) return null; // already recorded — redelivered event
 
+  // This calendar month's earnings so far (including the invoice just recorded above)
+  // decide the personal tier for the rest of the month. Unlike a lifetime total this can
+  // move in either direction — a creator who crossed $2,000 last month but hasn't yet this
+  // month goes back to STANDARD_FEE_PERCENT the moment their next invoice lands, rather than
+  // staying discounted forever off one good month long past.
+  const monthTotalResult = await client.query(
+    `SELECT COALESCE(SUM(amount_cents), 0)::bigint AS total
+     FROM creator_earnings
+     WHERE creator_id = $1 AND created_at >= date_trunc('month', now())`,
+    [creatorId]
+  );
+  const monthToDateCents = Number(monthTotalResult.rows[0].total);
+  const targetFeePercent =
+    monthToDateCents >= FEE_DISCOUNT_THRESHOLD_CENTS ? DISCOUNTED_FEE_PERCENT : STANDARD_FEE_PERCENT;
+
   let personalTierChange = null;
-  if (currentFeePercent > DISCOUNTED_FEE_PERCENT) {
-    const totalResult = await client.query(
-      `SELECT COALESCE(SUM(amount_cents), 0)::bigint AS total FROM creator_earnings WHERE creator_id = $1`,
-      [creatorId]
-    );
-    const lifetimeTotalCents = Number(totalResult.rows[0].total);
-    if (lifetimeTotalCents >= FEE_DISCOUNT_THRESHOLD_CENTS) {
-      await client.query('UPDATE users SET platform_fee_percent = $1 WHERE id = $2', [
-        DISCOUNTED_FEE_PERCENT,
-        creatorId,
-      ]);
-      personalTierChange = DISCOUNTED_FEE_PERCENT;
-    }
+  if (targetFeePercent !== currentFeePercent) {
+    await client.query('UPDATE users SET platform_fee_percent = $1 WHERE id = $2', [
+      targetFeePercent,
+      creatorId,
+    ]);
+    personalTierChange = targetFeePercent;
   }
 
   const crossedMilestones = await checkPlatformMilestones(client);

@@ -10,15 +10,17 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 export default stripe;
 
 // Your platform's take rate, applied to every subscription charge. Every creator starts
-// at STANDARD_FEE_PERCENT; once their lifetime gross revenue on ByUs crosses
-// FEE_DISCOUNT_THRESHOLD_CENTS, their rate drops permanently to DISCOUNTED_FEE_PERCENT —
-// see lib/fees.js for where that crossing is detected (on each successful invoice, in the
-// Stripe webhook) and applied (to that creator's stored rate and every one of their live
-// Stripe subscriptions). Kept in one place so it's easy to find/change — never hardcode
-// these numbers elsewhere in the app.
+// at STANDARD_FEE_PERCENT; for any calendar month their gross revenue on ByUs reaches
+// FEE_DISCOUNT_THRESHOLD_CENTS, their rate drops to DISCOUNTED_FEE_PERCENT for the rest of
+// that month — and moves back to STANDARD_FEE_PERCENT the moment a new month starts without
+// crossing it again, so a fee drop always reflects that month's actual volume rather than a
+// slow trickle accumulated over a year or more. See lib/fees.js for where that crossing is
+// detected (on each successful invoice, in the Stripe webhook) and applied (to that
+// creator's stored rate and every one of their live Stripe subscriptions). Kept in one
+// place so it's easy to find/change — never hardcode these numbers elsewhere in the app.
 export const STANDARD_FEE_PERCENT = 10;
 export const DISCOUNTED_FEE_PERCENT = 7;
-export const FEE_DISCOUNT_THRESHOLD_CENTS = 200000; // $2,000 lifetime gross revenue
+export const FEE_DISCOUNT_THRESHOLD_CENTS = 200000; // $2,000 gross revenue in a calendar month
 
 // Floor for the platform-wide milestone bonus in lib/fees.js. Set to match
 // DISCOUNTED_FEE_PERCENT exactly: Stripe's own processing (2.9% + $0.30/charge), Connect
