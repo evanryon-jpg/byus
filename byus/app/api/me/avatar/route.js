@@ -13,6 +13,7 @@ import { put, del } from '@vercel/blob';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { publicAvatarUrl } from '@/lib/avatar-url';
 
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
 const MAX_BYTES = 5 * 1024 * 1024; // 5MB — avatars are small, no reason to allow post-sized uploads
@@ -160,7 +161,7 @@ export async function POST(request) {
       }
     }
 
-    return NextResponse.json({ profile_image_url: `/api/avatar/${session.userId}` });
+    return NextResponse.json({ profile_image_url: publicAvatarUrl(session.userId, blob.pathname) });
   } catch (err) {
     console.error('me/avatar POST failed:', err);
     return NextResponse.json(
