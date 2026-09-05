@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="p-12 text-center text-brand-ink/40">Loading…</div>}>
+    <Suspense fallback={<div className="p-12 text-center text-brand-ink/60">Loading…</div>}>
       <LoginForm />
     </Suspense>
   );
@@ -82,7 +82,7 @@ function LoginForm() {
         <AppleIcon />
         Continue with Apple
       </a>
-      <p className="mt-3 text-center text-xs text-brand-ink/40">
+      <p className="mt-3 text-center text-xs text-brand-ink/60">
         By continuing, you agree to our{' '}
         <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline">
           Terms of Service
@@ -102,7 +102,7 @@ function LoginForm() {
           below the field would never actually appear. */}
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
         <label className="block">
-          <span className="mb-1 block text-sm font-medium text-brand-ink/60">Email</span>
+          <span className="mb-1 block text-sm font-medium text-brand-ink/72">Email</span>
           <input
             type="email"
             value={email}
@@ -121,7 +121,7 @@ function LoginForm() {
         </label>
         <label className="block">
           <div className="mb-1 flex items-center justify-between">
-            <span className="text-sm font-medium text-brand-ink/60">Password</span>
+            <span className="text-sm font-medium text-brand-ink/72">Password</span>
             <a href="/forgot-password" className="text-xs text-[#146359] underline">
               Forgot password?
             </a>
@@ -153,7 +153,7 @@ function LoginForm() {
           {loading ? 'Logging in…' : 'Log in'}
         </button>
       </form>
-      <p className="mt-6 text-center text-sm text-brand-ink/50">
+      <p className="mt-6 text-center text-sm text-brand-ink/65">
         No account yet?{' '}
         <a href={next ? `/signup?next=${encodeURIComponent(next)}` : '/signup'} className="text-[#146359] underline">
           Sign up
@@ -167,7 +167,7 @@ function Divider({ label }) {
   return (
     <div className="my-6 flex items-center gap-3">
       <div className="h-px flex-1 bg-brand-ink/10" />
-      <span className="text-xs font-medium uppercase tracking-wide text-brand-ink/35">{label}</span>
+      <span className="text-xs font-medium uppercase tracking-wide text-brand-ink/55">{label}</span>
       <div className="h-px flex-1 bg-brand-ink/10" />
     </div>
   );
