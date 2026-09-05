@@ -1165,9 +1165,9 @@ function GoalSection({ initialGoalCents, onSaved }) {
 // wants fans to find. Saved as one array in a single request, so reordering, editing,
 // and removing a row are all just "edit this state, then Save" rather than separate
 // per-link API calls that could race or partially fail.
-const MAX_LINKS = 8;
+const MAX_LINKS = 12;
 
-// The four platforms almost every creator already posts on. A tap fills in a row with
+// The platforms almost every creator already posts on. A tap fills in a row with
 // the domain already typed out and drops the cursor right after it, so all that's left
 // to do is type a username and hit save -- no one has to remember or type a URL format.
 const QUICK_PLATFORMS = [
@@ -1175,6 +1175,11 @@ const QUICK_PLATFORMS = [
   { key: 'youtube', name: 'YouTube', domain: 'youtube.com', prefix: 'https://www.youtube.com/@', badgeClass: 'bg-[#FF0000] text-white' },
   { key: 'instagram', name: 'Instagram', domain: 'instagram.com', prefix: 'https://www.instagram.com/', badgeClass: 'bg-gradient-to-br from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] text-white' },
   { key: 'x', name: 'X', domain: 'x.com', prefix: 'https://x.com/', badgeClass: 'bg-black text-white' },
+  { key: 'twitch', name: 'Twitch', domain: 'twitch.tv', prefix: 'https://www.twitch.tv/', badgeClass: 'bg-[#9146FF] text-white' },
+  { key: 'facebook', name: 'Facebook', domain: 'facebook.com', prefix: 'https://www.facebook.com/', badgeClass: 'bg-[#1877F2] text-white' },
+  { key: 'discord', name: 'Discord', domain: 'discord.gg', prefix: 'https://discord.gg/', badgeClass: 'bg-[#5865F2] text-white' },
+  { key: 'medium', name: 'Medium', domain: 'medium.com', prefix: 'https://medium.com/@', badgeClass: 'bg-[#1A1A1A] text-white' },
+  { key: 'github', name: 'GitHub', domain: 'github.com', prefix: 'https://github.com/', badgeClass: 'bg-[#24292e] text-white' },
 ];
 
 function LinksSection({ links: savedLinks, onSaved }) {
@@ -1258,7 +1263,7 @@ function LinksSection({ links: savedLinks, onSaved }) {
         Tap where you already post — add your username, then save. Fans will see these on your profile.
       </p>
 
-      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
         {QUICK_PLATFORMS.map((platform) => {
           const added = rows.some((r) => (r.url || '').toLowerCase().includes(platform.domain));
           return (
