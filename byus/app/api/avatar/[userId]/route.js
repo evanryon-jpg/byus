@@ -43,10 +43,11 @@ export async function GET(request, { params }) {
       headers: {
         'Content-Type': blob.blob.contentType,
         'X-Content-Type-Options': 'nosniff',
-        // Short public cache — long enough to avoid re-fetching on every page
-        // view, short enough that a changed avatar shows up quickly since the
-        // URL doesn't change when the photo does.
-        'Cache-Control': 'public, max-age=60',
+        // Callers now always go through lib/avatar-url.js's publicAvatarUrl(), which
+        // appends a `?v=` hash of the underlying photo -- so this exact URL (path +
+        // query) can only ever serve this one photo; a changed avatar gets a whole
+        // new URL instead of overwriting this one. Safe to cache hard and long.
+        'Cache-Control': 'public, max-age=31536000, immutable',
       },
     });
   } catch (err) {
