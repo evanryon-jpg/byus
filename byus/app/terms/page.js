@@ -10,7 +10,7 @@ export default function TermsPage() {
   return (
     <div className="mx-auto max-w-2xl px-6 py-16">
       <h1 className="font-display text-3xl font-semibold text-[#2B2420]">Terms of Service</h1>
-      <p className="mt-2 text-sm text-brand-ink/62">Last updated {LAST_UPDATED}</p>
+      <p className="mt-2 text-sm text-brand-ink/60">Last updated {LAST_UPDATED}</p>
 
       <div className="mt-10 space-y-8 text-[15px] leading-relaxed text-brand-ink/85">
         <Section title="1. Who these terms cover">
