@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import PhotoCollageBackground from '../components/PhotoCollageBackground';
 
 // searchParams is passed in automatically by Next.js for page.js files, client or
 // server, so a link like /browse?q=aria (from the homepage search, or its autocomplete
@@ -57,35 +58,47 @@ export default function BrowsePage({ searchParams }) {
   const isFiltered = Boolean(q.trim() || tag);
 
   return (
-    <div className="mx-auto max-w-4xl px-6 py-12">
-      <h1 className="text-2xl font-bold">Browse creators</h1>
+    <div>
+      {/* A wall of real creators at work behind the search -- same treatment as
+          the homepage hero, so "browse creators" reads as people to find rather
+          than another form to fill in. */}
+      <section className="relative overflow-hidden border-b border-brand-ink/10">
+        <PhotoCollageBackground />
+        <div className="mx-auto max-w-4xl px-6 pt-14 pb-10">
+          <h1 className="font-display text-3xl font-bold text-[#2B2420]">Browse creators</h1>
+          <p className="mt-2 max-w-lg text-brand-ink/68">
+            Find someone whose work you already love, or discover your next favorite.
+          </p>
 
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-        <input
-          type="text"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Search by name or bio…"
-          className="w-full rounded-full border border-brand-ink/10 px-4 py-2 text-sm focus:border-[#146359]/40 focus:outline-none sm:flex-1"
-        />
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <input
+              type="text"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search by name or bio…"
+              className="w-full rounded-full border border-brand-ink/10 bg-brand-paper px-4 py-2 text-sm focus:border-[#146359]/40 focus:outline-none sm:flex-1"
+            />
 
-        <div className="flex shrink-0 items-center gap-1 self-start rounded-full bg-brand-ink/5 p-1 text-xs font-medium sm:self-auto">
-          {SORT_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => setSort(opt.value)}
-              aria-pressed={sort === opt.value}
-              className={`rounded-full px-3 py-1.5 ${
-                sort === opt.value ? 'bg-brand-paper text-[#146359] shadow-sm' : 'text-brand-ink/65 hover:text-brand-ink/80'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
+            <div className="flex shrink-0 items-center gap-1 self-start rounded-full bg-brand-paper p-1 text-xs font-medium shadow-sm sm:self-auto">
+              {SORT_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setSort(opt.value)}
+                  aria-pressed={sort === opt.value}
+                  className={`rounded-full px-3 py-1.5 ${
+                    sort === opt.value ? 'bg-[#146359]/10 text-[#146359]' : 'text-brand-ink/65 hover:text-brand-ink/80'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
 
+      <div className="mx-auto max-w-4xl px-6 py-12">
       {availableTags.length > 0 && (
         <div className="mt-4 flex flex-wrap items-center gap-2">
           {availableTags.map((t) => (
@@ -168,6 +181,7 @@ export default function BrowsePage({ searchParams }) {
           </li>
         ))}
       </ul>
+      </div>
     </div>
   );
 }
