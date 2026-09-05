@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function SignupPage() {
   return (
-    <Suspense fallback={<div className="p-12 text-center text-brand-ink/40">Loading…</div>}>
+    <Suspense fallback={<div className="p-12 text-center text-brand-ink/60">Loading…</div>}>
       <SignupForm />
     </Suspense>
   );
@@ -97,7 +97,7 @@ function SignupForm() {
         <RoleTab label="I'm a creator" active={role === 'creator'} onClick={() => setRole('creator')} />
       </div>
       {role === 'creator' && (
-        <p className="mt-3 text-xs text-brand-ink/50">
+        <p className="mt-3 text-xs text-brand-ink/65">
           Next you'll connect Stripe and set up a subscription tier — takes a couple of minutes, right after you sign up.
         </p>
       )}
@@ -116,7 +116,7 @@ function SignupForm() {
         <AppleIcon />
         Continue with Apple
       </a>
-      <p className="mt-3 text-center text-xs text-brand-ink/40">
+      <p className="mt-3 text-center text-xs text-brand-ink/60">
         By continuing, you agree to our{' '}
         <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline">
           Terms of Service
@@ -166,7 +166,7 @@ function SignupForm() {
             }}
             aria-invalid={Boolean(fieldErrors.password)}
           />
-          {!fieldErrors.password && <p className="mt-1 text-xs text-brand-ink/40">At least 8 characters.</p>}
+          {!fieldErrors.password && <p className="mt-1 text-xs text-brand-ink/60">At least 8 characters.</p>}
         </Field>
 
         {/* Honeypot — hidden from real users via CSS, but present in the DOM for bots
@@ -185,7 +185,7 @@ function SignupForm() {
           />
         </div>
 
-        <label className="flex items-start gap-2.5 text-sm text-brand-ink/70">
+        <label className="flex items-start gap-2.5 text-sm text-brand-ink/80">
           <input
             type="checkbox"
             checked={termsAccepted}
@@ -216,7 +216,7 @@ function SignupForm() {
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-brand-ink/50">
+      <p className="mt-6 text-center text-sm text-brand-ink/65">
         Already have an account?{' '}
         <a href={next ? `/login?next=${encodeURIComponent(next)}` : '/login'} className="text-[#146359] underline">
           Log in
@@ -245,7 +245,7 @@ function RoleTab({ label, active, onClick }) {
       type="button"
       onClick={onClick}
       className={`flex-1 rounded-full py-2 text-sm font-medium transition ${
-        active ? 'bg-brand-paper shadow text-[#146359]' : 'text-brand-ink/50'
+        active ? 'bg-brand-paper shadow text-[#146359]' : 'text-brand-ink/65'
       }`}
     >
       {label}
@@ -256,7 +256,7 @@ function RoleTab({ label, active, onClick }) {
 function Field({ label, error, children }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-sm font-medium text-brand-ink/70">{label}</span>
+      <span className="mb-1 block text-sm font-medium text-brand-ink/80">{label}</span>
       {children}
       {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
     </label>
@@ -267,7 +267,7 @@ function Divider({ label }) {
   return (
     <div className="my-6 flex items-center gap-3">
       <div className="h-px flex-1 bg-brand-ink/10" />
-      <span className="text-xs font-medium uppercase tracking-wide text-brand-ink/35">{label}</span>
+      <span className="text-xs font-medium uppercase tracking-wide text-brand-ink/55">{label}</span>
       <div className="h-px flex-1 bg-brand-ink/10" />
     </div>
   );
