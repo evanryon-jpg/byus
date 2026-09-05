@@ -30,7 +30,7 @@ export default function HelpPage() {
       <h1 className="mt-2 text-center font-display text-3xl font-semibold leading-tight text-[#2B2420] sm:text-4xl">
         What can we help with?
       </h1>
-      <p className="mx-auto mt-3 max-w-lg text-center text-brand-ink/68">
+      <p className="mx-auto mt-3 max-w-lg text-center text-brand-ink/70">
         Answers for creators and fans, covering payments, posts, and everything in between.
       </p>
 
@@ -127,14 +127,14 @@ function SearchResult({ article }) {
           </svg>
         </span>
       </button>
-      {open && <p className="mt-2 pr-8 text-sm leading-relaxed text-brand-ink/72">{article.a}</p>}
+      {open && <p className="mt-2 pr-8 text-sm leading-relaxed text-brand-ink/70">{article.a}</p>}
     </div>
   );
 }
 
 function ContactFallback() {
   return (
-    <p className="mt-10 rounded-2xl bg-[#146359]/5 px-5 py-4 text-center text-sm text-brand-ink/72">
+    <p className="mt-10 rounded-2xl bg-[#146359]/5 px-5 py-4 text-center text-sm text-brand-ink/70">
       Still stuck?{' '}
       <a href="mailto:evanryon@yahoo.com" className="font-semibold text-[#146359] hover:underline">
         Email evanryon@yahoo.com
