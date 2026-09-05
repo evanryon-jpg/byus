@@ -54,7 +54,7 @@ export async function POST(request) {
 
   try {
     const tierResult = await query(
-      `SELECT t.id, t.stripe_price_id, t.annual_price_cents, t.stripe_annual_price_id, t.creator_id,
+      `SELECT t.id, t.stripe_price_id, t.annual_price_cents, t.stripe_annual_price_id, t.creator_id, t.trial_days,
               u.stripe_connect_account_id, u.stripe_connect_onboarded, u.platform_fee_percent
        FROM subscription_tiers t
        JOIN users u ON u.id = t.creator_id
@@ -124,12 +124,20 @@ export async function POST(request) {
       // there, and &tier=<id> lets it look up that tier's own custom welcome message.
       success_url: `${origin}/creator/${tier.creator_id}?subscribed=true&tier=${tier.id}`,
       cancel_url: `${origin}/creator/${tier.creator_id}`,
-      ...(discounts ? { discounts } : {}),
+      // Stripe rejects a Checkout Session that sets both `discounts` and
+      // `allow_promotion_codes` — a referred fan's automatic first-month discount takes
+      // priority (it's already decided, not something they need to type in); everyone
+      // else gets a code field to enter one of a creator's discount codes by hand.
+      ...(discounts ? { discounts } : { allow_promotion_codes: true }),
       subscription_data: {
         application_fee_percent: effectiveFeePercent,
         transfer_data: {
           destination: tier.stripe_connect_account_id,
         },
+        // Only set when the tier actually offers one — Stripe treats trial_period_days: 0
+        // as "no trial" anyway, but omitting it entirely keeps this from ever showing up
+        // where it doesn't apply.
+        ...(tier.trial_days > 0 ? { trial_period_days: tier.trial_days } : {}),
         metadata: {
           fan_id: session.userId,
           creator_id: tier.creator_id,
