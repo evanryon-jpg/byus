@@ -98,7 +98,7 @@ function CreatorProfile() {
   if (loadError) {
     return (
       <div className="mx-auto flex max-w-md flex-col items-center px-6 py-24 text-center">
-        <p className="text-brand-ink/72">Couldn't load this page. Check your connection and try again.</p>
+        <p className="text-brand-ink/70">Couldn't load this page. Check your connection and try again.</p>
         <button
           onClick={load}
           className="mt-4 rounded-full bg-[#146359] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#0f4d45]"
@@ -155,7 +155,7 @@ function CreatorProfile() {
         )}
         <h1 className="text-2xl font-bold">{creator.display_name}</h1>
       </div>
-      {creator.bio && <p className="mt-2 text-brand-ink/72">{creator.bio}</p>}
+      {creator.bio && <p className="mt-2 text-brand-ink/70">{creator.bio}</p>}
 
       {creator.social_links?.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-2">
@@ -699,7 +699,7 @@ function PollBlock({ postId, poll: initialPoll }) {
             disabled={voting !== null}
             className="block w-full text-left text-sm disabled:opacity-50"
           >
-            <div className={`flex justify-between ${mine ? 'font-semibold text-[#146359]' : 'text-brand-ink/72'}`}>
+            <div className={`flex justify-between ${mine ? 'font-semibold text-[#146359]' : 'text-brand-ink/70'}`}>
               <span>
                 {option}
                 {mine && ' ✓'}
@@ -741,7 +741,7 @@ function LockedPostPreview({ hasTiers }) {
         >
           🔒
         </span>
-        <p className="text-xs font-medium text-brand-ink/72">
+        <p className="text-xs font-medium text-brand-ink/70">
           {hasTiers ? (
             <a href="#tiers" className="text-[#146359] underline">
               Subscribe to view this post
