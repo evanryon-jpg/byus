@@ -31,16 +31,19 @@ function Hero({ user }) {
   const dashboardHref = user?.role === 'creator' ? '/creator/dashboard' : '/fan/dashboard';
 
   return (
-    <section className="relative overflow-hidden">
-      {/* A wall of real creators at work, softened under a warm paper scrim --
-          replaces the old gradient-blob backdrop with something closer to
-          Patreon's own homepage, where people (not boxes) carry the page. */}
-      <PhotoCollageBackground />
+    <section className="overflow-hidden">
+      {/* A banner of real creators at work above the fold -- replaces the old
+          gradient-blob backdrop with something closer to Patreon's own homepage,
+          where people (not boxes) carry the page. Sits above the copy rather than
+          behind it, so it never has to fight the headline or search box for
+          legibility, and the profile-preview card below keeps its own plain
+          background instead of competing with photos too. */}
+      <PhotoCollageBackground src="/images/collage/pottery.jpg" />
 
       {/* Asymmetric split — copy/search on the left, a live preview of what a
           creator's page actually looks like on the right, so the hero answers
           "what am I building/joining" instead of just describing it. */}
-      <div className="mx-auto max-w-6xl px-6 pt-20 pb-24">
+      <div className="mx-auto max-w-6xl px-6 pt-14 pb-24">
         <div className="grid items-center gap-14 lg:grid-cols-[1.05fr_0.95fr]">
           <div>
             <span className="inline-flex -rotate-2 items-center gap-2 rounded border border-dashed border-brand-clay bg-[#F5E9D8] px-4 py-1.5 font-display text-xs font-semibold italic tracking-wide text-[#B5613F]">
@@ -64,7 +67,7 @@ function Hero({ user }) {
               creators
             </h1>
 
-            <p className="mt-6 max-w-lg text-lg leading-relaxed text-brand-ink/72">
+            <p className="mt-6 max-w-lg text-lg leading-relaxed text-brand-ink/70">
               Type a creator's name below, or set up your own page in a couple of minutes.
               Creators keep 90% of every payment to start — and 93% for good once they've
               grown with us. Nothing hidden.
@@ -87,7 +90,7 @@ function Hero({ user }) {
               )}
             </div>
 
-            <p className="mt-8 text-sm text-brand-ink/62">
+            <p className="mt-8 text-sm text-brand-ink/60">
               90%+ direct payouts&nbsp;&nbsp;·&nbsp;&nbsp;fee drops as you grow&nbsp;&nbsp;·&nbsp;&nbsp;cancel anytime
             </p>
           </div>
@@ -177,7 +180,7 @@ function StatsBand() {
             className={`rounded-xl border border-brand-ink/20 bg-[#F5E9D8] px-6 py-6 text-center ${tilts[i % tilts.length]}`}
           >
             <div className="font-display text-4xl font-bold tabular-nums text-brand-teal">{s.value}</div>
-            <p className="mt-2 text-sm leading-relaxed text-brand-ink/68">{s.label}</p>
+            <p className="mt-2 text-sm leading-relaxed text-brand-ink/70">{s.label}</p>
           </div>
         ))}
       </div>
@@ -192,7 +195,7 @@ function Features() {
         <h2 className="font-display text-3xl font-semibold text-[#2B2420]">
           Everything a membership needs, nothing it doesn&rsquo;t
         </h2>
-        <p className="mx-auto mt-3 max-w-xl text-brand-ink/68">
+        <p className="mx-auto mt-3 max-w-xl text-brand-ink/70">
           No churn dashboards to configure — just the parts that make a subscription work.
         </p>
       </div>
@@ -249,7 +252,7 @@ function Feature({ icon, accent, title, body, big }) {
         {icon}
       </div>
       <h3 className={`mt-4 font-semibold text-[#2B2420] ${big ? 'text-xl' : ''}`}>{title}</h3>
-      <p className={`mt-2 leading-relaxed text-brand-ink/72 ${big ? 'max-w-md text-base' : 'text-sm'}`}>{body}</p>
+      <p className={`mt-2 leading-relaxed text-brand-ink/70 ${big ? 'max-w-md text-base' : 'text-sm'}`}>{body}</p>
     </div>
   );
 }
@@ -284,7 +287,7 @@ function HowItWorks() {
             <div key={s.n} className="relative text-left">
               <span className="font-display text-3xl font-semibold text-brand-gold/70">{s.n}</span>
               <h3 className="mt-3 font-semibold text-[#2B2420]">{s.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-brand-ink/72">{s.body}</p>
+              <p className="mt-2 text-sm leading-relaxed text-brand-ink/70">{s.body}</p>
               {i < steps.length - 1 && (
                 <span
                   className="absolute right-[-1.25rem] top-2 hidden text-brand-ink/35 sm:block"
