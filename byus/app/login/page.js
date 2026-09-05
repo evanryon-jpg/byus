@@ -102,7 +102,7 @@ function LoginForm() {
           below the field would never actually appear. */}
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
         <label className="block">
-          <span className="mb-1 block text-sm font-medium text-brand-ink/72">Email</span>
+          <span className="mb-1 block text-sm font-medium text-brand-ink/70">Email</span>
           <input
             type="email"
             value={email}
@@ -121,7 +121,7 @@ function LoginForm() {
         </label>
         <label className="block">
           <div className="mb-1 flex items-center justify-between">
-            <span className="text-sm font-medium text-brand-ink/72">Password</span>
+            <span className="text-sm font-medium text-brand-ink/70">Password</span>
             <a href="/forgot-password" className="text-xs text-[#146359] underline">
               Forgot password?
             </a>
