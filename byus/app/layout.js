@@ -45,7 +45,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={fraunces.variable}>
-      <body className="flex min-h-screen flex-col bg-[#FAF8F4] text-[#1A1A1A] antialiased">
+      <body className="flex min-h-screen flex-col bg-[#FAF8F4] text-[#2B2420] antialiased">
         <NavBar />
         <main className="flex-1">{children}</main>
         <Footer />
