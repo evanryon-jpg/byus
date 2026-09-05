@@ -18,7 +18,7 @@ module.exports = {
           // `ink` replaces `black` as the base for every text/border/divider opacity
           // utility (e.g. `text-brand-ink/60` instead of `text-black/60`) so muted text
           // and hairline borders read as warm taupe instead of cold gray.
-          cream: '#FAF8F4',
+          cream: '#E8DCC4',
           paper: '#FFFCF6',
           ink: '#2B2420',
         },
