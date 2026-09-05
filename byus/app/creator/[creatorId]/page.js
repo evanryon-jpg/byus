@@ -7,7 +7,7 @@ import LivePlayer from '../../components/LivePlayer';
 
 export default function CreatorProfilePage() {
   return (
-    <Suspense fallback={<div className="p-12 text-center text-black/40">Loading…</div>}>
+    <Suspense fallback={<div className="p-12 text-center text-brand-ink/40">Loading…</div>}>
       <CreatorProfile />
     </Suspense>
   );
@@ -82,11 +82,11 @@ function CreatorProfile() {
     setSubscribing(null);
   }
 
-  if (loading) return <div className="p-12 text-center text-black/40">Loading…</div>;
+  if (loading) return <div className="p-12 text-center text-brand-ink/40">Loading…</div>;
   if (loadError) {
     return (
       <div className="mx-auto flex max-w-md flex-col items-center px-6 py-24 text-center">
-        <p className="text-black/60">Couldn't load this page. Check your connection and try again.</p>
+        <p className="text-brand-ink/60">Couldn't load this page. Check your connection and try again.</p>
         <button
           onClick={load}
           className="mt-4 rounded-full bg-[#146359] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#0f4d45]"
@@ -96,7 +96,7 @@ function CreatorProfile() {
       </div>
     );
   }
-  if (!data) return <div className="p-12 text-center text-black/40">Creator not found.</div>;
+  if (!data) return <div className="p-12 text-center text-brand-ink/40">Creator not found.</div>;
 
   const { creator, tiers, posts, hasActiveSubscription, live, topSupporters } = data;
 
@@ -123,7 +123,7 @@ function CreatorProfile() {
         )}
         <h1 className="text-2xl font-bold">{creator.display_name}</h1>
       </div>
-      {creator.bio && <p className="mt-2 text-black/60">{creator.bio}</p>}
+      {creator.bio && <p className="mt-2 text-brand-ink/60">{creator.bio}</p>}
 
       {creator.social_links?.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-2">
@@ -152,13 +152,13 @@ function CreatorProfile() {
               <span className="h-1.5 w-1.5 rounded-full bg-red-500 motion-safe:animate-pulse" aria-hidden="true" />
               LIVE
             </span>
-            <span className="text-sm text-black/50">{creator.display_name} is streaming now</span>
+            <span className="text-sm text-brand-ink/50">{creator.display_name} is streaming now</span>
           </div>
           {live.playbackId && live.playbackToken ? (
             <LivePlayer playbackId={live.playbackId} playbackToken={live.playbackToken} />
           ) : (
-            <div className="flex aspect-video w-full items-center justify-center rounded-2xl bg-black/5 px-6 text-center">
-              <p className="text-sm text-black/50">
+            <div className="flex aspect-video w-full items-center justify-center rounded-2xl bg-brand-ink/5 px-6 text-center">
+              <p className="text-sm text-brand-ink/50">
                 {hasActiveSubscription
                   ? "Setting up the stream — refresh in a moment."
                   : tiers.length > 0
@@ -180,11 +180,11 @@ function CreatorProfile() {
         {!hasActiveSubscription && tiers.length > 0 && (
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
             {tiers.map((t) => (
-              <div key={t.id} className="rounded-2xl border border-black/5 bg-white p-6">
+              <div key={t.id} className="rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
                 <h3 className="font-semibold">{t.name}</h3>
-                {t.description && <p className="mt-1 text-sm text-black/50">{t.description}</p>}
+                {t.description && <p className="mt-1 text-sm text-brand-ink/50">{t.description}</p>}
                 <p className="mt-3 text-lg font-bold text-[#146359]">
-                  ${(t.price_cents / 100).toFixed(2)}<span className="text-sm font-normal text-black/40">/mo</span>
+                  ${(t.price_cents / 100).toFixed(2)}<span className="text-sm font-normal text-brand-ink/40">/mo</span>
                 </p>
                 <button
                   onClick={() => handleSubscribe(t.id)}
@@ -195,7 +195,7 @@ function CreatorProfile() {
                 </button>
                 {/* Sits right under the button that actually leads to a payment form — the
                     one place on this page where a trust signal matters most. */}
-                <p className="mt-2 text-center text-[11px] text-black/40">
+                <p className="mt-2 text-center text-[11px] text-brand-ink/40">
                   🔒 Secured by Stripe — ByUs never sees your card
                 </p>
               </div>
@@ -203,7 +203,7 @@ function CreatorProfile() {
           </div>
         )}
         {!hasActiveSubscription && tiers.length === 0 && (
-          <p className="mt-8 rounded-xl bg-black/5 px-4 py-3 text-sm text-black/50">
+          <p className="mt-8 rounded-xl bg-brand-ink/5 px-4 py-3 text-sm text-brand-ink/50">
             {creator.display_name} hasn't published any subscription tiers yet — check back soon.
           </p>
         )}
@@ -221,13 +221,13 @@ function CreatorProfile() {
       <h2 className="mt-12 font-semibold">Posts</h2>
       <ul className="mt-4 space-y-4">
         {posts.map((p) => (
-          <li key={p.id} className="rounded-2xl border border-black/5 bg-white p-6">
+          <li key={p.id} className="rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 flex-1 items-center gap-2">
                 <h3 className="truncate font-medium">{p.title || '(untitled)'}</h3>
                 <StatusBadge locked={p.locked} />
               </div>
-              <span className="shrink-0 text-xs text-black/40">{new Date(p.created_at).toLocaleDateString()}</span>
+              <span className="shrink-0 text-xs text-brand-ink/40">{new Date(p.created_at).toLocaleDateString()}</span>
             </div>
             {p.locked ? (
               <LockedPostPreview hasTiers={tiers.length > 0} />
@@ -252,13 +252,13 @@ function CreatorProfile() {
                     />
                   </div>
                 )}
-                <p className="mt-2 text-sm text-black/70">{p.body}</p>
+                <p className="mt-2 text-sm text-brand-ink/70">{p.body}</p>
                 {p.poll && <PollBlock postId={p.id} poll={p.poll} />}
               </>
             )}
           </li>
         ))}
-        {posts.length === 0 && <p className="text-sm text-black/40">No posts yet.</p>}
+        {posts.length === 0 && <p className="text-sm text-brand-ink/40">No posts yet.</p>}
       </ul>
     </div>
   );
@@ -277,7 +277,7 @@ function TopSupporters({ supporters, hasTiers }) {
   const hasSupporters = supporters && supporters.length > 0;
 
   return (
-    <div className="mt-8 flex items-center gap-4 rounded-2xl border border-black/5 bg-white p-4">
+    <div className="mt-8 flex items-center gap-4 rounded-2xl border border-brand-ink/5 bg-brand-paper p-4">
       <div className="flex -space-x-3">
         {hasSupporters ? (
           supporters.map((s) => (
@@ -299,7 +299,7 @@ function TopSupporters({ supporters, hasTiers }) {
           ))
         ) : (
           <div
-            className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-dashed border-black/20 text-black/30"
+            className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-dashed border-brand-ink/20 text-brand-ink/30"
             aria-hidden="true"
           >
             +
@@ -307,8 +307,8 @@ function TopSupporters({ supporters, hasTiers }) {
         )}
       </div>
       <div className="min-w-0">
-        <p className="text-sm font-semibold text-[#1A1A1A]">Top supporters</p>
-        <p className="text-xs text-black/50">
+        <p className="text-sm font-semibold text-[#2B2420]">Top supporters</p>
+        <p className="text-xs text-brand-ink/50">
           {hasSupporters
             ? `${supporters.length} supporter${supporters.length === 1 ? '' : 's'} shown here by their own choice.`
             : hasTiers ? (
@@ -408,14 +408,14 @@ function PollBlock({ postId, poll: initialPoll }) {
             disabled={voting !== null}
             className="block w-full text-left text-sm disabled:opacity-50"
           >
-            <div className={`flex justify-between ${mine ? 'font-semibold text-[#146359]' : 'text-black/60'}`}>
+            <div className={`flex justify-between ${mine ? 'font-semibold text-[#146359]' : 'text-brand-ink/60'}`}>
               <span>
                 {option}
                 {mine && ' ✓'}
               </span>
-              <span className="text-black/40">{pct}%</span>
+              <span className="text-brand-ink/40">{pct}%</span>
             </div>
-            <div className="mt-0.5 h-1.5 w-full overflow-hidden rounded-full bg-black/5">
+            <div className="mt-0.5 h-1.5 w-full overflow-hidden rounded-full bg-brand-ink/5">
               <div
                 className={`h-full rounded-full ${mine ? 'bg-[#146359]' : 'bg-[#146359]/40'}`}
                 style={{ width: `${pct}%` }}
@@ -424,7 +424,7 @@ function PollBlock({ postId, poll: initialPoll }) {
           </button>
         );
       })}
-      <p className="text-xs text-black/30">{total} vote{total === 1 ? '' : 's'} — tap an option to change your vote</p>
+      <p className="text-xs text-brand-ink/30">{total} vote{total === 1 ? '' : 's'} — tap an option to change your vote</p>
       {error && <p className="text-xs text-red-600">{error}</p>}
     </div>
   );
@@ -440,17 +440,17 @@ function LockedPostPreview({ hasTiers }) {
   return (
     <div className="relative mt-3 overflow-hidden rounded-xl">
       <div
-        className="pointer-events-none h-28 w-full bg-gradient-to-br from-[#146359]/10 via-black/5 to-[#C9A961]/10 blur-[2px]"
+        className="pointer-events-none h-28 w-full bg-gradient-to-br from-[#146359]/10 via-brand-ink/5 to-[#C9A961]/10 blur-[2px]"
         aria-hidden="true"
       />
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-white/40 text-center backdrop-blur-sm">
         <span
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-sm shadow-sm"
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-paper text-sm shadow-sm"
           aria-hidden="true"
         >
           🔒
         </span>
-        <p className="text-xs font-medium text-black/60">
+        <p className="text-xs font-medium text-brand-ink/60">
           {hasTiers ? (
             <a href="#tiers" className="text-[#146359] underline">
               Subscribe to view this post
@@ -471,7 +471,7 @@ function LockedPostPreview({ hasTiers }) {
 function StatusBadge({ locked }) {
   if (locked) {
     return (
-      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-black/5 px-2 py-0.5 text-[11px] font-medium text-black/50">
+      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-ink/5 px-2 py-0.5 text-[11px] font-medium text-brand-ink/50">
         🔒 Subscribers only
       </span>
     );

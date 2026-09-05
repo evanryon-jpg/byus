@@ -47,7 +47,7 @@ export default async function Image({ params }) {
           }}
         >
           <img src={iconDataUri} width={100} height={100} style={{ display: 'flex', marginBottom: 32 }} />
-          <div style={{ display: 'flex', fontSize: 52, fontWeight: 600, color: '#1A1A1A' }}>
+          <div style={{ display: 'flex', fontSize: 52, fontWeight: 600, color: '#2B2420' }}>
             Creator not found
           </div>
         </div>
@@ -114,7 +114,7 @@ export default async function Image({ params }) {
                 display: 'flex',
                 fontSize: 64,
                 fontWeight: 600,
-                color: '#1A1A1A',
+                color: '#2B2420',
                 letterSpacing: '-0.02em',
               }}
             >
