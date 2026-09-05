@@ -33,3 +33,12 @@ export const FEE_DISCOUNT_THRESHOLD_CENTS = 200000; // $2,000 gross revenue in a
 // homepage gauge, with no effect on anyone's bill. This constant is kept as the hard floor
 // in case that ever changes.
 export const MIN_FEE_PERCENT = 7;
+
+// One-time tips ("buy a coffee") — bounds for /api/creators/:creatorId/tip. Same fee
+// treatment as a subscription charge (the creator's current platform_fee_percent, see
+// lib/fees.js), just not tied to any tier. Floor matches Stripe's own per-charge minimum
+// (well above their $0.50 floor, so a $1 tip never risks landing below what Stripe itself
+// requires); ceiling is a sanity bound, not a business one — high enough for a genuine
+// generous tip, low enough to catch a typo'd extra digit before it ever reaches Stripe.
+export const MIN_TIP_CENTS = 100; // $1.00
+export const MAX_TIP_CENTS = 50000; // $500.00
