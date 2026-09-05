@@ -19,6 +19,22 @@ import stripe, { MIN_TIP_CENTS, MAX_TIP_CENTS } from '@/lib/stripe';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { getPlatformMilestoneReductionPoints, applyPlatformMilestoneReduction } from '@/lib/fees';
 
+// Ko-fi's tip flow lets a supporter leave a short note with their tip -- purely optional,
+// shown only to the creator (see GET /api/creator/tips), never made public on its own.
+// Stripe metadata values cap at 500 chars; we cap well under that for a readable note.
+const MAX_TIP_MESSAGE_LENGTH = 300;
+
+// A tip can be started from the creator's full profile page or from their standalone
+// /tip page -- Stripe redirects back to whichever one the fan actually came from instead
+// of always landing on the full profile. Restricted to this shape (own-origin, only the
+// two known pages) so the checkout endpoint can never be turned into an open redirect.
+function safeReturnPath(candidate, creatorId) {
+  if (typeof candidate === 'string' && /^\/creator\/[A-Za-z0-9_-]+(\/tip)?$/.test(candidate)) {
+    return candidate;
+  }
+  return `/creator/${creatorId}`;
+}
+
 export async function POST(request, { params }) {
   const session = await getCurrentUser();
   if (!session) {
@@ -44,7 +60,7 @@ export async function POST(request, { params }) {
   }
 
   const { creatorId } = params;
-  const { amountCents } = await request.json();
+  const { amountCents, message, returnTo } = await request.json();
   if (!Number.isInteger(amountCents) || amountCents < MIN_TIP_CENTS) {
     return NextResponse.json(
       { error: `A tip must be at least $${(MIN_TIP_CENTS / 100).toFixed(2)}.` },
@@ -59,6 +75,13 @@ export async function POST(request, { params }) {
   }
   if (session.userId === creatorId) {
     return NextResponse.json({ error: "You can't tip your own page." }, { status: 400 });
+  }
+  const trimmedMessage = typeof message === 'string' ? message.trim() : '';
+  if (trimmedMessage.length > MAX_TIP_MESSAGE_LENGTH) {
+    return NextResponse.json(
+      { error: `Message must be ${MAX_TIP_MESSAGE_LENGTH} characters or fewer.` },
+      { status: 400 }
+    );
   }
 
   try {
@@ -92,6 +115,7 @@ export async function POST(request, { params }) {
     const applicationFeeCents = Math.round((amountCents * effectiveFeePercent) / 100);
 
     const origin = request.headers.get('origin') || process.env.APP_URL;
+    const returnPath = safeReturnPath(returnTo, creator.id);
 
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: 'payment',
@@ -115,12 +139,13 @@ export async function POST(request, { params }) {
           type: 'tip',
           fan_id: session.userId,
           creator_id: creator.id,
+          ...(trimmedMessage ? { message: trimmedMessage } : {}),
         },
       },
-      // ?tipped=true triggers a thank-you banner on the creator's page — same pattern as
-      // ?subscribed=true after a subscription checkout.
-      success_url: `${origin}/creator/${creator.id}?tipped=true`,
-      cancel_url: `${origin}/creator/${creator.id}`,
+      // ?tipped=true triggers a thank-you banner wherever the fan started — the full
+      // profile page or the standalone tip page — same pattern as ?subscribed=true.
+      success_url: `${origin}${returnPath}?tipped=true`,
+      cancel_url: `${origin}${returnPath}`,
     });
 
     return NextResponse.json({ url: checkoutSession.url });
