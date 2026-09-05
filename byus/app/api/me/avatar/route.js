@@ -59,6 +59,45 @@ function matchesMagicNumber(bytes, type) {
   }
 }
 
+// DELETE /api/me/avatar
+// Clears the current photo back to the default initial-letter avatar. The settings page
+// previously only offered "Upload photo" (which replaces one photo with another) with no
+// way to go back to having none at all — this is that missing path.
+export async function DELETE() {
+  const session = await getCurrentUser();
+  if (!session) {
+    return NextResponse.json({ error: 'Not logged in.' }, { status: 401 });
+  }
+
+  try {
+    const existing = await query('SELECT profile_image_url FROM users WHERE id = $1', [session.userId]);
+    const pathname = existing.rows[0]?.profile_image_url || null;
+
+    if (!pathname) {
+      // Already has no photo — nothing to do, and not an error.
+      return NextResponse.json({ profile_image_url: null });
+    }
+
+    await query('UPDATE users SET profile_image_url = NULL WHERE id = $1', [session.userId]);
+
+    // Best-effort blob cleanup, same reasoning as the old-avatar cleanup in POST below —
+    // an orphaned blob costs storage, not correctness, and the row update already succeeded.
+    try {
+      await del(pathname);
+    } catch (err) {
+      console.error(`Avatar blob cleanup failed for user ${session.userId} (non-fatal):`, err);
+    }
+
+    return NextResponse.json({ profile_image_url: null });
+  } catch (err) {
+    console.error('me/avatar DELETE failed:', err);
+    return NextResponse.json(
+      { error: 'Could not remove this photo. Try again.' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request) {
   const session = await getCurrentUser();
   if (!session) {
