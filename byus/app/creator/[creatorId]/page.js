@@ -246,6 +246,11 @@ function CreatorProfile() {
                   <div key={t.id} className="rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
                     <h3 className="font-semibold">{t.name}</h3>
                     {t.description && <p className="mt-1 text-sm text-brand-ink/65">{t.description}</p>}
+                    {Number.isInteger(t.trial_days) && t.trial_days > 0 && (
+                      <p className="mt-1 inline-block rounded-full bg-[#146359]/10 px-2 py-0.5 text-xs font-semibold text-[#146359]">
+                        {t.trial_days}-day free trial
+                      </p>
+                    )}
                     <p className="mt-3 text-lg font-bold text-[#146359]">
                       ${(displayCents / 100).toFixed(2)}
                       <span className="text-sm font-normal text-brand-ink/60">{useAnnual ? '/yr' : '/mo'}</span>
