@@ -30,6 +30,10 @@ export const dynamic = 'force-dynamic';
 // can still be won, and Stripe already sends its own customer.subscription.updated /
 // .deleted events if the subscription's status actually changes as a result.
 //
+// checkout.session.completed also covers one-time tips (mode 'payment', from
+// /api/creators/:creatorId/tip) alongside subscription checkouts (mode 'subscription') —
+// no separate event type needed, this endpoint is already subscribed to it.
+//
 // invoice.payment_succeeded also does double duty as the platform's earnings ledger and
 // tiered-fee trigger — see lib/fees.js. Every successful invoice (the first one included,
 // not just recovery charges) gets logged against the creator it paid, and their rate is
@@ -72,6 +76,15 @@ export async function POST(request) {
     let stripeSubscription = null;
     if (event.type === 'checkout.session.completed' && event.data.object.mode === 'subscription') {
       stripeSubscription = await stripe.subscriptions.retrieve(event.data.object.subscription);
+    }
+
+    // A one-time tip (see /api/creators/:creatorId/tip) rides the same event type as a
+    // subscription checkout, distinguished by mode — 'payment' instead of 'subscription'.
+    // Its metadata lives on the PaymentIntent (payment_intent_data.metadata in that route),
+    // same "read it before opening a DB transaction" reasoning as the subscription lookup above.
+    let tipPaymentIntent = null;
+    if (event.type === 'checkout.session.completed' && event.data.object.mode === 'payment') {
+      tipPaymentIntent = await stripe.paymentIntents.retrieve(event.data.object.payment_intent);
     }
 
     // Same reasoning as above: fetching the creator_id off the Subscription (where /api/subscribe
@@ -133,9 +146,48 @@ export async function POST(request) {
 
       switch (event.type) {
         case 'checkout.session.completed': {
-          if (!stripeSubscription) break; // not a subscription-mode checkout
-
           const checkoutSession = event.data.object;
+
+          // Tip (one-time payment) branch — handled entirely separately from the
+          // subscription-checkout logic below, then done with this case.
+          if (checkoutSession.mode === 'payment') {
+            if (!tipPaymentIntent) break;
+            const { type, fan_id, creator_id } = tipPaymentIntent.metadata || {};
+            if (type !== 'tip' || !fan_id || !creator_id) break;
+
+            const grossCents = tipPaymentIntent.amount;
+            const feeCents = tipPaymentIntent.application_fee_amount || 0;
+            const netCents = grossCents - feeCents;
+            const chargeId =
+              typeof tipPaymentIntent.latest_charge === 'string'
+                ? tipPaymentIntent.latest_charge
+                : tipPaymentIntent.latest_charge?.id || null;
+
+            await client.query(
+              `INSERT INTO transactions
+                 (fan_id, creator_id, gross_amount_cents, platform_fee_cents, creator_net_cents, stripe_charge_id, status)
+               VALUES ($1, $2, $3, $4, $5, $6, 'succeeded')`,
+              [fan_id, creator_id, grossCents, feeCents, netCents, chargeId]
+            );
+
+            // Same earnings ledger + monthly fee-tier recheck a subscription invoice
+            // triggers — a tip counts toward the creator's monthly threshold too. Prefixed
+            // so a tip's PaymentIntent id can never collide with a real Stripe invoice id.
+            const result = await recordEarningAndCheckFeeTier(client, {
+              creatorId: creator_id,
+              stripeInvoiceId: `tip_${tipPaymentIntent.id}`,
+              amountCents: grossCents,
+            });
+            if (result?.personalTierChange) {
+              feeTierCrossing = { creatorId: creator_id, feePercent: result.personalTierChange };
+            }
+            if (result?.crossedMilestones?.length > 0) {
+              platformMilestoneCrossed = true;
+            }
+            break;
+          }
+
+          if (!stripeSubscription) break; // not a subscription-mode checkout
 
           // Metadata is set on `subscription_data` in /api/subscribe, which Stripe attaches
           // to the Subscription object itself — NOT to the Checkout Session.
