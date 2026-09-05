@@ -32,8 +32,10 @@ export const dynamic = 'force-dynamic';
 //
 // invoice.payment_succeeded also does double duty as the platform's earnings ledger and
 // tiered-fee trigger — see lib/fees.js. Every successful invoice (the first one included,
-// not just recovery charges) gets logged against the creator it paid, and once their
-// lifetime total crosses the discount threshold their rate drops for good.
+// not just recovery charges) gets logged against the creator it paid, and their rate is
+// re-evaluated off THIS CALENDAR MONTH's total — crossing the discount threshold drops it
+// for the rest of the month, and it moves back up on the first invoice of a month that
+// doesn't cross it again.
 
 import { NextResponse } from 'next/server';
 import { query, withTransaction } from '@/lib/db';
@@ -246,10 +248,9 @@ export async function POST(request) {
             );
           }
 
-          // Log this payment against the creator's lifetime earnings, and flip their stored
-          // fee rate if it just crossed the discount threshold — see lib/fees.js. amount_paid
-          // is what the fan was actually charged (after any referral discount), i.e. the real
-          // gross revenue this invoice brought the creator.
+          // Log this payment and re-check the creator's fee rate against THIS MONTH's total
+          // — see lib/fees.js. amount_paid is what the fan was actually charged (after any
+          // referral discount), i.e. the real gross revenue this invoice brought the creator.
           if (invoiceCreatorId && invoice.amount_paid > 0) {
             const result = await recordEarningAndCheckFeeTier(client, {
               creatorId: invoiceCreatorId,
