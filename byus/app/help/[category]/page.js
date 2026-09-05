@@ -18,7 +18,7 @@ export default function HelpCategoryPage() {
   if (!category) {
     return (
       <div className="mx-auto max-w-xl px-6 py-24 text-center">
-        <p className="text-brand-ink/60">We couldn't find that help topic.</p>
+        <p className="text-brand-ink/72">We couldn't find that help topic.</p>
         <Link href="/help" className="mt-4 inline-block font-semibold text-[#146359] hover:underline">
           ← Back to the Help Center
         </Link>
@@ -43,7 +43,7 @@ export default function HelpCategoryPage() {
           <h1 className="font-display text-2xl font-semibold leading-tight text-[#2B2420] sm:text-3xl">
             {category.title}
           </h1>
-          <p className="text-sm text-brand-ink/50">{category.description}</p>
+          <p className="text-sm text-brand-ink/65">{category.description}</p>
         </div>
       </div>
 
@@ -70,14 +70,14 @@ export default function HelpCategoryPage() {
                 </span>
               </button>
               {open && (
-                <p className="pb-5 pr-8 text-sm leading-relaxed text-brand-ink/60">{article.a}</p>
+                <p className="pb-5 pr-8 text-sm leading-relaxed text-brand-ink/72">{article.a}</p>
               )}
             </div>
           );
         })}
       </div>
 
-      <p className="mt-10 rounded-2xl bg-[#146359]/5 px-5 py-4 text-center text-sm text-brand-ink/60">
+      <p className="mt-10 rounded-2xl bg-[#146359]/5 px-5 py-4 text-center text-sm text-brand-ink/72">
         Didn't find your answer?{' '}
         <a href="mailto:evanryon@yahoo.com" className="font-semibold text-[#146359] hover:underline">
           Email evanryon@yahoo.com
