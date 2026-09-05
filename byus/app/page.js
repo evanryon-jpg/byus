@@ -74,37 +74,38 @@ function Hero({ user }) {
           90%+ direct payouts&nbsp;&nbsp;·&nbsp;&nbsp;fee drops as you grow&nbsp;&nbsp;·&nbsp;&nbsp;cancel anytime
         </p>
 
-        <AvatarCluster />
+        <TierFan />
       </div>
     </section>
   );
 }
 
-// Purely decorative cluster of warm, abstract circles standing in for a community of
-// creators and fans — intentionally not photographic, so it never implies real people
-// or real numbers we can't back up.
-function AvatarCluster() {
-  const swatches = [
-    'bg-brand-teal',
-    'bg-brand-gold',
-    'bg-brand-clay',
-    'bg-brand-teal/70',
-    'bg-brand-gold/80',
-    'bg-brand-clay/70',
+// Purely decorative fanned stack of small "tier cards" -- our own motif for "there's a
+// tier for every kind of supporter," standing in for the product itself (subscription
+// tiers) rather than a generic row of overlapping user avatars. Each card gets a faint
+// header line so the shape reads as a tiny membership card, not just a colored tile.
+function TierFan() {
+  const cards = [
+    { color: 'bg-brand-clay', rotate: '-rotate-6' },
+    { color: 'bg-brand-gold', rotate: '-rotate-2' },
+    { color: 'bg-brand-teal', rotate: 'rotate-2' },
+    { color: 'bg-brand-teal/60', rotate: 'rotate-6' },
   ];
   return (
     <div className="mt-12 flex flex-col items-center gap-3">
-      <div className="flex -space-x-3">
-        {swatches.map((c, i) => (
+      <div className="flex">
+        {cards.map((c, i) => (
           <span
             key={i}
-            className={`h-9 w-9 rounded-full border-2 border-[#FAF8F4] ${c} shadow-sm`}
+            className={`relative h-12 w-9 ${i > 0 ? '-ml-4' : ''} ${c.rotate} rounded-md border-2 border-[#FAF8F4] ${c.color} shadow-sm`}
             aria-hidden="true"
-          />
+          >
+            <span className="absolute inset-x-1.5 top-2.5 h-px bg-white/40" />
+          </span>
         ))}
       </div>
       <p className="text-xs font-medium uppercase tracking-wide text-brand-ink/40">
-        Built for creators of every kind
+        A tier for every kind of supporter
       </p>
     </div>
   );
