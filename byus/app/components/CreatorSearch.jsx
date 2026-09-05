@@ -68,7 +68,7 @@ export default function CreatorSearch() {
         </label>
         <div className="relative">
           <svg
-            className="pointer-events-none absolute left-5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-brand-ink/55"
+            className="pointer-events-none absolute left-5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-brand-ink/55"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
