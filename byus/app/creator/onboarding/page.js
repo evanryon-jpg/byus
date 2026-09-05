@@ -97,7 +97,7 @@ function OnboardingStatus() {
         <>
           <Spinner />
           <h1 className="mt-6 text-2xl font-bold">Finishing up your Stripe setup…</h1>
-          <p className="mt-2 text-sm text-black/50">This usually takes just a few seconds. Don't close this tab.</p>
+          <p className="mt-2 text-sm text-brand-ink/50">This usually takes just a few seconds. Don't close this tab.</p>
         </>
       )}
 
@@ -105,7 +105,7 @@ function OnboardingStatus() {
         <>
           <Spinner />
           <h1 className="mt-6 text-2xl font-bold">Reconnecting to Stripe…</h1>
-          <p className="mt-2 text-sm text-black/50">
+          <p className="mt-2 text-sm text-brand-ink/50">
             Your last onboarding link expired — sending you back to Stripe.
           </p>
         </>
@@ -117,7 +117,7 @@ function OnboardingStatus() {
             ✓
           </div>
           <h1 className="mt-6 text-2xl font-bold">You're all set!</h1>
-          <p className="mt-2 text-sm text-black/50">
+          <p className="mt-2 text-sm text-brand-ink/50">
             Stripe has confirmed your account. You can now create paid tiers and start earning.
           </p>
           <a
@@ -132,7 +132,7 @@ function OnboardingStatus() {
       {status === 'timeout' && (
         <>
           <h1 className="text-2xl font-bold">Still finishing up</h1>
-          <p className="mt-2 text-sm text-black/50">
+          <p className="mt-2 text-sm text-brand-ink/50">
             Stripe hasn't confirmed your account yet. This can occasionally take a few minutes —
             your dashboard will update automatically once it does.
           </p>
@@ -158,7 +158,7 @@ function OnboardingStatus() {
             </button>
             <a
               href="/creator/dashboard"
-              className="rounded-full border border-black/10 px-6 py-2.5 text-sm font-semibold hover:bg-black/5"
+              className="rounded-full border border-brand-ink/10 px-6 py-2.5 text-sm font-semibold hover:bg-brand-ink/5"
             >
               Go to dashboard
             </a>
@@ -172,7 +172,7 @@ function OnboardingStatus() {
 function Spinner() {
   return (
     <div
-      className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-black/10 border-t-[#146359]"
+      className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-brand-ink/10 border-t-[#146359]"
       aria-hidden="true"
     />
   );
@@ -180,7 +180,7 @@ function Spinner() {
 
 export default function OnboardingPage() {
   return (
-    <Suspense fallback={<div className="p-12 text-center text-black/40">Loading…</div>}>
+    <Suspense fallback={<div className="p-12 text-center text-brand-ink/40">Loading…</div>}>
       <OnboardingStatus />
     </Suspense>
   );
