@@ -62,11 +62,11 @@ export default function FanDashboard() {
     }
   }
 
-  if (loading) return <div className="p-12 text-center text-brand-ink/40">Loading…</div>;
+  if (loading) return <div className="p-12 text-center text-brand-ink/60">Loading…</div>;
   if (loadError) {
     return (
       <div className="mx-auto flex max-w-md flex-col items-center px-6 py-24 text-center">
-        <p className="text-brand-ink/60">Couldn't load your dashboard. Check your connection and try again.</p>
+        <p className="text-brand-ink/72">Couldn't load your dashboard. Check your connection and try again.</p>
         <button
           onClick={load}
           className="mt-4 rounded-full bg-[#146359] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#0f4d45]"
@@ -84,7 +84,7 @@ export default function FanDashboard() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Your subscriptions</h1>
-          <p className="text-brand-ink/50">Welcome back, {user?.display_name || user?.email}.</p>
+          <p className="text-brand-ink/65">Welcome back, {user?.display_name || user?.email}.</p>
         </div>
         {hasBillableSub && (
           <button
@@ -100,7 +100,7 @@ export default function FanDashboard() {
       {billingError && (
         <p className="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{billingError}</p>
       )}
-      <p className="mt-1 text-xs text-brand-ink/40">
+      <p className="mt-1 text-xs text-brand-ink/60">
         Update your card, view invoices, or cancel a subscription — all in one place.
       </p>
 
@@ -115,11 +115,11 @@ export default function FanDashboard() {
             >
               <div>
                 <p className="font-medium">{s.creator_name}</p>
-                <p className="text-sm text-brand-ink/50">{s.tier_name} — ${(s.price_cents / 100).toFixed(2)}/mo</p>
+                <p className="text-sm text-brand-ink/65">{s.tier_name} — ${(s.price_cents / 100).toFixed(2)}/mo</p>
               </div>
               <span
                 className={`rounded-full px-3 py-1 text-xs font-medium ${
-                  s.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-brand-ink/5 text-brand-ink/50'
+                  s.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-brand-ink/5 text-brand-ink/65'
                 }`}
               >
                 {s.status}
@@ -128,7 +128,7 @@ export default function FanDashboard() {
           </li>
         ))}
         {subs.length === 0 && (
-          <p className="text-brand-ink/40">
+          <p className="text-brand-ink/60">
             No subscriptions yet. <a href="/browse" className="text-[#146359] underline">Browse creators</a>
           </p>
         )}
