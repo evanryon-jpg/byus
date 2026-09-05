@@ -4,6 +4,7 @@ import CreatorSearch from './components/CreatorSearch';
 import PlatformGoalGauge from './components/PlatformGoalGauge';
 import FeaturedCreators from './components/FeaturedCreators';
 import EarningsCalculator from './components/EarningsCalculator';
+import PhotoCollageBackground from './components/PhotoCollageBackground';
 
 // Server component so the hero and closing CTAs can tell whether someone is already
 // logged in -- an existing creator or fan should never be invited to sign up again,
@@ -31,11 +32,10 @@ function Hero({ user }) {
 
   return (
     <section className="relative overflow-hidden">
-      {/* Soft warm gradient blobs — decorative only, sit behind the copy */}
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -top-24 left-1/4 h-[36rem] w-[36rem] -translate-x-1/2 rounded-full bg-brand-gold/10 blur-3xl" />
-        <div className="absolute -top-10 right-0 h-[28rem] w-[28rem] translate-x-1/3 rounded-full bg-brand-teal/[0.06] blur-3xl" />
-      </div>
+      {/* A wall of real creators at work, softened under a warm paper scrim --
+          replaces the old gradient-blob backdrop with something closer to
+          Patreon's own homepage, where people (not boxes) carry the page. */}
+      <PhotoCollageBackground />
 
       {/* Asymmetric split — copy/search on the left, a live preview of what a
           creator's page actually looks like on the right, so the hero answers
