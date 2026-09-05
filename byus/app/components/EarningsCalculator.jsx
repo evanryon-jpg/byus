@@ -39,7 +39,7 @@ export default function EarningsCalculator() {
         <h2 className="mt-3 font-display text-2xl font-bold text-[#2B2420] sm:text-3xl">
           See what you&rsquo;d actually keep
         </h2>
-        <p className="mt-2 max-w-xl text-sm text-brand-ink/68">
+        <p className="mt-2 max-w-xl text-sm text-brand-ink/70">
           Move the sliders to your numbers — this runs the same fee math ByUs applies to
           every charge, not a rough estimate.
         </p>
@@ -80,7 +80,7 @@ export default function EarningsCalculator() {
               </div>
             </div>
 
-            <label className="flex items-center gap-2 text-sm text-brand-ink/72">
+            <label className="flex items-center gap-2 text-sm text-brand-ink/70">
               <input
                 type="checkbox"
                 checked={showComparison}
@@ -170,13 +170,13 @@ function TierButton({ active, onClick, children }) {
 function OutputRow({ label, value, hero, muted }) {
   return (
     <div className={`flex items-baseline justify-between gap-3 ${hero ? 'pt-2' : ''}`}>
-      <span className={`text-sm ${hero ? 'font-bold text-[#2B2420]' : 'text-brand-ink/68'}`}>{label}</span>
+      <span className={`text-sm ${hero ? 'font-bold text-[#2B2420]' : 'text-brand-ink/70'}`}>{label}</span>
       <span
         className={
           hero
             ? 'font-display text-3xl font-extrabold tabular-nums text-brand-teal sm:text-4xl'
             : muted
-            ? 'text-sm tabular-nums text-brand-ink/62'
+            ? 'text-sm tabular-nums text-brand-ink/60'
             : 'text-sm font-medium tabular-nums text-[#2B2420]'
         }
       >

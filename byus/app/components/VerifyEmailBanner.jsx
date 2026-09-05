@@ -31,7 +31,7 @@ export default function VerifyEmailBanner({ email }) {
     <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-brand-gold/30 bg-brand-gold/10 p-4 text-sm sm:flex-row sm:items-center sm:justify-between">
       <div>
         <p className="font-semibold text-[#8a6b2f]">Verify your email address</p>
-        <p className="mt-0.5 text-brand-ink/72">
+        <p className="mt-0.5 text-brand-ink/70">
           {sent
             ? `We sent a new link to ${email}. Check your inbox.`
             : `We sent a link to ${email} when you signed up — check your inbox, or resend it below.`}

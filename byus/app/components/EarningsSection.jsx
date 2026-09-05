@@ -65,7 +65,7 @@ export default function EarningsSection() {
           </p>
         ) : (
           <>
-            <p className="text-sm text-brand-ink/72">
+            <p className="text-sm text-brand-ink/70">
               You're on the {feePercent}% rate. Cross ${(thresholdCents / 100).toLocaleString()} in
               earnings this month and your fee drops to {discountedFeePercent}% for the rest of the
               month — for every subscriber, not just new ones.

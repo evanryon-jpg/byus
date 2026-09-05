@@ -80,7 +80,7 @@ export default function PlatformGoalGauge() {
                 ? "We've hit every milestone — thank you."
                 : "Every creator here is part of this number"}
             </h2>
-            <p className="mt-2 max-w-xl text-sm text-brand-ink/68">
+            <p className="mt-2 max-w-xl text-sm text-brand-ink/70">
               {allCrossed
                 ? `ByUs's best month has crossed all ${milestones.length} milestones on this board — built entirely by the creators here and the fans who support them.`
                 : "This tracks ByUs's best single month of fee income yet — built entirely by the creators here and the fans who support them. Every checkpoint below is a number we've hit together."}
@@ -168,7 +168,7 @@ export default function PlatformGoalGauge() {
           </svg>
         </div>
 
-        <p className="mt-2 text-sm text-brand-ink/68">
+        <p className="mt-2 text-sm text-brand-ink/70">
           {allCrossed ? (
             <>ByUs's best month so far: {formatCompactUSD(platformBestMonthCents)}.</>
           ) : (

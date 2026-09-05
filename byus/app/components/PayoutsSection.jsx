@@ -71,9 +71,9 @@ export default function PayoutsSection() {
               {years.map((y) => (
                 <tr key={y.year} className="border-b border-brand-ink/5 last:border-0">
                   <td className="py-2 pr-3 font-medium text-[#2B2420]">{y.year}</td>
-                  <td className="py-2 pr-3 tabular-nums text-brand-ink/72">{y.paymentCount.toLocaleString()}</td>
-                  <td className="py-2 pr-3 tabular-nums text-brand-ink/72">{formatUSD(y.grossCents)}</td>
-                  <td className="py-2 pr-3 tabular-nums text-brand-ink/72">{formatUSD(y.feeCents)}</td>
+                  <td className="py-2 pr-3 tabular-nums text-brand-ink/70">{y.paymentCount.toLocaleString()}</td>
+                  <td className="py-2 pr-3 tabular-nums text-brand-ink/70">{formatUSD(y.grossCents)}</td>
+                  <td className="py-2 pr-3 tabular-nums text-brand-ink/70">{formatUSD(y.feeCents)}</td>
                   <td className="py-2 pr-3 tabular-nums font-semibold text-[#2B2420]">{formatUSD(y.netCents)}</td>
                   <td className="py-2 text-right">
                     <a
