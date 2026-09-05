@@ -12,6 +12,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { publicAvatarUrl } from '@/lib/avatar-url';
 
 // 'popular' and 'trending' both need a subscriber count to sort by, so they're a
 // distinct query shape rather than just an ORDER BY swap on the same SELECT. 'trending'
@@ -76,7 +77,7 @@ export async function GET(request) {
     // client at our own public proxy route instead of exposing it directly.
     const creators = creatorsResult.rows.map((c) => ({
       ...c,
-      profile_image_url: c.profile_image_url ? `/api/avatar/${c.id}` : null,
+      profile_image_url: publicAvatarUrl(c.id, c.profile_image_url),
     }));
     const availableTags = tagsResult.rows.map((r) => r.tag);
 
