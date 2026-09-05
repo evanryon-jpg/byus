@@ -152,7 +152,7 @@ export async function POST(request) {
           // subscription-checkout logic below, then done with this case.
           if (checkoutSession.mode === 'payment') {
             if (!tipPaymentIntent) break;
-            const { type, fan_id, creator_id } = tipPaymentIntent.metadata || {};
+            const { type, fan_id, creator_id, message } = tipPaymentIntent.metadata || {};
             if (type !== 'tip' || !fan_id || !creator_id) break;
 
             const grossCents = tipPaymentIntent.amount;
@@ -165,9 +165,9 @@ export async function POST(request) {
 
             await client.query(
               `INSERT INTO transactions
-                 (fan_id, creator_id, gross_amount_cents, platform_fee_cents, creator_net_cents, stripe_charge_id, status)
-               VALUES ($1, $2, $3, $4, $5, $6, 'succeeded')`,
-              [fan_id, creator_id, grossCents, feeCents, netCents, chargeId]
+                 (fan_id, creator_id, gross_amount_cents, platform_fee_cents, creator_net_cents, stripe_charge_id, status, message)
+               VALUES ($1, $2, $3, $4, $5, $6, 'succeeded', $7)`,
+              [fan_id, creator_id, grossCents, feeCents, netCents, chargeId, message || null]
             );
 
             // Same earnings ledger + monthly fee-tier recheck a subscription invoice
