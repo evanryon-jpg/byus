@@ -42,9 +42,10 @@ export default function TermsPage() {
             subscription tiers. Payments are processed through Stripe, and each creator connects
             their own Stripe account to receive payouts directly. Creators keep 90% of each
             payment; ByUs retains a 10% platform fee, applied automatically to every subscriber's
-            payment. That fee drops permanently to 7% for a creator once their total lifetime
-            earnings on ByUs reach $2,000 — at that point every subscriber's payment, existing
-            and new, is billed at the lower 7% rate going forward. We don&rsquo;t add hidden
+            payment. That fee drops to 7% for any calendar month a creator's earnings on ByUs
+            reach $2,000 — for that month, every subscriber's payment, existing and new, is
+            billed at the lower 7% rate, moving back to 10% for a month that doesn't reach
+            $2,000. We don&rsquo;t add hidden
             processing, payout, or currency-conversion charges on top of that fee — any charges
             Stripe itself applies are between you and Stripe under their own terms.
           </p>
