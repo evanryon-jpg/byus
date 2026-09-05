@@ -66,7 +66,7 @@ export default function FanDashboard() {
   if (loadError) {
     return (
       <div className="mx-auto flex max-w-md flex-col items-center px-6 py-24 text-center">
-        <p className="text-brand-ink/72">Couldn't load your dashboard. Check your connection and try again.</p>
+        <p className="text-brand-ink/70">Couldn't load your dashboard. Check your connection and try again.</p>
         <button
           onClick={load}
           className="mt-4 rounded-full bg-[#146359] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#0f4d45]"
