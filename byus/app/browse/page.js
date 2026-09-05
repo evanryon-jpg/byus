@@ -59,14 +59,15 @@ export default function BrowsePage({ searchParams }) {
 
   return (
     <div>
-      {/* A wall of real creators at work behind the search -- same treatment as
+      {/* A banner of real creators at work above the search -- same treatment as
           the homepage hero, so "browse creators" reads as people to find rather
-          than another form to fill in. */}
-      <section className="relative overflow-hidden border-b border-brand-ink/10">
-        <PhotoCollageBackground />
-        <div className="mx-auto max-w-4xl px-6 pt-14 pb-10">
+          than another form to fill in. Sits above the heading rather than behind
+          it so the search box and sort toggle stay fully legible. */}
+      <section className="overflow-hidden border-b border-brand-ink/10">
+        <PhotoCollageBackground src="/images/collage/sign-language.jpg" />
+        <div className="mx-auto max-w-4xl px-6 pt-10 pb-10">
           <h1 className="font-display text-3xl font-bold text-[#2B2420]">Browse creators</h1>
-          <p className="mt-2 max-w-lg text-brand-ink/68">
+          <p className="mt-2 max-w-lg text-brand-ink/70">
             Find someone whose work you already love, or discover your next favorite.
           </p>
 
@@ -122,7 +123,7 @@ export default function BrowsePage({ searchParams }) {
                 setQ('');
                 setTag('');
               }}
-              className="text-xs font-medium text-brand-ink/60 hover:text-brand-ink/72"
+              className="text-xs font-medium text-brand-ink/60 hover:text-brand-ink/70"
             >
               Clear filters
             </button>
