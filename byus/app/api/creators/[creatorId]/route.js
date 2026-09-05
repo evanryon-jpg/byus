@@ -10,6 +10,7 @@ import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { signPlaybackToken } from '@/lib/mux-jwt';
 import { getPollVoteCounts, getMyPollVotes, buildPollPayload } from '@/lib/polls';
+import { publicAvatarUrl } from '@/lib/avatar-url';
 
 export async function GET(request, { params }) {
   const { creatorId } = params;
@@ -43,7 +44,7 @@ export async function GET(request, { params }) {
       id: creatorRow.id,
       display_name: creatorRow.display_name,
       bio: creatorRow.bio,
-      profile_image_url: creatorRow.profile_image_url ? `/api/avatar/${creatorRow.id}` : null,
+      profile_image_url: publicAvatarUrl(creatorRow.id, creatorRow.profile_image_url),
       social_links: creatorRow.social_links || [],
       slug: creatorRow.slug,
       // Whether tipping/subscribing is actually possible right now — both need a
@@ -116,7 +117,7 @@ export async function GET(request, { params }) {
     const topSupporters = supportersResult.rows.map((row) => ({
       id: row.id,
       displayName: row.display_name,
-      profileImageUrl: row.profile_image_url ? `/api/avatar/${row.id}` : null,
+      profileImageUrl: publicAvatarUrl(row.id, row.profile_image_url),
       since: row.since,
     }));
 
