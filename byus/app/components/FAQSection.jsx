@@ -10,7 +10,7 @@ import { useState } from 'react';
 const FAQS = [
   {
     q: 'How does the platform fee work?',
-    a: "Creators keep 90% of every payment a fan sends, paid straight into the creator's own Stripe account. ByUs's fee starts at 10% and drops permanently to 7% once a creator's lifetime earnings on ByUs pass $2,000 — no extra processing, currency conversion, or payout charges stacked on top of that.",
+    a: "Creators keep 90% of every payment a fan sends, paid straight into the creator's own Stripe account. ByUs's fee starts at 10% and drops to 7% for any month a creator's earnings on ByUs reach $2,000, moving back to 10% for a month that doesn't — no extra processing, currency conversion, or payout charges stacked on top of that.",
   },
   {
     q: 'When and how do creators get paid?',

@@ -70,7 +70,7 @@ export default function EarningsCalculator() {
                   Just starting — {STARTER_FEE_PERCENT}%
                 </TierButton>
                 <TierButton active={tier === 'grown'} onClick={() => setTier('grown')}>
-                  $2k+ lifetime — {GROWN_FEE_PERCENT}%
+                  $2k+ this month — {GROWN_FEE_PERCENT}%
                 </TierButton>
               </div>
             </div>

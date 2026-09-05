@@ -34,33 +34,36 @@ export default function EarningsSection() {
     platformReductionPoints,
     discountedFeePercent,
     thresholdCents,
+    monthToDateGrossCents,
     lifetimeGrossCents,
     lifetimeNetCents,
     activeSubscriberCount,
     monthly,
   } = data;
 
-  const alreadyDiscounted = feePercent <= discountedFeePercent;
-  const progress = Math.min(1, lifetimeGrossCents / thresholdCents);
+  const isDiscountedThisMonth = feePercent <= discountedFeePercent;
+  const progress = Math.min(1, monthToDateGrossCents / thresholdCents);
   const hasAnyActivity =
     lifetimeGrossCents > 0 || activeSubscriberCount > 0 || monthly.some((m) => m.newSubscribers > 0);
   const hasPlatformBonus = platformReductionPoints > 0;
 
   return (
     <div className="mt-4 space-y-4">
-      {/* Fee tier — your own personal tier (10% -> 7% at $2k lifetime), plus whatever
-          ByUs's own growth milestones have knocked off on top of that for everyone. */}
+      {/* Fee tier — your own personal tier (10% -> 7% for any month you cross $2k, back to
+          10% the next month if you don't), plus whatever ByUs's own growth milestones have
+          knocked off on top of that for everyone. */}
       <div className="rounded-xl bg-black/[0.03] p-4">
-        {alreadyDiscounted ? (
+        {isDiscountedThisMonth ? (
           <p className="text-sm text-[#146359]">
-            🎉 You've unlocked ByUs's lowest personal rate — {feePercent}% platform fee, for good.
+            🎉 You've crossed ${(thresholdCents / 100).toLocaleString()} in earnings this month —
+            {' '}{feePercent}% platform fee for the rest of the month.
           </p>
         ) : (
           <>
             <p className="text-sm text-black/60">
-              You're on the {feePercent}% starter rate. Once your lifetime earnings on ByUs
-              cross ${(thresholdCents / 100).toLocaleString()}, your fee drops to {discountedFeePercent}%
-              permanently — for every subscriber, not just new ones.
+              You're on the {feePercent}% rate. Cross ${(thresholdCents / 100).toLocaleString()} in
+              earnings this month and your fee drops to {discountedFeePercent}% for the rest of the
+              month — for every subscriber, not just new ones.
             </p>
             <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-black/10">
               <div
@@ -69,10 +72,13 @@ export default function EarningsSection() {
               />
             </div>
             <p className="mt-1 text-xs text-black/40">
-              ${(lifetimeGrossCents / 100).toFixed(2)} of ${(thresholdCents / 100).toLocaleString()} earned
+              ${(monthToDateGrossCents / 100).toFixed(2)} of ${(thresholdCents / 100).toLocaleString()} this month
             </p>
           </>
         )}
+        <p className="mt-2 text-xs text-black/40">
+          Based on what you earn each month, not lifetime — it resets on the 1st.
+        </p>
         {hasPlatformBonus && (
           <p className="mt-2 text-xs text-[#8a6b2f]">
             🌱 Plus an extra {platformReductionPoints}pt off from ByUs's own growth milestones — you're
