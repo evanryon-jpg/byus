@@ -74,7 +74,7 @@ export default function CreatorDashboard() {
   if (loadError) {
     return (
       <div className="mx-auto flex max-w-md flex-col items-center px-6 py-24 text-center">
-        <p className="text-brand-ink/72">Couldn't load your dashboard. Check your connection and try again.</p>
+        <p className="text-brand-ink/70">Couldn't load your dashboard. Check your connection and try again.</p>
         <button
           onClick={load}
           className="mt-4 rounded-full bg-[#146359] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#0f4d45]"
@@ -146,7 +146,7 @@ export default function CreatorDashboard() {
           </>
         ) : (
           <>
-            <p className="mt-2 text-sm text-brand-ink/72">
+            <p className="mt-2 text-sm text-brand-ink/70">
               This is the last step: tap the button, and Stripe walks you through the rest.
               That's where your money gets paid out to — any draft tiers above go live the
               moment this is done.
@@ -417,7 +417,7 @@ function LiveStreamSection() {
           {/* The two values below are meaningless out of context to a first-time streamer, so
               lead with the numbered steps that tell them exactly where each one goes, instead
               of assuming they already know what "Server" and "Stream key" refer to. */}
-          <ol className="list-decimal space-y-1.5 rounded-xl border border-brand-ink/5 bg-brand-ink/[0.02] px-4 py-3 pl-8 text-xs text-brand-ink/72 marker:text-brand-ink/50">
+          <ol className="list-decimal space-y-1.5 rounded-xl border border-brand-ink/5 bg-brand-ink/[0.02] px-4 py-3 pl-8 text-xs text-brand-ink/70 marker:text-brand-ink/50">
             <li>Open OBS (or your streaming app) and go to Settings → Stream.</li>
             <li>
               Set "Service" to <span className="font-medium text-brand-ink/80">Custom</span>.
@@ -652,7 +652,7 @@ function AiSetupSection({ stripeConnected, onProfileSaved, onTierAdded }) {
   return (
     <div className="mt-6 rounded-2xl border border-[#146359]/15 bg-[#146359]/5 p-5">
       <h2 className="text-sm font-semibold text-[#146359]">AI setup assistant</h2>
-      <p className="mt-1 text-sm text-brand-ink/72">
+      <p className="mt-1 text-sm text-brand-ink/70">
         Describe what you make or post about and get a starter bio, categories, and tier ideas —
         review and use whichever ones fit.
       </p>
@@ -765,7 +765,7 @@ function GettingStartedChecklist({ stripeConnected, hasTier, hasPost }) {
             >
               {step.done ? '✓' : i + 1}
             </span>
-            <span className={step.done ? 'text-brand-ink/60 line-through' : 'font-medium text-brand-ink/88'}>
+            <span className={step.done ? 'text-brand-ink/60 line-through' : 'font-medium text-brand-ink/90'}>
               {step.label}
             </span>
           </li>
@@ -1711,7 +1711,7 @@ function PostSection({ posts, onCreated }) {
             value={body} onChange={(e) => setBody(e.target.value)} required rows={4}
             className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm" />
           <div>
-            <label className="mb-1 block text-sm text-brand-ink/72">Image (optional)</label>
+            <label className="mb-1 block text-sm text-brand-ink/70">Image (optional)</label>
             <input
               type="file"
               accept="image/png,image/jpeg,image/webp,image/gif"
@@ -1725,7 +1725,7 @@ function PostSection({ posts, onCreated }) {
             <option value="subscribers_only">Subscribers only</option>
           </select>
 
-          <label className="flex items-center gap-2 text-sm text-brand-ink/72">
+          <label className="flex items-center gap-2 text-sm text-brand-ink/70">
             <input type="checkbox" checked={isPoll} onChange={(e) => setIsPoll(e.target.checked)} />
             Add a poll (fans vote from a few options — your post text above is the question)
           </label>
@@ -1873,7 +1873,7 @@ function PostRow({ post, onChanged }) {
           />
         </div>
       )}
-      <p className="mt-1 text-sm text-brand-ink/72">{post.body}</p>
+      <p className="mt-1 text-sm text-brand-ink/70">{post.body}</p>
       {post.poll && <PollTally poll={post.poll} />}
       <div className="mt-2 flex gap-4 text-xs font-medium">
         <button onClick={() => setEditing(true)} className="text-[#146359] hover:text-[#0f4d45]">
@@ -1898,7 +1898,7 @@ function PollTally({ poll }) {
         const pct = total > 0 ? Math.round((count / total) * 100) : 0;
         return (
           <div key={i} className="text-xs">
-            <div className="flex justify-between text-brand-ink/72">
+            <div className="flex justify-between text-brand-ink/70">
               <span>{option}</span>
               <span className="text-brand-ink/60">{count} ({pct}%)</span>
             </div>
