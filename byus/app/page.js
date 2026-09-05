@@ -115,7 +115,7 @@ function StatsBand() {
     { value: '90%', label: "kept by the creator, every renewal — 93% once they've grown with us" },
     {
       value: '10% → 7%',
-      label: 'platform fee — drops for good after $2,000 lifetime earnings; Stripe’s own processing comes out of our cut, never billed to you separately',
+      label: 'platform fee — drops to 7% for any month you earn $2,000+ on ByUs; Stripe’s own processing comes out of our cut, never billed to you separately',
     },
     { value: '$0', label: 'to start; no listing or setup cost' },
   ];
