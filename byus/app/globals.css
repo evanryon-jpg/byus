@@ -1,3 +1,19 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Tailwind's preflight sets every placeholder to a cool gray (#9CA3AF, ~2.8:1
+   contrast on white) no matter what palette the site uses. Several forms here
+   rely on the placeholder as a field's only label (no visible <label> element
+   alongside it -- e.g. the tier "Welcome message for new subscribers" box),
+   so that default reads as too faint to do that job. Swap it for the warm
+   brand-ink tone at the same 65% opacity already used for muted body copy
+   sitewide (text-brand-ink/65 and friends) -- that clears 4.5:1 contrast on
+   both the white and cream/paper surfaces these fields sit on. */
+@layer base {
+  input::placeholder,
+  textarea::placeholder {
+    color: rgb(43 36 32 / 0.65);
+    opacity: 1;
+  }
+}
