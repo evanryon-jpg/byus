@@ -109,6 +109,15 @@ const limiters = {
     limiter: Ratelimit.slidingWindow(20, '1 h'),
     prefix: 'rl:tip',
   }),
+  // Guards submitting a suggestion (see app/api/suggestions/route.js) — cheap to run,
+  // but generous enough that someone genuinely typing up a handful of ideas in one
+  // sitting never gets blocked; it's here purely to stop a script from flooding the
+  // table, not to discourage a real person from sending more than a couple.
+  suggestion: new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(10, '1 h'),
+    prefix: 'rl:suggestion',
+  }),
 };
 
 // Best-effort client IP. Vercel always sets x-forwarded-for in production; the
