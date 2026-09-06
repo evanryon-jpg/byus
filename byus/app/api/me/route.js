@@ -44,6 +44,15 @@ function withAvatarUrl(user) {
 // before their stored platform_fee_percent column has caught up -- that column only
 // updates on their first invoice (see recordEarningAndCheckFeeTier), but a founding
 // creator should see their promo rate on day one, before they've ever billed anyone.
+//
+// Same reasoning applies to the creator-referral 0%-fee promo (lib/referrals.js,
+// rewardCreatorReferrerLaunch): `zero_fee_promo_expires_at` is stamped on the referrer's
+// row the instant their referred creator launches, but `platform_fee_percent` itself
+// only catches up to 0% on the referrer's own NEXT invoice. Without this check here, a
+// referrer who hasn't billed anyone since earning the reward would see their old
+// (founding or standard) rate on their dashboard despite already having earned 0% --
+// checking the expiry live means it shows up the moment it's granted, same as founding
+// status does, with zero extra round trip since the column is already on `user`.
 async function withEffectiveFee(user) {
   if (user.role !== 'creator') return user;
 
@@ -52,12 +61,17 @@ async function withEffectiveFee(user) {
     getFoundingCreatorRank(query, user.id),
   ]);
   const isFounding = foundingRank !== null && foundingRank <= FOUNDING_CREATOR_LIMIT;
+  const zeroFeePromoActive =
+    Boolean(user.zero_fee_promo_expires_at) && new Date(user.zero_fee_promo_expires_at) > new Date();
 
   return {
     ...user,
     is_founding_creator: isFounding,
     founding_creator_rank: isFounding ? foundingRank : null,
-    effective_fee_percent: isFounding
+    zero_fee_promo_active: zeroFeePromoActive,
+    effective_fee_percent: zeroFeePromoActive
+      ? 0
+      : isFounding
       ? DISCOUNTED_FEE_PERCENT
       : applyPlatformMilestoneReduction(user.platform_fee_percent, reductionPoints),
   };
@@ -105,7 +119,7 @@ export async function GET() {
     const result = await query(
       `SELECT id, email, role, display_name, bio, profile_image_url,
               stripe_connect_onboarded, tags, email_verified, platform_fee_percent, notify_new_posts,
-              show_support_publicly, support_goal_cents
+              show_support_publicly, support_goal_cents, zero_fee_promo_expires_at
        FROM users WHERE id = $1`,
       [session.userId]
     );
@@ -200,7 +214,7 @@ export async function PATCH(request) {
     values.push(session.userId);
     const result = await query(
       `UPDATE users SET ${fields.join(', ')} WHERE id = $${i}
-       RETURNING id, email, role, display_name, bio, profile_image_url, stripe_connect_onboarded, tags, email_verified, platform_fee_percent, notify_new_posts, show_support_publicly, support_goal_cents`,
+       RETURNING id, email, role, display_name, bio, profile_image_url, stripe_connect_onboarded, tags, email_verified, platform_fee_percent, notify_new_posts, show_support_publicly, support_goal_cents, zero_fee_promo_expires_at`,
       values
     );
 
