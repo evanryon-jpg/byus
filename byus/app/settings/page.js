@@ -39,6 +39,7 @@ export default function SettingsPage() {
       <NotificationsCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
       <SupportVisibilityCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
       <ReferralCard role={user.role} />
+      <SuggestionBoxCard />
       <PasswordCard />
     </div>
   );
@@ -515,6 +516,139 @@ function ReferralCard({ role }) {
             </div>
           </div>
         </>
+      )}
+    </section>
+  );
+}
+
+// Open to anyone with a ByUs account, creator or fan -- a fan browsing the site has just
+// as much useful perspective on layout/features as a creator running a page, so this
+// isn't gated by role the way ReferralCard's creator-only blurb above is. Submissions go
+// to app/api/suggestions/route.js and show up for the ByUs team on the admin overview
+// page; `admin_note` (set from there) is this box's way of closing the loop back to
+// whoever sent it in, so it's never just a write-only inbox.
+const SUGGESTION_MAX = 2000;
+
+const SUGGESTION_STATUS_CONFIG = {
+  new: { label: 'New', className: 'bg-brand-ink/5 text-brand-ink/60' },
+  reviewed: { label: 'Reviewed', className: 'bg-amber-50 text-amber-700' },
+  planned: { label: 'Planned', className: 'bg-blue-50 text-blue-700' },
+  shipped: { label: 'Shipped', className: 'bg-green-50 text-green-700' },
+};
+
+function SuggestionBoxCard() {
+  const [suggestions, setSuggestions] = useState([]);
+  const [loaded, setLoaded] = useState(false);
+  const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
+  const [status, setStatus] = useState(null); // { type: 'ok' | 'error', text }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  async function load() {
+    try {
+      const res = await fetch('/api/suggestions');
+      if (res.ok) {
+        const data = await res.json();
+        setSuggestions(data.suggestions);
+      }
+    } finally {
+      setLoaded(true);
+    }
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setSending(true);
+    setStatus(null);
+    try {
+      const res = await fetch('/api/suggestions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Could not send your suggestion.');
+      setSuggestions((current) => [result.suggestion, ...current]);
+      setMessage('');
+      setStatus({ type: 'ok', text: "Sent — thank you! We read every one." });
+    } catch (err) {
+      setStatus({ type: 'error', text: err.message || 'Could not send your suggestion.' });
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <section className="mt-6 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
+      <h2 className="font-semibold">Suggestions</h2>
+      <p className="mt-1 text-sm text-brand-ink/65">
+        Your ideas are important to ByUs — help us help you! Page layout, a feature you're
+        missing, anything at all — tell us what would make ByUs better for you.
+      </p>
+
+      <form onSubmit={handleSubmit} className="mt-4">
+        <textarea
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          maxLength={SUGGESTION_MAX}
+          rows={3}
+          placeholder="What would make ByUs better?"
+          required
+          className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
+        />
+        <div className="mt-2 flex items-center gap-3">
+          <button
+            type="submit"
+            disabled={sending || !message.trim()}
+            className="rounded-full bg-[#146359] px-5 py-2 text-sm font-semibold text-white hover:bg-[#0f4d45] disabled:opacity-50"
+          >
+            {sending ? 'Sending…' : 'Send suggestion'}
+          </button>
+          <span className="text-xs text-brand-ink/50">
+            {message.length}/{SUGGESTION_MAX}
+          </span>
+          {status && (
+            <span className={`text-sm ${status.type === 'ok' ? 'text-green-700' : 'text-red-600'}`}>
+              {status.text}
+            </span>
+          )}
+        </div>
+      </form>
+
+      {loaded && suggestions.length > 0 && (
+        <div className="mt-5 space-y-3 border-t border-brand-ink/10 pt-4">
+          <p className="text-xs font-medium uppercase tracking-wide text-brand-ink/50">
+            Your suggestions
+          </p>
+          {suggestions.map((s) => {
+            const config = SUGGESTION_STATUS_CONFIG[s.status] || SUGGESTION_STATUS_CONFIG.new;
+            return (
+              <div key={s.id} className="rounded-lg bg-brand-ink/[0.02] p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-sm text-brand-ink/85">{s.message}</p>
+                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${config.className}`}>
+                    {config.label}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-brand-ink/50">
+                  {new Date(s.created_at).toLocaleDateString(undefined, {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </p>
+                {s.admin_note && (
+                  <p className="mt-2 rounded-md bg-brand-gold/15 px-3 py-2 text-sm text-brand-ink">
+                    <span className="font-semibold">ByUs team:</span> {s.admin_note}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
       )}
     </section>
   );
