@@ -34,6 +34,13 @@ export const FEE_DISCOUNT_THRESHOLD_CENTS = 200000; // $2,000 gross revenue in a
 // in case that ever changes.
 export const MIN_FEE_PERCENT = 7;
 
+// Launch promo: the first FOUNDING_CREATOR_LIMIT creator accounts ever created on ByUs
+// get DISCOUNTED_FEE_PERCENT (7%) permanently, from day one -- the $2,000/mo milestone in
+// FEE_DISCOUNT_THRESHOLD_CENTS above is waived for them entirely rather than just started
+// at a lower point. See getFoundingCreatorRank / isFoundingCreator in lib/fees.js for how
+// "first 100" is determined (live off signup order, not a stamped flag).
+export const FOUNDING_CREATOR_LIMIT = 100;
+
 // One-time tips ("buy a coffee") — bounds for /api/creators/:creatorId/tip. Same fee
 // treatment as a subscription charge (the creator's current platform_fee_percent, see
 // lib/fees.js), just not tied to any tier. Floor matches Stripe's own per-charge minimum

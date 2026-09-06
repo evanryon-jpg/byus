@@ -32,7 +32,42 @@ import {
   DISCOUNTED_FEE_PERCENT,
   FEE_DISCOUNT_THRESHOLD_CENTS,
   MIN_FEE_PERCENT,
+  FOUNDING_CREATOR_LIMIT,
 } from './stripe';
+import { rewardCreatorReferrerLaunch } from './referrals';
+
+// This creator's signup rank among every creator account ever created, oldest first.
+// Rank 1 is the very first creator on ByUs. Computed live off `created_at` (tie-broken by
+// id) rather than stamped on the row at signup time -- that keeps it correct with zero
+// schema change and with no risk of drifting if an earlier account is ever removed.
+// `queryFn` lets callers pass either the shared pool (`query`) or a transaction client.
+export async function getFoundingCreatorRank(queryFn, creatorId) {
+  const result = await queryFn(
+    `SELECT rank FROM (
+       SELECT id, ROW_NUMBER() OVER (ORDER BY created_at, id) AS rank
+       FROM users WHERE role = 'creator'
+     ) ranked WHERE id = $1`,
+    [creatorId]
+  );
+  return result.rows[0] ? Number(result.rows[0].rank) : null;
+}
+
+// Founding promo: the first FOUNDING_CREATOR_LIMIT creators get DISCOUNTED_FEE_PERCENT
+// (7%) from day one, no $2,000/mo milestone required -- see recordEarningAndCheckFeeTier
+// below, which is where this actually takes effect on billing.
+export async function isFoundingCreator(queryFn, creatorId) {
+  const rank = await getFoundingCreatorRank(queryFn, creatorId);
+  return rank !== null && rank <= FOUNDING_CREATOR_LIMIT;
+}
+
+// Live counts for the homepage promo banner -- how many of the FOUNDING_CREATOR_LIMIT
+// founding spots are already claimed by a real creator account right now, so the copy
+// never overstates (or understates) what's actually left.
+export async function getFoundingPromoStats(queryFn) {
+  const result = await queryFn(`SELECT COUNT(*)::int AS count FROM users WHERE role = 'creator'`);
+  const claimed = Math.min(result.rows[0].count, FOUNDING_CREATOR_LIMIT);
+  return { limit: FOUNDING_CREATOR_LIMIT, claimed, remaining: FOUNDING_CREATOR_LIMIT - claimed };
+}
 
 const MILESTONE_POINTS_SQL = `
   SELECT COALESCE(SUM(reduction_points), 0)::int AS points
@@ -65,13 +100,18 @@ export function applyPlatformMilestoneReduction(basePercent, reductionPoints) {
 // milestone bonus already existed before this invoice), so historical net-earnings math
 // stays accurate no matter how either discount moves later. Then recomputes the personal
 // tier off THIS CALENDAR MONTH's earnings so far (including the invoice just recorded) and
-// checks the platform-wide milestone crossings this payment might have triggered. Returns
-// null when nothing changed (duplicate delivery, not a creator, or neither discount moved),
-// otherwise `{ personalTierChange, crossedMilestones }` — personalTierChange is the
-// creator's new personal-tier percent when this month's total just crossed (or fell back
-// below) the threshold (null otherwise), and crossedMilestones is the list of platform
-// milestones (if any) newly crossed by this payment. The caller syncs whichever of those
-// actually happened to Stripe once the transaction is safely committed.
+// checks the platform-wide milestone crossings this payment might have triggered. Also
+// checks whether this is the creator's very first-ever earning -- their page's "launch",
+// for the creator-referral promo below -- and grants their referrer (if any, and if that
+// referrer is themselves a creator) a full month at 0% fee. Returns null when nothing
+// changed (duplicate delivery, not a creator, or none of the three discounts moved),
+// otherwise `{ personalTierChange, crossedMilestones, referrerFeeGranted }` —
+// personalTierChange is the creator's new personal-tier percent when this month's total
+// just crossed (or fell back below) the threshold, or their own 0%-promo just started or
+// lapsed (null otherwise); crossedMilestones is the list of platform milestones (if any)
+// newly crossed by this payment; referrerFeeGranted is the referrer's user id when this
+// invoice just launched them a free 0%-fee month (null otherwise). The caller syncs
+// whichever of those actually happened to Stripe once the transaction is safely committed.
 export async function recordEarningAndCheckFeeTier(client, { creatorId, stripeInvoiceId, amountCents }) {
   if (!creatorId || !stripeInvoiceId || !(amountCents > 0)) return null;
 
@@ -79,7 +119,7 @@ export async function recordEarningAndCheckFeeTier(client, { creatorId, stripeIn
   // overlapping webhook deliveries can't both read the pre-crossing total and both think
   // they're the one that needs to flip their personal tier.
   const creatorResult = await client.query(
-    `SELECT platform_fee_percent FROM users WHERE id = $1 FOR UPDATE`,
+    `SELECT platform_fee_percent, zero_fee_promo_expires_at FROM users WHERE id = $1 FOR UPDATE`,
     [creatorId]
   );
   const currentFeePercent = creatorResult.rows[0]?.platform_fee_percent;
@@ -101,6 +141,17 @@ export async function recordEarningAndCheckFeeTier(client, { creatorId, stripeIn
   );
   if (inserted.rows.length === 0) return null; // already recorded — redelivered event
 
+  // If this is the very first row this creator has ever recorded, their page just "launched"
+  // in the sense the creator-referral promo cares about (a real, paid supporter -- not just
+  // a completed signup form) -- see lib/referrals.js for the reward this grants, if anyone
+  // referred them and that referrer is themselves a creator.
+  const totalEarningsRowsResult = await client.query(
+    `SELECT COUNT(*)::int AS n FROM creator_earnings WHERE creator_id = $1`,
+    [creatorId]
+  );
+  const isFirstEverEarning = Number(totalEarningsRowsResult.rows[0].n) === 1;
+  const referrerFeeGranted = isFirstEverEarning ? await rewardCreatorReferrerLaunch(client, creatorId) : null;
+
   // This calendar month's earnings so far (including the invoice just recorded above)
   // decide the personal tier for the rest of the month. Unlike a lifetime total this can
   // move in either direction — a creator who crossed $2,000 last month but hasn't yet this
@@ -113,8 +164,21 @@ export async function recordEarningAndCheckFeeTier(client, { creatorId, stripeIn
     [creatorId]
   );
   const monthToDateCents = Number(monthTotalResult.rows[0].total);
-  const targetFeePercent =
-    monthToDateCents >= FEE_DISCOUNT_THRESHOLD_CENTS ? DISCOUNTED_FEE_PERCENT : STANDARD_FEE_PERCENT;
+  // Highest priority: a still-active "invite a creator friend" 0%-fee month (see
+  // lib/referrals.js) beats everything else below, including the founding rate. Once it
+  // lapses, this naturally falls through to the founding/standard/discounted tiers on
+  // whichever invoice comes next -- no separate revert job needed.
+  const zeroFeePromoActive =
+    creatorResult.rows[0].zero_fee_promo_expires_at &&
+    new Date(creatorResult.rows[0].zero_fee_promo_expires_at) > new Date();
+  // Founding creators skip the milestone check entirely -- they're always at the
+  // discounted rate, full stop, not just started there for one qualifying month.
+  const founding = await isFoundingCreator(client.query.bind(client), creatorId);
+  const targetFeePercent = zeroFeePromoActive
+    ? 0
+    : founding || monthToDateCents >= FEE_DISCOUNT_THRESHOLD_CENTS
+    ? DISCOUNTED_FEE_PERCENT
+    : STANDARD_FEE_PERCENT;
 
   let personalTierChange = null;
   if (targetFeePercent !== currentFeePercent) {
@@ -127,8 +191,8 @@ export async function recordEarningAndCheckFeeTier(client, { creatorId, stripeIn
 
   const crossedMilestones = await checkPlatformMilestones(client);
 
-  if (personalTierChange === null && crossedMilestones.length === 0) return null;
-  return { personalTierChange, crossedMilestones };
+  if (personalTierChange === null && crossedMilestones.length === 0 && !referrerFeeGranted) return null;
+  return { personalTierChange, crossedMilestones, referrerFeeGranted };
 }
 
 // Checks whether ByUs's own BEST CALENDAR MONTH of fee income -- summed across every

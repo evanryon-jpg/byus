@@ -110,3 +110,41 @@ export async function rewardReferrer({ fanUserId, subscriptionRowId, priceCents 
     description: 'Referral reward — thanks for bringing a friend to ByUs!',
   });
 }
+
+// Creator-to-creator version of the referral reward above, for the "invite a creator
+// friend" promo: when someone a CREATOR referred is themselves a creator and just
+// recorded their first-ever earning on ByUs (their page "launched"), the referrer gets a
+// full month at 0% platform fee instead of the fan-side dollar credit above — a referred
+// FAN never reaches this path at all (they trigger rewardReferrer above instead), so the
+// two rewards can never collide on the same `referrals` row.
+//
+// Called from inside recordEarningAndCheckFeeTier's own transaction, right after that
+// function confirms this invoice is the referred creator's first ever — `client` is that
+// same transaction's connection, so this claim (`status = 'pending' -> 'rewarded'`) and the
+// earning that triggered it commit or roll back together.
+export async function rewardCreatorReferrerLaunch(client, referredCreatorId) {
+  const pending = await client.query(
+    `SELECT id, referrer_id FROM referrals WHERE referred_id = $1 AND status = 'pending' LIMIT 1`,
+    [referredCreatorId]
+  );
+  const referral = pending.rows[0];
+  if (!referral) return null;
+
+  const referrerResult = await client.query(`SELECT role FROM users WHERE id = $1`, [referral.referrer_id]);
+  if (referrerResult.rows[0]?.role !== 'creator') return null; // this perk only pays out to a creator
+
+  // Guarded by `status = 'pending'` so this can never double-grant the free month, same
+  // belt-and-suspenders pattern as rewardReferrer above.
+  const claimed = await client.query(
+    `UPDATE referrals SET status = 'rewarded', rewarded_at = now() WHERE id = $1 AND status = 'pending' RETURNING id`,
+    [referral.id]
+  );
+  if (claimed.rows.length === 0) return null;
+
+  await client.query(
+    `UPDATE users SET zero_fee_promo_expires_at = now() + interval '30 days' WHERE id = $1`,
+    [referral.referrer_id]
+  );
+
+  return referral.referrer_id;
+}
