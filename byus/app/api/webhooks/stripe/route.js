@@ -123,6 +123,10 @@ export async function POST(request) {
     // subscriptions doesn't belong inside an open DB transaction/lock.
     let feeTierCrossing = null;
     let platformMilestoneCrossed = false;
+    // Set inside the transaction when this invoice was a referred creator's first-ever
+    // earning and that "launch" just granted their referrer a free 0%-fee month (see
+    // lib/referrals.js) — read after commit for the same reason as feeTierCrossing above.
+    let referrerFeeGrant = null;
     // Set inside the transaction when a checkout just activated a brand-new subscription,
     // read after commit — like the fee-tier sync above, an email send is a network call
     // and doesn't belong inside an open DB transaction/lock.
@@ -183,6 +187,9 @@ export async function POST(request) {
             }
             if (result?.crossedMilestones?.length > 0) {
               platformMilestoneCrossed = true;
+            }
+            if (result?.referrerFeeGranted) {
+              referrerFeeGrant = result.referrerFeeGranted;
             }
             break;
           }
@@ -315,6 +322,9 @@ export async function POST(request) {
             if (result?.crossedMilestones?.length > 0) {
               platformMilestoneCrossed = true;
             }
+            if (result?.referrerFeeGranted) {
+              referrerFeeGrant = result.referrerFeeGranted;
+            }
           }
           break;
         }
@@ -389,6 +399,18 @@ export async function POST(request) {
         await syncActiveSubscriptionsToFeePercent(feeTierCrossing.creatorId, feeTierCrossing.feePercent);
       } catch (err) {
         console.error('Failed to sync discounted fee percent to Stripe subscriptions:', err);
+      }
+    }
+
+    // Same best-effort resync, for a creator who just earned a free 0%-fee month by
+    // referring a friend whose page just recorded its first-ever payment (see
+    // lib/referrals.js: rewardCreatorReferrerLaunch already set their platform_fee_percent
+    // to 0 in the DB — this just re-points their live Stripe subscriptions to match).
+    if (referrerFeeGrant) {
+      try {
+        await syncActiveSubscriptionsToFeePercent(referrerFeeGrant, 0);
+      } catch (err) {
+        console.error('Failed to sync referral 0%-fee month to Stripe subscriptions:', err);
       }
     }
 
