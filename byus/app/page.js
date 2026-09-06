@@ -93,6 +93,16 @@ function Hero({ user }) {
                   Start your own page →
                 </a>
               )}
+
+              {/* Lets a skeptical creator click through the whole product -- tiers,
+                  a locked post unlocking, the payout math -- before committing to an
+                  account, rather than taking the payout-rate pitch above on faith. */}
+              <a
+                href="/demo"
+                className="rounded-full border-2 border-brand-teal px-7 py-3 text-base font-semibold text-brand-teal transition hover:bg-brand-teal/10"
+              >
+                ✨ View Live Demo (No Sign-Up Required)
+              </a>
             </div>
 
             <p className="mt-4 text-base font-semibold text-brand-ink">
