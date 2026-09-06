@@ -38,7 +38,7 @@ export default function SettingsPage() {
       <ProfileCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
       <NotificationsCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
       <SupportVisibilityCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
-      <ReferralCard />
+      <ReferralCard role={user.role} />
       <PasswordCard />
     </div>
   );
@@ -437,7 +437,7 @@ function SupportVisibilityCard({ user, onChanged }) {
   );
 }
 
-function ReferralCard() {
+function ReferralCard({ role }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
@@ -475,6 +475,13 @@ function ReferralCard() {
         Share your link. When someone signs up and subscribes to a creator, you both get a
         free month.
       </p>
+
+      {role === 'creator' && (
+        <p className="mt-2 rounded-lg bg-brand-gold/15 px-3 py-2 text-sm font-semibold text-brand-ink">
+          🚀 Want 0% platform fees? Invite a creator friend — when their page gets its first
+          paying supporter, you get a full month at our 0% fee tier.
+        </p>
+      )}
 
       {error && <p className="mt-3 text-xs text-red-600">{error}</p>}
 
