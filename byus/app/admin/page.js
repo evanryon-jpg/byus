@@ -212,6 +212,148 @@ export default function AdminPage() {
           </table>
         </div>
       </div>
+
+      <SuggestionsSection />
+    </div>
+  );
+}
+
+// Self-fetching, separate from /api/admin/overview -- suggestions are unrelated to the
+// platform-revenue numbers that route exists for, and this section needs its own
+// optimistic per-row update logic (status change, admin reply) that has no business
+// living in that route's response shape. See app/api/admin/suggestions/route.js and
+// app/api/admin/suggestions/[id]/route.js, and app/settings/page.js's SuggestionBoxCard
+// for the submitter-facing side of the same loop.
+const SUGGESTION_STATUSES = ['new', 'reviewed', 'planned', 'shipped'];
+const SUGGESTION_STATUS_STYLES = {
+  new: 'bg-brand-ink/5 text-brand-ink/60',
+  reviewed: 'bg-amber-50 text-amber-700',
+  planned: 'bg-blue-50 text-blue-700',
+  shipped: 'bg-green-50 text-green-700',
+};
+
+function SuggestionsSection() {
+  const [suggestions, setSuggestions] = useState(null); // null = loading
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetch('/api/admin/suggestions')
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((data) => setSuggestions(data.suggestions))
+      .catch(() => setError('Could not load suggestions.'));
+  }, []);
+
+  async function updateSuggestion(id, patch) {
+    // Optimistic -- this is a low-stakes admin-only triage action, not worth a spinner
+    // per row; revert to the previous list on failure instead.
+    const previous = suggestions;
+    setSuggestions((current) => current.map((s) => (s.id === id ? { ...s, ...patch } : s)));
+    try {
+      const res = await fetch(`/api/admin/suggestions/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setSuggestions(previous);
+      setError('Could not save that change — try again.');
+    }
+  }
+
+  const openCount = suggestions?.filter((s) => s.status === 'new').length ?? 0;
+
+  return (
+    <div className="mt-8 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
+      <div className="flex items-center justify-between">
+        <h2 className="font-semibold">Suggestions</h2>
+        {openCount > 0 && (
+          <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
+            {openCount} new
+          </span>
+        )}
+      </div>
+      <p className="mt-1 text-sm text-brand-ink/65">
+        What creators and fans have sent in from Settings — reply and it shows up right
+        back on their end.
+      </p>
+
+      {error && <p className="mt-3 text-xs text-red-600">{error}</p>}
+
+      {suggestions === null ? (
+        <p className="mt-4 text-sm text-brand-ink/60">Loading…</p>
+      ) : suggestions.length === 0 ? (
+        <p className="mt-4 text-sm text-brand-ink/60">No suggestions yet.</p>
+      ) : (
+        <div className="mt-4 space-y-4">
+          {suggestions.map((s) => (
+            <SuggestionRow key={s.id} suggestion={s} onUpdate={(patch) => updateSuggestion(s.id, patch)} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SuggestionRow({ suggestion, onUpdate }) {
+  const [note, setNote] = useState(suggestion.admin_note || '');
+  const [savingNote, setSavingNote] = useState(false);
+
+  async function handleSaveNote() {
+    setSavingNote(true);
+    await onUpdate({ admin_note: note });
+    setSavingNote(false);
+  }
+
+  return (
+    <div className="rounded-lg border border-brand-ink/10 p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="font-medium text-[#2B2420]">
+            {suggestion.display_name || 'Unnamed'}{' '}
+            <span className="font-normal text-brand-ink/50">({suggestion.role})</span>
+          </div>
+          <div className="text-xs text-brand-ink/60">{suggestion.email}</div>
+        </div>
+        <select
+          value={suggestion.status}
+          onChange={(e) => onUpdate({ status: e.target.value })}
+          className={`rounded-full border-0 px-2.5 py-1 text-xs font-medium ${SUGGESTION_STATUS_STYLES[suggestion.status]}`}
+        >
+          {SUGGESTION_STATUSES.map((st) => (
+            <option key={st} value={st}>
+              {st.charAt(0).toUpperCase() + st.slice(1)}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <p className="mt-3 text-sm text-brand-ink/85">{suggestion.message}</p>
+      <p className="mt-1 text-xs text-brand-ink/50">
+        {new Date(suggestion.created_at).toLocaleDateString(undefined, {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+        })}
+      </p>
+
+      <div className="mt-3 flex items-start gap-2">
+        <input
+          type="text"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="Reply — shows up on their Settings page"
+          className="w-full rounded-lg border border-brand-ink/10 px-3 py-1.5 text-sm"
+        />
+        <button
+          type="button"
+          onClick={handleSaveNote}
+          disabled={savingNote || note === (suggestion.admin_note || '')}
+          className="shrink-0 rounded-full border border-[#146359] px-3 py-1.5 text-xs font-medium text-[#146359] hover:bg-[#146359]/5 disabled:opacity-50"
+        >
+          {savingNote ? 'Saving…' : 'Save reply'}
+        </button>
+      </div>
     </div>
   );
 }
