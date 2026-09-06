@@ -1,4 +1,6 @@
 import { getCurrentUser } from '@/lib/session';
+import { query } from '@/lib/db';
+import { getFoundingPromoStats } from '@/lib/fees';
 import FAQSection from './components/FAQSection';
 import CreatorSearch from './components/CreatorSearch';
 import PlatformGoalGauge from './components/PlatformGoalGauge';
@@ -11,10 +13,12 @@ import PhotoCollageBackground from './components/PhotoCollageBackground';
 // they should be pointed straight back to the page they actually want.
 export default async function HomePage() {
   const session = await getCurrentUser();
+  const foundingStats = await getFoundingPromoStats(query);
 
   return (
     <div>
       <Hero user={session} />
+      <FoundingPromoBanner stats={foundingStats} />
       <EarningsCalculator />
       <FeaturedCreators />
       <StatsBand />
@@ -24,6 +28,74 @@ export default async function HomePage() {
       <PlatformGoalGauge />
       <ClosingCta user={session} />
     </div>
+  );
+}
+
+// Launch offer -- see lib/fees.js for the actual billing logic this describes (founding
+// creators skip the $2k/mo milestone entirely and sit at 7% from day one). `stats.remaining`
+// is queried live, never hardcoded, so the count on the page can't drift from what a
+// creator actually gets when they sign up.
+function FoundingPromoBanner({ stats }) {
+  const soldOut = stats.remaining <= 0;
+  const pctClaimed = Math.round((stats.claimed / stats.limit) * 100);
+
+  return (
+    <section className="mx-auto max-w-6xl px-6 pb-4">
+      <div className="overflow-hidden rounded-2xl border-2 border-brand-gold bg-[#FBF3E2]">
+        <div className="grid gap-6 p-6 sm:p-8 lg:grid-cols-[1.3fr_1fr] lg:items-center">
+          <div>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-clay px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-[#F5E9D8]">
+              🚀 Founding promo
+            </span>
+
+            <ul className="mt-4 space-y-1.5 text-base font-semibold text-brand-ink">
+              <li className="flex gap-2">
+                <span className="text-brand-teal">✓</span>
+                You keep 90–93% of your revenue.
+              </li>
+              <li className="flex gap-2">
+                <span className="text-brand-teal">✓</span>
+                No hidden setup costs.
+              </li>
+            </ul>
+
+            <p className="mt-4 max-w-lg text-brand-ink/75">
+              We&rsquo;re waiving our standard milestones. The first {stats.limit} creators get our
+              lowest {'7%'} fee tier instantly — no need to wait until you&rsquo;re earning $2k+/mo.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-brand-ink/15 bg-brand-paper p-5">
+            {soldOut ? (
+              <p className="text-center text-sm font-semibold text-brand-ink/70">
+                All {stats.limit} founding spots have been claimed — standard rates now apply to new signups.
+              </p>
+            ) : (
+              <>
+                <div className="flex items-baseline justify-between text-sm font-semibold text-brand-ink">
+                  <span>{stats.remaining} founding spots left</span>
+                  <span className="tabular-nums text-brand-ink/50">
+                    {stats.claimed}/{stats.limit} claimed
+                  </span>
+                </div>
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-brand-ink/10">
+                  <div
+                    className="h-full rounded-full bg-brand-gold"
+                    style={{ width: `${Math.max(pctClaimed, 3)}%` }}
+                  />
+                </div>
+                <a
+                  href="/signup?role=creator"
+                  className="mt-4 block rounded-full bg-brand-teal px-6 py-3 text-center text-sm font-semibold text-brand-paper shadow-sm transition hover:bg-[#0f4d45]"
+                >
+                  🚀 Set this up
+                </a>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
