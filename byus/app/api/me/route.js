@@ -12,7 +12,12 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
-import { getPlatformMilestoneReductionPoints, applyPlatformMilestoneReduction } from '@/lib/fees';
+import {
+  getPlatformMilestoneReductionPoints,
+  applyPlatformMilestoneReduction,
+  getFoundingCreatorRank,
+} from '@/lib/fees';
+import { FOUNDING_CREATOR_LIMIT, DISCOUNTED_FEE_PERCENT } from '@/lib/stripe';
 import { isAdmin } from '@/lib/admin';
 import { publicAvatarUrl } from '@/lib/avatar-url';
 
@@ -34,11 +39,27 @@ function withAvatarUrl(user) {
 // whatever platform-wide milestone bonus is currently in effect (see lib/fees.js) — the
 // dashboard shows this, not the raw platform_fee_percent column, so a creator's "you keep
 // X%" preview always matches what Stripe is really billing.
+//
+// Founding creators (see lib/fees.js) are pinned to DISCOUNTED_FEE_PERCENT here even
+// before their stored platform_fee_percent column has caught up -- that column only
+// updates on their first invoice (see recordEarningAndCheckFeeTier), but a founding
+// creator should see their promo rate on day one, before they've ever billed anyone.
 async function withEffectiveFee(user) {
-  const reductionPoints = await getPlatformMilestoneReductionPoints(query);
+  if (user.role !== 'creator') return user;
+
+  const [reductionPoints, foundingRank] = await Promise.all([
+    getPlatformMilestoneReductionPoints(query),
+    getFoundingCreatorRank(query, user.id),
+  ]);
+  const isFounding = foundingRank !== null && foundingRank <= FOUNDING_CREATOR_LIMIT;
+
   return {
     ...user,
-    effective_fee_percent: applyPlatformMilestoneReduction(user.platform_fee_percent, reductionPoints),
+    is_founding_creator: isFounding,
+    founding_creator_rank: isFounding ? foundingRank : null,
+    effective_fee_percent: isFounding
+      ? DISCOUNTED_FEE_PERCENT
+      : applyPlatformMilestoneReduction(user.platform_fee_percent, reductionPoints),
   };
 }
 
