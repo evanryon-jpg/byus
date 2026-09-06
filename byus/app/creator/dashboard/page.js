@@ -111,6 +111,7 @@ export default function CreatorDashboard() {
         onCreated={load}
         stripeConnected={stripeConnected}
         platformFeePercent={user?.effective_fee_percent ?? user?.platform_fee_percent ?? 10}
+        zeroFeePromoActive={Boolean(user?.zero_fee_promo_active)}
       />
 
       {/* Discount codes — a fan enters one at checkout for a percentage off their first
@@ -785,7 +786,7 @@ const TIER_PRESETS = [
   { label: 'VIP', name: 'VIP', price: '25.00', description: 'Everything in Fan club, plus first access to new work.' },
 ];
 
-function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent }) {
+function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent, zeroFeePromoActive }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -864,6 +865,11 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent }) 
           {open ? 'Cancel' : '+ New tier'}
         </button>
       </div>
+      {zeroFeePromoActive && (
+        <p className="mt-2 inline-block rounded-full bg-brand-gold/15 px-3 py-1 text-xs font-semibold text-brand-ink">
+          🎉 0% ByUs fee this month — your creator-referral promo is active.
+        </p>
+      )}
       {!stripeConnected && (
         <p className="mt-2 text-sm text-brand-ink/60">
           You can build tiers now — they'll save as drafts and go live once you connect Stripe
