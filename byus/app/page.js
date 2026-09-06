@@ -15,9 +15,9 @@ export default async function HomePage() {
   return (
     <div>
       <Hero user={session} />
+      <EarningsCalculator />
       <FeaturedCreators />
       <StatsBand />
-      <EarningsCalculator />
       <Features />
       <HowItWorks />
       <FAQSection />
@@ -40,9 +40,13 @@ function Hero({ user }) {
           background instead of competing with photos too. */}
       <PhotoCollageBackground src="/images/collage/pottery.jpg" />
 
-      {/* Asymmetric split — copy/search on the left, a live preview of what a
-          creator's page actually looks like on the right, so the hero answers
-          "what am I building/joining" instead of just describing it. */}
+      {/* Asymmetric split — pitch/CTA on the left, a live preview of what a
+          creator's page actually looks like on the right. Leads with the payout
+          rate rather than "browse creators": with only a handful of creators live
+          so far, a stranger landing here has almost nothing to search for yet, but
+          every creator sizing up the platform cares immediately about what they'd
+          keep. The search box that used to open this section still exists below,
+          just no longer competing with the primary pitch for the first look. */}
       <div className="mx-auto max-w-6xl px-6 pt-14 pb-24">
         <div className="grid items-center gap-14 lg:grid-cols-[1.05fr_0.95fr]">
           <div>
@@ -51,9 +55,9 @@ function Hero({ user }) {
             </span>
 
             <h1 className="mt-6 font-display text-4xl font-extrabold leading-[1.08] tracking-tight text-[#2B2420] sm:text-5xl lg:text-[3.25rem]">
-              Connect with your{' '}
+              Keep{' '}
               <span className="relative inline-block whitespace-nowrap">
-                favorite
+                90&ndash;93%
                 <svg
                   className="absolute -bottom-1.5 left-0 w-full"
                   height="10"
@@ -64,35 +68,48 @@ function Hero({ user }) {
                   <path d="M2 6 Q 50 1, 100 5 T 198 6" stroke="#C9A961" strokeWidth="4" fill="none" strokeLinecap="round" />
                 </svg>
               </span>{' '}
-              creators
+              of what your fans pay you
             </h1>
 
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-brand-ink/70">
-              Type a creator's name below, or set up your own page in a couple of minutes.
-              Creators keep 90% of every payment to start — and 93% for good once they've
-              grown with us. Nothing hidden.
+              Set up your page in a couple of minutes — tiers, posts, and payouts
+              handled. Nothing hidden, no listing fee, and your rate only gets
+              better as you grow.
             </p>
 
-            <CreatorSearch />
-
-            <div className="mt-5 flex flex-wrap gap-4">
+            <div className="mt-8 flex flex-wrap items-center gap-4">
               {user ? (
                 <a
                   href={dashboardHref}
-                  className="text-sm font-semibold text-brand-teal hover:underline"
+                  className="rounded-full bg-brand-teal px-7 py-3.5 text-base font-semibold text-brand-paper shadow-sm transition hover:bg-[#0f4d45]"
                 >
                   {user.role === 'creator' ? 'Go to your dashboard' : 'Your subscriptions'} →
                 </a>
               ) : (
-                <a href="/signup?role=creator" className="text-sm font-semibold text-brand-teal hover:underline">
-                  Are you a creator? Start your own page →
+                <a
+                  href="/signup?role=creator"
+                  className="rounded-full bg-brand-teal px-7 py-3.5 text-base font-semibold text-brand-paper shadow-sm transition hover:bg-[#0f4d45]"
+                >
+                  Start your own page →
                 </a>
               )}
             </div>
 
-            <p className="mt-8 text-sm text-brand-ink/60">
-              90%+ direct payouts&nbsp;&nbsp;·&nbsp;&nbsp;fee drops as you grow&nbsp;&nbsp;·&nbsp;&nbsp;cancel anytime
+            <p className="mt-4 text-sm text-brand-ink/60">
+              $0 to start&nbsp;&nbsp;·&nbsp;&nbsp;fee drops to 7% once you're earning $2k+/mo&nbsp;&nbsp;·&nbsp;&nbsp;cancel anytime
             </p>
+
+            {/* Secondary path for the fan who already knows who they're looking for --
+                de-emphasized (small label, capped width) rather than removed, since it
+                costs nothing to keep for whoever does arrive here already knowing a name. */}
+            <div className="mt-10 border-t border-brand-ink/10 pt-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-brand-ink/50">
+                Looking for someone specific?
+              </p>
+              <div className="max-w-sm">
+                <CreatorSearch />
+              </div>
+            </div>
           </div>
 
           <ProfilePreview />
