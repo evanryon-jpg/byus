@@ -95,7 +95,7 @@ function Hero({ user }) {
               )}
             </div>
 
-            <p className="mt-4 text-sm text-brand-ink/60">
+            <p className="mt-4 text-base font-semibold text-brand-ink">
               $0 to start&nbsp;&nbsp;·&nbsp;&nbsp;fee drops to 7% once you're earning $2k+/mo&nbsp;&nbsp;·&nbsp;&nbsp;cancel anytime
             </p>
 
