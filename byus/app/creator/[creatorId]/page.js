@@ -153,7 +153,14 @@ function CreatorProfile() {
             {(creator.display_name || '?').trim().charAt(0).toUpperCase()}
           </div>
         )}
-        <h1 className="text-2xl font-bold">{creator.display_name}</h1>
+        <div>
+          <h1 className="text-2xl font-bold">{creator.display_name}</h1>
+          {creator.is_founding && (
+            <span className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-brand-clay px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-[#F5E9D8]">
+              🚀 Founding creator
+            </span>
+          )}
+        </div>
       </div>
       {creator.bio && <p className="mt-2 text-brand-ink/70">{creator.bio}</p>}
 
