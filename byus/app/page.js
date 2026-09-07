@@ -120,6 +120,11 @@ function FoundersCircleSection({ stats }) {
       icon: '💎',
       title: 'A permanent 7% fee',
       body: `The first ${stats.limit} creators lock in our lowest 7% fee tier for life — instantly, no need to wait until you're earning $2k+/mo like everyone else.`,
+      breakdown: [
+        { label: 'Founding 100', value: 'Keep 93% immediately' },
+        { label: 'Regular creators', value: 'Keep 90%' },
+        { label: 'Growing creator', value: 'Keep 93% at $2k+/mo' },
+      ],
     },
     {
       icon: '🎯',
@@ -143,6 +148,16 @@ function FoundersCircleSection({ stats }) {
             <span className="text-3xl" aria-hidden="true">{c.icon}</span>
             <h3 className="mt-3 font-display text-lg font-bold text-[#2B2420]">{c.title}</h3>
             <p className="mt-2 text-sm leading-relaxed text-brand-ink/70">{c.body}</p>
+            {c.breakdown && (
+              <dl className="mt-4 space-y-1.5 border-t border-brand-ink/10 pt-3">
+                {c.breakdown.map((row) => (
+                  <div key={row.label} className="flex items-baseline justify-between gap-3 text-xs">
+                    <dt className="text-brand-ink/55">{row.label}</dt>
+                    <dd className="text-right font-semibold text-brand-ink">{row.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
           </div>
         ))}
       </div>
