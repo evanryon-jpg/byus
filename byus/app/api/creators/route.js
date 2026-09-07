@@ -13,16 +13,23 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { publicAvatarUrl } from '@/lib/avatar-url';
+import { FOUNDING_CREATOR_LIMIT } from '@/lib/stripe';
 
 // 'popular' and 'trending' both need a subscriber count to sort by, so they're a
 // distinct query shape rather than just an ORDER BY swap on the same SELECT. 'trending'
 // ranks by subscribers gained in the last 30 days rather than all-time total, so a newer
 // creator who's picking up momentum right now can outrank a bigger, quieter account --
 // the same "gaining traction" signal a homepage or explore feed uses elsewhere.
+//
+// Every sort leads with `is_founding DESC` -- the first FOUNDING_CREATOR_LIMIT creators
+// (see lib/fees.js) always float to the top of Browse and the homepage's Featured
+// Creators section (app/components/FeaturedCreators.jsx pulls from this same endpoint),
+// ahead of whatever the visitor actually asked to sort by. That's the "featured
+// placement" half of the founding-creator perk; the fee side already lives in lib/fees.js.
 const SORTS = {
-  newest: 'u.created_at DESC',
-  popular: 'active_subscriber_count DESC, u.created_at DESC',
-  trending: 'recent_subscriber_count DESC, active_subscriber_count DESC, u.created_at DESC',
+  newest: 'is_founding DESC, u.created_at DESC',
+  popular: 'is_founding DESC, active_subscriber_count DESC, u.created_at DESC',
+  trending: 'is_founding DESC, recent_subscriber_count DESC, active_subscriber_count DESC, u.created_at DESC',
 };
 
 export async function GET(request) {
@@ -51,8 +58,13 @@ export async function GET(request) {
       query(
         `SELECT u.id, u.display_name, u.bio, u.profile_image_url, u.tags, u.slug,
                 COALESCE(s.active_subscriber_count, 0)::int AS active_subscriber_count,
-                COALESCE(r.recent_subscriber_count, 0)::int AS recent_subscriber_count
+                COALESCE(r.recent_subscriber_count, 0)::int AS recent_subscriber_count,
+                (ranked.rn <= ${FOUNDING_CREATOR_LIMIT}) AS is_founding
          FROM users u
+         JOIN (
+           SELECT id, ROW_NUMBER() OVER (ORDER BY created_at, id) AS rn
+           FROM users WHERE role = 'creator'
+         ) ranked ON ranked.id = u.id
          LEFT JOIN (
            SELECT creator_id, COUNT(*) AS active_subscriber_count
            FROM subscriptions WHERE status = 'active' GROUP BY creator_id
