@@ -129,7 +129,7 @@ function Hero({ user }) {
             </span>
 
             <h1 className="mt-6 font-display text-4xl font-extrabold leading-[1.08] tracking-tight text-[#2B2420] sm:text-5xl lg:text-[3.25rem]">
-              Keep{' '}
+              You keep{' '}
               <span className="relative inline-block whitespace-nowrap">
                 90&ndash;93%
                 <svg
@@ -141,9 +141,17 @@ function Hero({ user }) {
                 >
                   <path d="M2 6 Q 50 1, 100 5 T 198 6" stroke="#C9A961" strokeWidth="4" fill="none" strokeLinecap="round" />
                 </svg>
-              </span>{' '}
-              of what your fans pay you
+              </span>
+              . Period.
             </h1>
+
+            {/* Preempts the "is that before or after Stripe takes its cut"
+                question right where someone forms it — the fine-print answer
+                already lives in StatsBand/FAQ further down, but a first-time
+                visitor shouldn't have to scroll to find it. */}
+            <p className="mt-3 font-display text-xl italic text-brand-ink/60">
+              Stripe processing is covered by ByUs's platform fee.
+            </p>
 
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-brand-ink/70">
               Set up your page in a couple of minutes — tiers, posts, and payouts
