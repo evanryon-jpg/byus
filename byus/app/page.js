@@ -131,7 +131,7 @@ function FoundersCircleSection({ stats }) {
   return (
     <section className="mx-auto max-w-6xl px-6 pb-8">
       <div className="text-center">
-        <h2 className="font-display text-3xl font-bold text-[#2B2420]">Why join the Founder&rsquo;s Circle?</h2>
+        <h2 className="font-display text-3xl font-bold text-[#2B2420]">Become a founding creator</h2>
         <p className="mx-auto mt-2 max-w-xl text-brand-ink/70">
           Monetize your creativity, not your follower count.
         </p>
