@@ -50,9 +50,10 @@ export default function PhotoCreditsPage() {
     <div className="mx-auto max-w-2xl px-6 py-16">
       <h1 className="font-display text-2xl font-bold text-[#2B2420]">Photo credits</h1>
       <p className="mt-3 text-brand-ink/68">
-        The homepage and the Browse creators page use a background collage of real people at
-        work. Every photo comes from Wikimedia Commons and is either public domain or
-        Creative Commons licensed. Credit for each, as its license asks for:
+        The homepage and the Browse creators page used to open with a background photo of
+        real people at work; those banners have since been removed to get visitors to the
+        page's actual content faster. Every photo came from Wikimedia Commons and was either
+        public domain or Creative Commons licensed. Credit for each, as its license asks for:
       </p>
 
       <ul className="mt-8 space-y-5">
