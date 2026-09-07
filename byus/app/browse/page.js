@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import PhotoCollageBackground from '../components/PhotoCollageBackground';
 
 // searchParams is passed in automatically by Next.js for page.js files, client or
 // server, so a link like /browse?q=aria (from the homepage search, or its autocomplete
@@ -59,12 +58,7 @@ export default function BrowsePage({ searchParams }) {
 
   return (
     <div>
-      {/* A banner of real creators at work above the search -- same treatment as
-          the homepage hero, so "browse creators" reads as people to find rather
-          than another form to fill in. Sits above the heading rather than behind
-          it so the search box and sort toggle stay fully legible. */}
-      <section className="overflow-hidden border-b border-brand-ink/10">
-        <PhotoCollageBackground src="/images/collage/woodworking.jpg" />
+      <section className="border-b border-brand-ink/10">
         <div className="mx-auto max-w-4xl px-6 pt-10 pb-10">
           <h1 className="font-display text-3xl font-bold text-[#2B2420]">Browse creators</h1>
           <p className="mt-2 max-w-lg text-brand-ink/70">
