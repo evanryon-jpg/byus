@@ -19,6 +19,7 @@ export default async function HomePage() {
     <div>
       <Hero user={session} />
       <FoundingPromoBanner stats={foundingStats} />
+      <FoundersCircleSection stats={foundingStats} />
       <EarningsCalculator />
       <LookingForSomeoneSection />
       <FeaturedCreators />
@@ -95,6 +96,71 @@ function FoundingPromoBanner({ stats }) {
             )}
           </div>
         </div>
+      </div>
+    </section>
+  );
+}
+
+// The creator-recruitment pitch for the founding promo above -- a dedicated section
+// rather than a rewrite of the top Hero, since the Hero pitches BOTH fans and creators
+// (the fee line applies to everyone browsing) while this is creator-acquisition copy
+// specifically. Every claim here has to stay true to what's actually live: the fee is
+// a permanent 7% (not "0%" or "keep 100%"), the priority placement is real (see the
+// is_founding ordering in /api/creators) but there's no editorial/human curation layer,
+// and there's no brand-deal or UGC-gig matching feature on ByUs at all -- so none of
+// that made it into this copy even though it showed up in the original pitch.
+function FoundersCircleSection({ stats }) {
+  const soldOut = stats.remaining <= 0;
+  const cards = [
+    {
+      icon: '🚀',
+      title: 'Priority placement',
+      body: `Be a big fish in a small pond. Founding creators are automatically sorted first in Browse Creators and the homepage's featured section — for as long as you're here, before things get crowded.`,
+    },
+    {
+      icon: '💎',
+      title: 'A permanent 7% fee',
+      body: `The first ${stats.limit} creators lock in our lowest 7% fee tier for life — instantly, no need to wait until you're earning $2k+/mo like everyone else.`,
+    },
+    {
+      icon: '🎯',
+      title: 'Built for skills, not metrics',
+      body: `Zero followers required to start. Set up tiers, publish posts, and get paid directly by the fans who value your work — no follower minimum, no algorithm gatekeeping who gets to monetize.`,
+    },
+  ];
+
+  return (
+    <section className="mx-auto max-w-6xl px-6 pb-8">
+      <div className="text-center">
+        <h2 className="font-display text-3xl font-bold text-[#2B2420]">Why join the Founder&rsquo;s Circle?</h2>
+        <p className="mx-auto mt-2 max-w-xl text-brand-ink/70">
+          Monetize your creativity, not your follower count.
+        </p>
+      </div>
+
+      <div className="mt-8 grid gap-4 sm:grid-cols-3">
+        {cards.map((c) => (
+          <div key={c.title} className="rounded-2xl border border-brand-ink/10 bg-brand-paper p-6">
+            <span className="text-3xl" aria-hidden="true">{c.icon}</span>
+            <h3 className="mt-3 font-display text-lg font-bold text-[#2B2420]">{c.title}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-brand-ink/70">{c.body}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-8 text-center">
+        {soldOut ? (
+          <p className="text-sm font-semibold text-brand-ink/70">
+            All {stats.limit} founding spots have been claimed — standard rates now apply to new signups.
+          </p>
+        ) : (
+          <a
+            href="/signup?role=creator"
+            className="inline-block rounded-full bg-brand-teal px-7 py-3.5 text-base font-semibold text-brand-paper shadow-sm transition hover:bg-[#0f4d45]"
+          >
+            🚀 Claim your founding spot →
+          </a>
+        )}
       </div>
     </section>
   );
