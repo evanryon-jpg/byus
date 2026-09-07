@@ -161,6 +161,11 @@ export default function BrowsePage({ searchParams }) {
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold">{c.display_name || 'Unnamed creator'}</h3>
+                  {c.is_founding && (
+                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-clay px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-[#F5E9D8]">
+                      🚀 Founding
+                    </span>
+                  )}
                   {c.active_subscriber_count > 0 && (
                     <span className="shrink-0 text-xs font-medium text-brand-ink/60">
                       {c.active_subscriber_count.toLocaleString()} subscriber{c.active_subscriber_count === 1 ? '' : 's'}
