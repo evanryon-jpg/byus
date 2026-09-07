@@ -6,7 +6,6 @@ import CreatorSearch from './components/CreatorSearch';
 import PlatformGoalGauge from './components/PlatformGoalGauge';
 import FeaturedCreators from './components/FeaturedCreators';
 import EarningsCalculator from './components/EarningsCalculator';
-import PhotoCollageBackground from './components/PhotoCollageBackground';
 
 // Server component so the hero and closing CTAs can tell whether someone is already
 // logged in -- an existing creator or fan should never be invited to sign up again,
@@ -171,14 +170,6 @@ function Hero({ user }) {
 
   return (
     <section className="overflow-hidden">
-      {/* A banner of real creators at work above the fold -- replaces the old
-          gradient-blob backdrop with something closer to Patreon's own homepage,
-          where people (not boxes) carry the page. Sits above the copy rather than
-          behind it, so it never has to fight the headline or search box for
-          legibility, and the profile-preview card below keeps its own plain
-          background instead of competing with photos too. */}
-      <PhotoCollageBackground src="/images/collage/pottery.jpg" />
-
       {/* Asymmetric split — pitch/CTA on the left, a live preview of what a
           creator's page actually looks like on the right. Leads with the payout
           rate rather than "browse creators": with only a handful of creators live
