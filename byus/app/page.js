@@ -150,7 +150,7 @@ function Hero({ user }) {
                 already lives in StatsBand/FAQ further down, but a first-time
                 visitor shouldn't have to scroll to find it. */}
             <p className="mt-3 font-display text-xl italic text-brand-ink/60">
-              Stripe processing is covered by ByUs's platform fee.
+              Stripe processing is covered on ByUs's platform fee.
             </p>
 
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-brand-ink/70">
