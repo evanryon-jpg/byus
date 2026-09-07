@@ -20,6 +20,7 @@ export default async function HomePage() {
       <Hero user={session} />
       <FoundingPromoBanner stats={foundingStats} />
       <EarningsCalculator />
+      <LookingForSomeoneSection />
       <FeaturedCreators />
       <StatsBand />
       <Features />
@@ -117,8 +118,9 @@ function Hero({ user }) {
           rate rather than "browse creators": with only a handful of creators live
           so far, a stranger landing here has almost nothing to search for yet, but
           every creator sizing up the platform cares immediately about what they'd
-          keep. The search box that used to open this section still exists below,
-          just no longer competing with the primary pitch for the first look. */}
+          keep. The search box that used to open this section now lives further
+          down the page, after the earnings numbers, so it's there for anyone who
+          wants it without competing with the primary pitch for the first look. */}
       <div className="mx-auto max-w-6xl px-6 pt-14 pb-24">
         <div className="grid items-center gap-14 lg:grid-cols-[1.05fr_0.95fr]">
           <div>
@@ -180,18 +182,6 @@ function Hero({ user }) {
             <p className="mt-4 text-base font-semibold text-brand-ink">
               $0 to start&nbsp;&nbsp;·&nbsp;&nbsp;fee drops to 7% once you're earning $2k+/mo&nbsp;&nbsp;·&nbsp;&nbsp;cancel anytime
             </p>
-
-            {/* Secondary path for the fan who already knows who they're looking for --
-                de-emphasized (small label, capped width) rather than removed, since it
-                costs nothing to keep for whoever does arrive here already knowing a name. */}
-            <div className="mt-10 border-t border-brand-ink/10 pt-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-brand-ink/50">
-                Looking for someone specific?
-              </p>
-              <div className="max-w-sm">
-                <CreatorSearch />
-              </div>
-            </div>
           </div>
 
           <ProfilePreview />
@@ -256,6 +246,24 @@ function ProfilePreview() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Sits after the earnings calculator rather than up in the hero -- with only a
+// handful of creators live so far, opening with "search for someone" before a
+// visitor has any reason to have a name in mind would compete with the pitch for
+// the first look. By the time someone's scrolled past the numbers, they're ready
+// to either start their own page or go looking for one they already have in mind.
+function LookingForSomeoneSection() {
+  return (
+    <section className="mx-auto max-w-xl px-6 py-4 text-center">
+      <p className="font-display text-sm font-semibold uppercase tracking-wide text-brand-ink/50">
+        Looking for someone specific?
+      </p>
+      <div className="mt-2 flex justify-center">
+        <CreatorSearch />
+      </div>
+    </section>
   );
 }
 
