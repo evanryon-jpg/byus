@@ -11,6 +11,7 @@ import { getCurrentUser } from '@/lib/session';
 import { signPlaybackToken } from '@/lib/mux-jwt';
 import { getPollVoteCounts, getMyPollVotes, buildPollPayload } from '@/lib/polls';
 import { publicAvatarUrl } from '@/lib/avatar-url';
+import { isFoundingCreator } from '@/lib/fees';
 
 export async function GET(request, { params }) {
   const { creatorId } = params;
@@ -51,6 +52,10 @@ export async function GET(request, { params }) {
       // connected payout destination, and the frontend uses this to hide the tip widget
       // for a creator who hasn't finished Stripe setup rather than showing a dead button.
       stripe_connect_onboarded: Boolean(creatorRow.stripe_connect_onboarded),
+      // One of the first FOUNDING_CREATOR_LIMIT creators on ByUs (see lib/fees.js) — same
+      // check that grants the permanent 7% fee, reused here so the public "Founding
+      // Creator" badge on this page can never drift out of sync with who actually has it.
+      is_founding: await isFoundingCreator(query, id),
     };
 
     // A creator's optional monthly support goal (set in their dashboard) shown as a
