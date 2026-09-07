@@ -55,7 +55,14 @@ export default function FeaturedCreators() {
               </div>
             )}
             <div className="min-w-0">
-              <h3 className="truncate font-semibold text-[#2B2420]">{c.display_name || 'Unnamed creator'}</h3>
+              <div className="flex items-center gap-1.5">
+                <h3 className="truncate font-semibold text-[#2B2420]">{c.display_name || 'Unnamed creator'}</h3>
+                {c.is_founding && (
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-clay px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-[#F5E9D8]">
+                    🚀 Founding
+                  </span>
+                )}
+              </div>
               {c.bio && <p className="mt-0.5 truncate text-xs text-brand-ink/65">{c.bio}</p>}
             </div>
           </a>
