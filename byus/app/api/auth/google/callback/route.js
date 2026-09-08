@@ -123,7 +123,7 @@ export async function GET(request) {
   try {
     // 1. Already linked — the common case for every login after the first.
     const bySub = await query(
-      'SELECT id, email, role, display_name, session_version FROM users WHERE google_sub = $1',
+      'SELECT id, email, role, display_name, session_version, is_suspended FROM users WHERE google_sub = $1',
       [profile.sub]
     );
     user = bySub.rows[0];
@@ -133,7 +133,7 @@ export async function GET(request) {
       // already proven this person owns the address, so it's safe to attach
       // google_sub to that account instead of erroring out or duplicating it.
       const byEmail = await query(
-        'SELECT id, email, role, display_name, session_version FROM users WHERE email = $1',
+        'SELECT id, email, role, display_name, session_version, is_suspended FROM users WHERE email = $1',
         [email]
       );
       if (byEmail.rows[0]) {
@@ -143,7 +143,7 @@ export async function GET(request) {
                profile_image_url = COALESCE(profile_image_url, $2),
                updated_at = now()
            WHERE id = $3
-           RETURNING id, email, role, display_name, session_version`,
+           RETURNING id, email, role, display_name, session_version, is_suspended`,
           [profile.sub, profileImageUrl, byEmail.rows[0].id]
         );
         user = updated.rows[0];
@@ -167,6 +167,17 @@ export async function GET(request) {
   } catch (err) {
     console.error('Google sign-in database error:', err);
     return loginErrorRedirect(origin, GENERIC_ERROR);
+  }
+
+  // Only ever true for an existing account (a brand-new signup can't already be
+  // suspended) -- same rule the password login route enforces, just on this path too,
+  // since Google sign-in mints a session cookie directly and never goes through
+  // /api/auth/login at all.
+  if (user.is_suspended) {
+    return loginErrorRedirect(
+      origin,
+      'This account has been suspended. Contact evanryon@yahoo.com if you believe this is a mistake.'
+    );
   }
 
   const token = createSessionToken(user);
