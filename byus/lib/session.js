@@ -20,10 +20,20 @@ export async function getCurrentUser() {
   // session_version closes that gap: bumping the column (done on every password change)
   // instantly invalidates every token issued before the bump. Fails closed on any error —
   // if we can't confirm a session is still valid, treat it as not logged in.
+  //
+  // is_suspended is checked in the same query, for the same reason: this is the one
+  // choke point almost every authenticated page and API route already runs through, so
+  // it's also the cheapest place to make a suspension take effect immediately -- an
+  // admin suspending a creator mid-session logs them out on their very next request,
+  // not whenever their 30-day token happens to expire. See app/api/admin/users/[id]/route.js
+  // for where is_suspended actually gets set.
   try {
-    const result = await query('SELECT session_version FROM users WHERE id = $1', [claims.userId]);
+    const result = await query(
+      'SELECT session_version, is_suspended FROM users WHERE id = $1',
+      [claims.userId]
+    );
     const user = result.rows[0];
-    if (!user || user.session_version !== claims.sessionVersion) return null;
+    if (!user || user.session_version !== claims.sessionVersion || user.is_suspended) return null;
   } catch (err) {
     console.error('Session revocation check failed:', err);
     return null;
