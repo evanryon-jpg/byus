@@ -118,6 +118,15 @@ const limiters = {
     limiter: Ratelimit.slidingWindow(10, '1 h'),
     prefix: 'rl:suggestion',
   }),
+  // Guards submitting a content report (see app/api/reports/route.js). Tighter than
+  // suggestion's allowance on purpose — a real report of adult/illegal content is rare
+  // per person, so a burst here is far more likely to be someone hammering the endpoint
+  // (harassment against a creator via mass-reporting, or a script) than genuine use.
+  report: new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(5, '1 h'),
+    prefix: 'rl:report',
+  }),
 };
 
 // Best-effort client IP. Vercel always sets x-forwarded-for in production; the
