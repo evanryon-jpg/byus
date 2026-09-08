@@ -160,6 +160,9 @@ function CreatorProfile() {
               🚀 Founding creator
             </span>
           )}
+          <div className="mt-1">
+            <ReportButton creatorId={creator.id} />
+          </div>
         </div>
       </div>
       {creator.bio && <p className="mt-2 text-brand-ink/70">{creator.bio}</p>}
@@ -351,6 +354,9 @@ function CreatorProfile() {
                 {p.poll && <PollBlock postId={p.id} poll={p.poll} />}
               </>
             )}
+            <div className="mt-3">
+              <ReportButton creatorId={creator.id} postId={p.id} />
+            </div>
           </li>
         ))}
         {posts.length === 0 && <p className="text-sm text-brand-ink/60">No posts yet.</p>}
@@ -359,6 +365,111 @@ function CreatorProfile() {
         )}
       </ul>
     </div>
+  );
+}
+
+// The enforcement side of the content guidelines in app/terms/page.js (Section 5) — a
+// policy banning adult content is only as real as the mechanism for someone to flag it.
+// Collapsed to a small text link by default so it doesn't compete visually with the
+// actual page; expands into a short inline form on click rather than a modal, since a
+// report is a rare, low-stakes-for-the-UI action that doesn't need to interrupt the rest
+// of the page. See app/api/reports/route.js for where this posts to, and
+// app/admin/page.js's ReportsSection for where the ByUs team reviews these.
+const REPORT_REASONS = [
+  { value: 'adult_content', label: 'Adult / sexual content' },
+  { value: 'illegal_content', label: 'Illegal content' },
+  { value: 'harassment', label: 'Harassment or endangerment' },
+  { value: 'ip_infringement', label: 'Copyright / IP infringement' },
+  { value: 'other', label: 'Something else' },
+];
+
+function ReportButton({ creatorId, postId }) {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState('');
+  const [details, setDetails] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState('');
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!reason) return;
+    setSubmitting(true);
+    setError('');
+    try {
+      const res = await fetch('/api/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ creatorId, postId, reason, details }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not send your report.');
+      setSent(true);
+    } catch (err) {
+      setError(err.message || 'Could not send your report.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (sent) {
+    return <p className="text-xs text-green-700">✓ Reported — the ByUs team will take a look.</p>;
+  }
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="text-xs font-medium text-brand-ink/40 hover:text-brand-ink/70 hover:underline"
+      >
+        ⚑ Report{postId ? ' this post' : ''}
+      </button>
+    );
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="mt-1 max-w-xs rounded-xl border border-brand-ink/10 bg-brand-paper p-3 text-left shadow-sm"
+    >
+      <p className="text-xs font-semibold text-[#2B2420]">Report {postId ? 'this post' : 'this creator'}</p>
+      <select
+        value={reason}
+        onChange={(e) => setReason(e.target.value)}
+        required
+        className="mt-2 w-full rounded-lg border border-brand-ink/15 px-2.5 py-1.5 text-xs"
+      >
+        <option value="" disabled>Choose a reason…</option>
+        {REPORT_REASONS.map((r) => (
+          <option key={r.value} value={r.value}>{r.label}</option>
+        ))}
+      </select>
+      <textarea
+        value={details}
+        onChange={(e) => setDetails(e.target.value)}
+        placeholder="Optional details"
+        rows={2}
+        className="mt-2 w-full rounded-lg border border-brand-ink/15 px-2.5 py-1.5 text-xs"
+      />
+      {error && <p className="mt-1.5 text-xs text-red-600">{error}</p>}
+      <div className="mt-2 flex items-center gap-3">
+        <button
+          type="submit"
+          disabled={submitting || !reason}
+          className="rounded-full bg-[#146359] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f4d45] disabled:opacity-50"
+        >
+          {submitting ? 'Sending…' : 'Send report'}
+        </button>
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="text-xs text-brand-ink/50 hover:text-brand-ink/70"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
   );
 }
 
