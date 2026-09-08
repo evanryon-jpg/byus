@@ -24,7 +24,8 @@ export async function POST(request) {
   if (!emailCheck.success) return rateLimitResponse(emailCheck);
 
   const result = await query(
-    'SELECT id, email, password_hash, role, display_name, session_version FROM users WHERE email = $1',
+    `SELECT id, email, password_hash, role, display_name, session_version, is_suspended
+     FROM users WHERE email = $1`,
     [email.toLowerCase()]
   );
   const user = result.rows[0];
@@ -45,6 +46,17 @@ export async function POST(request) {
   const passwordMatches = await verifyPassword(password, user.password_hash);
   if (!passwordMatches) {
     return NextResponse.json({ error: 'Invalid email or password.' }, { status: 401 });
+  }
+
+  // Checked only after the password has already been confirmed correct -- same reasoning
+  // as the vague "invalid email or password" message above, just in the other direction.
+  // Someone who doesn't know the password learns nothing extra; someone who does gets a
+  // clear, specific reason they can't get in rather than a session that silently never works.
+  if (user.is_suspended) {
+    return NextResponse.json(
+      { error: 'This account has been suspended. Contact evanryon@yahoo.com if you believe this is a mistake.' },
+      { status: 403 }
+    );
   }
 
   const token = createSessionToken(user);
