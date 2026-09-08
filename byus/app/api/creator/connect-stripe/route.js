@@ -48,6 +48,21 @@ export async function POST(request) {
     // Only create a new Stripe account if this creator doesn't already have one.
     // Re-running this after a partial/abandoned onboarding should resume, not duplicate.
     if (!accountId) {
+      // First-time connect only: require the explicit content-policy acknowledgment from
+      // the dashboard's checkbox (see app/creator/dashboard/page.js) before this creator
+      // can ever start collecting payments. A retry/reconnect of an *existing* account
+      // (below, once accountId is already set) doesn't re-send this -- they already
+      // cleared this gate the first time through. Recorded server-side, not just checked
+      // client-side, so there's a durable timestamp of when each creator agreed, not just
+      // a UI checkbox nobody can later point to.
+      const { acknowledgePolicy } = await request.json().catch(() => ({}));
+      if (!acknowledgePolicy) {
+        return NextResponse.json(
+          { error: 'You need to agree to the content guidelines before connecting Stripe.' },
+          { status: 400 }
+        );
+      }
+
       const account = await stripe.accounts.create({
         type: 'express',
         email: user.email,
@@ -57,7 +72,12 @@ export async function POST(request) {
         },
       });
       accountId = account.id;
-      await query('UPDATE users SET stripe_connect_account_id = $1 WHERE id = $2', [accountId, user.id]);
+      await query(
+        `UPDATE users SET stripe_connect_account_id = $1,
+                          content_policy_accepted_at = COALESCE(content_policy_accepted_at, now())
+         WHERE id = $2`,
+        [accountId, user.id]
+      );
     }
 
     // Generate a fresh onboarding link. These links expire quickly, so always generate
