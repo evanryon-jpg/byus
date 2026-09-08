@@ -16,6 +16,7 @@ export default function CreatorDashboard() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [connecting, setConnecting] = useState(false);
+  const [policyAccepted, setPolicyAccepted] = useState(false);
 
   useEffect(() => {
     load();
@@ -60,7 +61,11 @@ export default function CreatorDashboard() {
 
   async function handleConnectStripe() {
     setConnecting(true);
-    const res = await fetch('/api/creator/connect-stripe', { method: 'POST' });
+    const res = await fetch('/api/creator/connect-stripe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ acknowledgePolicy: policyAccepted }),
+    });
     const data = await res.json();
     if (data.url) {
       window.location.href = data.url; // redirect to Stripe-hosted onboarding
@@ -159,13 +164,34 @@ export default function CreatorDashboard() {
             {user && !user.email_verified ? (
               <p className="mt-4 text-sm text-brand-ink/60">Verify your email above before connecting Stripe.</p>
             ) : (
-              <button
-                onClick={handleConnectStripe}
-                disabled={connecting}
-                className="mt-4 w-full rounded-2xl bg-[#146359] px-6 py-5 text-lg font-semibold text-white hover:bg-[#0f4d45] disabled:opacity-50 sm:w-auto sm:px-10"
-              >
-                {connecting ? 'Redirecting…' : 'Connect Stripe & start earning →'}
-              </button>
+              <>
+                {/* Required before the button below is even clickable — see Section 5 of
+                    the Terms (app/terms/page.js) for the policy itself, and
+                    /api/creator/connect-stripe for the server-side record of this
+                    acceptance (content_policy_accepted_at). A checkbox alone is easy to
+                    click through without reading; pairing it with a durable, per-creator
+                    timestamp is what makes this a real gate rather than a formality. */}
+                <label className="mt-4 flex items-start gap-2.5 text-sm text-brand-ink/70">
+                  <input
+                    type="checkbox"
+                    checked={policyAccepted}
+                    onChange={(e) => setPolicyAccepted(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-brand-ink/30 text-[#146359] focus:ring-[#146359]"
+                  />
+                  <span>
+                    I agree that everything I publish on ByUs follows the{' '}
+                    <a href="/terms" target="_blank" className="text-[#146359] underline">content guidelines</a>
+                    {' '}— no adult content, ever, and nothing that endangers minors.
+                  </span>
+                </label>
+                <button
+                  onClick={handleConnectStripe}
+                  disabled={connecting || !policyAccepted}
+                  className="mt-4 w-full rounded-2xl bg-[#146359] px-6 py-5 text-lg font-semibold text-white hover:bg-[#0f4d45] disabled:opacity-50 sm:w-auto sm:px-10"
+                >
+                  {connecting ? 'Redirecting…' : 'Connect Stripe & start earning →'}
+                </button>
+              </>
             )}
           </>
         )}
