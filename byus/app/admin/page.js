@@ -213,7 +213,166 @@ export default function AdminPage() {
         </div>
       </div>
 
+      <ReportsSection />
       <SuggestionsSection />
+    </div>
+  );
+}
+
+// Self-fetching, same shape as SuggestionsSection below -- but this is the trust & safety
+// queue, not a feature-idea inbox, so it renders first: a flagged creator/post is
+// something the team needs to act on, not just read when convenient. See
+// app/api/admin/reports/route.js and app/api/admin/reports/[id]/route.js, and
+// app/creator/[creatorId]/page.js's ReportButton for the submitter-facing side. This is
+// the actual enforcement mechanism behind the no-adult-content policy in Section 5 of
+// app/terms/page.js -- without a queue like this, that policy is just a sentence nobody
+// can act on.
+const REPORT_STATUSES = ['new', 'reviewed', 'resolved', 'dismissed'];
+const REPORT_STATUS_STYLES = {
+  new: 'bg-red-50 text-red-700',
+  reviewed: 'bg-amber-50 text-amber-700',
+  resolved: 'bg-green-50 text-green-700',
+  dismissed: 'bg-brand-ink/5 text-brand-ink/60',
+};
+const REPORT_REASON_LABELS = {
+  adult_content: 'Adult / sexual content',
+  illegal_content: 'Illegal content',
+  harassment: 'Harassment or endangerment',
+  ip_infringement: 'Copyright / IP infringement',
+  other: 'Something else',
+};
+
+function ReportsSection() {
+  const [reports, setReports] = useState(null); // null = loading
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetch('/api/admin/reports')
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((data) => setReports(data.reports))
+      .catch(() => setError('Could not load reports.'));
+  }, []);
+
+  async function updateReport(id, patch) {
+    // Optimistic, same trade-off as SuggestionsSection below — this is an admin-only
+    // triage action, not worth a spinner per row; revert on failure instead.
+    const previous = reports;
+    setReports((current) => current.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+    try {
+      const res = await fetch(`/api/admin/reports/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setReports(previous);
+      setError('Could not save that change — try again.');
+    }
+  }
+
+  const openCount = reports?.filter((r) => r.status === 'new').length ?? 0;
+
+  return (
+    <div className="mt-8 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
+      <div className="flex items-center justify-between">
+        <h2 className="font-semibold">Reports</h2>
+        {openCount > 0 && (
+          <span className="rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700">
+            {openCount} new
+          </span>
+        )}
+      </div>
+      <p className="mt-1 text-sm text-brand-ink/65">
+        Content flagged by creators or fans — a page or a specific post someone thinks
+        breaks the content guidelines.
+      </p>
+
+      {error && <p className="mt-3 text-xs text-red-600">{error}</p>}
+
+      {reports === null ? (
+        <p className="mt-4 text-sm text-brand-ink/60">Loading…</p>
+      ) : reports.length === 0 ? (
+        <p className="mt-4 text-sm text-brand-ink/60">No reports — nothing's been flagged.</p>
+      ) : (
+        <div className="mt-4 space-y-4">
+          {reports.map((r) => (
+            <ReportRow key={r.id} report={r} onUpdate={(patch) => updateReport(r.id, patch)} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ReportRow({ report, onUpdate }) {
+  const [note, setNote] = useState(report.admin_note || '');
+  const [savingNote, setSavingNote] = useState(false);
+
+  async function handleSaveNote() {
+    setSavingNote(true);
+    await onUpdate({ admin_note: note });
+    setSavingNote(false);
+  }
+
+  return (
+    <div className="rounded-lg border border-brand-ink/10 p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="font-medium text-[#2B2420]">
+            <a href={`/creator/${report.creator_slug || report.creator_id}`} target="_blank" className="hover:underline">
+              {report.creator_name || 'Unnamed creator'}
+            </a>
+            {report.post_id && (
+              <span className="font-normal text-brand-ink/50"> — post: {report.post_title || '(untitled)'}</span>
+            )}
+          </div>
+          <div className="text-xs text-brand-ink/60">
+            Reported by {report.reporter_name || 'someone'} ({report.reporter_email})
+          </div>
+        </div>
+        <select
+          value={report.status}
+          onChange={(e) => onUpdate({ status: e.target.value })}
+          className={`rounded-full border-0 px-2.5 py-1 text-xs font-medium ${REPORT_STATUS_STYLES[report.status]}`}
+        >
+          {REPORT_STATUSES.map((st) => (
+            <option key={st} value={st}>
+              {st.charAt(0).toUpperCase() + st.slice(1)}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <p className="mt-3 text-sm font-medium text-[#2B2420]">
+        {REPORT_REASON_LABELS[report.reason] || report.reason}
+      </p>
+      {report.details && <p className="mt-1 text-sm text-brand-ink/80">{report.details}</p>}
+      <p className="mt-1 text-xs text-brand-ink/50">
+        {new Date(report.created_at).toLocaleDateString(undefined, {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+        })}
+      </p>
+
+      <div className="mt-3 flex items-start gap-2">
+        <input
+          type="text"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="Internal note — what you found, what you did"
+          className="w-full rounded-lg border border-brand-ink/10 px-3 py-1.5 text-sm"
+        />
+        <button
+          type="button"
+          onClick={handleSaveNote}
+          disabled={savingNote || note === (report.admin_note || '')}
+          className="shrink-0 rounded-full border border-[#146359] px-3 py-1.5 text-xs font-medium text-[#146359] hover:bg-[#146359]/5 disabled:opacity-50"
+        >
+          {savingNote ? 'Saving…' : 'Save note'}
+        </button>
+      </div>
     </div>
   );
 }
