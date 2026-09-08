@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import VerifyEmailBanner from '../../components/VerifyEmailBanner';
+import AcknowledgePolicyBanner from '../../components/AcknowledgePolicyBanner';
 import EarningsSection from '../../components/EarningsSection';
 import PayoutsSection from '../../components/PayoutsSection';
 import { TRIAL_DAY_OPTIONS } from '@/lib/trials';
@@ -100,6 +101,12 @@ export default function CreatorDashboard() {
       <p className="text-brand-ink/65">Welcome back, {user?.display_name || user?.email}.</p>
 
       {user && !user.email_verified && <VerifyEmailBanner email={user.email} />}
+
+      {user && user.role === 'creator' && user.stripe_connect_onboarded && !user.content_policy_accepted_at && (
+        <AcknowledgePolicyBanner
+          onAcknowledged={(patch) => setUser((prev) => ({ ...prev, ...patch }))}
+        />
+      )}
 
       <PageUrlCard />
 
