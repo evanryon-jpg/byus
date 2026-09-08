@@ -33,7 +33,8 @@ export async function GET() {
               r.post_id, p.title AS post_title,
               reporter.id AS reporter_id, reporter.display_name AS reporter_name, reporter.email AS reporter_email,
               creator.id AS creator_id, creator.display_name AS creator_name, creator.email AS creator_email,
-              creator.slug AS creator_slug
+              creator.slug AS creator_slug, creator.is_suspended AS creator_is_suspended,
+              creator.suspension_reason AS creator_suspension_reason
        FROM reports r
        JOIN users reporter ON reporter.id = r.reporter_id
        JOIN users creator ON creator.id = r.creator_id
