@@ -79,7 +79,8 @@ export async function GET() {
       query(
         `SELECT
            u.id, u.display_name, u.email, u.created_at, u.stripe_connect_onboarded,
-           u.platform_fee_percent, COALESCE(e.gross_cents, 0)::bigint AS lifetime_gross_cents
+           u.platform_fee_percent, u.is_suspended, u.suspension_reason,
+           COALESCE(e.gross_cents, 0)::bigint AS lifetime_gross_cents
          FROM users u
          LEFT JOIN (
            SELECT creator_id, SUM(amount_cents) AS gross_cents
@@ -124,6 +125,8 @@ export async function GET() {
       stripeConnectOnboarded: row.stripe_connect_onboarded,
       platformFeePercent: row.platform_fee_percent,
       lifetimeGrossCents: Number(row.lifetime_gross_cents),
+      isSuspended: row.is_suspended,
+      suspensionReason: row.suspension_reason,
     }));
 
     const disputes = recentDisputes.rows.map((row) => ({
