@@ -39,7 +39,11 @@ export async function GET(request) {
   const sort = SORTS[searchParams.get('sort')] ? searchParams.get('sort') : 'newest';
 
   try {
-    const conditions = [`u.role = 'creator'`];
+    // A suspended creator simply doesn't exist as far as Browse/homepage/search are
+    // concerned -- not a separate filter the visitor could ever toggle off, so it's
+    // baked into the base condition list rather than something q/tag could interact
+    // with. See app/api/admin/users/[id]/route.js for where is_suspended gets set.
+    const conditions = [`u.role = 'creator'`, `u.is_suspended = false`];
     const values = [];
     let i = 1;
 
