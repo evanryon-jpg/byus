@@ -176,6 +176,7 @@ export default function AdminPage() {
                 <th className="py-2 pr-4">Stripe</th>
                 <th className="py-2 pr-4">Fee</th>
                 <th className="py-2 pr-4 text-right">Lifetime gross</th>
+                <th className="py-2 pr-4">Account</th>
               </tr>
             </thead>
             <tbody>
@@ -199,11 +200,14 @@ export default function AdminPage() {
                   <td className="py-2.5 pr-4 text-right font-medium text-[#2B2420]" style={{ fontVariantNumeric: 'tabular-nums' }}>
                     {formatUSD(c.lifetimeGrossCents)}
                   </td>
+                  <td className="py-2.5 pr-4">
+                    <SuspendControl userId={c.id} initialSuspended={c.isSuspended} initialReason={c.suspensionReason} />
+                  </td>
                 </tr>
               ))}
               {creators.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-6 text-center text-brand-ink/60">
+                  <td colSpan={6} className="py-6 text-center text-brand-ink/60">
                     No creators have signed up yet.
                   </td>
                 </tr>
@@ -330,6 +334,13 @@ function ReportRow({ report, onUpdate }) {
           <div className="text-xs text-brand-ink/60">
             Reported by {report.reporter_name || 'someone'} ({report.reporter_email})
           </div>
+          <div className="mt-2">
+            <SuspendControl
+              userId={report.creator_id}
+              initialSuspended={report.creator_is_suspended}
+              initialReason={report.creator_suspension_reason}
+            />
+          </div>
         </div>
         <select
           value={report.status}
@@ -371,6 +382,111 @@ function ReportRow({ report, onUpdate }) {
           className="shrink-0 rounded-full border border-[#146359] px-3 py-1.5 text-xs font-medium text-[#146359] hover:bg-[#146359]/5 disabled:opacity-50"
         >
           {savingNote ? 'Saving…' : 'Save note'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// The actual enforcement action, embedded wherever an admin might decide to use it --
+// the Recent creators table (spotting a problem account) and each report row (acting on
+// what was just flagged). Each instance manages its own local state rather than syncing
+// through the parent's data/reports state: this mirrors ReportsSection/SuggestionsSection
+// being independent of each other on this same page, and a full reload always shows the
+// current truth regardless. See app/api/admin/users/[id]/route.js for what this actually
+// does -- notably, it does NOT touch Stripe subscriptions or payouts.
+function SuspendControl({ userId, initialSuspended, initialReason }) {
+  const [suspended, setSuspended] = useState(Boolean(initialSuspended));
+  const [reason, setReason] = useState(initialReason || '');
+  const [open, setOpen] = useState(false);
+  const [reasonInput, setReasonInput] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  async function submit(nextSuspended, nextReason) {
+    setSaving(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_suspended: nextSuspended, suspension_reason: nextReason || null }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not save that change.');
+      setSuspended(nextSuspended);
+      setReason(nextReason || '');
+      setOpen(false);
+      setReasonInput('');
+    } catch (err) {
+      setError(err.message || 'Could not save that change.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (suspended) {
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        <span
+          className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700"
+          title={reason || undefined}
+        >
+          Suspended
+        </span>
+        <button
+          type="button"
+          onClick={() => submit(false, '')}
+          disabled={saving}
+          className="text-xs font-medium text-[#146359] hover:underline disabled:opacity-50"
+        >
+          {saving ? 'Reinstating…' : 'Reinstate'}
+        </button>
+      </div>
+    );
+  }
+
+  if (!open) {
+    return (
+      <button type="button" onClick={() => setOpen(true)} className="text-xs font-medium text-red-600 hover:underline">
+        Suspend
+      </button>
+    );
+  }
+
+  return (
+    <div className="w-64 rounded-lg border border-brand-ink/10 bg-white p-3 shadow-sm">
+      <p className="text-xs font-semibold text-[#2B2420]">Suspend this account?</p>
+      <p className="mt-1 text-xs text-brand-ink/60">
+        Blocks login immediately and hides their public page from Browse and search. Doesn&rsquo;t
+        touch Stripe — cancel subscriptions or payouts there separately if that&rsquo;s warranted.
+      </p>
+      <textarea
+        value={reasonInput}
+        onChange={(e) => setReasonInput(e.target.value)}
+        placeholder="Reason (required, internal only)"
+        rows={2}
+        className="mt-2 w-full rounded-lg border border-brand-ink/15 px-2 py-1.5 text-xs"
+      />
+      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+      <div className="mt-2 flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => submit(true, reasonInput)}
+          disabled={saving || !reasonInput.trim()}
+          className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+        >
+          {saving ? 'Suspending…' : 'Confirm suspend'}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setOpen(false);
+            setError('');
+          }}
+          className="text-xs text-brand-ink/50 hover:text-brand-ink/70"
+        >
+          Cancel
         </button>
       </div>
     </div>
