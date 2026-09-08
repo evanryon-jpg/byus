@@ -3,7 +3,7 @@ export const metadata = {
   description: 'The terms that govern using ByUs as a creator or a fan.',
 };
 
-const LAST_UPDATED = 'August 30, 2026';
+const LAST_UPDATED = 'September 8, 2026';
 const CONTACT_EMAIL = 'evanryon@yahoo.com';
 
 export default function TermsPage() {
@@ -69,10 +69,17 @@ export default function TermsPage() {
         <Section title="5. Content guidelines">
           <p>
             Don&rsquo;t post content that is illegal, that infringes someone else&rsquo;s
-            intellectual property or other rights, that harasses or endangers others, or that
-            sexualizes or otherwise endangers minors. We can remove content or suspend accounts
-            that violate this, and we may report unlawful content to appropriate authorities
-            where required.
+            intellectual property or other rights, or that harasses or endangers others.
+          </p>
+          <p className="mt-3">
+            ByUs is not an adult platform. Pornography, sexually explicit material, adult
+            services, and any other content whose primary purpose is sexual gratification are
+            not allowed anywhere on ByUs, in any tier or format. Content that sexualizes or
+            otherwise endangers minors is never allowed, under any circumstances.
+          </p>
+          <p className="mt-3">
+            We can remove content or suspend accounts that violate this, and we may report
+            unlawful content to appropriate authorities where required.
           </p>
         </Section>
 
