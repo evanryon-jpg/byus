@@ -5,7 +5,7 @@ export default function manifest() {
   return {
     name: 'ByUs — Creator subscriptions, simplified',
     short_name: 'ByUs',
-    description: 'Support creators you love. Creators keep 90% of every payment.',
+    description: 'Join creator memberships on ByUs. Creators keep 90–93% of every subscription payment.',
     start_url: '/',
     display: 'standalone',
     background_color: '#E8DCC4',

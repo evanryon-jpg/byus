@@ -40,10 +40,10 @@ export const viewport = {
 export const metadata = {
   metadataBase: new URL(SITE_URL),
   title: 'ByUs — Creator subscriptions, simplified',
-  description: 'Support creators you love. Creators keep 90% of every payment.',
+  description: 'Join creator memberships on ByUs. Creators keep 90–93% of every subscription payment.',
   openGraph: {
     title: 'ByUs — Creator subscriptions, simplified',
-    description: 'Support creators you love. Creators keep 90% of every payment.',
+    description: 'Join creator memberships on ByUs. Creators keep 90–93% of every subscription payment.',
     url: SITE_URL,
     siteName: 'ByUs',
     type: 'website',
@@ -51,7 +51,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'ByUs — Creator subscriptions, simplified',
-    description: 'Support creators you love. Creators keep 90% of every payment.',
+    description: 'Join creator memberships on ByUs. Creators keep 90–93% of every subscription payment.',
   },
 };
 
