@@ -3,7 +3,6 @@ import { query } from '@/lib/db';
 import { getFoundingPromoStats } from '@/lib/fees';
 import FAQSection from './components/FAQSection';
 import CreatorSearch from './components/CreatorSearch';
-import PlatformGoalGauge from './components/PlatformGoalGauge';
 import FeaturedCreators from './components/FeaturedCreators';
 import EarningsCalculator from './components/EarningsCalculator';
 
@@ -26,7 +25,10 @@ export default async function HomePage() {
       <Features />
       <HowItWorks />
       <FAQSection />
-      <PlatformGoalGauge />
+      {/* PlatformGoalGauge (app/components/PlatformGoalGauge.jsx) pulled for now -- with
+          one creator and no revenue yet, "our best month so far: $0.00" reads as a red
+          flag to a visitor rather than a growth story. Bring it back once there's an
+          actual best month worth showing. */}
       <ClosingCta user={session} />
     </div>
   );
