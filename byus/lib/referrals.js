@@ -7,7 +7,7 @@
 // reward to both sides once the referred person actually subscribes.
 
 import { query } from '@/lib/db';
-import stripe from '@/lib/stripe';
+import { paymentProvider } from '@/lib/payments';
 
 export async function attributeReferral(referralCode, referredUserId) {
   if (!referralCode || typeof referralCode !== 'string') return;
@@ -32,18 +32,13 @@ export async function attributeReferral(referralCode, referredUserId) {
 const REFERRAL_COUPON_ID = 'referral-first-month-free';
 
 async function ensureReferralCoupon() {
-  try {
-    await stripe.coupons.retrieve(REFERRAL_COUPON_ID);
-  } catch (err) {
-    if (err?.code !== 'resource_missing') throw err;
-    await stripe.coupons.create({
-      id: REFERRAL_COUPON_ID,
-      name: 'Referral — first month free',
-      percent_off: 100,
-      duration: 'once',
-    });
-  }
-  return REFERRAL_COUPON_ID;
+  const { couponId } = await paymentProvider.getOrCreateNamedCoupon({
+    id: REFERRAL_COUPON_ID,
+    name: 'Referral — first month free',
+    percentOff: 100,
+    duration: 'once',
+  });
+  return couponId;
 }
 
 // Called from /api/subscribe right before creating the Checkout Session. Returns a
@@ -94,19 +89,19 @@ export async function rewardReferrer({ fanUserId, subscriptionRowId, priceCents 
 
   let customerId = referrer.stripe_customer_id;
   if (!customerId) {
-    const customer = await stripe.customers.create({
+    const created = await paymentProvider.createCustomer({
       email: referrer.email,
-      metadata: { user_id: referral.referrer_id },
+      userId: referral.referrer_id,
     });
-    customerId = customer.id;
+    customerId = created.customerId;
     await query('UPDATE users SET stripe_customer_id = $1 WHERE id = $2', [customerId, referral.referrer_id]);
   }
 
   // A negative amount is a credit — it reduces what they owe on their next invoice
   // rather than charging them.
-  await stripe.customers.createBalanceTransaction(customerId, {
-    amount: -priceCents,
-    currency: 'usd',
+  await paymentProvider.applyCustomerBalanceCredit({
+    customerId,
+    amountCents: priceCents,
     description: 'Referral reward — thanks for bringing a friend to ByUs!',
   });
 }

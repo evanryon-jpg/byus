@@ -26,14 +26,14 @@
 // same split, and same reasoning, the webhook already uses for referral rewards.
 
 import { query } from './db';
-import stripe from './stripe';
+import { paymentProvider } from './payments';
 import {
   STANDARD_FEE_PERCENT,
   DISCOUNTED_FEE_PERCENT,
   FEE_DISCOUNT_THRESHOLD_CENTS,
   MIN_FEE_PERCENT,
   FOUNDING_CREATOR_LIMIT,
-} from './stripe';
+} from './pricing';
 import { rewardCreatorReferrerLaunch } from './referrals';
 
 // This creator's signup rank among every creator account ever created, oldest first.
@@ -249,7 +249,10 @@ export async function syncActiveSubscriptionsToFeePercent(creatorId, personalTie
   );
   for (const { stripe_subscription_id } of subsResult.rows) {
     try {
-      await stripe.subscriptions.update(stripe_subscription_id, { application_fee_percent: effectiveFeePercent });
+      await paymentProvider.updateSubscriptionFeePercent({
+        subscriptionId: stripe_subscription_id,
+        feePercent: effectiveFeePercent,
+      });
     } catch (err) {
       console.error(`Failed to sync application_fee_percent for subscription ${stripe_subscription_id}:`, err);
     }
@@ -273,7 +276,10 @@ export async function syncAllActiveSubscriptionsToCurrentEffectiveFee() {
   for (const { stripe_subscription_id, platform_fee_percent } of subsResult.rows) {
     const effectiveFeePercent = applyPlatformMilestoneReduction(platform_fee_percent, reductionPoints);
     try {
-      await stripe.subscriptions.update(stripe_subscription_id, { application_fee_percent: effectiveFeePercent });
+      await paymentProvider.updateSubscriptionFeePercent({
+        subscriptionId: stripe_subscription_id,
+        feePercent: effectiveFeePercent,
+      });
     } catch (err) {
       console.error(`Failed to sync platform milestone fee for subscription ${stripe_subscription_id}:`, err);
     }
