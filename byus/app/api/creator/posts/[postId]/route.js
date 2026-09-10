@@ -10,6 +10,7 @@ import { NextResponse } from 'next/server';
 import { del } from '@vercel/blob';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
+import { containsBlockedContent } from '@/lib/content-policy';
 
 const TITLE_MAX = 200;
 const BODY_MAX = 20000;
@@ -34,6 +35,14 @@ export async function PATCH(request, { params }) {
     const post = await loadOwnedPost(postId, session.userId);
     if (!post) {
       return NextResponse.json({ error: 'Post not found.' }, { status: 404 });
+    }
+
+    const postPolicyCheck = containsBlockedContent(title, typeof body === 'string' ? body : null);
+    if (postPolicyCheck.blocked) {
+      return NextResponse.json(
+        { error: `That post ${postPolicyCheck.message}.` },
+        { status: 400 }
+      );
     }
 
     const fields = [];
