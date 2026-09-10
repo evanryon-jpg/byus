@@ -17,7 +17,7 @@ export async function GET(request, { params }) {
 
   try {
     const postResult = await query(
-      `SELECT creator_id, media_url, visibility FROM posts WHERE id = $1`,
+      `SELECT creator_id, media_url, visibility, pending_review FROM posts WHERE id = $1`,
       [postId]
     );
     const post = postResult.rows[0];
@@ -26,9 +26,11 @@ export async function GET(request, { params }) {
     }
 
     const isOwner = session && session.userId === post.creator_id;
-    let isAuthorized = post.visibility === 'public' || isOwner;
+    // A pending-review post (see /api/creator/posts) is never public, no matter what
+    // its own visibility column says -- only its own creator can preview the media.
+    let isAuthorized = (post.visibility === 'public' && !post.pending_review) || isOwner;
 
-    if (!isAuthorized && session) {
+    if (!isAuthorized && session && !post.pending_review) {
       // Cross-check current_period_end against now(), not just the cached status column.
       // status is only ever updated by a webhook — if one is ever missed (a delivery
       // failure, an outage), a canceled or lapsed subscription's status can stay stuck
