@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
-import stripe from '@/lib/stripe';
+import { paymentProvider } from '@/lib/payments';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { getReferralDiscount } from '@/lib/referrals';
 import { getPlatformMilestoneReductionPoints, applyPlatformMilestoneReduction } from '@/lib/fees';
@@ -104,11 +104,8 @@ export async function POST(request) {
     // single customer — would only ever show one of their subscriptions.
     let customerId = fan.stripe_customer_id;
     if (!customerId) {
-      const customer = await stripe.customers.create({
-        email: session.email,
-        metadata: { user_id: session.userId },
-      });
-      customerId = customer.id;
+      const customer = await paymentProvider.createCustomer({ email: session.email, userId: session.userId });
+      customerId = customer.customerId;
       await query('UPDATE users SET stripe_customer_id = $1 WHERE id = $2', [customerId, session.userId]);
     }
 
@@ -126,38 +123,31 @@ export async function POST(request) {
     const reductionPoints = await getPlatformMilestoneReductionPoints(query);
     const effectiveFeePercent = applyPlatformMilestoneReduction(tier.platform_fee_percent, reductionPoints);
 
-    const checkoutSession = await stripe.checkout.sessions.create({
-      mode: 'subscription',
-      customer: customerId,
-      line_items: [{ price: stripePriceId, quantity: 1 }],
+    const { url } = await paymentProvider.createSubscriptionCheckoutSession({
+      customerId,
+      priceId: stripePriceId,
       // Back to the creator's own page, not a generic dashboard — that's where the content
       // the fan just paid for actually lives. ?subscribed=true triggers a welcome banner
       // there, and &tier=<id> lets it look up that tier's own custom welcome message.
-      success_url: `${origin}/creator/${tier.creator_id}?subscribed=true&tier=${tier.id}`,
-      cancel_url: `${origin}/creator/${tier.creator_id}`,
-      // Stripe rejects a Checkout Session that sets both `discounts` and
-      // `allow_promotion_codes` — a referred fan's automatic first-month discount takes
-      // priority (it's already decided, not something they need to type in); everyone
-      // else gets a code field to enter one of a creator's discount codes by hand.
-      ...(discounts ? { discounts } : { allow_promotion_codes: true }),
-      subscription_data: {
-        application_fee_percent: effectiveFeePercent,
-        transfer_data: {
-          destination: tier.stripe_connect_account_id,
-        },
-        // Only set when the tier actually offers one — Stripe treats trial_period_days: 0
-        // as "no trial" anyway, but omitting it entirely keeps this from ever showing up
-        // where it doesn't apply.
-        ...(tier.trial_days > 0 ? { trial_period_days: tier.trial_days } : {}),
-        metadata: {
-          fan_id: session.userId,
-          creator_id: tier.creator_id,
-          tier_id: tier.id,
-        },
+      successUrl: `${origin}/creator/${tier.creator_id}?subscribed=true&tier=${tier.id}`,
+      cancelUrl: `${origin}/creator/${tier.creator_id}`,
+      applicationFeePercent: effectiveFeePercent,
+      connectedAccountId: tier.stripe_connect_account_id,
+      // Only passed through when the tier actually offers one — the adapter treats 0/undefined
+      // as "no trial" the same way Stripe itself does.
+      trialDays: tier.trial_days,
+      // A referred fan's automatic first-month discount (Stripe-shaped, see
+      // lib/referrals.js's getReferralDiscount) takes priority when present; everyone else
+      // gets a code field to enter one of a creator's discount codes by hand.
+      discounts,
+      metadata: {
+        fan_id: session.userId,
+        creator_id: tier.creator_id,
+        tier_id: tier.id,
       },
     });
 
-    return NextResponse.json({ url: checkoutSession.url });
+    return NextResponse.json({ url });
   } catch (err) {
     console.error('subscribe failed:', err);
     return NextResponse.json(
