@@ -8,6 +8,7 @@ import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import stripe from '@/lib/stripe';
 import { TRIAL_DAY_OPTIONS } from '@/lib/trials';
+import { containsBlockedContent } from '@/lib/content-policy';
 
 // Stripe itself caps unit_amount well above this, but there's no legitimate reason for
 // a creator subscription tier to cost more than $2,000/month — bounding it here catches
@@ -58,6 +59,13 @@ export async function POST(request) {
   if (!name || !Number.isInteger(priceCents) || priceCents < 100) {
     return NextResponse.json(
       { error: 'A tier needs a name and a price of at least $1.00 (100 cents).' },
+      { status: 400 }
+    );
+  }
+  const tierPolicyCheck = containsBlockedContent(name, description);
+  if (tierPolicyCheck.blocked) {
+    return NextResponse.json(
+      { error: `That tier ${tierPolicyCheck.message}.` },
       { status: 400 }
     );
   }
