@@ -2,6 +2,9 @@ import './globals.css';
 import { Fraunces, Karla } from 'next/font/google';
 import NavBar from './components/NavBar';
 import Footer from './components/Footer';
+// Redeploy trigger: Web Analytics was enabled in the Vercel dashboard after our last
+// deploy -- its tracking routes (/*.../script.js) only get wired up on the *next*
+// deployment after enabling, so this comment forces that deployment.
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
