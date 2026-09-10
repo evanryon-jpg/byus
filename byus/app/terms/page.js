@@ -3,7 +3,7 @@ export const metadata = {
   description: 'The terms that govern using ByUs as a creator or a fan.',
 };
 
-const LAST_UPDATED = 'September 8, 2026';
+const LAST_UPDATED = 'September 10, 2026';
 const CONTACT_EMAIL = 'evanryon@yahoo.com';
 
 export default function TermsPage() {
@@ -76,6 +76,19 @@ export default function TermsPage() {
             services, and any other content whose primary purpose is sexual gratification are
             not allowed anywhere on ByUs, in any tier or format. Content that sexualizes or
             otherwise endangers minors is never allowed, under any circumstances.
+          </p>
+          <p className="mt-3">
+            This includes linking off-platform to adult or sexually explicit content — in your
+            bio, your posts, or anywhere else on your ByUs page. Directing people to adult
+            websites or services from ByUs is itself a violation of these terms, even if the
+            explicit content isn&rsquo;t hosted on ByUs directly, and results in an immediate
+            account ban.
+          </p>
+          <p className="mt-3">
+            We use automated screening — including keyword and link filtering — to catch
+            violations of this section before content is published, in addition to manual
+            review. New creator accounts go through a one-time initial review before they can
+            accept their first paid subscriber or tip.
           </p>
           <p className="mt-3">
             We can remove content or suspend accounts that violate this, and we may report
