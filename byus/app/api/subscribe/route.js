@@ -55,7 +55,8 @@ export async function POST(request) {
   try {
     const tierResult = await query(
       `SELECT t.id, t.stripe_price_id, t.annual_price_cents, t.stripe_annual_price_id, t.creator_id, t.trial_days,
-              u.stripe_connect_account_id, u.stripe_connect_onboarded, u.platform_fee_percent
+              u.stripe_connect_account_id, u.stripe_connect_onboarded, u.platform_fee_percent,
+              u.review_cleared_at
        FROM subscription_tiers t
        JOIN users u ON u.id = t.creator_id
        WHERE t.id = $1 AND t.active = true`,
@@ -67,6 +68,16 @@ export async function POST(request) {
     }
     if (!tier.stripe_connect_onboarded) {
       return NextResponse.json({ error: 'This creator has not finished payment setup yet.' }, { status: 400 });
+    }
+    // A creator ByUs hasn't run its one-time initial review on yet -- true for every new
+    // signup until an admin clears them, see /api/admin/users/[id]/clear-review -- can't
+    // accept a first paid subscriber. This is what actually holds a brand-new creator's
+    // "first payout": no subscription exists yet for there to be a payout from.
+    if (!tier.review_cleared_at) {
+      return NextResponse.json(
+        { error: "This creator's page is still completing an initial review. Check back soon." },
+        { status: 400 }
+      );
     }
     if (billingInterval === 'year' && !tier.stripe_annual_price_id) {
       return NextResponse.json({ error: 'This tier does not offer annual billing.' }, { status: 400 });
