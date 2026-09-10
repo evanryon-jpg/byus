@@ -20,6 +20,7 @@ import {
 import { FOUNDING_CREATOR_LIMIT, DISCOUNTED_FEE_PERCENT } from '@/lib/stripe';
 import { isAdmin } from '@/lib/admin';
 import { publicAvatarUrl } from '@/lib/avatar-url';
+import { containsBlockedContent } from '@/lib/content-policy';
 
 // Matches the cap used at signup — keep both in sync since they constrain the same column.
 const DISPLAY_NAME_MAX = 100;
@@ -118,8 +119,8 @@ export async function GET() {
   try {
     const result = await query(
       `SELECT id, email, role, display_name, bio, profile_image_url,
-              stripe_connect_onboarded, content_policy_accepted_at, tags, email_verified,
-              platform_fee_percent, notify_new_posts,
+              stripe_connect_onboarded, content_policy_accepted_at, review_cleared_at, tags,
+              email_verified, platform_fee_percent, notify_new_posts,
               show_support_publicly, support_goal_cents, zero_fee_promo_expires_at
        FROM users WHERE id = $1`,
       [session.userId]
@@ -174,6 +175,10 @@ export async function PATCH(request) {
         { status: 400 }
       );
     }
+    const policyCheck = containsBlockedContent(bio);
+    if (policyCheck.blocked) {
+      return NextResponse.json({ error: `Your bio ${policyCheck.message}.` }, { status: 400 });
+    }
     fields.push(`bio = $${i++}`);
     values.push(bio || null);
   }
@@ -215,7 +220,7 @@ export async function PATCH(request) {
     values.push(session.userId);
     const result = await query(
       `UPDATE users SET ${fields.join(', ')} WHERE id = $${i}
-       RETURNING id, email, role, display_name, bio, profile_image_url, stripe_connect_onboarded, content_policy_accepted_at, tags, email_verified, platform_fee_percent, notify_new_posts, show_support_publicly, support_goal_cents, zero_fee_promo_expires_at`,
+       RETURNING id, email, role, display_name, bio, profile_image_url, stripe_connect_onboarded, content_policy_accepted_at, review_cleared_at, tags, email_verified, platform_fee_percent, notify_new_posts, show_support_publicly, support_goal_cents, zero_fee_promo_expires_at`,
       values
     );
 
