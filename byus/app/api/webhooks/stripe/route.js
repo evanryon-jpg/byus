@@ -43,7 +43,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { query, withTransaction } from '@/lib/db';
-import stripe from '@/lib/stripe';
+import { paymentProvider } from '@/lib/payments';
 import { rewardReferrer } from '@/lib/referrals';
 import { sendWelcomeSubscriptionEmail } from '@/lib/email';
 import {
@@ -63,7 +63,7 @@ export async function POST(request) {
 
   let event;
   try {
-    event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+    event = paymentProvider.verifyWebhookSignature({ payload: body, signature, secret: webhookSecret });
   } catch (err) {
     console.error('Webhook signature verification failed:', err.message);
     return NextResponse.json({ error: 'Invalid signature.' }, { status: 400 });
@@ -75,7 +75,9 @@ export async function POST(request) {
     // connection (and its locks) open while waiting on a network call to Stripe.
     let stripeSubscription = null;
     if (event.type === 'checkout.session.completed' && event.data.object.mode === 'subscription') {
-      stripeSubscription = await stripe.subscriptions.retrieve(event.data.object.subscription);
+      stripeSubscription = await paymentProvider.retrieveSubscription({
+        subscriptionId: event.data.object.subscription,
+      });
     }
 
     // A one-time tip (see /api/creators/:creatorId/tip) rides the same event type as a
@@ -84,7 +86,7 @@ export async function POST(request) {
     // same "read it before opening a DB transaction" reasoning as the subscription lookup above.
     let tipPaymentIntent = null;
     if (event.type === 'checkout.session.completed' && event.data.object.mode === 'payment') {
-      tipPaymentIntent = await stripe.paymentIntents.retrieve(event.data.object.payment_intent);
+      tipPaymentIntent = await paymentProvider.retrievePaymentIntent({ id: event.data.object.payment_intent });
     }
 
     // Same reasoning as above: fetching the creator_id off the Subscription (where /api/subscribe
@@ -95,7 +97,9 @@ export async function POST(request) {
     // after checkout.session.completed has been processed on our side.
     let invoiceCreatorId = null;
     if (event.type === 'invoice.payment_succeeded' && event.data.object.subscription) {
-      const invoiceSubscription = await stripe.subscriptions.retrieve(event.data.object.subscription);
+      const invoiceSubscription = await paymentProvider.retrieveSubscription({
+        subscriptionId: event.data.object.subscription,
+      });
       invoiceCreatorId = invoiceSubscription.metadata?.creator_id || null;
     }
 
@@ -107,9 +111,9 @@ export async function POST(request) {
     let disputeSubscriptionStripeId = null;
     if (event.type === 'charge.dispute.created') {
       try {
-        const charge = await stripe.charges.retrieve(event.data.object.charge);
+        const charge = await paymentProvider.retrieveCharge({ id: event.data.object.charge });
         if (charge.invoice) {
-          const invoice = await stripe.invoices.retrieve(charge.invoice);
+          const invoice = await paymentProvider.retrieveInvoice({ id: charge.invoice });
           disputeSubscriptionStripeId = invoice.subscription || null;
         }
       } catch (err) {
