@@ -18,7 +18,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
-import stripe from '@/lib/stripe';
+import { paymentProvider } from '@/lib/payments';
 import { MIN_DISCOUNT_PERCENT, MAX_DISCOUNT_PERCENT, COUPON_DURATION } from '@/lib/discounts';
 
 const CODE_PATTERN = /^[A-Z0-9_-]{3,40}$/;
@@ -36,21 +36,18 @@ export async function GET() {
     );
     const tierNameByProduct = new Map(tiersResult.rows.map((t) => [t.stripe_product_id, t.name]));
 
-    const list = await stripe.promotionCodes.list({ limit: 100 });
-    const codes = list.data
-      .filter((pc) => pc.coupon?.metadata?.creator_id === session.userId)
-      .map((pc) => {
-        const productId = pc.coupon.applies_to?.products?.[0] || null;
-        return {
-          id: pc.id,
-          code: pc.code,
-          active: pc.active,
-          percentOff: pc.coupon.percent_off,
-          tierName: productId ? tierNameByProduct.get(productId) || null : null,
-          timesRedeemed: pc.times_redeemed,
-          maxRedemptions: pc.max_redemptions,
-        };
-      })
+    const list = await paymentProvider.listPromotionCodes({ limit: 100 });
+    const codes = list
+      .filter((pc) => pc.creatorId === session.userId)
+      .map((pc) => ({
+        id: pc.id,
+        code: pc.code,
+        active: pc.active,
+        percentOff: pc.percentOff,
+        tierName: pc.productId ? tierNameByProduct.get(pc.productId) || null : null,
+        timesRedeemed: pc.timesRedeemed,
+        maxRedemptions: pc.maxRedemptions,
+      }))
       .sort((a, b) => (a.code < b.code ? -1 : 1));
 
     return NextResponse.json({ codes });
@@ -102,17 +99,18 @@ export async function POST(request) {
 
     // duration: 'once' -- applies to a fan's first invoice only, never a standing discount
     // that could compound with the platform fee tier or a referral discount over time.
-    const coupon = await stripe.coupons.create({
-      percent_off: percentOff,
+    const coupon = await paymentProvider.createDiscountCoupon({
+      percentOff,
       duration: COUPON_DURATION,
-      ...(productId ? { applies_to: { products: [productId] } } : {}),
-      metadata: { creator_id: session.userId, tier_id: tierId || 'all' },
+      productId,
+      creatorId: session.userId,
+      tierId,
     });
 
-    const promotionCode = await stripe.promotionCodes.create({
-      coupon: coupon.id,
-      ...(code ? { code } : {}),
-      ...(maxRedemptions ? { max_redemptions: maxRedemptions } : {}),
+    const promotionCode = await paymentProvider.createPromotionCode({
+      couponId: coupon.couponId,
+      code,
+      maxRedemptions,
     });
 
     return NextResponse.json({
@@ -120,10 +118,10 @@ export async function POST(request) {
         id: promotionCode.id,
         code: promotionCode.code,
         active: promotionCode.active,
-        percentOff: coupon.percent_off,
+        percentOff: coupon.percentOff,
         tierName,
-        timesRedeemed: promotionCode.times_redeemed,
-        maxRedemptions: promotionCode.max_redemptions,
+        timesRedeemed: promotionCode.timesRedeemed,
+        maxRedemptions: promotionCode.maxRedemptions,
       },
     });
   } catch (err) {
