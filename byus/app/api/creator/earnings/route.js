@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
-import { STANDARD_FEE_PERCENT, DISCOUNTED_FEE_PERCENT, FEE_DISCOUNT_THRESHOLD_CENTS } from '@/lib/stripe';
+import { STANDARD_FEE_PERCENT, DISCOUNTED_FEE_PERCENT, FEE_DISCOUNT_THRESHOLD_CENTS } from '@/lib/pricing';
 import { getPlatformMilestoneReductionPoints, applyPlatformMilestoneReduction } from '@/lib/fees';
 
 const MONTHS_OF_HISTORY = 12;
