@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import VerifyEmailBanner from '../../components/VerifyEmailBanner';
 import AcknowledgePolicyBanner from '../../components/AcknowledgePolicyBanner';
+import PendingReviewBanner from '../../components/PendingReviewBanner';
 import EarningsSection from '../../components/EarningsSection';
 import PayoutsSection from '../../components/PayoutsSection';
 import { TRIAL_DAY_OPTIONS } from '@/lib/trials';
@@ -107,6 +108,8 @@ export default function CreatorDashboard() {
           onAcknowledged={(patch) => setUser((prev) => ({ ...prev, ...patch }))}
         />
       )}
+
+      {user && user.role === 'creator' && !user.review_cleared_at && <PendingReviewBanner />}
 
       <PageUrlCard />
 
