@@ -23,7 +23,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { withTransaction } from '@/lib/db';
-import stripe from '@/lib/stripe';
+import { paymentProvider } from '@/lib/payments';
 
 const webhookSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET;
 
@@ -33,7 +33,7 @@ export async function POST(request) {
 
   let event;
   try {
-    event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+    event = paymentProvider.verifyWebhookSignature({ payload: body, signature, secret: webhookSecret });
   } catch (err) {
     console.error('Connect webhook signature verification failed:', err.message);
     return NextResponse.json({ error: 'Invalid signature.' }, { status: 400 });
