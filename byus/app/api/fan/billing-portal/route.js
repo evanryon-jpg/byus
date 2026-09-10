@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
-import stripe from '@/lib/stripe';
+import { paymentProvider } from '@/lib/payments';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function POST(request) {
@@ -35,12 +35,12 @@ export async function POST(request) {
         }
 
       const origin = request.headers.get('origin') || process.env.APP_URL;
-        const portalSession = await stripe.billingPortal.sessions.create({
-                customer: customerId,
-                return_url: `${origin}/fan/dashboard`,
+        const { url } = await paymentProvider.createBillingPortalSession({
+                customerId,
+                returnUrl: `${origin}/fan/dashboard`,
         });
 
-      return NextResponse.json({ url: portalSession.url });
+      return NextResponse.json({ url });
   } catch (err) {
         console.error('billing-portal failed:', err);
         return NextResponse.json(
