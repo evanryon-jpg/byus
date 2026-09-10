@@ -17,7 +17,7 @@ import {
   applyPlatformMilestoneReduction,
   getFoundingCreatorRank,
 } from '@/lib/fees';
-import { FOUNDING_CREATOR_LIMIT, DISCOUNTED_FEE_PERCENT } from '@/lib/stripe';
+import { FOUNDING_CREATOR_LIMIT, DISCOUNTED_FEE_PERCENT } from '@/lib/pricing';
 import { isAdmin } from '@/lib/admin';
 import { publicAvatarUrl } from '@/lib/avatar-url';
 import { containsBlockedContent } from '@/lib/content-policy';
