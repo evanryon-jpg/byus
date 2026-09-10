@@ -15,7 +15,8 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
-import stripe, { MIN_TIP_CENTS, MAX_TIP_CENTS } from '@/lib/stripe';
+import { paymentProvider } from '@/lib/payments';
+import { MIN_TIP_CENTS, MAX_TIP_CENTS } from '@/lib/pricing';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { getPlatformMilestoneReductionPoints, applyPlatformMilestoneReduction } from '@/lib/fees';
 
@@ -114,11 +115,8 @@ export async function POST(request, { params }) {
     // Customer per fan across every creator, not a fresh one per checkout.
     let customerId = fan.stripe_customer_id;
     if (!customerId) {
-      const customer = await stripe.customers.create({
-        email: session.email,
-        metadata: { user_id: session.userId },
-      });
-      customerId = customer.id;
+      const customer = await paymentProvider.createCustomer({ email: session.email, userId: session.userId });
+      customerId = customer.customerId;
       await query('UPDATE users SET stripe_customer_id = $1 WHERE id = $2', [customerId, session.userId]);
     }
 
@@ -129,38 +127,25 @@ export async function POST(request, { params }) {
     const origin = request.headers.get('origin') || process.env.APP_URL;
     const returnPath = safeReturnPath(returnTo, creator.id);
 
-    const checkoutSession = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      customer: customerId,
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: { name: `Tip for ${creator.display_name || 'this creator'}` },
-            unit_amount: amountCents,
-          },
-          quantity: 1,
-        },
-      ],
-      payment_intent_data: {
-        application_fee_amount: applicationFeeCents,
-        transfer_data: {
-          destination: creator.stripe_connect_account_id,
-        },
-        metadata: {
-          type: 'tip',
-          fan_id: session.userId,
-          creator_id: creator.id,
-          ...(trimmedMessage ? { message: trimmedMessage } : {}),
-        },
-      },
+    const { url } = await paymentProvider.createOneTimePaymentCheckoutSession({
+      customerId,
+      amountCents,
+      productName: `Tip for ${creator.display_name || 'this creator'}`,
+      applicationFeeCents,
+      connectedAccountId: creator.stripe_connect_account_id,
       // ?tipped=true triggers a thank-you banner wherever the fan started — the full
       // profile page or the standalone tip page — same pattern as ?subscribed=true.
-      success_url: `${origin}${returnPath}?tipped=true`,
-      cancel_url: `${origin}${returnPath}`,
+      successUrl: `${origin}${returnPath}?tipped=true`,
+      cancelUrl: `${origin}${returnPath}`,
+      metadata: {
+        type: 'tip',
+        fan_id: session.userId,
+        creator_id: creator.id,
+        ...(trimmedMessage ? { message: trimmedMessage } : {}),
+      },
     });
 
-    return NextResponse.json({ url: checkoutSession.url });
+    return NextResponse.json({ url });
   } catch (err) {
     console.error('tip checkout failed:', err);
     return NextResponse.json(
