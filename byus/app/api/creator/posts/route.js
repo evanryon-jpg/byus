@@ -8,6 +8,7 @@ import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { getPollVoteCounts, buildPollPayload } from '@/lib/polls';
 import { sendNewPostEmail } from '@/lib/email';
+import { containsBlockedContent } from '@/lib/content-policy';
 
 const TITLE_MAX = 200;
 const BODY_MAX = 20000;
@@ -41,7 +42,7 @@ export async function GET() {
 
   try {
     const result = await query(
-      `SELECT id, title, body, media_url, visibility, poll_options, created_at
+      `SELECT id, title, body, media_url, visibility, poll_options, pending_review, created_at
        FROM posts WHERE creator_id = $1 ORDER BY created_at DESC`,
       [session.userId]
     );
@@ -88,6 +89,13 @@ export async function POST(request) {
       { status: 400 }
     );
   }
+  const postPolicyCheck = containsBlockedContent(title, body);
+  if (postPolicyCheck.blocked) {
+    return NextResponse.json(
+      { error: `That post ${postPolicyCheck.message}.` },
+      { status: 400 }
+    );
+  }
 
   let cleanedPollOptions;
   try {
@@ -108,13 +116,24 @@ export async function POST(request) {
   const finalVisibility = visibility === 'subscribers_only' ? 'subscribers_only' : 'public';
 
   try {
+    // A creator ByUs hasn't reviewed yet (review_cleared_at is null -- true for every
+    // NEW signup; existing creators were backfilled when this shipped, see the
+    // migration note in lib/content-policy.js) gets their posts held out of public
+    // view instead of blocked outright, so they can still build their page while
+    // waiting on the one-time check. /api/admin/users/[id]/clear-review flips this
+    // for a creator, publishing anything they made in the meantime.
+    const creatorResult = await query('SELECT review_cleared_at FROM users WHERE id = $1', [
+      session.userId,
+    ]);
+    const pendingReview = !creatorResult.rows[0]?.review_cleared_at;
+
     // mediaUrl here is actually the private Blob pathname returned by
     // /api/creator/upload, stored as-is — it's only ever resolved back into
     // real file bytes through the gated /api/posts/:id/media route.
     const result = await query(
-      `INSERT INTO posts (creator_id, title, body, media_url, visibility, poll_options)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING id, title, body, media_url, visibility, poll_options, created_at`,
+      `INSERT INTO posts (creator_id, title, body, media_url, visibility, poll_options, pending_review)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING id, title, body, media_url, visibility, poll_options, pending_review, created_at`,
       [
         session.userId,
         title || null,
@@ -122,6 +141,7 @@ export async function POST(request) {
         mediaUrl || null,
         finalVisibility,
         cleanedPollOptions ? JSON.stringify(cleanedPollOptions) : null,
+        pendingReview,
       ]
     );
 
@@ -130,11 +150,15 @@ export async function POST(request) {
     // Best-effort — a notification failure should never mean the post itself didn't get
     // created. Goes out to every active subscriber who hasn't turned this off, regardless
     // of whether the post is public or subscribers-only (they're already paying to stay
-    // in the loop either way, same audience the broadcast feature uses).
-    try {
-      await notifySubscribersOfNewPost(session.userId, post);
-    } catch (err) {
-      console.error('New-post notification failed (post still created):', err);
+    // in the loop either way, same audience the broadcast feature uses). Skipped entirely
+    // while the post is pending review -- nobody should be notified about something that
+    // isn't actually visible yet.
+    if (!pendingReview) {
+      try {
+        await notifySubscribersOfNewPost(session.userId, post);
+      } catch (err) {
+        console.error('New-post notification failed (post still created):', err);
+      }
     }
 
     return NextResponse.json({
