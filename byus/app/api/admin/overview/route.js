@@ -12,6 +12,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { isAdmin } from '@/lib/admin';
+import { containsUrl } from '@/lib/content-policy';
 
 const MONTHS_OF_HISTORY = 12;
 const RECENT_CREATORS_LIMIT = 25;
@@ -27,7 +28,7 @@ export async function GET() {
   }
 
   try {
-    const [counts, activeSubs, lifetime, monthlyResult, recentCreators, openDisputes, recentDisputes] = await Promise.all([
+    const [counts, activeSubs, lifetime, monthlyResult, recentCreators, openDisputes, recentDisputes, needsReview] = await Promise.all([
       query(
         `SELECT
            COUNT(*) FILTER (WHERE role = 'creator')::int AS creator_count,
@@ -78,8 +79,8 @@ export async function GET() {
       ),
       query(
         `SELECT
-           u.id, u.display_name, u.email, u.created_at, u.stripe_connect_onboarded,
-           u.platform_fee_percent, u.is_suspended, u.suspension_reason,
+           u.id, u.display_name, u.email, u.bio, u.created_at, u.stripe_connect_onboarded,
+           u.platform_fee_percent, u.is_suspended, u.suspension_reason, u.review_cleared_at,
            COALESCE(e.gross_cents, 0)::bigint AS lifetime_gross_cents
          FROM users u
          LEFT JOIN (
@@ -107,6 +108,7 @@ export async function GET() {
          LIMIT $1`,
         [RECENT_DISPUTES_LIMIT]
       ),
+      query(`SELECT COUNT(*)::int AS count FROM users WHERE role = 'creator' AND review_cleared_at IS NULL`),
     ]);
 
     const monthly = monthlyResult.rows.map((row) => ({
@@ -127,6 +129,13 @@ export async function GET() {
       lifetimeGrossCents: Number(row.lifetime_gross_cents),
       isSuspended: row.is_suspended,
       suspensionReason: row.suspension_reason,
+      // needsReview: this creator hasn't cleared ByUs's one-time initial review yet --
+      // their posts stay unpublished and fans can't subscribe/tip until an admin clears
+      // them (POST /api/admin/users/:id/clear-review). bioFlagged: their bio contains
+      // something that looks like a URL -- not blocked outright (see lib/content-policy.js),
+      // just worth a human actually reading it.
+      needsReview: !row.review_cleared_at,
+      bioFlagged: containsUrl(row.bio),
     }));
 
     const disputes = recentDisputes.rows.map((row) => ({
@@ -150,6 +159,7 @@ export async function GET() {
       lifetimeGrossCents: Number(lifetime.rows[0].gross_cents),
       lifetimePlatformFeeCents: Number(lifetime.rows[0].platform_fee_cents),
       openDisputeCount: openDisputes.rows[0].count,
+      needsReviewCount: needsReview.rows[0].count,
       monthly,
       creators,
       disputes,
