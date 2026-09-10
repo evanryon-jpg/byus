@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
-import stripe from '@/lib/stripe';
+import { paymentProvider } from '@/lib/payments';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function POST(request) {
@@ -63,15 +63,8 @@ export async function POST(request) {
         );
       }
 
-      const account = await stripe.accounts.create({
-        type: 'express',
-        email: user.email,
-        capabilities: {
-          card_payments: { requested: true },
-          transfers: { requested: true },
-        },
-      });
-      accountId = account.id;
+      const { accountId: newAccountId } = await paymentProvider.createConnectedAccount({ email: user.email });
+      accountId = newAccountId;
       await query(
         `UPDATE users SET stripe_connect_account_id = $1,
                           content_policy_accepted_at = COALESCE(content_policy_accepted_at, now())
@@ -83,14 +76,13 @@ export async function POST(request) {
     // Generate a fresh onboarding link. These links expire quickly, so always generate
     // a new one right before redirecting rather than reusing an old one.
     const origin = request.headers.get('origin') || process.env.APP_URL;
-    const accountLink = await stripe.accountLinks.create({
-      account: accountId,
-      refresh_url: `${origin}/creator/onboarding?refresh=true`,
-      return_url: `${origin}/creator/onboarding?complete=true`,
-      type: 'account_onboarding',
+    const { url } = await paymentProvider.createAccountOnboardingLink({
+      accountId,
+      refreshUrl: `${origin}/creator/onboarding?refresh=true`,
+      returnUrl: `${origin}/creator/onboarding?complete=true`,
     });
 
-    return NextResponse.json({ url: accountLink.url });
+    return NextResponse.json({ url });
   } catch (err) {
     console.error('connect-stripe failed:', err);
     // Stripe's own error messages are logged above for debugging, but not forwarded to the
