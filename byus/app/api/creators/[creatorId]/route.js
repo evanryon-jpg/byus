@@ -102,9 +102,13 @@ export async function GET(request, { params }) {
       hasActiveSubscription = subResult.rows.length > 0;
     }
 
+    // pending_review = true means this creator hasn't cleared ByUs's one-time initial
+    // review yet (see /api/creator/posts and /api/admin/users/[id]/clear-review) --
+    // hidden from every visitor here regardless of visibility, including the creator's
+    // own logged-out view of their public page.
     const postsResult = await query(
       `SELECT id, title, body, media_url, visibility, poll_options, created_at
-       FROM posts WHERE creator_id = $1 ORDER BY created_at DESC`,
+       FROM posts WHERE creator_id = $1 AND pending_review = false ORDER BY created_at DESC`,
       [id]
     );
 
