@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { publicAvatarUrl } from '@/lib/avatar-url';
-import { FOUNDING_CREATOR_LIMIT } from '@/lib/stripe';
+import { FOUNDING_CREATOR_LIMIT } from '@/lib/pricing';
 
 // 'popular' and 'trending' both need a subscriber count to sort by, so they're a
 // distinct query shape rather than just an ORDER BY swap on the same SELECT. 'trending'
