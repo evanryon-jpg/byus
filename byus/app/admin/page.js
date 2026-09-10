@@ -60,6 +60,7 @@ export default function AdminPage() {
     lifetimeGrossCents,
     lifetimePlatformFeeCents,
     openDisputeCount,
+    needsReviewCount,
     monthly,
     creators,
     disputes,
@@ -80,6 +81,11 @@ export default function AdminPage() {
           label="Open disputes"
           value={openDisputeCount.toLocaleString()}
           flag={openDisputeCount > 0}
+        />
+        <StatTile
+          label="Creators awaiting review"
+          value={needsReviewCount.toLocaleString()}
+          flag={needsReviewCount > 0}
         />
       </div>
 
@@ -166,9 +172,11 @@ export default function AdminPage() {
         <h2 className="font-semibold">Recent creators</h2>
         <p className="mt-1 text-sm text-brand-ink/65">
           Most recent signups first — worth a look if Stripe was never connected or earnings stayed at $0.
+          A creator flagged &ldquo;Needs review&rdquo; has no posts live and can&rsquo;t accept a fan&rsquo;s
+          first payment yet — see the Review column.
         </p>
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[640px] border-collapse text-sm">
+          <table className="w-full min-w-[760px] border-collapse text-sm">
             <thead>
               <tr className="border-b border-brand-ink/10 text-left text-xs font-medium uppercase tracking-wide text-brand-ink/60">
                 <th className="py-2 pr-4">Creator</th>
@@ -176,6 +184,7 @@ export default function AdminPage() {
                 <th className="py-2 pr-4">Stripe</th>
                 <th className="py-2 pr-4">Fee</th>
                 <th className="py-2 pr-4 text-right">Lifetime gross</th>
+                <th className="py-2 pr-4">Review</th>
                 <th className="py-2 pr-4">Account</th>
               </tr>
             </thead>
@@ -183,7 +192,17 @@ export default function AdminPage() {
               {creators.map((c) => (
                 <tr key={c.id} className="border-b border-brand-ink/5">
                   <td className="py-2.5 pr-4">
-                    <div className="font-medium text-[#2B2420]">{c.displayName || 'Unnamed creator'}</div>
+                    <div className="font-medium text-[#2B2420]">
+                      {c.displayName || 'Unnamed creator'}
+                      {c.bioFlagged && (
+                        <span
+                          className="ml-1.5 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700"
+                          title="This creator's bio contains something that looks like a link — worth a look."
+                        >
+                          Bio has a link
+                        </span>
+                      )}
+                    </div>
                     <div className="text-xs text-brand-ink/60">{c.email}</div>
                   </td>
                   <td className="py-2.5 pr-4 text-brand-ink/70">
@@ -201,13 +220,16 @@ export default function AdminPage() {
                     {formatUSD(c.lifetimeGrossCents)}
                   </td>
                   <td className="py-2.5 pr-4">
+                    <ReviewControl userId={c.id} initialNeedsReview={c.needsReview} />
+                  </td>
+                  <td className="py-2.5 pr-4">
                     <SuspendControl userId={c.id} initialSuspended={c.isSuspended} initialReason={c.suspensionReason} />
                   </td>
                 </tr>
               ))}
               {creators.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-6 text-center text-brand-ink/60">
+                  <td colSpan={7} className="py-6 text-center text-brand-ink/60">
                     No creators have signed up yet.
                   </td>
                 </tr>
@@ -489,6 +511,56 @@ function SuspendControl({ userId, initialSuspended, initialReason }) {
           Cancel
         </button>
       </div>
+    </div>
+  );
+}
+
+// ByUs's one-time initial review gate (Stripe compliance asked for a real hold on a new
+// creator's first payout, not just a policy saying someone will eventually look --
+// see lib/content-policy.js's header comment and app/api/admin/users/[id]/clear-review/route.js).
+// Until an admin clears a creator, their posts stay unpublished and /api/subscribe + the
+// tip route refuse to let any fan pay them. Clearing is one-way, same as SuspendControl's
+// reinstate-only-in-that-direction pattern -- there's no "un-clear."
+function ReviewControl({ userId, initialNeedsReview }) {
+  const [needsReview, setNeedsReview] = useState(Boolean(initialNeedsReview));
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  async function clearReview() {
+    setSaving(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/clear-review`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not clear this creator for review.');
+      setNeedsReview(false);
+    } catch (err) {
+      setError(err.message || 'Could not clear this creator for review.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (!needsReview) {
+    return <span className="text-xs text-brand-ink/40">Cleared</span>;
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+          Needs review
+        </span>
+        <button
+          type="button"
+          onClick={clearReview}
+          disabled={saving}
+          className="text-xs font-medium text-[#146359] hover:underline disabled:opacity-50"
+        >
+          {saving ? 'Clearing…' : 'Clear for review'}
+        </button>
+      </div>
+      {error && <p className="text-xs text-red-600">{error}</p>}
     </div>
   );
 }
