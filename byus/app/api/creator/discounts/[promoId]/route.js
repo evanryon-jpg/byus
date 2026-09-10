@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/session';
-import stripe from '@/lib/stripe';
+import { paymentProvider } from '@/lib/payments';
 
 export async function DELETE(request, { params }) {
   const session = await getCurrentUser();
@@ -17,11 +17,11 @@ export async function DELETE(request, { params }) {
   const { promoId } = params;
 
   try {
-    const promotionCode = await stripe.promotionCodes.retrieve(promoId);
-    if (promotionCode.coupon?.metadata?.creator_id !== session.userId) {
+    const promotionCode = await paymentProvider.getPromotionCode({ id: promoId });
+    if (promotionCode.creatorId !== session.userId) {
       return NextResponse.json({ error: 'Code not found.' }, { status: 404 });
     }
-    const updated = await stripe.promotionCodes.update(promoId, { active: false });
+    const updated = await paymentProvider.deactivatePromotionCode({ id: promoId });
     return NextResponse.json({ code: { id: updated.id, active: updated.active } });
   } catch (err) {
     console.error('creator/discounts DELETE failed:', err);
