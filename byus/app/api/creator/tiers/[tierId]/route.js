@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
-import stripe from '@/lib/stripe';
+import { paymentProvider } from '@/lib/payments';
 import { TRIAL_DAY_OPTIONS } from '@/lib/trials';
 import { containsBlockedContent } from '@/lib/content-policy';
 
@@ -122,7 +122,7 @@ export async function PATCH(request, { params }) {
     // here shouldn't block the rename the creator actually asked for.
     if (typeof name === 'string' && name.trim() && tier.stripe_product_id) {
       try {
-        await stripe.products.update(tier.stripe_product_id, { name: name.trim() });
+        await paymentProvider.updateProductName({ productId: tier.stripe_product_id, name: name.trim() });
       } catch (err) {
         console.error('Stripe product name sync failed (non-fatal):', err);
       }
