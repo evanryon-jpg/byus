@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
-import stripe from '@/lib/stripe';
+import { paymentProvider } from '@/lib/payments';
 import { TRIAL_DAY_OPTIONS } from '@/lib/trials';
 import { containsBlockedContent } from '@/lib/content-policy';
 
@@ -118,25 +118,24 @@ export async function POST(request) {
   // try/catch, that throws unhandled, Next returns a bodyless 500, and the dashboard's
   // fetch crashes trying to parse it as JSON instead of showing the actual error.
   try {
-    // Create the Stripe Product + recurring Price for this tier.
-    const product = await stripe.products.create({ name });
-    const price = await stripe.prices.create({
-      product: product.id,
-      unit_amount: priceCents,
-      currency: 'usd',
-      recurring: { interval: 'month' },
+    // Create the underlying product + recurring price for this tier.
+    const { productId } = await paymentProvider.createProduct({ name });
+    const { priceId } = await paymentProvider.createRecurringPrice({
+      productId,
+      amountCents: priceCents,
+      interval: 'month',
     });
 
-    // A second recurring Price on the same Product, billed yearly, only when the creator
+    // A second recurring price on the same product, billed yearly, only when the creator
     // set one — fans then choose monthly or annual at checkout (see /api/subscribe).
-    let annualPrice = null;
+    let annualPriceId = null;
     if (hasAnnual) {
-      annualPrice = await stripe.prices.create({
-        product: product.id,
-        unit_amount: annualPriceCents,
-        currency: 'usd',
-        recurring: { interval: 'year' },
+      const annualPrice = await paymentProvider.createRecurringPrice({
+        productId,
+        amountCents: annualPriceCents,
+        interval: 'year',
       });
+      annualPriceId = annualPrice.priceId;
     }
 
     const result = await query(
@@ -151,11 +150,11 @@ export async function POST(request) {
         name,
         description || null,
         priceCents,
-        price.id,
-        product.id,
+        priceId,
+        productId,
         startActive,
         hasAnnual ? annualPriceCents : null,
-        annualPrice?.id || null,
+        annualPriceId,
         welcomeMessage || null,
         resolvedTrialDays,
       ]
