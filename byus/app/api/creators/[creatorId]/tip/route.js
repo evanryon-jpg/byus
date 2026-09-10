@@ -90,7 +90,8 @@ export async function POST(request, { params }) {
 
   try {
     const creatorResult = await query(
-      `SELECT id, display_name, stripe_connect_account_id, stripe_connect_onboarded, platform_fee_percent
+      `SELECT id, display_name, stripe_connect_account_id, stripe_connect_onboarded, platform_fee_percent,
+              review_cleared_at
        FROM users WHERE id = $1 AND role = 'creator'`,
       [creatorId]
     );
@@ -100,6 +101,13 @@ export async function POST(request, { params }) {
     }
     if (!creator.stripe_connect_onboarded) {
       return NextResponse.json({ error: 'This creator has not finished payment setup yet.' }, { status: 400 });
+    }
+    // Same one-time initial-review gate as /api/subscribe -- see that file's comment.
+    if (!creator.review_cleared_at) {
+      return NextResponse.json(
+        { error: "This creator's page is still completing an initial review. Check back soon." },
+        { status: 400 }
+      );
     }
 
     // Reuse this fan's existing Stripe Customer, same reasoning as /api/subscribe — one
