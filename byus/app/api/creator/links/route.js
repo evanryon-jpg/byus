@@ -11,6 +11,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { containsBlockedContent } from '@/lib/content-policy';
 
 const MAX_LINKS = 8;
 const MAX_LABEL_LENGTH = 40;
@@ -97,7 +98,16 @@ export async function PUT(request) {
           }
 
       const label = (raw?.label || '').trim().slice(0, MAX_LABEL_LENGTH) || friendlyLabel(parsed.hostname);
-          cleaned.push({ label, url: parsed.toString() });
+
+      const linkPolicyCheck = containsBlockedContent(parsed.hostname, label);
+          if (linkPolicyCheck.blocked) {
+                return NextResponse.json(
+                  { error: `That link ${linkPolicyCheck.message}.` },
+                  { status: 400 }
+                );
+          }
+
+      cleaned.push({ label, url: parsed.toString() });
     }
 
   try {
