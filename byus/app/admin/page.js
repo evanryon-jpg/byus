@@ -265,6 +265,7 @@ const REPORT_REASON_LABELS = {
   illegal_content: 'Illegal content',
   harassment: 'Harassment or endangerment',
   ip_infringement: 'Copyright / IP infringement',
+  hate_violence: 'Hate speech or violent extremism',
   other: 'Something else',
 };
 
