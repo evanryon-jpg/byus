@@ -49,7 +49,12 @@ export async function createCustomer({ email, userId }) {
 
 // ---- Connected accounts (creator payout destinations) ----------------------------------
 
-export async function createConnectedAccount({ email }) {
+// `url` is the creator's own public ByUs page (e.g. https://byusapp.com/creator/<slug-or-id>) —
+// passed as business_profile.url so Stripe's own risk/review tooling can see, per connected
+// account, the actual storefront that account is selling through. Required, not optional:
+// every creator has a page (even pre-slug, the UUID-based URL is permanent — see
+// app/api/creators/[creatorId]/route.js), so there's never a real case for omitting it.
+export async function createConnectedAccount({ email, url }) {
   const account = await stripe.accounts.create({
     type: 'express',
     email,
@@ -57,6 +62,7 @@ export async function createConnectedAccount({ email }) {
       card_payments: { requested: true },
       transfers: { requested: true },
     },
+    business_profile: { url },
   });
   return { accountId: account.id };
 }
