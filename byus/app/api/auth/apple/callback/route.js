@@ -195,7 +195,7 @@ export async function POST(request) {
   if (user.is_suspended) {
     return loginErrorRedirect(
       origin,
-      'This account has been suspended. Contact evanryon@yahoo.com if you believe this is a mistake.'
+      'This account has been suspended. Contact support@byusapp.com if you believe this is a mistake.'
     );
   }
 
