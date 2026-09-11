@@ -29,7 +29,7 @@ export async function POST(request) {
   // wrong (Stripe's own error messages are usually specific and actionable).
   try {
     const userResult = await query(
-      'SELECT id, email, stripe_connect_account_id, email_verified FROM users WHERE id = $1',
+      'SELECT id, email, slug, stripe_connect_account_id, email_verified FROM users WHERE id = $1',
       [session.userId]
     );
     const user = userResult.rows[0];
@@ -42,6 +42,11 @@ export async function POST(request) {
         { status: 403 }
       );
     }
+
+    // Needed below both for the connected account's business_profile.url (on first-time
+    // creation only) and for the onboarding link's refresh/return URLs — computed once,
+    // up front, rather than twice.
+    const origin = request.headers.get('origin') || process.env.APP_URL;
 
     let accountId = user.stripe_connect_account_id;
 
@@ -63,7 +68,15 @@ export async function POST(request) {
         );
       }
 
-      const { accountId: newAccountId } = await paymentProvider.createConnectedAccount({ email: user.email });
+      // Slug is usually unset this early (claimed later from the dashboard), but the
+      // UUID-based page URL is permanent -- app/api/creators/[creatorId]/route.js resolves
+      // it forever, even after a slug is claimed -- so this URL never needs to be updated
+      // on Stripe's side later.
+      const profileUrl = `${origin}/creator/${user.slug || user.id}`;
+      const { accountId: newAccountId } = await paymentProvider.createConnectedAccount({
+        email: user.email,
+        url: profileUrl,
+      });
       accountId = newAccountId;
       await query(
         `UPDATE users SET stripe_connect_account_id = $1,
@@ -75,7 +88,6 @@ export async function POST(request) {
 
     // Generate a fresh onboarding link. These links expire quickly, so always generate
     // a new one right before redirecting rather than reusing an old one.
-    const origin = request.headers.get('origin') || process.env.APP_URL;
     const { url } = await paymentProvider.createAccountOnboardingLink({
       accountId,
       refreshUrl: `${origin}/creator/onboarding?refresh=true`,
