@@ -97,7 +97,7 @@ const ACCENTS = {
 
 export default function CreatorShowcase() {
   return (
-    <section className="mx-auto max-w-6xl px-6 py-16">
+    <section className="mx-auto max-w-6xl px-6 py-10 sm:py-14">
       <div className="max-w-2xl">
         <span className="text-xs font-extrabold uppercase tracking-wide text-brand-clay">
           Demonstration creator pages
@@ -111,7 +111,11 @@ export default function CreatorShowcase() {
         </p>
       </div>
 
-      <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Two-up on phones (previously one giant full-bleed card per row, which alone
+          could run six screens of scroll) and a shorter near-square crop below the sm
+          breakpoint -- the full 4:5 portrait crop comes back once there's room for it
+          at sm+ and up to three per row. */}
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:mt-10 sm:gap-5 lg:grid-cols-3">
         {CREATORS.map((c) => (
           <CreatorCard key={c.slug} creator={c} />
         ))}
@@ -128,8 +132,8 @@ function CreatorCard({ creator }) {
       <ArtSlot
         src={creator.art}
         alt={`${creator.name}, ${creator.craft.toLowerCase()} -- example ByUs creator page`}
-        aspect="aspect-[4/5]"
-        sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+        aspect="aspect-[1/1] sm:aspect-[4/5]"
+        sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 50vw"
         label={`${creator.name} — artwork placeholder`}
         className="transition duration-300 group-hover:scale-[1.03]"
       />
@@ -143,25 +147,27 @@ function CreatorCard({ creator }) {
         style={{ background: 'linear-gradient(0deg, rgba(10,12,10,0.82) 0%, rgba(10,12,10,0.35) 45%, transparent 72%)' }}
       />
 
-      <div className="absolute inset-x-0 bottom-0 p-5">
-        <span className="text-[11px] font-extrabold uppercase tracking-wide text-brand-gold">
+      <div className="absolute inset-x-0 bottom-0 p-3 sm:p-5">
+        <span className="text-[10px] font-extrabold uppercase tracking-wide text-brand-gold sm:text-[11px]">
           {creator.craft}
         </span>
-        <h3 className="mt-1 font-display text-xl font-bold text-brand-paper">{creator.name}</h3>
-        <p className="mt-1 text-sm font-medium text-brand-paper/90">{creator.tagline}</p>
-        <p className="mt-2 text-sm italic leading-snug text-brand-paper/70">&ldquo;{creator.quote}&rdquo;</p>
+        <h3 className="mt-1 font-display text-base font-bold text-brand-paper sm:text-xl">{creator.name}</h3>
+        <p className="mt-0.5 text-xs font-medium text-brand-paper/90 sm:mt-1 sm:text-sm">{creator.tagline}</p>
+        <p className="mt-2 hidden text-sm italic leading-snug text-brand-paper/70 sm:block">
+          &ldquo;{creator.quote}&rdquo;
+        </p>
 
-        <div className="mt-4">
+        <div className="mt-2.5 sm:mt-4">
           {creator.live && creator.href ? (
             <a
               href={creator.href}
-              className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold text-brand-paper shadow-sm transition hover:opacity-90 ${accentClass}`}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-brand-paper shadow-sm transition hover:opacity-90 sm:px-4 sm:py-2 sm:text-sm ${accentClass}`}
             >
               {creator.cta || 'View Creator'} →
             </a>
           ) : (
             <span
-              className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold text-brand-paper opacity-80 ${accentClass}`}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-brand-paper opacity-80 sm:px-4 sm:py-2 sm:text-sm ${accentClass}`}
               aria-disabled="true"
             >
               View Creator →
@@ -169,7 +175,7 @@ function CreatorCard({ creator }) {
           )}
         </div>
 
-        <p className="mt-2.5 text-[11px] text-brand-paper/50">
+        <p className="mt-2.5 hidden text-[11px] text-brand-paper/50 sm:block">
           {creator.live ? 'Demonstration profile — interactive page shown is a live sandbox.' : 'Demonstration profile — interactive page coming soon.'}
         </p>
       </div>

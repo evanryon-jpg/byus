@@ -43,7 +43,7 @@ export default function FAQSection() {
 
   return (
     <section>
-      <div className="mx-auto max-w-3xl px-6 py-24">
+      <div className="mx-auto max-w-3xl px-6 py-16">
         <h2 className="text-center font-display text-3xl font-semibold text-[#2B2420]">
           Questions, answered
         </h2>
@@ -52,7 +52,7 @@ export default function FAQSection() {
           account.
         </p>
 
-        <div className="mt-12 divide-y divide-brand-ink/10 border-y border-brand-ink/10">
+        <div className="mt-8 divide-y divide-brand-ink/10 border-y border-brand-ink/10">
           {FAQS.map((item, i) => {
             const open = openIndex === i;
             return (

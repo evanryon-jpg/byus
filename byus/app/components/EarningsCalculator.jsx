@@ -114,7 +114,7 @@ export default function EarningsCalculator() {
   const extraKeptDisplay = useTweenedCents(extraKeptCents);
 
   return (
-    <section className="mx-auto max-w-4xl px-6 py-4">
+    <section className="mx-auto max-w-4xl px-6 py-2">
       <div
         ref={revealRef}
         className={`rounded-[28px] border border-brand-ink/15 bg-brand-paper p-6 shadow-[0_34px_60px_-38px_rgba(43,36,32,0.28)] transition-all duration-500 ease-out sm:p-10 ${
