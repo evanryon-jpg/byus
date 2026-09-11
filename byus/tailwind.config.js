@@ -27,6 +27,19 @@ module.exports = {
         display: ['var(--font-display)', 'ui-serif', 'Georgia', 'serif'],
         sans: ['var(--font-body)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
+      // Ambient drift for the two blurred corner blobs in the dark hero band --
+      // purely decorative background motion, separate from the "live" pulse dot on the
+      // demo button (which is tied to something real). Applied via `motion-safe:` so it
+      // never needs its own JS/media-query handling for prefers-reduced-motion.
+      keyframes: {
+        'byus-drift': {
+          '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+          '50%': { transform: 'translate(-18px, 12px) scale(1.06)' },
+        },
+      },
+      animation: {
+        'byus-drift': 'byus-drift 14s ease-in-out infinite',
+      },
     },
   },
   plugins: [],
