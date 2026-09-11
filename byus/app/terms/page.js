@@ -4,7 +4,7 @@ export const metadata = {
 };
 
 const LAST_UPDATED = 'September 10, 2026';
-const CONTACT_EMAIL = 'evanryon@yahoo.com';
+const CONTACT_EMAIL = 'support@byusapp.com';
 
 export default function TermsPage() {
   return (
