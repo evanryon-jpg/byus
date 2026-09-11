@@ -8,6 +8,7 @@
 // nothing to sign up for and nothing that could ever charge a real card.
 
 import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
+import { STANDARD_FEE_PERCENT } from '@/lib/pricing';
 
 const CREATOR = {
   name: 'Alex Rivers',
@@ -80,7 +81,7 @@ export default function DemoPage() {
         payment is ever processed here.
       </div>
 
-      <DashboardToggle open={dashboardOpen} onToggle={() => setDashboardOpen((v) => !v)} />
+      <ViewToggle open={dashboardOpen} onChange={setDashboardOpen} />
       {dashboardOpen && <CreatorDashboardPanel />}
 
       <FanView unlocked={unlocked} subscribedPrice={subscribedPrice} onJoin={setCheckoutTier} />
@@ -203,15 +204,21 @@ function TierCard({ tier, subscribedPrice, onJoin }) {
   );
 }
 
+// Thumbnails are self-contained SVG icons on a brand gradient, matching the craft-icon
+// treatment on the homepage's photo band and post feed -- a real illustration/animation
+// still doesn't exist for this fictional creator, and a giant emoji standing in for one
+// read as filler. Clay for public content, teal for the members-only piece, so the two
+// posts read as visually distinct before you even notice the lock.
 function PublicPost() {
   return (
     <article className="overflow-hidden rounded-2xl border border-brand-ink/15 bg-brand-paper shadow-sm">
       <div
-        className="flex h-56 items-center justify-center text-6xl"
-        style={{ background: 'linear-gradient(135deg, #C9A961 0%, #E8DCC4 100%)' }}
+        className="flex aspect-[16/9] items-center justify-center bg-gradient-to-br from-brand-clay to-[#b6613f]"
         aria-hidden="true"
       >
-        🎨
+        <span className="h-16 w-16 text-brand-paper opacity-90 sm:h-20 sm:w-20">
+          <PencilIcon />
+        </span>
       </div>
       <div className="p-5">
         <p className="text-sm leading-relaxed text-brand-ink/80">
@@ -225,19 +232,17 @@ function PublicPost() {
 function LockedPost({ unlocked, onUnlock }) {
   return (
     <article className="overflow-hidden rounded-2xl border border-brand-ink/15 bg-brand-paper shadow-sm">
-      <div className="relative flex h-56 items-center justify-center overflow-hidden">
-        <div
-          className={`absolute inset-0 flex items-center justify-center text-6xl transition ${
+      <div className="relative flex aspect-[16/9] items-center justify-center overflow-hidden bg-gradient-to-br from-brand-teal to-[#0e4a42]">
+        <span
+          className={`h-16 w-16 text-brand-paper opacity-90 transition sm:h-20 sm:w-20 ${
             unlocked ? '' : 'scale-110 blur-md'
           }`}
-          style={{ background: 'linear-gradient(135deg, #146359 0%, #0f4d45 100%)' }}
-          aria-hidden="true"
         >
-          🎬
-        </div>
+          <FilmIcon />
+        </span>
         {!unlocked && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-brand-ink/50 px-6 text-center">
-            <span className="text-3xl" aria-hidden="true">🔒</span>
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-brand-ink/55 px-6 text-center">
+            <LockIconLarge />
             <p className="text-sm font-semibold text-brand-paper">Behind the Scenes members only</p>
             <button
               type="button"
@@ -269,32 +274,65 @@ function LockedPost({ unlocked, onUnlock }) {
 // Creator's-eye view
 // ---------------------------------------------------------------------------
 
-function DashboardToggle({ open, onToggle }) {
+// A segmented pill control instead of a single banner-style button -- reads as a real
+// product toggle (same convention as the fee-tier switch on the earnings calculator)
+// rather than a marketing callout, and it's self-explanatory enough that the copy
+// underneath only needs to add the one thing the toggle itself can't say.
+function ViewToggle({ open, onChange }) {
+  return (
+    <div className="border-b border-brand-ink/10 bg-brand-paper px-6 py-4">
+      <div className="mx-auto max-w-3xl text-center">
+        <div className="inline-flex gap-1 rounded-full border border-brand-ink/15 bg-brand-cream p-1 text-sm font-bold">
+          <ViewToggleButton active={!open} onClick={() => onChange(false)}>
+            <EyeIcon /> Fan view
+          </ViewToggleButton>
+          <ViewToggleButton active={open} onClick={() => onChange(true)}>
+            <DashboardIcon /> Creator view
+          </ViewToggleButton>
+        </div>
+        <p className="mt-2.5 text-xs text-brand-ink/50">
+          {open
+            ? 'The creator-only view — your live page below, plus real-time earnings.'
+            : 'Exactly what a fan sees when they visit your page.'}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function ViewToggleButton({ active, onClick, children }) {
   return (
     <button
       type="button"
-      onClick={onToggle}
-      className="flex w-full items-center justify-center gap-2 border-b border-brand-teal/20 bg-brand-teal/10 px-6 py-3 text-center text-sm font-semibold text-brand-teal transition hover:bg-brand-teal/15"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`flex items-center gap-1.5 rounded-full px-4 py-2 transition ${
+        active ? 'bg-brand-teal text-brand-paper shadow-sm' : 'text-brand-ink/65 hover:text-brand-ink/80'
+      }`}
     >
-      {open ? (
-        <>👀 Viewing the Creator’s Dashboard — click to return to the Fan View</>
-      ) : (
-        <>💡 You’re viewing the Fan View. Click here to see the Creator’s Dashboard for this page.</>
-      )}
+      {children}
     </button>
   );
 }
 
 function CreatorDashboardPanel() {
   const gross = 840;
-  const feeRate = 0.1;
-  const fee = gross * feeRate;
+  // Real fee logic, not a demo-only stand-in -- same constant the earnings calculator
+  // and every other fee mention on the site pulls from.
+  const fee = gross * (STANDARD_FEE_PERCENT / 100);
   const payout = gross - fee;
 
   return (
     <div className="border-b border-brand-ink/10 bg-[#F5E9D8] px-6 py-8">
       <div className="mx-auto max-w-3xl">
-        <p className="text-xs font-semibold uppercase tracking-wide text-brand-ink/50">Live revenue tracker</p>
+        <div
+          className="h-1.5 w-[52px] rounded-full"
+          style={{
+            background: 'repeating-linear-gradient(115deg, #C97C5D 0 8px, #C9A961 8px 16px, #146359 16px 24px)',
+          }}
+          aria-hidden="true"
+        />
+        <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-brand-ink/50">Live revenue tracker</p>
         <div className="mt-2 flex flex-wrap items-end justify-between gap-6">
           <div>
             <p className="font-display text-4xl font-bold tabular-nums text-brand-teal">
@@ -304,7 +342,7 @@ function CreatorDashboardPanel() {
           </div>
           <div className="rounded-xl border border-brand-ink/15 bg-brand-paper px-5 py-3 text-sm">
             <div className="flex justify-between gap-8 tabular-nums">
-              <span className="text-brand-ink/60">ByUs fee (10%)</span>
+              <span className="text-brand-ink/60">ByUs fee ({STANDARD_FEE_PERCENT}%)</span>
               <span className="font-semibold text-brand-clay">-${fee.toFixed(2)}</span>
             </div>
             <div className="mt-1 flex justify-between gap-8 tabular-nums">
@@ -426,6 +464,59 @@ function ClosingCtaBar() {
         </div>
       </div>
     </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Icons -- hand-drawn line icons, same conventions as the rest of the site
+// (24x24/stroke-1.8 for small inline marks, 64x64/stroke-2.2 for the bigger
+// post-thumbnail illustrations) instead of emoji standing in for real artwork.
+// ---------------------------------------------------------------------------
+
+function PencilIcon() {
+  return (
+    <svg viewBox="0 0 64 64" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none" stroke="currentColor" className="h-full w-full">
+      <path d="M42 12l10 10-28 28-12 3 3-12z" />
+      <path d="M38 16l10 10" />
+    </svg>
+  );
+}
+
+function FilmIcon() {
+  return (
+    <svg viewBox="0 0 64 64" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none" stroke="currentColor" className="h-full w-full">
+      <rect x="10" y="12" width="44" height="40" rx="6" />
+      <path d="M27 24l13 8-13 8z" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function LockIconLarge() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-brand-paper" aria-hidden="true">
+      <rect x="4" y="11" width="16" height="10" rx="2" />
+      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+    </svg>
+  );
+}
+
+function EyeIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z" strokeLinejoin="round" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function DashboardIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <path d="M5 19v-6" strokeLinecap="round" />
+      <path d="M12 19V9" strokeLinecap="round" />
+      <path d="M19 19V5" strokeLinecap="round" />
+      <path d="M3 19h18" strokeLinecap="round" />
+    </svg>
   );
 }
 
