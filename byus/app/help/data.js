@@ -249,7 +249,7 @@ export const HELP_CATEGORIES = [
       },
       {
         q: 'How do I report a problem or abusive content?',
-        a: 'Email evanryon@yahoo.com with a link to the page or post and a short description — reports are handled directly rather than through an automated system, given ByUs’s size today.',
+        a: 'Email support@byusapp.com with a link to the page or post and a short description — reports are handled directly rather than through an automated system, given ByUs’s size today.',
       },
       {
         q: 'Where can I read the Terms of Service and Privacy Policy?',
