@@ -9,13 +9,12 @@ import ArtSlot from './ArtSlot';
 // components instead of the flattened reference image itself.
 //
 // Alex Rivers is the one profile with a real, live interactive page (the production
-// /demo route) and real artwork already in /public/creators/alex-rivers. The other
-// five are placeholders waiting on real artwork: each has a clearly named image slot
-// below (ArtSlot with no `src` renders an honest "artwork placeholder" box, never a
-// generated stand-in) at the exact path a finished hero.jpg should land at. None of
-// these six are real ByUs members, and the disclaimer on every card is not
-// negotiable copy -- it's what keeps this section from reading as a claim about real
-// creators or real earnings.
+// /demo route). All six now have real supplied photos under /public/creators/<slug>/
+// -- if a future creator's photo isn't ready yet, leave its `art` field unset and
+// ArtSlot renders an honest "artwork placeholder" box instead of a generated
+// stand-in. None of these six are real ByUs members, and the disclaimer on every
+// card is not negotiable copy -- it's what keeps this section from reading as a
+// claim about real creators or real earnings.
 const CREATORS = [
   {
     slug: 'alex-rivers',
@@ -24,7 +23,11 @@ const CREATORS = [
     tagline: 'Fantasy worlds. Real emotions.',
     quote: 'Art is a way of seeing the world differently.',
     accent: 'teal',
-    art: '/creators/alex-rivers/hero.jpg', // already supplied -- see also public/images/demo
+    // Deliberately a different file from /creators/alex-rivers/hero.jpg -- that one
+    // is his landscape painting, reused on the homepage hero as an example of his
+    // artwork. This showcase card uses a photo of Alex himself, matching the other
+    // five cards below.
+    art: '/creators/alex-rivers/showcase.jpg',
     href: '/demo',
     cta: 'View Creator',
     live: true,
@@ -36,7 +39,6 @@ const CREATORS = [
     tagline: 'Wild places. Honest moments.',
     quote: 'Teaching others to see the extraordinary in the everyday.',
     accent: 'olive',
-    // BYUS ARTWORK SLOT: drop Maya Sinclair's hero photo at this path
     art: '/creators/maya-sinclair/hero.jpg',
   },
   {
@@ -46,17 +48,18 @@ const CREATORS = [
     tagline: 'Songs. Stories. Community.',
     quote: 'Music brings people together in a way nothing else can.',
     accent: 'rust',
-    // BYUS ARTWORK SLOT: drop Liam Carter's hero photo at this path
     art: '/creators/liam-carter/hero.jpg',
   },
   {
     slug: 'elena-park',
     name: 'Elena Park',
-    craft: 'Food Creator',
-    tagline: 'Simple food. A happier you.',
-    quote: 'Good food brings people together.',
+    // Craft swapped from an earlier "Food Creator" placeholder once the real
+    // supplied photo turned out to be an ASL educator instead -- copy below was
+    // rewritten to match the photo rather than the other way around.
+    craft: 'ASL Educator',
+    tagline: 'Language. Connection. Community.',
+    quote: 'Everyone deserves a way to be understood.',
     accent: 'clay',
-    // BYUS ARTWORK SLOT: drop Elena Park's hero photo at this path
     art: '/creators/elena-park/hero.jpg',
   },
   {
@@ -66,7 +69,6 @@ const CREATORS = [
     tagline: 'Handmade for a slower world.',
     quote: 'Creating with my hands keeps me grounded.',
     accent: 'plum',
-    // BYUS ARTWORK SLOT: drop Sophie Lane's hero photo at this path
     art: '/creators/sophie-lane/hero.jpg',
   },
   {
@@ -76,7 +78,6 @@ const CREATORS = [
     tagline: 'Stronger habits. A better you.',
     quote: "Progress isn't perfect. It's consistent.",
     accent: 'teal',
-    // BYUS ARTWORK SLOT: drop Noah Blake's hero photo at this path
     art: '/creators/noah-blake/hero.jpg',
   },
 ];
