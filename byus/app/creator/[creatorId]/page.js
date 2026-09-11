@@ -380,6 +380,7 @@ const REPORT_REASONS = [
   { value: 'illegal_content', label: 'Illegal content' },
   { value: 'harassment', label: 'Harassment or endangerment' },
   { value: 'ip_infringement', label: 'Copyright / IP infringement' },
+  { value: 'hate_violence', label: 'Hate speech or violent extremism' },
   { value: 'other', label: 'Something else' },
 ];
 
