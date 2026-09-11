@@ -79,8 +79,8 @@ export default function HelpCategoryPage() {
 
       <p className="mt-10 rounded-2xl bg-[#146359]/5 px-5 py-4 text-center text-sm text-brand-ink/70">
         Didn't find your answer?{' '}
-        <a href="mailto:evanryon@yahoo.com" className="font-semibold text-[#146359] hover:underline">
-          Email evanryon@yahoo.com
+        <a href="mailto:support@byusapp.com" className="font-semibold text-[#146359] hover:underline">
+          Email support@byusapp.com
         </a>{' '}
         and we'll help directly.
       </p>
