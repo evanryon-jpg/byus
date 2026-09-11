@@ -13,8 +13,9 @@ import { STANDARD_FEE_PERCENT } from '@/lib/pricing';
 const CREATOR = {
   name: 'Alex Rivers',
   handle: '@alexrivers',
-  tagline: 'Digital Artist & Animator',
-  bio: "I make hand-drawn animation shorts and post the process behind them — for people who like watching a piece come together almost as much as seeing it finished. New sketch every week, a real deep-dive video every month.",
+  tagline: 'Fantasy Concept Artist & Illustrator',
+  bio: "I paint the landscapes and characters for worlds that don't exist yet — moody environments, portrait studies, and the sketches that get me there. New piece every week, a full process breakdown every month.",
+  stats: { members: '1,240', posts: '89', since: '2022' },
   socials: [
     { label: 'YouTube', href: '#' },
     { label: 'Instagram', href: '#' },
@@ -101,25 +102,39 @@ export default function DemoPage() {
 
 function FanView({ unlocked, subscribedPrice, onJoin }) {
   return (
-    <div className="mx-auto max-w-3xl px-6 pb-20 pt-10">
+    <div className="mx-auto max-w-4xl px-6 pb-20 pt-10">
       <ProfileHeader />
 
-      <section className="mt-10">
-        <h2 className="font-display text-xl font-bold text-brand-ink">Membership tiers</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-3">
-          {TIERS.map((tier) => (
-            <TierCard key={tier.id} tier={tier} subscribedPrice={subscribedPrice} onJoin={() => onJoin(tier)} />
-          ))}
+      <div className="mt-10 grid grid-cols-1 gap-10 lg:grid-cols-[1fr_268px]">
+        <div>
+          <p className="mb-5 text-[11px] font-extrabold uppercase tracking-wide text-brand-ink/40">Recent work</p>
+          <div className="flex flex-col gap-11">
+            <HeroPiece />
+            <div className="grid grid-cols-1 gap-7 sm:grid-cols-2">
+              <FieldNote />
+              <TallPiece />
+            </div>
+            <LockedHeroPiece unlocked={unlocked} onUnlock={() => onJoin(UNLOCK_TIER)} />
+            <div className="grid grid-cols-2 gap-5">
+              <SmallPiece
+                src="/images/demo/castle-detail.jpg"
+                alt="A close-up detail of a cliffside castle in warm afternoon light"
+                title="Detail pass — the castle"
+                meta="11 days ago"
+              />
+              <SmallPiece
+                src="/images/demo/sketch-detail.jpg"
+                alt="A pencil sketch detail of the same castle"
+                title="World-building sketches"
+                meta="13 days ago"
+                locked
+              />
+            </div>
+          </div>
         </div>
-      </section>
 
-      <section className="mt-12">
-        <h2 className="font-display text-xl font-bold text-brand-ink">Posts</h2>
-        <div className="mt-4 space-y-6">
-          <PublicPost />
-          <LockedPost unlocked={unlocked} onUnlock={() => onJoin(UNLOCK_TIER)} />
-        </div>
-      </section>
+        <Sidebar subscribedPrice={subscribedPrice} onJoin={() => onJoin(UNLOCK_TIER)} />
+      </div>
     </div>
   );
 }
@@ -127,31 +142,42 @@ function FanView({ unlocked, subscribedPrice, onJoin }) {
 function ProfileHeader() {
   return (
     <div className="overflow-hidden rounded-2xl border border-brand-ink/15 bg-brand-paper shadow-sm">
-      <div
-        className="h-36 sm:h-44"
-        style={{
-          background: 'repeating-linear-gradient(115deg, #C97C5D 0 60px, #C9A961 60px 120px, #146359 120px 180px)',
-        }}
-        aria-hidden="true"
-      />
+      <div className="relative h-32 overflow-hidden bg-brand-paper sm:h-36" aria-hidden="true">
+        <div className="absolute -top-24 -left-10 h-64 w-64 rounded-full bg-brand-clay/50 blur-3xl" />
+        <div className="absolute -top-20 right-[8%] h-56 w-56 rounded-full bg-brand-gold/45 blur-3xl" />
+        <div className="absolute -top-24 -right-16 h-56 w-56 rounded-full bg-brand-teal/40 blur-3xl" />
+      </div>
       <div className="-mt-10 px-6 pb-6 sm:px-8">
-        <div className="flex h-20 w-20 -rotate-3 items-center justify-center rounded-2xl border-4 border-brand-paper bg-[#0f4d45] font-display text-3xl font-bold text-[#F5E9D8]">
-          AR
+        <div className="h-20 w-20 overflow-hidden rounded-2xl border-4 border-brand-paper shadow-md">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/images/demo/avatar.jpg" alt={CREATOR.name} className="h-full w-full object-cover" />
         </div>
         <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h1 className="font-display text-2xl font-bold text-brand-ink">{CREATOR.name}</h1>
           <span className="text-sm text-brand-ink/50">{CREATOR.handle}</span>
         </div>
-        <p className="text-sm font-semibold text-brand-teal">{CREATOR.tagline}</p>
+        <p className="text-sm font-semibold italic text-brand-teal">{CREATOR.tagline}</p>
         <p className="mt-3 max-w-xl text-sm leading-relaxed text-brand-ink/70">{CREATOR.bio}</p>
-        <div className="mt-3 flex flex-wrap gap-1.5">
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px] text-brand-ink/55">
+          <span>
+            <strong className="font-display font-bold text-brand-ink">{CREATOR.stats.members}</strong> members
+          </span>
+          <span className="text-brand-ink/20">·</span>
+          <span>
+            <strong className="font-display font-bold text-brand-ink">{CREATOR.stats.posts}</strong> posts
+          </span>
+          <span className="text-brand-ink/20">·</span>
+          <span>Posting since {CREATOR.stats.since}</span>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-3">
           {CREATOR.socials.map((s) => (
-            <span
+            <a
               key={s.label}
-              className="rounded border border-brand-ink/20 bg-[#F5E9D8] px-2 py-1 text-[11px] font-bold text-brand-ink/65"
+              href={s.href}
+              className="border-b border-brand-ink/15 pb-0.5 text-xs font-bold text-brand-ink/55 transition hover:border-brand-teal hover:text-brand-teal"
             >
               {s.label} ↗
-            </span>
+            </a>
           ))}
         </div>
       </div>
@@ -159,114 +185,206 @@ function ProfileHeader() {
   );
 }
 
-function TierCard({ tier, subscribedPrice, onJoin }) {
-  const included = subscribedPrice >= tier.price;
-
+// The public hero -- one large, confident piece of finished work, title set right on
+// the art rather than in a caption box underneath. This one lever does more against
+// "looks like a pricing page" than anything else on this view.
+function HeroPiece() {
   return (
-    <div
-      className={`relative flex flex-col rounded-2xl border bg-brand-paper p-5 shadow-sm ${
-        tier.popular ? 'border-brand-gold' : 'border-brand-ink/15'
-      }`}
-    >
-      {tier.popular && (
-        <span className="absolute -top-3 left-5 rounded bg-brand-clay px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-[#F5E9D8]">
-          Most popular
+    <div>
+      <div className="relative aspect-[16/8.2] overflow-hidden rounded-sm">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/demo/hero-landscape.jpg"
+          alt="A painted fantasy vista of a river valley leading to a cliffside castle"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div
+          className="absolute inset-0"
+          style={{ background: 'linear-gradient(0deg, rgba(15,26,22,0.78) 0%, rgba(15,26,22,0.15) 46%, transparent 68%)' }}
+        />
+        <div className="absolute inset-x-0 bottom-0 p-6 text-brand-paper sm:p-8">
+          <span className="text-[11px] font-extrabold uppercase tracking-wide text-brand-gold">
+            Environment painting · Process breakdown
+          </span>
+          <h2 className="mt-2 max-w-[22ch] font-display text-2xl font-bold leading-tight sm:text-3xl">
+            The Long Road Ahead — sketch to final light
+          </h2>
+          <div className="mt-2.5 text-xs text-brand-paper/60">2 days ago · 9 comments</div>
+        </div>
+      </div>
+      <p className="mt-4 border-l-2 border-brand-gold pl-4 font-display text-[15px] italic leading-relaxed text-brand-ink/70">
+        "Watching the light change across three passes taught me more about atmosphere than any tutorial has."
+        <span className="mt-1.5 block font-sans text-xs font-bold not-italic text-brand-ink/40">
+          — from a member comment
         </span>
-      )}
-      <p className="font-display text-lg font-bold text-brand-ink">{tier.name}</p>
-      <p className="mt-1 text-2xl font-bold tabular-nums text-brand-teal">
-        ${tier.price}
-        <span className="text-sm font-medium text-brand-ink/50">/mo</span>
       </p>
-      <ul className="mt-3 flex-1 space-y-1.5 text-sm text-brand-ink/70">
-        {tier.perks.map((perk) => (
-          <li key={perk} className="flex gap-2">
-            <span className="text-brand-teal">✓</span>
-            {perk}
-          </li>
-        ))}
-      </ul>
-      <button
-        type="button"
-        onClick={onJoin}
-        disabled={included}
-        className={`mt-4 rounded-full px-4 py-2.5 text-sm font-semibold transition ${
-          included
-            ? 'cursor-default bg-brand-teal/10 text-brand-teal'
-            : tier.popular
-            ? 'bg-brand-teal text-brand-paper hover:bg-[#0f4d45]'
-            : 'border border-brand-ink/20 text-brand-ink hover:bg-brand-ink/5'
-        }`}
-      >
-        {included ? '✓ Included in your plan' : `Join · $${tier.price}/mo`}
-      </button>
     </div>
   );
 }
 
-// Thumbnails are self-contained SVG icons on a brand gradient, matching the craft-icon
-// treatment on the homepage's photo band and post feed -- a real illustration/animation
-// still doesn't exist for this fictional creator, and a giant emoji standing in for one
-// read as filler. Clay for public content, teal for the members-only piece, so the two
-// posts read as visually distinct before you even notice the lock.
-function PublicPost() {
+// A text-only post -- no image at all. The strongest possible contrast to a grid of
+// thumbnails, and it reads as a real update rather than filler.
+function FieldNote() {
   return (
-    <article className="overflow-hidden rounded-2xl border border-brand-ink/15 bg-brand-paper shadow-sm">
-      <div
-        className="flex aspect-[16/9] items-center justify-center bg-gradient-to-br from-brand-clay to-[#b6613f]"
-        aria-hidden="true"
-      >
-        <span className="h-16 w-16 text-brand-paper opacity-90 sm:h-20 sm:w-20">
-          <PencilIcon />
-        </span>
-      </div>
-      <div className="p-5">
-        <p className="text-sm leading-relaxed text-brand-ink/80">
-          Thanks for checking out my page! Full process video is locked for Tier 2+ members below.
-        </p>
-      </div>
-    </article>
+    <div className="flex flex-col justify-center rounded-sm bg-brand-paper p-6">
+      <span className="text-[11px] font-extrabold uppercase tracking-wide text-brand-clay">A note</span>
+      <p className="mt-3 text-[19px] leading-snug text-brand-ink font-display">
+        Taking next week off to finish a client project — back to the regular Tuesday piece after that. Thank you for
+        being patient with me.
+      </p>
+      <div className="mt-4 text-xs text-brand-ink/40">5 days ago · 3 comments</div>
+    </div>
   );
 }
 
-function LockedPost({ unlocked, onUnlock }) {
+function TallPiece() {
   return (
-    <article className="overflow-hidden rounded-2xl border border-brand-ink/15 bg-brand-paper shadow-sm">
-      <div className="relative flex aspect-[16/9] items-center justify-center overflow-hidden bg-gradient-to-br from-brand-teal to-[#0e4a42]">
-        <span
-          className={`h-16 w-16 text-brand-paper opacity-90 transition sm:h-20 sm:w-20 ${
-            unlocked ? '' : 'scale-110 blur-md'
-          }`}
-        >
-          <FilmIcon />
-        </span>
-        {!unlocked && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-brand-ink/55 px-6 text-center">
-            <LockIconLarge />
-            <p className="text-sm font-semibold text-brand-paper">Behind the Scenes members only</p>
+    <div className="relative aspect-[3/4] overflow-hidden rounded-sm">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/images/demo/portrait-study.jpg"
+        alt="A painterly close-up portrait study of a woman looking off to the side"
+        className="absolute inset-0 h-full w-full object-cover"
+        style={{ objectPosition: '78% 42%' }}
+      />
+      <div
+        className="absolute inset-0"
+        style={{ background: 'linear-gradient(0deg, rgba(15,26,22,0.7) 0%, transparent 55%)' }}
+      />
+      <div className="absolute inset-x-0 bottom-0 p-5 text-brand-paper">
+        <span className="text-[10.5px] font-extrabold uppercase tracking-wide text-brand-gold">Portrait study</span>
+        <h3 className="mt-1.5 font-display text-lg font-bold leading-tight">Getting the skin tones right</h3>
+        <div className="mt-1.5 text-[11.5px] text-brand-paper/60">8 days ago · 17 comments</div>
+      </div>
+    </div>
+  );
+}
+
+// The gated piece -- same large, confident treatment as the public hero, so what's
+// behind the paywall reads as the best work on the page, not an afterthought. Before
+// unlocking, the art is still visible underneath a partial veil (blurred, darkened at
+// center for text contrast) instead of a fully opaque block, so a fan can tell what a
+// piece actually is before joining.
+function LockedHeroPiece({ unlocked, onUnlock }) {
+  return (
+    <div className="relative aspect-[16/7.5] overflow-hidden rounded-sm">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/images/demo/storm-study.jpg"
+        alt="A moody storm-sky color study"
+        className={`absolute inset-0 h-full w-full object-cover transition ${unlocked ? '' : 'scale-105 blur-[3px]'}`}
+      />
+      {!unlocked && (
+        <>
+          <span className="absolute left-4 top-4 flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wide text-brand-gold">
+            🔒 Behind the Scenes only
+          </span>
+          <div
+            className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center"
+            style={{
+              background:
+                'radial-gradient(ellipse 70% 65% at 50% 55%, rgba(10,20,18,0.72) 0%, rgba(10,20,18,0.38) 55%, rgba(10,20,18,0.12) 85%)',
+            }}
+          >
+            <p className="max-w-[30ch] font-display text-lg font-semibold text-brand-paper sm:text-xl">
+              Full color-study breakdown: choosing the storm-cloud palette
+            </p>
             <button
               type="button"
               onClick={onUnlock}
-              className="rounded-full bg-brand-gold px-4 py-2 text-sm font-semibold text-[#2B2420] shadow-sm transition hover:brightness-95"
+              className="rounded-full bg-brand-gold px-5 py-2.5 text-[13.5px] font-bold text-[#2B2420] shadow-sm transition hover:brightness-95"
             >
-              Unlock this post by joining “{UNLOCK_TIER.name}” (${UNLOCK_TIER.price}/mo)
+              Unlock — join "{UNLOCK_TIER.name}" (${UNLOCK_TIER.price}/mo)
             </button>
           </div>
-        )}
-        {unlocked && (
-          <span className="absolute right-3 top-3 rounded-full bg-brand-teal px-2.5 py-1 text-[11px] font-bold text-brand-paper">
+        </>
+      )}
+      {unlocked && (
+        <>
+          <span className="absolute right-4 top-4 rounded-full bg-brand-teal px-2.5 py-1 text-[11px] font-bold text-brand-paper">
             ✓ Unlocked
           </span>
-        )}
+          <div
+            className="absolute inset-x-0 bottom-0 p-6 text-brand-paper sm:p-8"
+            style={{ background: 'linear-gradient(0deg, rgba(15,26,22,0.75) 0%, transparent 60%)' }}
+          >
+            <span className="text-[11px] font-extrabold uppercase tracking-wide text-brand-gold">
+              Environment color study
+            </span>
+            <h3 className="mt-1.5 max-w-[26ch] font-display text-lg font-bold leading-tight sm:text-xl">
+              Choosing the storm-cloud palette — thanks for joining!
+            </h3>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function SmallPiece({ src, alt, title, meta, locked }) {
+  return (
+    <div className="relative aspect-square overflow-hidden rounded-sm">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt={alt} className="absolute inset-0 h-full w-full object-cover" />
+      <div
+        className="absolute inset-0"
+        style={{ background: 'linear-gradient(0deg, rgba(15,26,22,0.65) 0%, transparent 55%)' }}
+      />
+      {locked && (
+        <span className="absolute right-2.5 top-2.5 flex h-6 w-6 items-center justify-center rounded-full bg-brand-ink/55 text-[11px]">
+          🔒
+        </span>
+      )}
+      <div className="absolute inset-x-0 bottom-0 p-3.5 text-brand-paper">
+        <h4 className="font-display text-sm font-bold leading-tight">{title}</h4>
+        <div className="mt-1 text-[10.5px] text-brand-paper/60">{meta}</div>
       </div>
-      <div className="p-5">
-        <p className="text-sm leading-relaxed text-brand-ink/80">
-          {unlocked
-            ? 'New process video: inking the flight scene, start to finish — thanks for joining!'
-            : 'New process video: inking the flight scene, start to finish.'}
-        </p>
+    </div>
+  );
+}
+
+// Tiers demoted to a minimal, typographic list -- hairline-divided rows, not bordered
+// cards -- so the sidebar reads as page furniture rather than the main event. One CTA
+// at the bottom joins the tier that unlocks the gated piece above.
+function Sidebar({ subscribedPrice, onJoin }) {
+  const joined = subscribedPrice >= UNLOCK_TIER.price;
+  return (
+    <div className="lg:sticky lg:top-7 lg:self-start">
+      <h3 className="font-display text-lg font-bold text-brand-ink">Support {CREATOR.name.split(' ')[0]}</h3>
+      <p className="mt-1 text-[12.5px] leading-relaxed text-brand-ink/55">Every tier includes everything below it.</p>
+
+      <div className="mt-2">
+        {TIERS.map((tier, i) => (
+          <div
+            key={tier.id}
+            className={`py-4 border-t border-brand-ink/15 ${i === TIERS.length - 1 ? 'border-b' : ''}`}
+          >
+            {tier.popular && (
+              <span className="mb-1.5 inline-block text-[9.5px] font-extrabold uppercase tracking-wide text-brand-clay">
+                Most popular
+              </span>
+            )}
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="font-display text-[15px] font-bold text-brand-ink">{tier.name}</span>
+              <span className="text-sm font-bold tabular-nums text-brand-teal">${tier.price}/mo</span>
+            </div>
+            <p className="mt-1.5 max-w-[30ch] text-xs leading-relaxed text-brand-ink/55">{tier.perks[0]}</p>
+          </div>
+        ))}
       </div>
-    </article>
+
+      <button
+        type="button"
+        onClick={onJoin}
+        disabled={joined}
+        className={`mt-5 w-full rounded-full px-4 py-3 text-sm font-bold shadow-sm transition ${
+          joined ? 'cursor-default bg-brand-teal/10 text-brand-teal' : 'bg-brand-teal text-brand-paper hover:bg-[#0f4d45]'
+        }`}
+      >
+        {joined ? '✓ You\'re a member' : `Join ${UNLOCK_TIER.name} →`}
+      </button>
+      <p className="mt-2.5 text-center text-[11.5px] text-brand-ink/40">$0 to browse — join anytime</p>
+    </div>
   );
 }
 
@@ -468,37 +586,9 @@ function ClosingCtaBar() {
 }
 
 // ---------------------------------------------------------------------------
-// Icons -- hand-drawn line icons, same conventions as the rest of the site
-// (24x24/stroke-1.8 for small inline marks, 64x64/stroke-2.2 for the bigger
-// post-thumbnail illustrations) instead of emoji standing in for real artwork.
+// Icons -- small inline marks only now (24x24/stroke-1.8). The post thumbnails
+// above are real imagery, not icons standing in for it.
 // ---------------------------------------------------------------------------
-
-function PencilIcon() {
-  return (
-    <svg viewBox="0 0 64 64" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none" stroke="currentColor" className="h-full w-full">
-      <path d="M42 12l10 10-28 28-12 3 3-12z" />
-      <path d="M38 16l10 10" />
-    </svg>
-  );
-}
-
-function FilmIcon() {
-  return (
-    <svg viewBox="0 0 64 64" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none" stroke="currentColor" className="h-full w-full">
-      <rect x="10" y="12" width="44" height="40" rx="6" />
-      <path d="M27 24l13 8-13 8z" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function LockIconLarge() {
-  return (
-    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-brand-paper" aria-hidden="true">
-      <rect x="4" y="11" width="16" height="10" rx="2" />
-      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-    </svg>
-  );
-}
 
 function EyeIcon() {
   return (
