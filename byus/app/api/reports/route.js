@@ -18,7 +18,14 @@ import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
-const VALID_REASONS = new Set(['adult_content', 'illegal_content', 'harassment', 'ip_infringement', 'other']);
+const VALID_REASONS = new Set([
+  'adult_content',
+  'illegal_content',
+  'harassment',
+  'ip_infringement',
+  'hate_violence',
+  'other',
+]);
 const DETAILS_MAX = 1000;
 
 export async function POST(request) {
