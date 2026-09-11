@@ -41,7 +41,7 @@ export async function sendVerificationEmail(to, verifyUrl) {
           <a href="${verifyUrl}" style="background:#146359;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;">Verify email</a>
         </p>
         <p style="color:#666;font-size:13px;">If you didn't create a ByUs account, you can safely ignore this email.</p>
-        <p style="color:#999;font-size:12px;margin-top:24px;">Questions? Contact us at evanryon@yahoo.com.</p>
+        <p style="color:#999;font-size:12px;margin-top:24px;">Questions? Contact us at support@byusapp.com.</p>
       </div>
     `,
   });
