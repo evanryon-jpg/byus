@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { getCurrentUser } from '@/lib/session';
 import { query } from '@/lib/db';
 import { getFoundingPromoStats } from '@/lib/fees';
@@ -5,6 +6,7 @@ import FAQSection from './components/FAQSection';
 import CreatorSearch from './components/CreatorSearch';
 import FeaturedCreators from './components/FeaturedCreators';
 import EarningsCalculator from './components/EarningsCalculator';
+import CreatorShowcase from './components/CreatorShowcase';
 
 // Server component so the hero and closing CTAs can tell whether someone is already
 // logged in -- an existing creator or fan should never be invited to sign up again,
@@ -16,16 +18,13 @@ export default async function HomePage() {
   return (
     <div>
       <Hero user={session} />
-      <FoundingPromoBanner stats={foundingStats} />
-      <FoundersCircleSection stats={foundingStats} />
-      <CraftPhotoBand />
-      <ExamplePostFeed />
+      <CreatorShowcase />
       <EarningsCalculator />
-      <LookingForSomeoneSection />
-      <FeaturedCreators />
-      <StatsBand />
+      <FoundingCreatorProgram stats={foundingStats} />
       <Features />
       <HowItWorks />
+      <LookingForSomeoneSection />
+      <FeaturedCreators />
       <FAQSection />
       {/* PlatformGoalGauge (app/components/PlatformGoalGauge.jsx) pulled for now -- with
           one creator and no revenue yet, "our best month so far: $0.00" reads as a red
@@ -36,125 +35,99 @@ export default async function HomePage() {
   );
 }
 
-// Launch offer -- see lib/fees.js for the actual billing logic this describes (founding
-// creators skip the $2k/mo milestone entirely and sit at 7% from day one). `stats.remaining`
-// is queried live, never hardcoded, so the count on the page can't drift from what a
-// creator actually gets when they sign up.
+// The Founding Creator Program, merged into one premium section (previously two --
+// FoundingPromoBanner's fee-framing banner and FoundersCircleSection's two perk cards
+// -- which repeated the same "founding creators keep more, sooner" point twice back to
+// back). `stats` comes straight from lib/fees.js's getFoundingPromoStats(), which
+// counts real creator signups (`SELECT COUNT(*) FROM users WHERE role='creator'`) --
+// `stats.limit`/`stats.remaining`/`stats.claimed` are never hardcoded, so this section
+// can't drift from what a creator actually gets when they sign up. The literal "100
+// SPOTS. 7% FOREVER." framing from the brief is built from `stats.limit` rather than a
+// bare "100" so the copy stays correct if FOUNDING_CREATOR_LIMIT in lib/pricing.js ever
+// changes; "7%" is left as a literal since it mirrors that same file's permanent
+// MIN_FEE_PERCENT/DISCOUNTED_FEE_PERCENT constant. Every claim below is scoped to what's
+// actually live: the fee is a permanent 7% (never "0%" or "keep 100%"), priority
+// placement is real (see the is_founding ordering in /api/creators), and there's no
+// human-curation layer, brand-deal matching, or other feature ByUs doesn't have --
+// none of that is implied here.
 //
-// A plain editorial statement, not a bordered promo card. Previously this was a boxed
-// card with a checklist restating the hero almost word for word, plus a progress bar
-// that -- at 1 of 100 claimed -- visually undercut its own pitch ("barely anyone's
-// here" reads louder than the bar's color ever could), plus a rocket-badge button.
-// The only fact here that isn't already said in the hero is the real one: founding
-// creators skip the $2k/mo wait entirely. Type scale carries the emphasis instead of
-// a colored box, the same trick the hero's own "90-93%" already uses.
-function FoundingPromoBanner({ stats }) {
+// Styled as its own dark, premium panel rather than blending into the cream page
+// background, so "Founding Creator Program" reads as a distinct, limited offer rather
+// than another feature bullet -- the treatment the brief asked for when it said this
+// needed to be "more visible."
+function FoundingCreatorProgram({ stats }) {
   const soldOut = stats.remaining <= 0;
+  const perks = [
+    {
+      icon: <RankIcon />,
+      title: 'Priority placement',
+      body: `Automatically sorted first in Browse Creators and the homepage's showcase — before things get crowded.`,
+    },
+    {
+      icon: <KeyIcon />,
+      title: 'No follower minimum',
+      body: `Zero followers required. Set up tiers, publish posts, and get paid directly — no algorithm gatekeeping who gets to monetize.`,
+    },
+    {
+      icon: <FastForwardIcon />,
+      title: 'Skip the $2,000/mo wait',
+      body: `Standard accounts reach 7% once they're earning $2,000/mo on ByUs. Founding creators start there, from day one.`,
+    },
+  ];
 
   return (
-    <section className="border-y border-brand-ink/15 bg-brand-cream">
-      <div className="mx-auto max-w-6xl px-6 py-11">
-        <span className="text-xs font-extrabold uppercase tracking-wide text-[#B5613F]">
-          Founding promo
+    <section className="relative overflow-hidden bg-[#0e2620]">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -left-24 -top-24 h-96 w-96 rounded-full blur-3xl"
+        style={{ background: 'radial-gradient(circle, rgba(201,169,97,0.18), transparent 65%)' }}
+      />
+
+      <div className="relative mx-auto max-w-5xl px-6 py-20 text-center">
+        <span className="text-xs font-extrabold uppercase tracking-[0.2em] text-brand-gold">
+          Founding Creator Program
         </span>
-        <p className="mt-3 max-w-[26ch] font-display text-2xl font-bold leading-tight text-[#2B2420] sm:text-3xl">
-          The first <span className="text-3xl font-extrabold text-brand-teal sm:text-4xl">{stats.limit}</span>{' '}
-          creators keep <span className="text-3xl font-extrabold text-brand-teal sm:text-4xl">93%</span> from day
-          one — everyone else earns their way there.
+        <p className="mx-auto mt-4 max-w-2xl font-display text-4xl font-extrabold leading-tight text-brand-paper sm:text-5xl">
+          {stats.limit} spots. <span className="text-brand-gold">7% forever.</span>
         </p>
-        <p className="mt-3.5 max-w-lg text-brand-ink/70">
-          Standard accounts reach our lowest fee once they&rsquo;re earning $2,000/mo. Founding creators
-          start there.
+        <p className="mx-auto mt-4 max-w-lg text-brand-paper/70">
+          The first {stats.limit} creators to join lock in our lowest fee for good — everyone else
+          earns their way there at $2,000/mo.
         </p>
 
-        <div className="mt-6 flex flex-wrap items-center gap-5">
+        <div className="mx-auto mt-10 grid max-w-3xl gap-4 text-left sm:grid-cols-3">
+          {perks.map((p) => (
+            <div key={p.title} className="rounded-xl border border-brand-paper/15 bg-brand-paper/5 p-5">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-gold/15 text-brand-gold">
+                {p.icon}
+              </div>
+              <h3 className="mt-3 font-display text-base font-bold text-brand-paper">{p.title}</h3>
+              <p className="mt-1.5 text-sm leading-relaxed text-brand-paper/65">{p.body}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-10">
           {soldOut ? (
-            <p className="text-sm font-semibold text-brand-ink/70">
-              All {stats.limit} founding spots have been claimed — standard rates now apply to new signups.
+            <p className="text-sm font-semibold text-brand-paper/70">
+              All {stats.limit} founding spots have been claimed — standard rates now apply to new
+              signups.
             </p>
           ) : (
             <>
               <a
                 href="/signup?role=creator"
-                className="border-b-2 border-brand-gold font-semibold text-brand-teal transition hover:text-[#0f4d45]"
+                className="inline-block rounded-full bg-brand-gold px-8 py-3.5 text-base font-bold text-[#0e2620] shadow-[0_16px_30px_-14px_rgba(201,169,97,0.5)] transition hover:-translate-y-0.5"
               >
-                Claim your spot →
+                Claim a Founding Spot →
               </a>
-              <span className="text-sm font-medium tabular-nums text-brand-ink/60">
-                <strong className="font-display text-base text-[#2B2420]">{stats.remaining}</strong> of{' '}
-                {stats.limit} left
-              </span>
+              <p className="mt-3 text-sm font-medium tabular-nums text-brand-paper/55">
+                <strong className="font-display text-base text-brand-paper">{stats.remaining}</strong> of{' '}
+                {stats.limit} spots left
+              </p>
             </>
           )}
         </div>
-      </div>
-    </section>
-  );
-}
-
-// The creator-recruitment pitch for the founding promo above -- a dedicated section
-// rather than a rewrite of the top Hero, since the Hero pitches BOTH fans and creators
-// (the fee line applies to everyone browsing) while this is creator-acquisition copy
-// specifically. Every claim here has to stay true to what's actually live: the fee is
-// a permanent 7% (not "0%" or "keep 100%"), the priority placement is real (see the
-// is_founding ordering in /api/creators) but there's no editorial/human curation layer,
-// and there's no brand-deal or UGC-gig matching feature on ByUs at all -- so none of
-// that made it into this copy even though it showed up in the original pitch.
-// The "permanent 7% fee" card used to live here too, duplicating the fee stat the
-// FoundingPromoBanner right above already states plainly -- cut, since the two
-// sections back to back were making the same claim twice. These two cards each say
-// something the banner doesn't: where you rank in Browse, and that follower count
-// isn't the gate. Icons match the site's existing line-icon set (see PayoutIcon
-// etc. below) instead of emoji.
-function FoundersCircleSection({ stats }) {
-  const soldOut = stats.remaining <= 0;
-  const cards = [
-    {
-      icon: <RankIcon />,
-      title: 'Priority placement',
-      body: `Be a big fish in a small pond. Founding creators are automatically sorted first in Browse Creators and the homepage's featured section — for as long as you're here, before things get crowded.`,
-    },
-    {
-      icon: <KeyIcon />,
-      title: 'Built for skills, not metrics',
-      body: `Zero followers required to start. Set up tiers, publish posts, and get paid directly by the fans who value your work — no follower minimum, no algorithm gatekeeping who gets to monetize.`,
-    },
-  ];
-
-  return (
-    <section className="mx-auto max-w-6xl px-6 pb-8">
-      <div className="text-center">
-        <h2 className="font-display text-3xl font-bold text-[#2B2420]">Become a founding creator</h2>
-        <p className="mx-auto mt-2 max-w-xl text-brand-ink/70">
-          Monetize your creativity, not your follower count.
-        </p>
-      </div>
-
-      <div className="mx-auto mt-8 grid max-w-2xl gap-4 sm:grid-cols-2">
-        {cards.map((c) => (
-          <div key={c.title} className="rounded-2xl border border-brand-ink/10 bg-brand-paper p-6">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-teal/10 text-brand-teal">
-              {c.icon}
-            </div>
-            <h3 className="mt-4 font-display text-lg font-bold text-[#2B2420]">{c.title}</h3>
-            <p className="mt-2 text-sm leading-relaxed text-brand-ink/70">{c.body}</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-8 text-center">
-        {soldOut ? (
-          <p className="text-sm font-semibold text-brand-ink/70">
-            All {stats.limit} founding spots have been claimed — standard rates now apply to new signups.
-          </p>
-        ) : (
-          <a
-            href="/signup?role=creator"
-            className="inline-block rounded-full bg-brand-teal px-7 py-3.5 text-base font-semibold text-brand-paper shadow-sm transition hover:bg-[#0f4d45]"
-          >
-            Claim your founding spot →
-          </a>
-        )}
       </div>
     </section>
   );
@@ -164,19 +137,16 @@ function Hero({ user }) {
   const dashboardHref = user?.role === 'creator' ? '/creator/dashboard' : '/fan/dashboard';
 
   return (
-    // Dark band fading down into the page's own cream -- the darker treatment the
-    // mockup rounds settled on. Single column on purpose still: this used to split into
-    // two columns with a decorative profile-preview card on the right, but that card was
-    // doing a job the rest of the page now does better -- the photo band, the example
-    // feed, and the calculator below all show real "here's what this looks like"
-    // content, so the card in the hero was redundant. On mobile -- where outreach
-    // traffic actually lands -- it also pushed the CTA and fine print below a card most
-    // people would just scroll past. A tight single column gets to the button faster.
+    // Dark band fading down into the page's own cream. Two columns on desktop now --
+    // copy on the left, a small editorial collage of real Alex Rivers artwork on the
+    // right, so the hero shows what a ByUs page actually looks like instead of telling
+    // you. Stacks to a single column on mobile, art below the copy, so the CTAs and
+    // fine print still come first for outreach traffic.
     <section className="relative overflow-hidden bg-gradient-to-b from-[#0f201c] via-[#142c26] to-brand-cream">
       {/* Two blurred, ambiently drifting color blobs -- clay top-right, gold
           bottom-left -- give the dark band some depth instead of a flat fill. Purely
           decorative background motion, kept separate from the live-pulse dot on the
-          demo button below (which is tied to something real); `motion-safe:` means
+          demo link below (which is tied to something real); `motion-safe:` means
           prefers-reduced-motion is handled without any JS. */}
       <div
         aria-hidden="true"
@@ -189,193 +159,156 @@ function Hero({ user }) {
         style={{ background: 'radial-gradient(circle, rgba(201,169,97,0.16), transparent 65%)' }}
       />
 
-      <div className="relative mx-auto max-w-2xl px-6 pt-16 pb-24 text-left">
-        <span className="inline-flex -rotate-2 items-center gap-2 rounded border border-dashed border-brand-gold bg-brand-gold/10 px-4 py-1.5 font-display text-xs font-semibold italic tracking-wide text-brand-gold">
-          Made for creators, built around fairness
-        </span>
-
-        <h1 className="mt-6 font-display text-4xl font-extrabold leading-[1.08] tracking-tight text-brand-paper sm:text-5xl lg:text-[3.25rem]">
-          You keep{' '}
-          <span className="relative inline-block whitespace-nowrap">
-            90&ndash;93%
-            <svg
-              className="absolute -bottom-1.5 left-0 w-full"
-              height="10"
-              viewBox="0 0 200 10"
-              preserveAspectRatio="none"
-              aria-hidden="true"
-            >
-              <path d="M2 6 Q 50 1, 100 5 T 198 6" stroke="#C9A961" strokeWidth="4" fill="none" strokeLinecap="round" />
-            </svg>
-          </span>
-          . Period.
-        </h1>
-
-        {/* Preempts the "is that before or after Stripe takes its cut"
-            question right where someone forms it — the fine-print answer
-            already lives in StatsBand/FAQ further down, but a first-time
-            visitor shouldn't have to scroll to find it. */}
-        <p className="mt-3 font-display text-xl italic text-brand-paper/60">
-          Stripe processing is covered on ByUs's platform fee.
-        </p>
-
-        <p className="mt-6 max-w-lg text-lg leading-relaxed text-brand-paper/75">
-          Set up your page in a couple of minutes — tiers, posts, and payouts
-          handled. Nothing hidden, no listing fee, and your rate only gets
-          better as you grow.
-        </p>
-
-        <div className="mt-8 flex flex-wrap items-center gap-4">
-          {user ? (
-            <a
-              href={dashboardHref}
-              className="rounded-full bg-gradient-to-br from-brand-clay to-[#b6613f] px-7 py-3.5 text-base font-semibold text-brand-paper shadow-[0_16px_30px_-14px_rgba(201,124,93,0.65)] transition hover:-translate-y-0.5"
-            >
-              {user.role === 'creator' ? 'Go to your dashboard' : 'Your subscriptions'} →
-            </a>
-          ) : (
-            <a
-              href="/signup?role=creator"
-              className="rounded-full bg-gradient-to-br from-brand-clay to-[#b6613f] px-7 py-3.5 text-base font-semibold text-brand-paper shadow-[0_16px_30px_-14px_rgba(201,124,93,0.65)] transition hover:-translate-y-0.5"
-            >
-              Start your own page →
-            </a>
-          )}
-
-          {/* Lets a skeptical creator click through the whole product -- tiers,
-              a locked post unlocking, the payout math -- before committing to an
-              account, rather than taking the payout-rate pitch above on faith.
-              A broadcast-style "live" dot instead of a sparkle emoji -- the
-              emoji looked decorative and didn't actually read as "live." Border/
-              fill are translucent paper now instead of solid teal, since a teal
-              outline barely showed up against this teal-adjacent dark backdrop. */}
-          <a
-            href="/demo"
-            className="inline-flex items-center gap-2.5 rounded-full border-2 border-brand-paper/30 bg-brand-paper/10 px-7 py-3 text-base font-semibold text-brand-paper backdrop-blur transition hover:border-brand-gold hover:bg-brand-paper/15"
-          >
-            <span className="relative flex h-2 w-2" aria-hidden="true">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-gold opacity-70" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-brand-gold" />
+      <div className="relative mx-auto max-w-6xl px-6 pt-16 pb-24">
+        <div className="grid grid-cols-1 items-center gap-14 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="text-left">
+            <span className="inline-flex -rotate-2 items-center gap-2 rounded border border-dashed border-brand-gold bg-brand-gold/10 px-4 py-1.5 font-display text-xs font-semibold italic tracking-wide text-brand-gold">
+              Made for creators, built around fairness
             </span>
-            View Live Demo
-          </a>
-        </div>
-        <p className="mt-2.5 text-sm text-brand-paper/50">No sign-up required to preview</p>
 
-        <p className="mt-3 text-base font-semibold text-brand-paper/85">
-          $0 to start&nbsp;&nbsp;·&nbsp;&nbsp;fee drops to 7% once you're earning $2k+/mo&nbsp;&nbsp;·&nbsp;&nbsp;cancel anytime
-        </p>
-      </div>
-    </section>
-  );
-}
+            <h1 className="mt-6 font-display text-4xl font-extrabold leading-[1.08] tracking-tight text-brand-paper sm:text-5xl lg:text-[3.25rem]">
+              You keep{' '}
+              <span className="relative inline-block whitespace-nowrap">
+                90&ndash;93%
+                <svg
+                  className="absolute -bottom-1.5 left-0 w-full"
+                  height="10"
+                  viewBox="0 0 200 10"
+                  preserveAspectRatio="none"
+                  aria-hidden="true"
+                >
+                  <path d="M2 6 Q 50 1, 100 5 T 198 6" stroke="#C9A961" strokeWidth="4" fill="none" strokeLinecap="round" />
+                </svg>
+              </span>
+              . Period.
+            </h1>
 
-// Duotoned per-craft cards instead of stock photography. This first linked out to a
-// placeholder face-photo service (pravatar.cc) -- those silently failed to load in
-// some renders, which is worse than no photo at all, and a stranger's face standing
-// in for "a ByUs creator" was never more than a stopgap regardless. Self-contained SVG
-// icons can't break and don't imply any specific real person. Swap each card for real
-// photography (licensed stock, or actual ByUs creators) the moment it exists.
-function CraftPhotoBand() {
-  const crafts = [
-    { label: 'Ceramics', icon: <CeramicsIcon /> },
-    { label: 'Music', icon: <MusicIcon /> },
-    { label: 'Food', icon: <FoodIcon /> },
-    { label: 'Illustration', icon: <IllustrationIcon /> },
-    { label: 'Writing', icon: <WritingIcon /> },
-  ];
+            <p className="mt-3 font-display text-xl italic text-brand-paper/60">
+              The creator-first membership platform.
+            </p>
 
-  return (
-    <section className="mx-auto max-w-6xl px-6 py-14 text-center">
-      <h2 className="font-display text-3xl font-bold text-[#2B2420]">Built for every kind of creator</h2>
-      <p className="mx-auto mt-2 max-w-md text-brand-ink/70">
-        Placeholder art for now, standing in for real creator photography.
-      </p>
-      <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-5">
-        {crafts.map((c) => (
-          <div
-            key={c.label}
-            className="relative flex aspect-[4/5] items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-brand-teal to-[#0e4a42] text-brand-paper shadow-md"
-          >
-            <span className="h-[42%] w-[42%] opacity-90">{c.icon}</span>
-            <span className="absolute bottom-2.5 left-3 text-xs font-bold tracking-wide">{c.label}</span>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
+            <p className="mt-6 max-w-lg text-lg leading-relaxed text-brand-paper/75">
+              Build your page, connect payments, and share your work — tiers, posts, and
+              payouts handled, with Stripe's processing already covered in that fee.
+            </p>
 
-// Example post cards -- illustrative content, not real ByUs creators or posts. The
-// staggered layout (alternating cards nudged down on desktop) is what makes this read
-// as an actual feed instead of a grid of features; a subscriber's real feed replaces
-// these the moment creators are posting.
-function ExamplePostFeed() {
-  const posts = [
-    {
-      craft: 'Illustration',
-      title: 'Character sketch process, start to finish',
-      meta: '1 day ago · 22 comments',
-      icon: <IllustrationIcon />,
-      video: true,
-    },
-    {
-      craft: 'Music',
-      title: 'Studio session: laying down the bassline',
-      meta: '3 days ago · 9 comments',
-      icon: <MusicIcon />,
-      video: true,
-      lift: true,
-    },
-    {
-      craft: 'Ceramics',
-      title: 'Behind the glaze — testing a new celadon batch',
-      meta: '5 days ago · 14 comments',
-      icon: <CeramicsIcon />,
-    },
-    {
-      craft: 'Food',
-      title: "This week's menu development",
-      meta: '6 days ago · 31 comments',
-      icon: <FoodIcon />,
-      lift: true,
-    },
-  ];
-
-  return (
-    <section className="mx-auto max-w-6xl px-6 py-14 text-center">
-      <span className="inline-block rounded-md bg-brand-teal/10 px-3 py-1 text-xs font-semibold tracking-wide text-brand-teal">
-        Your feed, your rules
-      </span>
-      <h2 className="mt-3 font-display text-3xl font-bold text-[#2B2420]">What a subscriber actually sees</h2>
-      <p className="mx-auto mt-2 max-w-md text-brand-ink/70">
-        Example post cards — illustrative content, not real ByUs creators or posts.
-      </p>
-      <div className="mt-8 grid gap-4 text-left sm:grid-cols-4">
-        {posts.map((p) => (
-          <div
-            key={p.title}
-            className={`overflow-hidden rounded-2xl border border-brand-ink/15 bg-brand-paper shadow-sm ${
-              p.lift ? 'sm:mt-8' : ''
-            }`}
-          >
-            <div className="relative flex aspect-[4/3] items-center justify-center bg-gradient-to-br from-brand-clay to-[#b6613f]">
-              <span className="h-[34%] w-[34%] text-brand-paper opacity-90">{p.icon}</span>
-              {p.video && (
-                <span className="absolute bottom-2.5 right-2.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/45 text-[10px] text-brand-paper">
-                  ▶
-                </span>
+            <div className="mt-8 flex flex-wrap items-center gap-4">
+              {user ? (
+                <a
+                  href={dashboardHref}
+                  className="rounded-full bg-gradient-to-br from-brand-clay to-[#b6613f] px-7 py-3.5 text-base font-semibold text-brand-paper shadow-[0_16px_30px_-14px_rgba(201,124,93,0.65)] transition hover:-translate-y-0.5"
+                >
+                  {user.role === 'creator' ? 'Go to your dashboard' : 'Your subscriptions'} →
+                </a>
+              ) : (
+                <a
+                  href="/signup?role=creator"
+                  className="rounded-full bg-gradient-to-br from-brand-clay to-[#b6613f] px-7 py-3.5 text-base font-semibold text-brand-paper shadow-[0_16px_30px_-14px_rgba(201,124,93,0.65)] transition hover:-translate-y-0.5"
+                >
+                  Start Creating →
+                </a>
               )}
+
+              {/* Anchors down to HowItWorks -- for a visitor who isn't ready to commit
+                  to either CTA yet, this answers "okay, but how does it actually work"
+                  without leaving the page. */}
+              <a
+                href="#how-it-works"
+                className="rounded-full border-2 border-brand-paper/30 bg-brand-paper/10 px-7 py-3.5 text-base font-semibold text-brand-paper backdrop-blur transition hover:border-brand-gold hover:bg-brand-paper/15"
+              >
+                See How It Works
+              </a>
             </div>
-            <div className="p-3.5">
-              <div className="text-[10.5px] font-bold uppercase tracking-wide text-brand-teal">{p.craft}</div>
-              <div className="mt-1 text-sm font-bold leading-snug text-[#2B2420]">{p.title}</div>
-              <div className="mt-1.5 text-xs text-brand-ink/60">{p.meta}</div>
-            </div>
+
+            {/* The live-demo link, demoted from a filled pill to plain text with a small
+                live-pulse dot -- it still lets a skeptical creator click through the
+                whole product (tiers, a locked post unlocking, the payout math) before
+                committing to an account, but it no longer competes with the two primary
+                CTAs above for the first look. */}
+            <p className="mt-5 flex items-center gap-2 text-sm text-brand-paper/60">
+              <span className="relative flex h-2 w-2" aria-hidden="true">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-gold opacity-70" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-brand-gold" />
+              </span>
+              <a href="/demo" className="font-semibold underline-offset-2 hover:underline">
+                View a live demo
+              </a>
+              — no sign-up required
+            </p>
+
+            <p className="mt-4 text-base font-semibold text-brand-paper/85">
+              $0 to start&nbsp;&nbsp;·&nbsp;&nbsp;fee drops to 7% once you're earning $2k+/mo&nbsp;&nbsp;·&nbsp;&nbsp;cancel anytime
+            </p>
           </div>
-        ))}
+
+          <HeroArtCollage />
+        </div>
       </div>
     </section>
+  );
+}
+
+// A small editorial collage of real artwork from Alex Rivers's page (see
+// /public/creators/alex-rivers and the live /demo route) -- three crops, offset and
+// lightly rotated like pinned prints rather than a clean grid, so the hero shows a
+// real example of "what you can build" instead of describing it. The member-exclusive
+// crop keeps a light blur and lock badge so a first-time visitor also sees, at a
+// glance, that gated content is part of the picture. All three sit inside the Hero
+// section's own `overflow-hidden`, so the small negative offsets that give the pinned
+// look never cause page-level horizontal scroll.
+function HeroArtCollage() {
+  return (
+    <div className="relative mx-auto w-full max-w-sm lg:max-w-none">
+      <div className="relative aspect-[9/10] w-full">
+        <div className="absolute inset-x-[6%] top-0 h-[62%] -rotate-2 overflow-hidden rounded-sm border-[5px] border-brand-paper shadow-[0_30px_55px_-20px_rgba(0,0,0,0.55)]">
+          <Image
+            src="/creators/alex-rivers/hero.jpg"
+            alt="A landscape illustration from a ByUs creator's page — an example of the artwork a member's public feed can show"
+            fill
+            sizes="(min-width: 1024px) 34vw, 78vw"
+            className="object-cover"
+            priority
+          />
+        </div>
+
+        <div className="absolute bottom-[4%] left-0 h-[42%] w-[54%] rotate-1 overflow-hidden rounded-sm border-[5px] border-brand-paper shadow-[0_22px_44px_-18px_rgba(0,0,0,0.5)]">
+          <Image
+            src="/creators/alex-rivers/portrait-process.jpg"
+            alt="A portrait study from a ByUs creator's page"
+            fill
+            sizes="(min-width: 1024px) 20vw, 42vw"
+            className="object-cover"
+            style={{ objectPosition: '78% 42%' }}
+          />
+        </div>
+
+        <div className="absolute bottom-[10%] right-0 h-[34%] w-[38%] rotate-3 overflow-hidden rounded-sm border-[5px] border-brand-paper shadow-[0_18px_36px_-16px_rgba(0,0,0,0.5)]">
+          <Image
+            src="/creators/alex-rivers/member-exclusive.jpg"
+            alt="A members-only piece from a ByUs creator's page, shown blurred behind its lock"
+            fill
+            sizes="(min-width: 1024px) 16vw, 30vw"
+            className="object-cover blur-[2px] scale-105"
+          />
+          <div className="absolute inset-0 flex items-center justify-center bg-[#0f1a16]/35">
+            <LockGlyphLarge />
+          </div>
+        </div>
+      </div>
+
+      <p className="mt-5 text-center text-xs text-brand-paper/40 lg:text-left">
+        From Alex Rivers's page — see the full interactive version in the live demo.
+      </p>
+    </div>
+  );
+}
+
+function LockGlyphLarge() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFCF6" strokeWidth="2" aria-hidden="true">
+      <rect x="4" y="11" width="16" height="10" rx="2" />
+      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+    </svg>
   );
 }
 
@@ -397,99 +330,127 @@ function LookingForSomeoneSection() {
   );
 }
 
-function StatsBand() {
-  const stats = [
-    { value: '90%', label: "kept by the creator, every renewal — 93% once they've grown with us" },
-    {
-      value: '10% → 7%',
-      label: 'platform fee — drops to 7% for any month you earn $2,000+ on ByUs; Stripe’s own processing comes out of our cut, never billed to you separately',
-    },
-    { value: '$0', label: 'to start; no listing or setup cost' },
-  ];
-  const tilts = ['-rotate-[1.1deg]', 'rotate-[0.8deg]', '-rotate-[0.6deg]'];
-
-  return (
-    <section className="border-y border-brand-ink/10 bg-brand-paper">
-      <div className="mx-auto grid max-w-4xl gap-6 px-6 py-14 sm:grid-cols-3">
-        {stats.map((s, i) => (
-          <div
-            key={s.label}
-            className={`rounded-xl border border-brand-ink/20 bg-[#F5E9D8] px-6 py-6 text-center ${tilts[i % tilts.length]}`}
-          >
-            <div className="font-display text-4xl font-bold tabular-nums text-brand-teal">{s.value}</div>
-            <p className="mt-2 text-sm leading-relaxed text-brand-ink/70">{s.label}</p>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
+// Replaces the old icon+text feature cards with small, realistic previews of the
+// product itself -- a mock payout breakdown, a mock tier picker, and a locked post --
+// so a visitor sees roughly what these look like inside ByUs instead of reading an
+// icon standing in for the idea. The gated-content preview reuses real Alex Rivers
+// artwork (detail-piece.jpg) with the same blur+lock treatment as the live /demo
+// route's LockedHeroPiece, so the "locked" language on this page and the real product
+// look identical.
 function Features() {
   return (
-    <section className="mx-auto max-w-4xl px-6 py-24">
+    <section className="mx-auto max-w-5xl px-6 py-24">
       <div className="text-center">
         <h2 className="font-display text-3xl font-semibold text-[#2B2420]">
           Everything a membership needs, nothing it doesn&rsquo;t
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-brand-ink/70">
-          No churn dashboards to configure — just the parts that make a subscription work.
+          No churn dashboards to configure — just the parts that make a subscription work, shown as
+          they actually appear.
         </p>
       </div>
 
       {/* Asymmetric rhythm instead of three uniform boxes -- Direct payouts gets the
-          big 2/3 slot since Stripe Express payouts are the actual differentiator,
-          the other two stack beside it rather than competing for equal weight. */}
-      <div className="mt-14 grid gap-6 lg:grid-cols-[2fr_1fr]">
-        <Feature
-          big
-          icon={<PayoutIcon />}
-          accent="teal"
-          title="Direct payouts"
-          body="Each creator connects their own Stripe Express account and receives 90% of every charge automatically — rising to 93% for good once they've grown with us. This is the whole model, so it gets the room to say it plainly."
-        />
+          big slot since Stripe Express payouts are the actual differentiator, the
+          other two stack beside it rather than competing for equal weight. */}
+      <div className="mt-14 grid gap-6 lg:grid-cols-[1.3fr_1fr]">
+        <PayoutDemo />
         <div className="flex flex-col gap-6">
-          <Feature
-            icon={<TiersIcon />}
-            accent="gold"
-            title="Tiered memberships"
-            body="Build one or more monthly tiers with custom names, descriptions, and prices. Fans pick what fits."
-          />
-          <Feature
-            icon={<LockIcon />}
-            accent="clay"
-            title="Gated content"
-            body="Post public or subscribers-only updates. Access turns off the moment a subscription lapses or is canceled."
-          />
+          <TiersDemo />
+          <GatedContentDemo />
         </div>
       </div>
     </section>
   );
 }
 
-const accentClasses = {
-  teal: { bg: 'bg-brand-teal/10', text: 'text-brand-teal' },
-  gold: { bg: 'bg-brand-gold/15', text: 'text-[#8a6b2f]' },
-  clay: { bg: 'bg-brand-clay/15', text: 'text-brand-clay' },
-};
-
-function Feature({ icon, accent, title, body, big }) {
-  const c = accentClasses[accent];
+function PayoutDemo() {
   return (
-    <div
-      className={`group rounded-2xl border bg-brand-paper text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
-        big ? 'flex h-full flex-col justify-center border-brand-teal/30 p-8' : 'border-brand-ink/15 p-6'
-      }`}
-    >
-      <div
-        className={`flex items-center justify-center rounded-xl ${c.bg} ${c.text} ${
-          big ? 'h-14 w-14' : 'h-11 w-11'
-        }`}
-      >
-        {icon}
+    <div className="flex h-full flex-col justify-between rounded-2xl border border-brand-teal/30 bg-brand-paper p-8 shadow-sm">
+      <div>
+        <span className="text-xs font-extrabold uppercase tracking-wide text-brand-teal">Direct payouts</span>
+        <h3 className="mt-2 font-display text-xl font-bold text-[#2B2420]">Every charge, split automatically</h3>
+        <p className="mt-2 max-w-md text-brand-ink/70">
+          Each creator connects their own Stripe Express account. Payouts land there directly — no
+          manual transfers, no waiting on ByUs to release funds.
+        </p>
       </div>
-      <h3 className={`mt-4 font-semibold text-[#2B2420] ${big ? 'text-xl' : ''}`}>{title}</h3>
-      <p className={`mt-2 leading-relaxed text-brand-ink/70 ${big ? 'max-w-md text-base' : 'text-sm'}`}>{body}</p>
+
+      {/* A real receipt, not a made-up one -- $10/mo at the 7% founding-creator rate,
+          the same math the EarningsCalculator above uses. */}
+      <div className="mt-6 rounded-xl border border-brand-ink/10 bg-[#F5E9D8] p-4">
+        <div className="flex items-center justify-between text-sm">
+          <span className="font-medium text-brand-ink/70">Membership charge</span>
+          <span className="font-display font-bold tabular-nums text-[#2B2420]">$10.00</span>
+        </div>
+        <div className="mt-2 flex items-center justify-between text-sm text-brand-ink/50">
+          <span>Platform fee (7%)</span>
+          <span className="tabular-nums">&minus;$0.70</span>
+        </div>
+        <div className="mt-3 flex items-center justify-between border-t border-brand-ink/15 pt-3 text-sm font-bold">
+          <span className="text-brand-teal">You receive</span>
+          <span className="font-display tabular-nums text-brand-teal">$9.30</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TiersDemo() {
+  const tiers = [
+    { name: 'Supporter', price: 5 },
+    { name: 'Insider', price: 10, popular: true },
+    { name: 'VIP', price: 25 },
+  ];
+  return (
+    <div className="rounded-2xl border border-brand-ink/15 bg-brand-paper p-6 shadow-sm">
+      <span className="text-xs font-extrabold uppercase tracking-wide text-[#8a6b2f]">Tiered memberships</span>
+      <h3 className="mt-2 font-display text-lg font-bold text-[#2B2420]">Fans pick what fits</h3>
+      <div className="mt-4 space-y-2">
+        {tiers.map((t) => (
+          <div
+            key={t.name}
+            className={`flex items-center justify-between rounded-lg border px-3.5 py-2.5 ${
+              t.popular ? 'border-brand-gold bg-brand-gold/10' : 'border-brand-ink/15'
+            }`}
+          >
+            <span className="text-sm font-semibold text-[#2B2420]">{t.name}</span>
+            <span className="text-sm font-bold tabular-nums text-brand-ink/70">${t.price}/mo</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function GatedContentDemo() {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-brand-ink/15 bg-brand-paper shadow-sm">
+      <div className="relative aspect-[16/10]">
+        <Image
+          src="/creators/alex-rivers/detail-piece.jpg"
+          alt="Example of a members-only post, shown locked"
+          fill
+          sizes="(min-width: 1024px) 22vw, 90vw"
+          className="object-cover blur-[3px] scale-105"
+        />
+        <div className="absolute inset-0 flex items-center justify-center bg-[#0f1a16]/45">
+          <span className="flex items-center gap-1.5 rounded-full bg-brand-paper/95 px-3.5 py-1.5 text-xs font-bold text-[#2B2420]">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true">
+              <rect x="4" y="11" width="16" height="10" rx="2" />
+              <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+            </svg>
+            Members only
+          </span>
+        </div>
+      </div>
+      <div className="p-5">
+        <span className="text-xs font-extrabold uppercase tracking-wide text-brand-clay">Gated content</span>
+        <p className="mt-1.5 text-sm leading-relaxed text-brand-ink/70">
+          Post public or subscribers-only updates. Access turns off the moment a subscription lapses
+          or is canceled.
+        </p>
+      </div>
     </div>
   );
 }
@@ -498,28 +459,33 @@ function HowItWorks() {
   const steps = [
     {
       n: '01',
-      title: 'Set up your page',
+      title: 'Create your page',
       body: 'Add a bio, a photo, and one or more monthly tiers with your own pricing.',
     },
     {
       n: '02',
-      title: 'Connect Stripe',
-      body: 'Link your own Stripe Express account once — payouts land there directly, every time.',
+      title: 'Connect payments',
+      body: 'Link your own Stripe Express account once — it stays connected, no re-linking required.',
     },
     {
       n: '03',
-      title: 'Share and post',
+      title: 'Share with your audience',
       body: 'Publish public updates to bring people in, and subscriber-only posts to reward them for joining.',
+    },
+    {
+      n: '04',
+      title: 'Get paid',
+      body: 'Every charge splits automatically — your share lands in your Stripe account directly, no manual invoicing.',
     },
   ];
   return (
-    <section className="bg-brand-paper">
-      <div className="mx-auto max-w-4xl px-6 py-24">
+    <section id="how-it-works" className="bg-brand-paper">
+      <div className="mx-auto max-w-5xl px-6 py-24">
         <h2 className="text-center font-display text-3xl font-semibold text-[#2B2420]">
-          Up and running in three steps
+          Up and running in four steps
         </h2>
 
-        <div className="mt-14 grid gap-10 sm:grid-cols-3">
+        <div className="mt-14 grid grid-cols-2 gap-x-8 gap-y-12 sm:grid-cols-4 sm:gap-y-10">
           {steps.map((s, i) => (
             <div key={s.n} className="relative text-left">
               <span className="font-display text-3xl font-semibold text-brand-gold/70">{s.n}</span>
@@ -587,40 +553,8 @@ function ClosingCta({ user }) {
   );
 }
 
-function PayoutIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <rect x="3" y="7" width="18" height="13" rx="2" />
-      <path d="M3 10h18" />
-      <path d="M7 15h4" strokeLinecap="round" />
-      <path d="M12 3l3.5 3.5" strokeLinecap="round" />
-      <path d="M12 3l-3.5 3.5" strokeLinecap="round" />
-      <path d="M12 3v6" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function TiersIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d="M12 3l9 5-9 5-9-5 9-5z" strokeLinejoin="round" />
-      <path d="M3 13l9 5 9-5" strokeLinejoin="round" />
-      <path d="M3 18l9 5 9-5" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function LockIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <rect x="4" y="11" width="16" height="10" rx="2" />
-      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-    </svg>
-  );
-}
-
-// FoundersCircleSection icons -- same 24x24/1.8-stroke convention as the three above,
-// sized to sit inside a fixed 44px icon tile.
+// FoundingCreatorProgram perk-card icons -- same 24x24/1.8-stroke convention as the
+// icons above, sized to sit inside a fixed 40px icon tile.
 function RankIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -643,53 +577,16 @@ function KeyIcon() {
   );
 }
 
-// CraftPhotoBand / ExamplePostFeed icons -- these sit inside percentage-sized wrappers
-// (h-[42%]/h-[34%] of a much larger card) rather than a fixed pixel box, so they use a
-// 64x64 viewBox with no explicit width/height and scale with their container.
-function CeramicsIcon() {
+// FoundingCreatorProgram's third perk card -- "skip the wait," visualized as two
+// chevrons past a bar rather than a literal clock/calendar, to read as "ahead of the
+// line" instead of "time passing."
+function FastForwardIcon() {
   return (
-    <svg viewBox="0 0 64 64" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none" stroke="currentColor" className="h-full w-full">
-      <path d="M25 12h14" />
-      <path d="M27 12c-3 6-5 10-5 16 0 8 6 10 6 18 0 4-2 6-2 6h12s-2-2-2-6c0-8 6-10 6-18 0-6-2-10-5-16" />
-      <path d="M18 52h28" />
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M4 6v12" strokeLinecap="round" />
+      <path d="M9 7l7 5-7 5V7z" strokeLinejoin="round" />
+      <path d="M16 7l7 5-7 5V7z" strokeLinejoin="round" />
     </svg>
   );
 }
 
-function MusicIcon() {
-  return (
-    <svg viewBox="0 0 64 64" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none" stroke="currentColor" className="h-full w-full">
-      <circle cx="24" cy="46" r="8" />
-      <path d="M32 46V14l14 4v10" />
-      <path d="M32 24l14 4" />
-    </svg>
-  );
-}
-
-function FoodIcon() {
-  return (
-    <svg viewBox="0 0 64 64" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none" stroke="currentColor" className="h-full w-full">
-      <path d="M20 40c-5 0-8-4-8-8 0-4 3-7 6-7 0-5 4-9 9-9 3 0 5 1 7 3 2-3 5-4 8-4 5 0 9 4 9 9 4 0 7 3 7 7 0 4-3 8-8 8" />
-      <path d="M20 40v10h24V40" />
-      <path d="M20 46h24" />
-    </svg>
-  );
-}
-
-function IllustrationIcon() {
-  return (
-    <svg viewBox="0 0 64 64" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none" stroke="currentColor" className="h-full w-full">
-      <path d="M42 12l10 10-28 28-12 3 3-12z" />
-      <path d="M38 16l10 10" />
-    </svg>
-  );
-}
-
-function WritingIcon() {
-  return (
-    <svg viewBox="0 0 64 64" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none" stroke="currentColor" className="h-full w-full">
-      <path d="M32 20c-4-4-10-6-18-6v34c8 0 14 2 18 6 4-4 10-6 18-6V14c-8 0-14 2-18 6z" />
-      <path d="M32 20v34" />
-    </svg>
-  );
-}
