@@ -54,7 +54,7 @@ export async function POST(request) {
   // clear, specific reason they can't get in rather than a session that silently never works.
   if (user.is_suspended) {
     return NextResponse.json(
-      { error: 'This account has been suspended. Contact evanryon@yahoo.com if you believe this is a mistake.' },
+      { error: 'This account has been suspended. Contact support@byusapp.com if you believe this is a mistake.' },
       { status: 403 }
     );
   }
