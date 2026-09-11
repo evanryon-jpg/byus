@@ -106,7 +106,8 @@ function SupportPageContent() {
           Support ByUs
         </h1>
         <p className="mx-auto mt-2 max-w-xs text-sm text-brand-ink/65">
-          A one-time thank-you that goes straight toward hosting and building ByUs — no
+          A one-time tip for the work of running ByUs — the hosting, support, and
+          development that keep the app online for every creator and fan on it. No
           subscription, no commitment.
         </p>
 
@@ -164,7 +165,7 @@ function SupportPageContent() {
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value.slice(0, MAX_MESSAGE_LENGTH))}
-                placeholder="Say something (optional, only Evan will see it)"
+                placeholder="Say something (optional, only the ByUs team will see it)"
                 rows={2}
                 className="mt-4 w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
               />
