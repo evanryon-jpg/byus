@@ -83,7 +83,7 @@ function FoundingCreatorProgram({ stats }) {
         style={{ background: 'radial-gradient(circle, rgba(201,169,97,0.18), transparent 65%)' }}
       />
 
-      <div className="relative mx-auto max-w-5xl px-6 py-20 text-center">
+      <div className="relative mx-auto max-w-5xl px-6 py-14 text-center">
         <span className="text-xs font-extrabold uppercase tracking-[0.2em] text-brand-gold">
           Founding Creator Program
         </span>
@@ -95,7 +95,7 @@ function FoundingCreatorProgram({ stats }) {
           earns their way there at $2,000/mo.
         </p>
 
-        <div className="mx-auto mt-10 grid max-w-3xl gap-4 text-left sm:grid-cols-3">
+        <div className="mx-auto mt-8 grid max-w-3xl gap-4 text-left sm:grid-cols-3">
           {perks.map((p) => (
             <div key={p.title} className="rounded-xl border border-brand-paper/15 bg-brand-paper/5 p-5">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-gold/15 text-brand-gold">
@@ -107,7 +107,7 @@ function FoundingCreatorProgram({ stats }) {
           ))}
         </div>
 
-        <div className="mt-10">
+        <div className="mt-8">
           {soldOut ? (
             <p className="text-sm font-semibold text-brand-paper/70">
               All {stats.limit} founding spots have been claimed — standard rates now apply to new
@@ -159,8 +159,8 @@ function Hero({ user }) {
         style={{ background: 'radial-gradient(circle, rgba(201,169,97,0.16), transparent 65%)' }}
       />
 
-      <div className="relative mx-auto max-w-6xl px-6 pt-16 pb-24">
-        <div className="grid grid-cols-1 items-center gap-14 lg:grid-cols-[1.05fr_0.95fr]">
+      <div className="relative mx-auto max-w-6xl px-6 pt-14 pb-16">
+        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14">
           <div className="text-left">
             <span className="inline-flex -rotate-2 items-center gap-2 rounded border border-dashed border-brand-gold bg-brand-gold/10 px-4 py-1.5 font-display text-xs font-semibold italic tracking-wide text-brand-gold">
               Made for creators, built around fairness
@@ -319,7 +319,7 @@ function LockGlyphLarge() {
 // to either start their own page or go looking for one they already have in mind.
 function LookingForSomeoneSection() {
   return (
-    <section className="mx-auto max-w-xl px-6 py-4 text-center">
+    <section className="mx-auto max-w-xl px-6 py-2 text-center">
       <p className="font-display text-sm font-semibold uppercase tracking-wide text-brand-ink/50">
         Looking for someone specific?
       </p>
@@ -339,7 +339,7 @@ function LookingForSomeoneSection() {
 // look identical.
 function Features() {
   return (
-    <section className="mx-auto max-w-5xl px-6 py-24">
+    <section className="mx-auto max-w-5xl px-6 py-16">
       <div className="text-center">
         <h2 className="font-display text-3xl font-semibold text-[#2B2420]">
           Everything a membership needs, nothing it doesn&rsquo;t
@@ -353,7 +353,7 @@ function Features() {
       {/* Asymmetric rhythm instead of three uniform boxes -- Direct payouts gets the
           big slot since Stripe Express payouts are the actual differentiator, the
           other two stack beside it rather than competing for equal weight. */}
-      <div className="mt-14 grid gap-6 lg:grid-cols-[1.3fr_1fr]">
+      <div className="mt-10 grid gap-6 lg:grid-cols-[1.3fr_1fr]">
         <PayoutDemo />
         <div className="flex flex-col gap-6">
           <TiersDemo />
@@ -480,12 +480,12 @@ function HowItWorks() {
   ];
   return (
     <section id="how-it-works" className="bg-brand-paper">
-      <div className="mx-auto max-w-5xl px-6 py-24">
+      <div className="mx-auto max-w-5xl px-6 py-16">
         <h2 className="text-center font-display text-3xl font-semibold text-[#2B2420]">
           Up and running in four steps
         </h2>
 
-        <div className="mt-14 grid grid-cols-2 gap-x-8 gap-y-12 sm:grid-cols-4 sm:gap-y-10">
+        <div className="mt-10 grid grid-cols-2 gap-x-8 gap-y-8 sm:grid-cols-4 sm:gap-y-10">
           {steps.map((s, i) => (
             <div key={s.n} className="relative text-left">
               <span className="font-display text-3xl font-semibold text-brand-gold/70">{s.n}</span>
@@ -513,7 +513,7 @@ function ClosingCta({ user }) {
   return (
     <section className="relative overflow-hidden bg-brand-teal">
       <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-brand-gold/20 blur-3xl" />
-      <div className="mx-auto max-w-3xl px-6 py-20 text-center">
+      <div className="mx-auto max-w-3xl px-6 py-14 text-center">
         <h2 className="font-display text-3xl font-semibold text-white sm:text-4xl">
           {user ? 'Welcome back.' : 'Ready to get started?'}
         </h2>
