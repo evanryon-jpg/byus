@@ -85,6 +85,12 @@ export default function TermsPage() {
             account ban.
           </p>
           <p className="mt-3">
+            Content that engages in, encourages, promotes, or celebrates unlawful violence, or
+            hate speech targeting any group based on race, religion, disability, gender, sexual
+            orientation, national origin, or any other immutable characteristic, is never allowed
+            on ByUs and results in an immediate account ban.
+          </p>
+          <p className="mt-3">
             We use automated screening — including keyword and link filtering — to catch
             violations of this section before content is published, in addition to manual
             review. New creator accounts go through a one-time initial review before they can
