@@ -164,21 +164,37 @@ function Hero({ user }) {
   const dashboardHref = user?.role === 'creator' ? '/creator/dashboard' : '/fan/dashboard';
 
   return (
-    <section className="overflow-hidden">
-      {/* Single column on purpose. This used to split into two columns with a
-          decorative profile-preview card on the right, but that card was doing a
-          job the rest of the page now does better -- the photo band, the example
-          feed, and the calculator below all show real "here's what this looks
-          like" content, so the card in the hero was redundant. On mobile -- where
-          outreach traffic actually lands -- it also pushed the CTA and fine print
-          below a card most people would just scroll past. A tight single column
-          gets to the button faster. */}
-      <div className="mx-auto max-w-2xl px-6 pt-14 pb-20 text-left">
-        <span className="inline-flex -rotate-2 items-center gap-2 rounded border border-dashed border-brand-clay bg-[#F5E9D8] px-4 py-1.5 font-display text-xs font-semibold italic tracking-wide text-[#B5613F]">
+    // Dark band fading down into the page's own cream -- the darker treatment the
+    // mockup rounds settled on. Single column on purpose still: this used to split into
+    // two columns with a decorative profile-preview card on the right, but that card was
+    // doing a job the rest of the page now does better -- the photo band, the example
+    // feed, and the calculator below all show real "here's what this looks like"
+    // content, so the card in the hero was redundant. On mobile -- where outreach
+    // traffic actually lands -- it also pushed the CTA and fine print below a card most
+    // people would just scroll past. A tight single column gets to the button faster.
+    <section className="relative overflow-hidden bg-gradient-to-b from-[#0f201c] via-[#142c26] to-brand-cream">
+      {/* Two blurred, ambiently drifting color blobs -- clay top-right, gold
+          bottom-left -- give the dark band some depth instead of a flat fill. Purely
+          decorative background motion, kept separate from the live-pulse dot on the
+          demo button below (which is tied to something real); `motion-safe:` means
+          prefers-reduced-motion is handled without any JS. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-40 -top-28 h-[560px] w-[560px] rounded-full blur-md motion-safe:animate-byus-drift"
+        style={{ background: 'radial-gradient(circle, rgba(201,124,93,0.28), transparent 65%)' }}
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -left-36 bottom-[10%] h-[420px] w-[420px] rounded-full"
+        style={{ background: 'radial-gradient(circle, rgba(201,169,97,0.16), transparent 65%)' }}
+      />
+
+      <div className="relative mx-auto max-w-2xl px-6 pt-16 pb-24 text-left">
+        <span className="inline-flex -rotate-2 items-center gap-2 rounded border border-dashed border-brand-gold bg-brand-gold/10 px-4 py-1.5 font-display text-xs font-semibold italic tracking-wide text-brand-gold">
           Made for creators, built around fairness
         </span>
 
-        <h1 className="mt-6 font-display text-4xl font-extrabold leading-[1.08] tracking-tight text-[#2B2420] sm:text-5xl lg:text-[3.25rem]">
+        <h1 className="mt-6 font-display text-4xl font-extrabold leading-[1.08] tracking-tight text-brand-paper sm:text-5xl lg:text-[3.25rem]">
           You keep{' '}
           <span className="relative inline-block whitespace-nowrap">
             90&ndash;93%
@@ -199,11 +215,11 @@ function Hero({ user }) {
             question right where someone forms it — the fine-print answer
             already lives in StatsBand/FAQ further down, but a first-time
             visitor shouldn't have to scroll to find it. */}
-        <p className="mt-3 font-display text-xl italic text-brand-ink/60">
+        <p className="mt-3 font-display text-xl italic text-brand-paper/60">
           Stripe processing is covered on ByUs's platform fee.
         </p>
 
-        <p className="mt-6 max-w-lg text-lg leading-relaxed text-brand-ink/70">
+        <p className="mt-6 max-w-lg text-lg leading-relaxed text-brand-paper/75">
           Set up your page in a couple of minutes — tiers, posts, and payouts
           handled. Nothing hidden, no listing fee, and your rate only gets
           better as you grow.
@@ -213,14 +229,14 @@ function Hero({ user }) {
           {user ? (
             <a
               href={dashboardHref}
-              className="rounded-full bg-brand-teal px-7 py-3.5 text-base font-semibold text-brand-paper shadow-sm transition hover:bg-[#0f4d45]"
+              className="rounded-full bg-gradient-to-br from-brand-clay to-[#b6613f] px-7 py-3.5 text-base font-semibold text-brand-paper shadow-[0_16px_30px_-14px_rgba(201,124,93,0.65)] transition hover:-translate-y-0.5"
             >
               {user.role === 'creator' ? 'Go to your dashboard' : 'Your subscriptions'} →
             </a>
           ) : (
             <a
               href="/signup?role=creator"
-              className="rounded-full bg-brand-teal px-7 py-3.5 text-base font-semibold text-brand-paper shadow-sm transition hover:bg-[#0f4d45]"
+              className="rounded-full bg-gradient-to-br from-brand-clay to-[#b6613f] px-7 py-3.5 text-base font-semibold text-brand-paper shadow-[0_16px_30px_-14px_rgba(201,124,93,0.65)] transition hover:-translate-y-0.5"
             >
               Start your own page →
             </a>
@@ -230,10 +246,12 @@ function Hero({ user }) {
               a locked post unlocking, the payout math -- before committing to an
               account, rather than taking the payout-rate pitch above on faith.
               A broadcast-style "live" dot instead of a sparkle emoji -- the
-              emoji looked decorative and didn't actually read as "live." */}
+              emoji looked decorative and didn't actually read as "live." Border/
+              fill are translucent paper now instead of solid teal, since a teal
+              outline barely showed up against this teal-adjacent dark backdrop. */}
           <a
             href="/demo"
-            className="inline-flex items-center gap-2.5 rounded-full border-2 border-brand-teal px-7 py-3 text-base font-semibold text-brand-teal transition hover:bg-brand-teal/10"
+            className="inline-flex items-center gap-2.5 rounded-full border-2 border-brand-paper/30 bg-brand-paper/10 px-7 py-3 text-base font-semibold text-brand-paper backdrop-blur transition hover:border-brand-gold hover:bg-brand-paper/15"
           >
             <span className="relative flex h-2 w-2" aria-hidden="true">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-gold opacity-70" />
@@ -242,9 +260,9 @@ function Hero({ user }) {
             View Live Demo
           </a>
         </div>
-        <p className="mt-2.5 text-sm text-brand-ink/50">No sign-up required to preview</p>
+        <p className="mt-2.5 text-sm text-brand-paper/50">No sign-up required to preview</p>
 
-        <p className="mt-3 text-base font-semibold text-brand-ink">
+        <p className="mt-3 text-base font-semibold text-brand-paper/85">
           $0 to start&nbsp;&nbsp;·&nbsp;&nbsp;fee drops to 7% once you're earning $2k+/mo&nbsp;&nbsp;·&nbsp;&nbsp;cancel anytime
         </p>
       </div>
