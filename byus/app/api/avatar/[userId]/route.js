@@ -5,7 +5,7 @@ import { get } from '@vercel/blob';
 import { query } from '@/lib/db';
 import { isValidPresetAvatarId } from '@/lib/preset-avatars';
 
-const AVATAR_ASSET_VERSION = '5';
+const AVATAR_ASSET_VERSION = '6';
 
 export async function GET(request, { params }) {
   const { userId } = params;
