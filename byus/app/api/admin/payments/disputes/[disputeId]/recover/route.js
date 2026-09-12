@@ -11,8 +11,11 @@ export const dynamic = 'force-dynamic';
 // - We only automate FULL-charge disputes here. Partial disputes need a proportional
 //   reversal amount based on the original destination transfer, so they stay manual until
 //   that amount can be verified precisely rather than guessed.
-// - A synthetic record in processed_stripe_events acts as an idempotency guard so an admin
-//   double-click cannot intentionally run the same recovery twice.
+// - A synthetic record in processed_stripe_events acts as an application-level idempotency
+//   guard so an admin double-click cannot intentionally run the same recovery twice.
+// - The Stripe reversal itself also uses a deterministic idempotency key. If Stripe succeeds
+//   but the DB transaction later rolls back, a retry returns the same reversal instead of
+//   creating a second one.
 
 import { NextResponse } from 'next/server';
 import { withTransaction } from '@/lib/db';
@@ -27,7 +30,7 @@ export async function POST(_request, { params }) {
   }
 
   const disputeId = typeof params?.disputeId === 'string' ? params.disputeId.trim() : '';
-  if (!disputeId.startsWith('dp_')) {
+  if (!disputeId.startsWith('du_')) {
     return NextResponse.json({ error: 'A valid Stripe dispute ID is required.' }, { status: 400 });
   }
 
@@ -114,6 +117,7 @@ export async function POST(_request, { params }) {
       // application fee is NOT refunded here; this is a dispute loss, not a voluntary refund.
       const reversal = await paymentProvider.reverseDestinationChargeTransfer({
         chargeId: dispute.stripe_charge_id,
+        idempotencyKey: `byus-dispute-recovery-${disputeId}`,
         metadata: {
           byus_dispute_recovery: 'true',
           byus_dispute_id: disputeId,
