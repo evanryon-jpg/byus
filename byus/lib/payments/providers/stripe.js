@@ -210,7 +210,12 @@ export async function createDestinationChargeRefund({
   };
 }
 
-export async function reverseDestinationChargeTransfer({ chargeId, amountCents, metadata }) {
+export async function reverseDestinationChargeTransfer({
+  chargeId,
+  amountCents,
+  metadata,
+  idempotencyKey,
+}) {
   const charge = await stripe.charges.retrieve(chargeId);
   const transferId =
     typeof charge.transfer === 'string' ? charge.transfer : charge.transfer?.id || null;
@@ -219,10 +224,14 @@ export async function reverseDestinationChargeTransfer({ chargeId, amountCents, 
     throw new Error(`Charge ${chargeId} does not have a destination transfer to reverse.`);
   }
 
-  const reversal = await stripe.transfers.createReversal(transferId, {
-    ...(Number.isInteger(amountCents) ? { amount: amountCents } : {}),
-    ...(metadata ? { metadata } : {}),
-  });
+  const reversal = await stripe.transfers.createReversal(
+    transferId,
+    {
+      ...(Number.isInteger(amountCents) ? { amount: amountCents } : {}),
+      ...(metadata ? { metadata } : {}),
+    },
+    ...(idempotencyKey ? [{ idempotencyKey }] : [])
+  );
 
   return {
     reversalId: reversal.id,
