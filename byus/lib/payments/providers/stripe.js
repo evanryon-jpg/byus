@@ -334,6 +334,10 @@ export async function retrieveCharge({ id }) {
   return stripe.charges.retrieve(id);
 }
 
+export async function retrieveDispute({ id }) {
+  return stripe.disputes.retrieve(id);
+}
+
 export async function retrieveInvoice({ id }) {
   return stripe.invoices.retrieve(id);
 }
