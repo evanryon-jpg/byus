@@ -1,11 +1,9 @@
 import './globals.css';
+import { Suspense } from 'react';
 import { Fraunces, Karla } from 'next/font/google';
 import NavBar from './components/NavBar';
 import Footer from './components/Footer';
 import ConversionAnalytics from './components/ConversionAnalytics';
-// Redeploy trigger: Web Analytics was enabled in the Vercel dashboard after our last
-// deploy -- its tracking routes (/*.../script.js) only get wired up on the *next*
-// deployment after enabling, so this comment forces that deployment.
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
@@ -29,7 +27,7 @@ export default function RootLayout({ children }) {
         <NavBar />
         <main className="flex-1">{children}</main>
         <Footer />
-        <ConversionAnalytics />
+        <Suspense fallback={null}><ConversionAnalytics /></Suspense>
         <Analytics />
         <SpeedInsights />
       </body>
