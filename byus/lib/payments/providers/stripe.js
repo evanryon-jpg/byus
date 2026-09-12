@@ -184,6 +184,67 @@ export async function updateSubscriptionFeePercent({ subscriptionId, feePercent 
   await stripe.subscriptions.update(subscriptionId, { application_fee_percent: feePercent });
 }
 
+// ---- Refunds & connected-account fund recovery ------------------------------------------
+
+// Destination-charge refunds must explicitly reverse the creator transfer or the creator
+// keeps their payout while the platform funds the customer refund. ByUs also refunds its
+// application fee by default so a full refund actually unwinds the whole transaction.
+// Stripe handles partial refunds proportionally for both the transfer and application fee.
+export async function createDestinationChargeRefund({
+  chargeId,
+  amountCents,
+  reason = 'requested_by_customer',
+  metadata,
+  refundApplicationFee = true,
+}) {
+  const params = {
+    charge: chargeId,
+    reverse_transfer: true,
+    refund_application_fee: refundApplicationFee,
+    reason,
+    ...(metadata ? { metadata } : {}),
+    ...(Number.isInteger(amountCents) ? { amount: amountCents } : {}),
+  };
+
+  const refund = await stripe.refunds.create(params);
+  return {
+    refundId: refund.id,
+    status: refund.status,
+    amountCents: refund.amount,
+    chargeId: typeof refund.charge === 'string' ? refund.charge : refund.charge?.id || chargeId,
+    transferReversalId:
+      typeof refund.transfer_reversal === 'string'
+        ? refund.transfer_reversal
+        : refund.transfer_reversal?.id || null,
+  };
+}
+
+// Disputes are different from voluntary refunds: Stripe debits the platform first, so ByUs
+// may need to recover the creator's transferred share separately. This helper intentionally
+// only performs the reversal; policy code decides WHEN it is safe to call it (for example,
+// cross-border destination charges may need to wait until a dispute is lost).
+export async function reverseDestinationChargeTransfer({ chargeId, amountCents, metadata }) {
+  const charge = await stripe.charges.retrieve(chargeId);
+  const transferId =
+    typeof charge.transfer === 'string' ? charge.transfer : charge.transfer?.id || null;
+
+  if (!transferId) {
+    throw new Error(`Charge ${chargeId} does not have a destination transfer to reverse.`);
+  }
+
+  const reversal = await stripe.transfers.createReversal(transferId, {
+    ...(Number.isInteger(amountCents) ? { amount: amountCents } : {}),
+    ...(metadata ? { metadata } : {}),
+  });
+
+  return {
+    reversalId: reversal.id,
+    transferId,
+    amountCents: reversal.amount,
+    currency: reversal.currency,
+  };
+}
+
 // ---- Discount codes (see limit #2 above — Stripe's metadata is the actual storage) -----
 
 // Retrieve-or-create by a fixed, well-known id — used for the single shared referral
