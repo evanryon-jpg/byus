@@ -49,11 +49,6 @@ export async function createCustomer({ email, userId }) {
 
 // ---- Connected accounts (creator payout destinations) ----------------------------------
 
-// `url` is the creator's own public ByUs page (e.g. https://byusapp.com/creator/<slug-or-id>) —
-// passed as business_profile.url so Stripe's own risk/review tooling can see, per connected
-// account, the actual storefront that account is selling through. Required, not optional:
-// every creator has a page (even pre-slug, the UUID-based URL is permanent — see
-// app/api/creators/[creatorId]/route.js), so there's never a real case for omitting it.
 export async function createConnectedAccount({ email, url }) {
   const account = await stripe.accounts.create({
     type: 'express',
@@ -88,7 +83,6 @@ export async function updateProductName({ productId, name }) {
   await stripe.products.update(productId, { name });
 }
 
-// interval: 'month' | 'year'
 export async function createRecurringPrice({ productId, amountCents, interval }) {
   const price = await stripe.prices.create({
     product: productId,
@@ -101,9 +95,6 @@ export async function createRecurringPrice({ productId, amountCents, interval })
 
 // ---- Checkout -----------------------------------------------------------------------------
 
-// `discounts` (when present) is already provider-shaped — Stripe's own `[{ coupon: id }]` —
-// passed straight through from lib/referrals.js's getReferralDiscount(). That's the one
-// place this adapter's boundary leaks slightly; see limit #2 in the file header.
 export async function createSubscriptionCheckoutSession({
   customerId,
   priceId,
@@ -114,6 +105,7 @@ export async function createSubscriptionCheckoutSession({
   trialDays,
   discounts,
   metadata,
+  checkoutDisclosure,
 }) {
   const checkoutSession = await stripe.checkout.sessions.create({
     mode: 'subscription',
@@ -122,11 +114,12 @@ export async function createSubscriptionCheckoutSession({
     success_url: successUrl,
     cancel_url: cancelUrl,
     ...(discounts ? { discounts } : { allow_promotion_codes: true }),
+    ...(checkoutDisclosure
+      ? { custom_text: { submit: { message: checkoutDisclosure } } }
+      : {}),
     subscription_data: {
       application_fee_percent: applicationFeePercent,
-      transfer_data: {
-        destination: connectedAccountId,
-      },
+      transfer_data: { destination: connectedAccountId },
       ...(trialDays > 0 ? { trial_period_days: trialDays } : {}),
       metadata,
     },
@@ -143,6 +136,7 @@ export async function createOneTimePaymentCheckoutSession({
   successUrl,
   cancelUrl,
   metadata,
+  checkoutDisclosure,
 }) {
   const checkoutSession = await stripe.checkout.sessions.create({
     mode: 'payment',
@@ -157,11 +151,12 @@ export async function createOneTimePaymentCheckoutSession({
         quantity: 1,
       },
     ],
+    ...(checkoutDisclosure
+      ? { custom_text: { submit: { message: checkoutDisclosure } } }
+      : {}),
     payment_intent_data: {
       application_fee_amount: applicationFeeCents,
-      transfer_data: {
-        destination: connectedAccountId,
-      },
+      transfer_data: { destination: connectedAccountId },
       metadata,
     },
     success_url: successUrl,
@@ -186,10 +181,6 @@ export async function updateSubscriptionFeePercent({ subscriptionId, feePercent 
 
 // ---- Refunds & connected-account fund recovery ------------------------------------------
 
-// Destination-charge refunds must explicitly reverse the creator transfer or the creator
-// keeps their payout while the platform funds the customer refund. ByUs also refunds its
-// application fee by default so a full refund actually unwinds the whole transaction.
-// Stripe handles partial refunds proportionally for both the transfer and application fee.
 export async function createDestinationChargeRefund({
   chargeId,
   amountCents,
@@ -219,10 +210,6 @@ export async function createDestinationChargeRefund({
   };
 }
 
-// Disputes are different from voluntary refunds: Stripe debits the platform first, so ByUs
-// may need to recover the creator's transferred share separately. This helper intentionally
-// only performs the reversal; policy code decides WHEN it is safe to call it (for example,
-// cross-border destination charges may need to wait until a dispute is lost).
 export async function reverseDestinationChargeTransfer({ chargeId, amountCents, metadata }) {
   const charge = await stripe.charges.retrieve(chargeId);
   const transferId =
@@ -245,11 +232,8 @@ export async function reverseDestinationChargeTransfer({ chargeId, amountCents, 
   };
 }
 
-// ---- Discount codes (see limit #2 above — Stripe's metadata is the actual storage) -----
+// ---- Discount codes --------------------------------------------------------------------
 
-// Retrieve-or-create by a fixed, well-known id — used for the single shared referral
-// coupon (see lib/referrals.js). Distinct from createDiscountCoupon below, which always
-// mints a fresh coupon for a creator's own discount code.
 export async function getOrCreateNamedCoupon({ id, name, percentOff, duration }) {
   try {
     await stripe.coupons.retrieve(id);
@@ -285,9 +269,6 @@ export async function createPromotionCode({ couponId, code, maxRedemptions }) {
   };
 }
 
-// Normalized: unwraps Stripe's nested coupon/applies_to shape so callers never see it
-// directly. `creatorId`/`productId` come straight off the coupon's own metadata/applies_to —
-// this is the one place in the app that reads that Stripe-specific storage.
 export async function listPromotionCodes({ limit }) {
   const list = await stripe.promotionCodes.list({ limit });
   return list.data.map((pc) => ({
@@ -316,11 +297,9 @@ export async function deactivatePromotionCode({ id }) {
   return { id: updated.id, active: updated.active };
 }
 
-// ---- Customer balance credits (referral rewards) ----------------------------------------
+// ---- Customer balance credits ----------------------------------------------------------
 
 export async function applyCustomerBalanceCredit({ customerId, amountCents, description }) {
-  // A negative amount is a credit — it reduces what the customer owes on their next
-  // invoice rather than charging them.
   await stripe.customers.createBalanceTransaction(customerId, {
     amount: -amountCents,
     currency: 'usd',
@@ -328,7 +307,7 @@ export async function applyCustomerBalanceCredit({ customerId, amountCents, desc
   });
 }
 
-// ---- Webhooks (raw provider-native objects — see limit #1 above) -----------------------
+// ---- Webhooks --------------------------------------------------------------------------
 
 export function verifyWebhookSignature({ payload, signature, secret }) {
   return stripe.webhooks.constructEvent(payload, signature, secret);
