@@ -230,7 +230,7 @@ export async function reverseDestinationChargeTransfer({
       ...(Number.isInteger(amountCents) ? { amount: amountCents } : {}),
       ...(metadata ? { metadata } : {}),
     },
-    ...(idempotencyKey ? [{ idempotencyKey }] : [])
+    idempotencyKey ? { idempotencyKey } : undefined
   );
 
   return {
