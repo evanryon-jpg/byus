@@ -11,6 +11,7 @@ import { query } from '@/lib/db';
 import { createSessionToken, getSessionCookieOptions, SESSION_COOKIE_NAME } from '@/lib/auth';
 import { checkRateLimit, rateLimitResponse, getClientIp } from '@/lib/rate-limit';
 import { attributeReferral } from '@/lib/referrals';
+import { recordPaymentEvidenceBestEffort } from '@/lib/payment-evidence';
 
 const STATE_COOKIE_NAME = 'byus_oauth_state';
 const GENERIC_ERROR = 'Something went wrong signing in with Google. Please try again.';
@@ -178,6 +179,17 @@ export async function GET(request) {
       origin,
       'This account has been suspended. Contact support@byusapp.com if you believe this is a mistake.'
     );
+  }
+
+  // Successful fan authentication is useful factual dispute evidence. Keep the event
+  // deliberately small: provider + user id/timestamp are enough; never persist Google
+  // tokens, authorization codes, or profile payloads in the evidence ledger.
+  if (user.role === 'fan') {
+    await recordPaymentEvidenceBestEffort({
+      fanId: user.id,
+      eventType: 'login_success',
+      metadata: { provider: 'google' },
+    });
   }
 
   const token = createSessionToken(user);

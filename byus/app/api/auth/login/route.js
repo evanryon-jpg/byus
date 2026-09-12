@@ -6,6 +6,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { verifyPassword, createSessionToken, getSessionCookieOptions, SESSION_COOKIE_NAME } from '@/lib/auth';
 import { checkRateLimit, rateLimitResponse, getClientIp } from '@/lib/rate-limit';
+import { recordPaymentEvidenceBestEffort } from '@/lib/payment-evidence';
 
 export async function POST(request) {
   const { email, password } = await request.json();
@@ -57,6 +58,17 @@ export async function POST(request) {
       { error: 'This account has been suspended. Contact support@byusapp.com if you believe this is a mistake.' },
       { status: 403 }
     );
+  }
+
+  // A successful fan login is useful dispute evidence for digital memberships. Store only
+  // a minimal timestamped fact that this authenticated account successfully logged in — no
+  // password, raw session token, or other sensitive material is persisted here.
+  if (user.role === 'fan') {
+    await recordPaymentEvidenceBestEffort({
+      fanId: user.id,
+      eventType: 'login_success',
+      metadata: { auth_method: 'password' },
+    });
   }
 
   const token = createSessionToken(user);

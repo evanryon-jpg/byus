@@ -10,6 +10,7 @@ import { NextResponse } from 'next/server';
 import { get } from '@vercel/blob';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
+import { recordPaymentEvidenceBestEffort } from '@/lib/payment-evidence';
 
 export async function GET(request, { params }) {
   const { postId } = params;
@@ -29,6 +30,7 @@ export async function GET(request, { params }) {
     // A pending-review post (see /api/creator/posts) is never public, no matter what
     // its own visibility column says -- only its own creator can preview the media.
     let isAuthorized = (post.visibility === 'public' && !post.pending_review) || isOwner;
+    let subscriberSubscriptionId = null;
 
     if (!isAuthorized && session && !post.pending_review) {
       // Cross-check current_period_end against now(), not just the cached status column.
@@ -40,10 +42,13 @@ export async function GET(request, { params }) {
       const subResult = await query(
         `SELECT id FROM subscriptions
          WHERE fan_id = $1 AND creator_id = $2 AND status = 'active'
-           AND (current_period_end IS NULL OR current_period_end > now())`,
+           AND (current_period_end IS NULL OR current_period_end > now())
+         ORDER BY created_at DESC
+         LIMIT 1`,
         [session.userId, post.creator_id]
       );
-      isAuthorized = subResult.rows.length > 0;
+      subscriberSubscriptionId = subResult.rows[0]?.id || null;
+      isAuthorized = Boolean(subscriberSubscriptionId);
     }
 
     if (!isAuthorized) {
@@ -56,6 +61,23 @@ export async function GET(request, { params }) {
     const result = await get(post.media_url, { access: 'private' });
     if (!result || result.statusCode !== 200) {
       return NextResponse.json({ error: 'File not found.' }, { status: 404 });
+    }
+
+    // This is especially strong delivery evidence for digital memberships: the server has
+    // just verified an active paid subscription and successfully retrieved private content
+    // that a non-subscriber could not access. Record the fact, not the media itself.
+    if (subscriberSubscriptionId && session?.userId) {
+      await recordPaymentEvidenceBestEffort({
+        fanId: session.userId,
+        creatorId: post.creator_id,
+        subscriptionId: subscriberSubscriptionId,
+        postId,
+        eventType: 'subscriber_media_access',
+        metadata: {
+          visibility: post.visibility,
+          content_type: result.blob.contentType || null,
+        },
+      });
     }
 
     return new NextResponse(result.stream, {

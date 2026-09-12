@@ -11,3 +11,10 @@ const ADMIN_EMAILS = new Set(['evanryon@yahoo.com']);
 export function isAdmin(session) {
   return Boolean(session?.email && ADMIN_EMAILS.has(session.email.toLowerCase()));
 }
+
+// Operational alerts (for example, new Stripe disputes) should go to the exact same
+// people who can act on them in /admin. Return a copy so callers can't mutate the
+// authorization allowlist by accident.
+export function getAdminEmails() {
+  return Array.from(ADMIN_EMAILS);
+}

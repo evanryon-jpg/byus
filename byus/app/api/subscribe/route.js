@@ -2,10 +2,7 @@ export const dynamic = 'force-dynamic';
 
 // POST /api/subscribe
 // Called when a fan clicks "Subscribe" on a creator's tier. Creates a Stripe Checkout
-// session that, on completion, charges the fan monthly and automatically splits the
-// payment: ByUs keeps the creator's current platform_fee_percent (10% to start, dropping
-// to 7% for any calendar month their earnings cross $2,000 — see lib/fees.js), the rest
-// goes to the creator's connected account.
+// session that charges the fan and splits the payment between ByUs and the creator.
 
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
@@ -14,12 +11,14 @@ import { paymentProvider } from '@/lib/payments';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { getReferralDiscount } from '@/lib/referrals';
 import { getPlatformMilestoneReductionPoints, applyPlatformMilestoneReduction } from '@/lib/fees';
+import {
+  TERMS_VERSION,
+  MEMBERSHIP_REFUND_POLICY_VERSION,
+  membershipCheckoutDisclosure,
+} from '@/lib/legal';
 
 export async function POST(request) {
   const session = await getCurrentUser();
-  // Split "not logged in" from "wrong role": the client redirects straight to login (and
-  // back again afterward) on the first, but that would be a dead end for the second — a
-  // creator's own account is never going to become a fan by logging in again.
   if (!session) {
     return NextResponse.json({ error: 'Please log in to subscribe.' }, { status: 401 });
   }
@@ -27,8 +26,6 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Only fans can subscribe.' }, { status: 403 });
   }
 
-  // Rate limit by user — this endpoint is authenticated, so the account itself is the
-  // identifier. Guards against a script hammering Stripe Checkout session creation.
   const rateCheck = await checkRateLimit('subscribe', `user:${session.userId}`);
   if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
@@ -48,13 +45,12 @@ export async function POST(request) {
   if (!tierId) {
     return NextResponse.json({ error: 'tierId is required.' }, { status: 400 });
   }
-  // 'month' is the only price every tier is guaranteed to have; 'year' only works when the
-  // creator set an annual price (checked below, once the tier's own row is in hand).
   const billingInterval = interval === 'year' ? 'year' : 'month';
 
   try {
     const tierResult = await query(
-      `SELECT t.id, t.stripe_price_id, t.annual_price_cents, t.stripe_annual_price_id, t.creator_id, t.trial_days,
+      `SELECT t.id, t.name, t.price_cents, t.stripe_price_id, t.annual_price_cents,
+              t.stripe_annual_price_id, t.creator_id, t.trial_days,
               u.stripe_connect_account_id, u.stripe_connect_onboarded, u.platform_fee_percent,
               u.review_cleared_at
        FROM subscription_tiers t
@@ -69,10 +65,6 @@ export async function POST(request) {
     if (!tier.stripe_connect_onboarded) {
       return NextResponse.json({ error: 'This creator has not finished payment setup yet.' }, { status: 400 });
     }
-    // A creator ByUs hasn't run its one-time initial review on yet -- true for every new
-    // signup until an admin clears them, see /api/admin/users/[id]/clear-review -- can't
-    // accept a first paid subscriber. This is what actually holds a brand-new creator's
-    // "first payout": no subscription exists yet for there to be a payout from.
     if (!tier.review_cleared_at) {
       return NextResponse.json(
         { error: "This creator's page is still completing an initial review. Check back soon." },
@@ -82,10 +74,14 @@ export async function POST(request) {
     if (billingInterval === 'year' && !tier.stripe_annual_price_id) {
       return NextResponse.json({ error: 'This tier does not offer annual billing.' }, { status: 400 });
     }
-    const stripePriceId = billingInterval === 'year' ? tier.stripe_annual_price_id : tier.stripe_price_id;
 
-    // Prevent subscribing to your own content, and prevent duplicate active subscriptions
-    // to the same tier (fans should manage/cancel from their dashboard, not double-subscribe).
+    const stripePriceId = billingInterval === 'year' ? tier.stripe_annual_price_id : tier.stripe_price_id;
+    const purchasePriceCents = billingInterval === 'year' ? tier.annual_price_cents : tier.price_cents;
+
+    if (!Number.isInteger(purchasePriceCents) || purchasePriceCents <= 0) {
+      return NextResponse.json({ error: 'This tier has an invalid price.' }, { status: 400 });
+    }
+
     if (session.userId === tier.creator_id) {
       return NextResponse.json({ error: "You can't subscribe to your own content." }, { status: 400 });
     }
@@ -97,11 +93,6 @@ export async function POST(request) {
       return NextResponse.json({ error: 'You already have an active subscription to this tier.' }, { status: 409 });
     }
 
-    // Reuse this fan's existing Stripe Customer across every subscription rather than
-    // letting Checkout mint a new one per checkout (its default behavior when only
-    // `customer_email` is passed). Without this, a fan who subscribes to two creators ends
-    // up as two unrelated Stripe customers, and the billing portal — which is scoped to a
-    // single customer — would only ever show one of their subscriptions.
     let customerId = fan.stripe_customer_id;
     if (!customerId) {
       const customer = await paymentProvider.createCustomer({ email: session.email, userId: session.userId });
@@ -110,40 +101,36 @@ export async function POST(request) {
     }
 
     const origin = request.headers.get('origin') || process.env.APP_URL;
-
-    // If this fan signed up through someone's referral link and hasn't already had a
-    // referral reward on some other subscription, their first month here is free — see
-    // lib/referrals.js. This is a real Stripe discount applied at checkout, not
-    // something faked client-side, so it shows up correctly on their invoice too.
     const discounts = await getReferralDiscount(session.userId);
-
-    // A brand-new subscription should bill at whatever ByUs is actually charging right
-    // now — the creator's personal tier minus any platform-wide milestone bonus already
-    // in effect — not their raw personal-tier number. See lib/fees.js.
     const reductionPoints = await getPlatformMilestoneReductionPoints(query);
     const effectiveFeePercent = applyPlatformMilestoneReduction(tier.platform_fee_percent, reductionPoints);
+
+    const disclosure = membershipCheckoutDisclosure({
+      amountCents: purchasePriceCents,
+      interval: billingInterval,
+      trialDays: tier.trial_days,
+    });
 
     const { url } = await paymentProvider.createSubscriptionCheckoutSession({
       customerId,
       priceId: stripePriceId,
-      // Back to the creator's own page, not a generic dashboard — that's where the content
-      // the fan just paid for actually lives. ?subscribed=true triggers a welcome banner
-      // there, and &tier=<id> lets it look up that tier's own custom welcome message.
       successUrl: `${origin}/creator/${tier.creator_id}?subscribed=true&tier=${tier.id}`,
       cancelUrl: `${origin}/creator/${tier.creator_id}`,
       applicationFeePercent: effectiveFeePercent,
       connectedAccountId: tier.stripe_connect_account_id,
-      // Only passed through when the tier actually offers one — the adapter treats 0/undefined
-      // as "no trial" the same way Stripe itself does.
       trialDays: tier.trial_days,
-      // A referred fan's automatic first-month discount (Stripe-shaped, see
-      // lib/referrals.js's getReferralDiscount) takes priority when present; everyone else
-      // gets a code field to enter one of a creator's discount codes by hand.
       discounts,
+      checkoutDisclosure: disclosure,
       metadata: {
         fan_id: session.userId,
         creator_id: tier.creator_id,
         tier_id: tier.id,
+        tier_name: String(tier.name || '').slice(0, 200),
+        billing_interval: billingInterval,
+        purchase_price_cents: String(purchasePriceCents),
+        terms_version: TERMS_VERSION,
+        refund_policy_version: MEMBERSHIP_REFUND_POLICY_VERSION,
+        purchase_disclosure_shown: 'true',
       },
     });
 

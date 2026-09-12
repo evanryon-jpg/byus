@@ -102,6 +102,61 @@ export async function sendWelcomeSubscriptionEmail(to, { creatorName, creatorUrl
   }
 }
 
+// Urgent owner alert for a newly-opened card dispute. Kept separate from customer-facing
+// mail so a failed alert can be retried safely by the Stripe webhook without affecting the
+// payment itself. The webhook marks stripe_disputes.alert_sent_at only after this succeeds.
+export async function sendDisputeAlertEmail(to, {
+  disputeId,
+  amountCents,
+  currency,
+  reason,
+  responseDueAt,
+  adminUrl,
+}) {
+  const resend = getClient();
+  const amount = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: String(currency || 'usd').toUpperCase(),
+  }).format((Number(amountCents) || 0) / 100);
+  const dueText = responseDueAt
+    ? new Date(responseDueAt).toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZoneName: 'short',
+      })
+    : 'Check Stripe immediately — no response deadline was supplied in the webhook.';
+
+  const { error } = await resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: `Action required: ByUs dispute for ${amount}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 520px; margin: 0 auto; color: #1A1A1A;">
+        <h2 style="color:#b42318;">New payment dispute</h2>
+        <p>A cardholder has disputed a ByUs payment. Review it promptly so the response window isn't missed.</p>
+        <table style="border-collapse:collapse;width:100%;margin:20px 0;font-size:14px;">
+          <tr><td style="padding:6px 0;color:#666;">Amount</td><td style="padding:6px 0;font-weight:600;">${escapeHtml(amount)}</td></tr>
+          <tr><td style="padding:6px 0;color:#666;">Reason</td><td style="padding:6px 0;">${escapeHtml(reason || 'Not provided')}</td></tr>
+          <tr><td style="padding:6px 0;color:#666;">Stripe dispute</td><td style="padding:6px 0;">${escapeHtml(disputeId)}</td></tr>
+          <tr><td style="padding:6px 0;color:#666;">Response due</td><td style="padding:6px 0;font-weight:600;">${escapeHtml(dueText)}</td></tr>
+        </table>
+        <p style="margin:24px 0;">
+          <a href="${adminUrl}" style="background:#146359;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;">Open ByUs admin</a>
+        </p>
+        <p style="color:#666;font-size:13px;">Use the dispute evidence package in ByUs together with Stripe's dispute workflow before submitting a response.</p>
+      </div>
+    `,
+  });
+
+  if (error) {
+    console.error('Resend dispute alert failed:', error);
+    throw new Error(error.message || 'Could not send the dispute alert email.');
+  }
+}
+
 // Emails a creator's active subscribers when they publish a new post — one individual
 // email per recipient (never one email with everyone in "to"), sent via the batch
 // endpoint like the creator-update broadcast below. Only sent to subscribers who haven't

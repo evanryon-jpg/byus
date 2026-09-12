@@ -12,6 +12,7 @@ import { signPlaybackToken } from '@/lib/mux-jwt';
 import { getPollVoteCounts, getMyPollVotes, buildPollPayload } from '@/lib/polls';
 import { publicAvatarUrl } from '@/lib/avatar-url';
 import { isFoundingCreator } from '@/lib/fees';
+import { recordPaymentEvidenceBestEffort } from '@/lib/payment-evidence';
 
 export async function GET(request, { params }) {
   const { creatorId } = params;
@@ -21,7 +22,7 @@ export async function GET(request, { params }) {
     // Links can point at a creator by their raw UUID (old/already-shared links, or any
     // creator who hasn't claimed a vanity URL) or by their slug (new short links). A UUID
     // always matches the id column directly; anything else can only ever be a slug.
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(creatorId);
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(creatorId);
     // is_suspended = false is part of the lookup itself, not a separate check after --
     // a suspended creator's page returns the exact same 404 a nonexistent slug would,
     // so there's no way to tell "never existed" apart from "taken down for a policy
@@ -92,14 +93,18 @@ export async function GET(request, { params }) {
     // status only updates on a webhook, so a missed one (delivery failure, outage) could
     // otherwise leave a lapsed subscription reading as active indefinitely.
     let hasActiveSubscription = false;
+    let activeSubscriptionId = null;
     if (session) {
       const subResult = await query(
         `SELECT id FROM subscriptions
          WHERE fan_id = $1 AND creator_id = $2 AND status = 'active'
-           AND (current_period_end IS NULL OR current_period_end > now())`,
+           AND (current_period_end IS NULL OR current_period_end > now())
+         ORDER BY created_at DESC
+         LIMIT 1`,
         [session.userId, id]
       );
-      hasActiveSubscription = subResult.rows.length > 0;
+      activeSubscriptionId = subResult.rows[0]?.id || null;
+      hasActiveSubscription = Boolean(activeSubscriptionId);
     }
 
     // pending_review = true means this creator hasn't cleared ByUs's one-time initial
@@ -111,6 +116,26 @@ export async function GET(request, { params }) {
        FROM posts WHERE creator_id = $1 AND pending_review = false ORDER BY created_at DESC`,
       [id]
     );
+
+    // If an authenticated fan's active subscription caused subscriber-only content to be
+    // delivered, record that fact as best-effort dispute evidence. We intentionally log one
+    // compact page-access event instead of a row per post, and we do not store post bodies,
+    // titles, search terms, or other browsing detail.
+    const unlockedSubscriberOnlyPostCount = hasActiveSubscription
+      ? postsResult.rows.filter((post) => post.visibility === 'subscribers_only').length
+      : 0;
+    if (session?.role === 'fan' && activeSubscriptionId && unlockedSubscriberOnlyPostCount > 0) {
+      await recordPaymentEvidenceBestEffort({
+        fanId: session.userId,
+        creatorId: id,
+        subscriptionId: activeSubscriptionId,
+        eventType: 'subscriber_content_access',
+        metadata: {
+          surface: 'creator_profile',
+          unlockedSubscriberOnlyPostCount,
+        },
+      });
+    }
 
     // Top supporters: the longest-tenured active subscribers who've opted in (see
     // show_support_publicly in app/api/me/route.js, off by default). Oldest subscription

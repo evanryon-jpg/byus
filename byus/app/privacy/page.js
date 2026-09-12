@@ -3,7 +3,7 @@ export const metadata = {
   description: 'What information ByUs collects, how it is used, and who to contact about it.',
 };
 
-const LAST_UPDATED = 'August 30, 2026';
+const LAST_UPDATED = 'September 12, 2026';
 const CONTACT_EMAIL = 'support@byusapp.com';
 
 export default function PrivacyPage() {
@@ -30,6 +30,13 @@ export default function PrivacyPage() {
             type, and general usage activity — used for security purposes like rate-limiting and
             fraud prevention.
           </p>
+          <p className="mt-3">
+            For paid memberships and payment-dispute handling, we may keep limited account-activity
+            records such as a successful sign-in, when a subscription started or was canceled,
+            and whether subscriber-only content or media was accessed. These records are tied to
+            the relevant account and payment where possible. We do not store card numbers, raw
+            passwords, session tokens, or full request bodies in these payment-evidence records.
+          </p>
         </Section>
 
         <Section title="2. How we use it">
@@ -39,6 +46,11 @@ export default function PrivacyPage() {
             resets, receipts), prevent fraud and abuse, and improve ByUs. We don&rsquo;t sell
             your personal information.
           </p>
+          <p className="mt-3">
+            Limited payment and account-activity records may also be used to investigate refunds,
+            unauthorized-payment reports, and card disputes, and to provide factual evidence to
+            payment processors or financial institutions when a dispute needs a response.
+          </p>
         </Section>
 
         <Section title="3. Who we share it with">
@@ -47,6 +59,11 @@ export default function PrivacyPage() {
             it &mdash; Stripe for payments and payouts, our hosting and database providers, and
             our email provider for transactional messages. We don&rsquo;t share your information
             with anyone else except where required by law.
+          </p>
+          <p className="mt-3">
+            When a payment is refunded, reported as unauthorized, or disputed, relevant transaction
+            and account-activity information may be shared with Stripe, card networks, or the
+            financial institution handling the dispute as needed to investigate or respond.
           </p>
           <p className="mt-3">
             A creator&rsquo;s public profile, posts, and tier information are visible to anyone
@@ -66,7 +83,8 @@ export default function PrivacyPage() {
             We keep your account information for as long as your account is active. If you
             delete your account, we remove or anonymize your personal information within a
             reasonable time, except where we&rsquo;re required to retain records (for example,
-            payment records Stripe keeps for tax or legal purposes).
+            payment, fraud-prevention, dispute, tax, or legal records that need to be kept for a
+            longer period).
           </p>
         </Section>
 

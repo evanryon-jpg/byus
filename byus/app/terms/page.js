@@ -3,7 +3,7 @@ export const metadata = {
   description: 'The terms that govern using ByUs as a creator or a fan.',
 };
 
-const LAST_UPDATED = 'September 10, 2026';
+const LAST_UPDATED = 'September 12, 2026';
 const CONTACT_EMAIL = 'support@byusapp.com';
 
 export default function TermsPage() {
@@ -39,15 +39,15 @@ export default function TermsPage() {
         <Section title="3. Creators">
           <p>
             Creators can publish public and subscribers-only posts and set one or more monthly
-            subscription tiers. Payments are processed through Stripe, and each creator connects
-            their own Stripe account to receive payouts directly. Creators keep 90% of each
-            payment; ByUs retains a 10% platform fee, applied automatically to every subscriber's
-            payment. That fee drops to 7% for any calendar month a creator's earnings on ByUs
-            reach $2,000 — for that month, every subscriber's payment, existing and new, is
-            billed at the lower 7% rate, moving back to 10% for a month that doesn't reach
-            $2,000. We don&rsquo;t add hidden
-            processing, payout, or currency-conversion charges on top of that fee — any charges
-            Stripe itself applies are between you and Stripe under their own terms.
+            or annual subscription tiers. Payments are processed through Stripe, and each creator
+            connects their own Stripe account to receive payouts. ByUs&rsquo;s standard platform fee
+            is currently 10% of each payment. The first 100 founding creators receive a 7% platform
+            fee from day one, and other creators may qualify for a 7% rate when their gross ByUs
+            revenue reaches $2,000 in a calendar month. Separate promotional fee credits may also
+            apply. The rate actually charged is shown in the creator dashboard and checkout flow,
+            and ByUs routes the remaining proceeds to the creator&rsquo;s connected Stripe account.
+            Stripe may separately charge processing, payout, currency-conversion, dispute, or other
+            fees under Stripe&rsquo;s own terms.
           </p>
           <p className="mt-3">
             You&rsquo;re responsible for the content you post and for honoring what you promise
@@ -55,14 +55,44 @@ export default function TermsPage() {
             guidelines below can be removed, and repeated or serious violations can result in
             account suspension.
           </p>
+          <p className="mt-3">
+            If a payment to you is refunded, reversed, disputed, charged back, or otherwise
+            returned to a fan, you remain responsible for the creator portion of that transaction
+            to the extent permitted by law and Stripe&rsquo;s rules. ByUs may reverse or recover funds
+            from your connected Stripe balance when appropriate, including when a dispute is lost
+            or a refund is issued. ByUs will not intentionally recover more than the creator share
+            attributable to the affected transaction, and any recovery is subject to Stripe&rsquo;s
+            technical and legal limitations.
+          </p>
         </Section>
 
-        <Section title="4. Fans and subscriptions">
+        <Section title="4. Fans, subscriptions, tips, cancellations, and refunds">
           <p>
-            Subscriptions renew monthly until you cancel. Cancelling stops future renewals but
-            doesn&rsquo;t retroactively refund the current billing period unless we say otherwise
-            in a specific case. You can manage or cancel a subscription from your dashboard at
-            any time.
+            Subscription pricing and billing frequency are shown before purchase. Unless a tier
+            includes a free trial, your first payment is charged when checkout completes.
+            Subscriptions renew automatically at the displayed monthly or annual interval until
+            you cancel. If a free trial applies, the recurring charge begins after the trial ends
+            unless you cancel before then.
+          </p>
+          <p className="mt-3">
+            You can manage or cancel a subscription at any time from your dashboard. Cancelling
+            prevents future renewal charges but does not automatically refund a payment that has
+            already been processed.
+          </p>
+          <p className="mt-3">
+            Membership payments and one-time tips are generally non-refundable once processed.
+            This does not limit any refund, cancellation, or dispute rights you may have under
+            applicable law or card-network rules. ByUs may also issue a refund when we determine
+            one is appropriate, including for duplicate charges, unauthorized payments, technical
+            failures, or failure to provide the purchased access.
+          </p>
+          <p className="mt-3">
+            If you believe you were charged in error, did not authorize a payment, or did not
+            receive the access you purchased, please contact{' '}
+            <a href={`mailto:${CONTACT_EMAIL}`} className="text-brand-teal underline">
+              {CONTACT_EMAIL}
+            </a>{' '}
+            so we can investigate promptly.
           </p>
         </Section>
 

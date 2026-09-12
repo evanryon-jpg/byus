@@ -98,13 +98,21 @@ export async function GET() {
       ),
       query(
         `SELECT
-           d.id, d.amount_cents, d.currency, d.reason, d.status, d.opened_at, d.closed_at,
+           d.id, d.stripe_dispute_id, d.amount_cents, d.currency, d.reason, d.status,
+           d.opened_at, d.closed_at, d.response_due_at, d.alert_sent_at,
            creator.display_name AS creator_name, creator.email AS creator_email,
            fan.display_name AS fan_name, fan.email AS fan_email
          FROM stripe_disputes d
          LEFT JOIN users creator ON creator.id = d.creator_id
          LEFT JOIN users fan ON fan.id = d.fan_id
-         ORDER BY d.opened_at DESC
+         ORDER BY
+           CASE
+             WHEN d.status NOT IN ('won', 'lost') AND d.response_due_at IS NOT NULL THEN 0
+             WHEN d.status NOT IN ('won', 'lost') THEN 1
+             ELSE 2
+           END,
+           d.response_due_at ASC NULLS LAST,
+           d.opened_at DESC
          LIMIT $1`,
         [RECENT_DISPUTES_LIMIT]
       ),
@@ -138,19 +146,37 @@ export async function GET() {
       bioFlagged: containsUrl(row.bio),
     }));
 
-    const disputes = recentDisputes.rows.map((row) => ({
-      id: row.id,
-      amountCents: row.amount_cents,
-      currency: row.currency,
-      reason: row.reason,
-      status: row.status,
-      openedAt: row.opened_at,
-      closedAt: row.closed_at,
-      creatorName: row.creator_name,
-      creatorEmail: row.creator_email,
-      fanName: row.fan_name,
-      fanEmail: row.fan_email,
-    }));
+    const nowMs = Date.now();
+    const disputes = recentDisputes.rows.map((row) => {
+      const responseDueAt = row.response_due_at || null;
+      const millisecondsRemaining = responseDueAt
+        ? new Date(responseDueAt).getTime() - nowMs
+        : null;
+      const hoursRemaining = millisecondsRemaining === null
+        ? null
+        : Math.ceil(millisecondsRemaining / (60 * 60 * 1000));
+      const isClosed = CLOSED_DISPUTE_STATUSES.includes(row.status);
+
+      return {
+        id: row.id,
+        stripeDisputeId: row.stripe_dispute_id,
+        amountCents: row.amount_cents,
+        currency: row.currency,
+        reason: row.reason,
+        status: row.status,
+        openedAt: row.opened_at,
+        closedAt: row.closed_at,
+        responseDueAt,
+        hoursRemaining,
+        responseOverdue: !isClosed && hoursRemaining !== null && hoursRemaining < 0,
+        responseUrgent: !isClosed && hoursRemaining !== null && hoursRemaining >= 0 && hoursRemaining <= 72,
+        alertSentAt: row.alert_sent_at,
+        creatorName: row.creator_name,
+        creatorEmail: row.creator_email,
+        fanName: row.fan_name,
+        fanEmail: row.fan_email,
+      };
+    });
 
     return NextResponse.json({
       creatorCount: counts.rows[0].creator_count,
