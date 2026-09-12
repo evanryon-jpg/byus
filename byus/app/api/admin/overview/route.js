@@ -13,6 +13,7 @@ import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { isAdmin } from '@/lib/admin';
 import { containsUrl } from '@/lib/content-policy';
+import { paymentProvider } from '@/lib/payments';
 
 const MONTHS_OF_HISTORY = 12;
 const RECENT_CREATORS_LIMIT = 25;
@@ -21,6 +22,31 @@ const RECENT_DISPUTES_LIMIT = 25;
 // 'under_review', 'warning_needs_response', etc.) still needs a human to look at it.
 const CLOSED_DISPUTE_STATUSES = ['won', 'lost'];
 
+// Webhooks remain the primary sync path, but Stripe can occasionally omit or delay a
+// sandbox delivery. Reconcile the small set of locally-open disputes when an admin loads
+// this page so stale "Needs response" warnings repair themselves from Stripe's source of truth.
+async function reconcileOpenDisputes() {
+  const open = await query(
+    `SELECT stripe_dispute_id FROM stripe_disputes WHERE status != ALL($1::text[]) LIMIT 25`,
+    [CLOSED_DISPUTE_STATUSES]
+  );
+
+  await Promise.all(open.rows.map(async ({ stripe_dispute_id: id }) => {
+    try {
+      const dispute = await paymentProvider.retrieveDispute({ id });
+      if (!CLOSED_DISPUTE_STATUSES.includes(dispute.status)) return;
+      await query(
+        `UPDATE stripe_disputes
+         SET status = $1, closed_at = COALESCE(closed_at, now())
+         WHERE stripe_dispute_id = $2`,
+        [dispute.status, id]
+      );
+    } catch (err) {
+      console.error(`Could not reconcile Stripe dispute ${id}:`, err.message);
+    }
+  }));
+}
+
 export async function GET() {
   const session = await getCurrentUser();
   if (!session || !isAdmin(session)) {
@@ -28,6 +54,8 @@ export async function GET() {
   }
 
   try {
+    await reconcileOpenDisputes();
+
     const [counts, activeSubs, lifetime, monthlyResult, recentCreators, openDisputes, recentDisputes, needsReview] = await Promise.all([
       query(
         `SELECT
