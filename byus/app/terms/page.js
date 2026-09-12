@@ -40,10 +40,14 @@ export default function TermsPage() {
           <p>
             Creators can publish public and subscribers-only posts and set one or more monthly
             or annual subscription tiers. Payments are processed through Stripe, and each creator
-            connects their own Stripe account to receive payouts. ByUs retains the platform fee
-            shown in the creator dashboard and routes the remaining proceeds to the creator&rsquo;s
-            connected Stripe account. Stripe may separately charge processing, payout, currency-
-            conversion, dispute, or other fees under Stripe&rsquo;s own terms.
+            connects their own Stripe account to receive payouts. ByUs&rsquo;s standard platform fee
+            is currently 10% of each payment. The first 100 founding creators receive a 7% platform
+            fee from day one, and other creators may qualify for a 7% rate when their gross ByUs
+            revenue reaches $2,000 in a calendar month. Separate promotional fee credits may also
+            apply. The rate actually charged is shown in the creator dashboard and checkout flow,
+            and ByUs routes the remaining proceeds to the creator&rsquo;s connected Stripe account.
+            Stripe may separately charge processing, payout, currency-conversion, dispute, or other
+            fees under Stripe&rsquo;s own terms.
           </p>
           <p className="mt-3">
             You&rsquo;re responsible for the content you post and for honoring what you promise
