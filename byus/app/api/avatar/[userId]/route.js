@@ -5,7 +5,7 @@ import { get } from '@vercel/blob';
 import { query } from '@/lib/db';
 import { isValidPresetAvatarId } from '@/lib/preset-avatars';
 
-const AVATAR_ASSET_VERSION = '3';
+const AVATAR_ASSET_VERSION = '4';
 
 export async function GET(request, { params }) {
   const { userId } = params;
@@ -22,9 +22,7 @@ export async function GET(request, { params }) {
       if (!isValidPresetAvatarId(id)) {
         return NextResponse.json({ error: 'No profile photo.' }, { status: 404 });
       }
-      return NextResponse.redirect(
-        new URL(`/api/preset-avatar/${id}?v=${AVATAR_ASSET_VERSION}`, request.url)
-      );
+      return NextResponse.redirect(new URL(`/api/preset-avatar/${id}?v=${AVATAR_ASSET_VERSION}`, request.url));
     }
 
     const blob = await get(pathname, { access: 'private' });
