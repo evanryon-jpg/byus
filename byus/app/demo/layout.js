@@ -13,6 +13,11 @@ export default function DemoLayout({ children }) {
         .demo-route-scope [aria-hidden="true"].relative.h-32.overflow-hidden.bg-brand-paper > div {
           display: none;
         }
+
+        .demo-route-scope [aria-hidden="true"].relative.h-32.overflow-hidden.bg-brand-paper + div {
+          position: relative;
+          z-index: 1;
+        }
       `}</style>
       {children}
     </div>
