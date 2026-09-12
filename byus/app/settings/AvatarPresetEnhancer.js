@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 
-const AVATAR_ASSET_VERSION = '5';
+const AVATAR_ASSET_VERSION = '6';
 
 export default function AvatarPresetEnhancer() {
   useEffect(() => {
