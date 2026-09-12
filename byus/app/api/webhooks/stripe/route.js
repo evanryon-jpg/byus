@@ -103,13 +103,14 @@ export async function POST(request) {
       invoiceCreatorId = invoiceSubscription.metadata?.creator_id || null;
     }
 
-    // A Dispute object only carries a charge ID, not which subscription (and therefore
-    // which creator/fan) it belongs to -- resolve that by walking charge -> invoice ->
-    // subscription, same "do the Stripe round trips before opening a DB transaction"
-    // reasoning as above. Best-effort: if any lookup fails or this charge simply isn't
-    // tied to a subscription, the dispute still gets recorded below, just without a link.
+    // A Dispute object carries a charge ID but not which subscription (and therefore which
+    // creator/fan) it belongs to. For subscription charges, resolve that by walking
+    // charge -> invoice -> subscription before opening the DB transaction. One-time tips
+    // have no invoice/subscription, so the transaction-table fallback below resolves them by
+    // the stripe_charge_id recorded when the tip completed. Resolve on both created and
+    // closed events so a missed/out-of-order created delivery can still be reconstructed.
     let disputeSubscriptionStripeId = null;
-    if (event.type === 'charge.dispute.created') {
+    if (event.type === 'charge.dispute.created' || event.type === 'charge.dispute.closed') {
       try {
         const charge = await paymentProvider.retrieveCharge({ id: event.data.object.charge });
         if (charge.invoice) {
@@ -338,6 +339,7 @@ export async function POST(request) {
           let subscriptionId = null;
           let creatorId = null;
           let fanId = null;
+
           if (disputeSubscriptionStripeId) {
             const subResult = await client.query(
               `SELECT id, creator_id, fan_id FROM subscriptions WHERE stripe_subscription_id = $1`,
@@ -350,6 +352,22 @@ export async function POST(request) {
               fanId = sub.fan_id;
             }
           }
+
+          // One-time tips don't have an invoice/subscription. Their confirmed transaction
+          // row already stores Stripe's charge ID, so use that as the fallback attribution
+          // path rather than leaving a tip dispute orphaned in the admin view.
+          if (!creatorId || !fanId) {
+            const transactionResult = await client.query(
+              `SELECT creator_id, fan_id FROM transactions WHERE stripe_charge_id = $1 LIMIT 1`,
+              [dispute.charge]
+            );
+            const transaction = transactionResult.rows[0];
+            if (transaction) {
+              creatorId = creatorId || transaction.creator_id;
+              fanId = fanId || transaction.fan_id;
+            }
+          }
+
           await client.query(
             `INSERT INTO stripe_disputes
                (stripe_dispute_id, stripe_charge_id, subscription_id, creator_id, fan_id,
@@ -373,16 +391,66 @@ export async function POST(request) {
         }
 
         case 'charge.dispute.closed': {
-          // Fires once the dispute is resolved -- dispute.status is 'won' or 'lost' by
-          // this point. Same ordering guard as the other handlers: a late/out-of-order
-          // delivery can never overwrite a newer status with a stale one.
+          // Normally this updates the row created by charge.dispute.created. If Stripe's
+          // created event was missed or arrived out of order, reconstruct enough context here
+          // and INSERT the dispute instead of silently updating zero rows.
           const dispute = event.data.object;
+          let subscriptionId = null;
+          let creatorId = null;
+          let fanId = null;
+
+          if (disputeSubscriptionStripeId) {
+            const subResult = await client.query(
+              `SELECT id, creator_id, fan_id FROM subscriptions WHERE stripe_subscription_id = $1`,
+              [disputeSubscriptionStripeId]
+            );
+            const sub = subResult.rows[0];
+            if (sub) {
+              subscriptionId = sub.id;
+              creatorId = sub.creator_id;
+              fanId = sub.fan_id;
+            }
+          }
+
+          if (!creatorId || !fanId) {
+            const transactionResult = await client.query(
+              `SELECT creator_id, fan_id FROM transactions WHERE stripe_charge_id = $1 LIMIT 1`,
+              [dispute.charge]
+            );
+            const transaction = transactionResult.rows[0];
+            if (transaction) {
+              creatorId = creatorId || transaction.creator_id;
+              fanId = fanId || transaction.fan_id;
+            }
+          }
+
           await client.query(
-            `UPDATE stripe_disputes
-             SET status = $1, closed_at = to_timestamp($2), stripe_event_created_at = to_timestamp($2)
-             WHERE stripe_dispute_id = $3
-               AND (stripe_event_created_at IS NULL OR stripe_event_created_at <= to_timestamp($2))`,
-            [dispute.status, event.created, dispute.id]
+            `INSERT INTO stripe_disputes
+               (stripe_dispute_id, stripe_charge_id, subscription_id, creator_id, fan_id,
+                amount_cents, currency, reason, status, opened_at, closed_at, stripe_event_created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, to_timestamp($10), to_timestamp($11), to_timestamp($11))
+             ON CONFLICT (stripe_dispute_id) DO UPDATE
+               SET status = EXCLUDED.status,
+                   closed_at = EXCLUDED.closed_at,
+                   stripe_event_created_at = EXCLUDED.stripe_event_created_at,
+                   subscription_id = COALESCE(stripe_disputes.subscription_id, EXCLUDED.subscription_id),
+                   creator_id = COALESCE(stripe_disputes.creator_id, EXCLUDED.creator_id),
+                   fan_id = COALESCE(stripe_disputes.fan_id, EXCLUDED.fan_id)
+               WHERE stripe_disputes.stripe_event_created_at IS NULL
+                  OR stripe_disputes.stripe_event_created_at <= EXCLUDED.stripe_event_created_at`,
+            [
+              dispute.id,
+              dispute.charge,
+              subscriptionId,
+              creatorId,
+              fanId,
+              dispute.amount,
+              dispute.currency,
+              dispute.reason || null,
+              dispute.status,
+              dispute.created || event.created,
+              event.created,
+            ]
           );
           break;
         }
