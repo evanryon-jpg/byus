@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 import { isValidPresetAvatarId } from '@/lib/preset-avatars';
 import sprite from '@/lib/avatar-sprite-100';
 
-const TILE = 48;
+const TILE = 128;
 const COLS = 8;
-const SPRITE_WIDTH = 384;
-const SPRITE_HEIGHT = 240;
+const SPRITE_WIDTH = 1024;
+const SPRITE_HEIGHT = 640;
 
 export async function GET(request, { params }) {
   const { presetId } = params;
