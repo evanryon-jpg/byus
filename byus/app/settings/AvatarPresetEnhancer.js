@@ -2,12 +2,14 @@
 
 import { useEffect } from 'react';
 
+const AVATAR_ASSET_VERSION = '3';
+
 export default function AvatarPresetEnhancer() {
   useEffect(() => {
     function replacePresetSources() {
       document.querySelectorAll('img[src^="/images/avatars/avatar-"]').forEach((img) => {
         const match = img.getAttribute('src')?.match(/\/images\/avatars\/(avatar-\d+)\.svg$/);
-        if (match) img.src = `/api/preset-avatar/${match[1]}`;
+        if (match) img.src = `/api/preset-avatar/${match[1]}?v=${AVATAR_ASSET_VERSION}`;
       });
     }
 
