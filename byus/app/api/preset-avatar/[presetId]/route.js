@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
 import { isValidPresetAvatarId } from '@/lib/preset-avatars';
-import sprite0 from '@/lib/avatar-sprite-0';
-import sprite1 from '@/lib/avatar-sprite-1';
-import sprite2 from '@/lib/avatar-sprite-2';
+import sprite from '@/lib/avatar-sprite-100';
 
-const SPRITE = `${sprite0}${sprite1}${sprite2}`;
-const TILE = 48;
-const COLS = 8;
+const TILE = 64;
+const COLS = 10;
+const SPRITE_SIZE = 640;
 
 export async function GET(request, { params }) {
   const { presetId } = params;
@@ -17,7 +15,7 @@ export async function GET(request, { params }) {
   const index = Number(presetId.replace('avatar-', '')) - 1;
   const x = (index % COLS) * TILE;
   const y = Math.floor(index / COLS) * TILE;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="${x} ${y} ${TILE} ${TILE}"><image href="data:image/webp;base64,${SPRITE}" width="384" height="240"/></svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="${x} ${y} ${TILE} ${TILE}"><image href="data:image/webp;base64,${sprite}" width="${SPRITE_SIZE}" height="${SPRITE_SIZE}"/></svg>`;
 
   return new NextResponse(svg, {
     headers: {
