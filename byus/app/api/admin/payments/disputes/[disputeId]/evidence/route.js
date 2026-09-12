@@ -40,7 +40,7 @@ export async function GET(request, { params }) {
        FROM stripe_disputes d
        LEFT JOIN users creator ON creator.id = d.creator_id
        LEFT JOIN users fan ON fan.id = d.fan_id
-       WHERE d.id = $1 OR d.stripe_dispute_id = $1
+       WHERE d.id::text = $1 OR d.stripe_dispute_id = $1
        LIMIT 1`,
       [disputeId]
     );
