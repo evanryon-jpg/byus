@@ -1,16 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 // POST /api/creators/:creatorId/tip
-// A one-time "buy a coffee" payment — no tier, no subscription, no commitment. Same
-// destination-charge split as a subscription (ByUs keeps the creator's current
-// platform_fee_percent, see lib/fees.js), just a single payment instead of a recurring
-// one. Recorded in `transactions` (subscription_id left NULL — the schema already
-// supports a one-off payment, it just had nothing writing to it until now) and in
-// `creator_earnings` via the same recordEarningAndCheckFeeTier() a subscription invoice
-// uses, so a generous month of tips counts toward the creator's monthly fee-discount
-// threshold exactly like subscription revenue does. See app/api/webhooks/stripe/route.js
-// for where the payment is actually confirmed and recorded — this route only starts
-// checkout.
+// A one-time "buy a coffee" payment — no tier, no subscription, no commitment.
 
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
@@ -19,17 +10,10 @@ import { paymentProvider } from '@/lib/payments';
 import { MIN_TIP_CENTS, MAX_TIP_CENTS } from '@/lib/pricing';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { getPlatformMilestoneReductionPoints, applyPlatformMilestoneReduction } from '@/lib/fees';
+import { TERMS_VERSION, TIP_REFUND_POLICY_VERSION, tipCheckoutDisclosure } from '@/lib/legal';
 
-// Ko-fi's tip flow lets a supporter leave a short note with their tip -- purely optional,
-// shown only to the creator (see GET /api/creator/tips), never made public on its own.
-// Stripe metadata values cap at 500 chars; we cap well under that for a readable note.
 const MAX_TIP_MESSAGE_LENGTH = 300;
 
-// A tip can be started from the creator's full profile page, their standalone /tip page,
-// or (for PLATFORM_CREATOR_ID specifically) the site-wide /support page -- Stripe redirects
-// back to whichever one the fan actually came from instead of always landing on the full
-// profile. Restricted to this exact allowlist (own-origin, only the known pages) so the
-// checkout endpoint can never be turned into an open redirect.
 function safeReturnPath(candidate, creatorId) {
   if (typeof candidate === 'string' && /^\/creator\/[A-Za-z0-9_-]+(\/tip)?$/.test(candidate)) {
     return candidate;
@@ -103,7 +87,6 @@ export async function POST(request, { params }) {
     if (!creator.stripe_connect_onboarded) {
       return NextResponse.json({ error: 'This creator has not finished payment setup yet.' }, { status: 400 });
     }
-    // Same one-time initial-review gate as /api/subscribe -- see that file's comment.
     if (!creator.review_cleared_at) {
       return NextResponse.json(
         { error: "This creator's page is still completing an initial review. Check back soon." },
@@ -111,8 +94,6 @@ export async function POST(request, { params }) {
       );
     }
 
-    // Reuse this fan's existing Stripe Customer, same reasoning as /api/subscribe — one
-    // Customer per fan across every creator, not a fresh one per checkout.
     let customerId = fan.stripe_customer_id;
     if (!customerId) {
       const customer = await paymentProvider.createCustomer({ email: session.email, userId: session.userId });
@@ -133,14 +114,17 @@ export async function POST(request, { params }) {
       productName: `Tip for ${creator.display_name || 'this creator'}`,
       applicationFeeCents,
       connectedAccountId: creator.stripe_connect_account_id,
-      // ?tipped=true triggers a thank-you banner wherever the fan started — the full
-      // profile page or the standalone tip page — same pattern as ?subscribed=true.
       successUrl: `${origin}${returnPath}?tipped=true`,
       cancelUrl: `${origin}${returnPath}`,
+      checkoutDisclosure: tipCheckoutDisclosure(),
       metadata: {
         type: 'tip',
         fan_id: session.userId,
         creator_id: creator.id,
+        purchase_price_cents: String(amountCents),
+        terms_version: TERMS_VERSION,
+        refund_policy_version: TIP_REFUND_POLICY_VERSION,
+        purchase_disclosure_shown: 'true',
         ...(trimmedMessage ? { message: trimmedMessage } : {}),
       },
     });
