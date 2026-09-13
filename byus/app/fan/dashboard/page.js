@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import VerifyEmailBanner from '../../components/VerifyEmailBanner';
+import FanDownloads from '../../components/FanDownloads';
 
 export default function FanDashboard() {
   const [user, setUser] = useState(null);
@@ -190,6 +191,8 @@ export default function FanDashboard() {
           </div>
         </div>
       )}
+
+      <FanDownloads />
 
       <ul className="mt-8 space-y-3">
         {subs.map((s) => (
