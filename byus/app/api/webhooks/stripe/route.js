@@ -258,8 +258,19 @@ export async function POST(request) {
 
         case 'customer.subscription.updated': {
           const sub = event.data.object;
-          // Map Stripe's status vocabulary to ours; anything else falls back to 'incomplete'.
-          const status = KNOWN_STATUSES.includes(sub.status) ? sub.status : 'incomplete';
+          // Map Stripe's status vocabulary to ours. Treat 'trialing' the same as 'active':
+          // checkout.session.completed above already marks a brand-new trial subscription
+          // 'active' so the fan gets immediate access, and Stripe reliably sends this same
+          // event again while still trialing (e.g. attaching the default payment method
+          // right after checkout) -- falling through to the 'incomplete' default below for
+          // that status would silently revoke access mid-trial for something Stripe hasn't
+          // actually flagged as a problem. Anything else unrecognized still falls back to
+          // 'incomplete'.
+          const status = sub.status === 'trialing'
+            ? 'active'
+            : KNOWN_STATUSES.includes(sub.status)
+            ? sub.status
+            : 'incomplete';
           await client.query(
             `UPDATE subscriptions
              SET status = $1, current_period_end = to_timestamp($2), stripe_event_created_at = to_timestamp($3)
