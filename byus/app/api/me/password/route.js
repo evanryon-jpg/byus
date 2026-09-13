@@ -8,7 +8,13 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
-import { hashPassword, verifyPassword } from '@/lib/auth';
+import {
+  hashPassword,
+  verifyPassword,
+  createSessionToken,
+  getSessionCookieOptions,
+  SESSION_COOKIE_NAME,
+} from '@/lib/auth';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 // bcrypt silently ignores any bytes past 72 — capping here means the account's real
@@ -61,13 +67,24 @@ export async function PATCH(request) {
     const newHash = await hashPassword(newPassword);
     // Bumping session_version invalidates every other session immediately — including a
     // stolen cookie an attacker might be using elsewhere right now — rather than leaving
-    // them valid for up to 30 more days.
-    await query(
-      'UPDATE users SET password_hash = $1, session_version = session_version + 1 WHERE id = $2',
+    // them valid for up to 30 more days. That would also invalidate THIS session's own
+    // cookie, though, since it still carries the pre-bump version -- so reissue a fresh
+    // token below, the same way login/signup do, to keep the person who just changed
+    // their password logged in instead of silently signing them out.
+    const updated = await query(
+      `UPDATE users SET password_hash = $1, session_version = session_version + 1
+       WHERE id = $2
+       RETURNING id, email, role, session_version`,
       [newHash, session.userId]
     );
 
-    return NextResponse.json({ success: true });
+    const response = NextResponse.json({ success: true });
+    response.cookies.set(
+      SESSION_COOKIE_NAME,
+      createSessionToken(updated.rows[0]),
+      getSessionCookieOptions()
+    );
+    return response;
   } catch (err) {
     console.error('me/password PATCH failed:', err);
     return NextResponse.json(
