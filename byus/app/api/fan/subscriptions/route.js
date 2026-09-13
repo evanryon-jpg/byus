@@ -30,7 +30,7 @@ export async function GET() {
   } catch (err) {
     console.error('fan/subscriptions GET failed:', err);
     return NextResponse.json(
-      { error: err.message || 'Could not load your subscriptions. Try again.' },
+      { error: 'Could not load your subscriptions. Try again.' },
       { status: 500 }
     );
   }
