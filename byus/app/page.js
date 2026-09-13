@@ -26,6 +26,7 @@ export default async function HomePage() {
       <LookingForSomeoneSection />
       <FeaturedCreators />
       <FAQSection />
+      <WhyWeBuiltByUs />
       {/* PlatformGoalGauge (app/components/PlatformGoalGauge.jsx) pulled for now -- with
           one creator and no revenue yet, "our best month so far: $0.00" reads as a red
           flag to a visitor rather than a growth story. Bring it back once there's an
@@ -501,6 +502,42 @@ function HowItWorks() {
               )}
             </div>
           ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
+function WhyWeBuiltByUs() {
+  return (
+    <section className="relative overflow-hidden bg-brand-cream">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-28 top-1/2 h-72 w-72 -translate-y-1/2 rounded-full bg-brand-gold/15 blur-3xl"
+      />
+      <div className="relative mx-auto max-w-4xl px-6 py-16 sm:py-20">
+        <div className="rounded-3xl border border-brand-ink/10 bg-brand-paper px-7 py-10 shadow-sm sm:px-12 sm:py-12">
+          <span className="text-xs font-extrabold uppercase tracking-[0.18em] text-brand-clay">
+            Our reason for building ByUs
+          </span>
+          <h2 className="mt-4 font-display text-3xl font-semibold text-[#2B2420] sm:text-4xl">
+            Creators deserve better.
+          </h2>
+          <div className="mt-6 space-y-4 text-base leading-relaxed text-brand-ink/75 sm:text-lg">
+            <p>
+              ByUs began with a conversation. A creator told us that she received a $500 gift—but
+              after fees and deductions, only about $200 reached her.
+            </p>
+            <p className="font-display text-xl font-semibold text-brand-teal">
+              That didn&rsquo;t feel right.
+            </p>
+            <p>
+              Creators do the work, build the communities, and create the value. They deserve to
+              keep more of what they earn. We built ByUs to offer creators and their fans a simpler,
+              fairer way to support one another.
+            </p>
+          </div>
         </div>
       </div>
     </section>
