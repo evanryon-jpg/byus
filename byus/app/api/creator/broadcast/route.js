@@ -13,6 +13,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { sendCreatorUpdateEmail } from '@/lib/email';
+import { containsBlockedContent } from '@/lib/content-policy';
 
 const SUBJECT_MAX = 150;
 const MESSAGE_MAX = 5000;
@@ -66,6 +67,16 @@ export async function POST(request) {
       { status: 400 }
     );
   }
+  // Same structural content gate applied to bio, tier text, links, and post title/body
+  // (see lib/content-policy.js) -- this free-text update reaches every active subscriber's
+  // inbox exactly like a post would, so it needs the same check before it goes out.
+  const broadcastPolicyCheck = containsBlockedContent(subject, message);
+  if (broadcastPolicyCheck.blocked) {
+    return NextResponse.json(
+      { error: `That update ${broadcastPolicyCheck.message}.` },
+      { status: 400 }
+    );
+  }
 
   try {
     const userResult = await query('SELECT display_name FROM users WHERE id = $1', [session.userId]);
@@ -90,7 +101,7 @@ export async function POST(request) {
   } catch (err) {
     console.error('creator/broadcast POST failed:', err);
     return NextResponse.json(
-      { error: err.message || 'Could not send this update. Try again.' },
+      { error: 'Could not send this update. Try again.' },
       { status: 500 }
     );
   }
