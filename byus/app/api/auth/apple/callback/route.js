@@ -191,10 +191,16 @@ export async function POST(request) {
            )
            VALUES (
              $1, $2, $3, $4, true, now(),
-             CASE
+             -- Cast to integer: with both branches bare parameters, Postgres can't infer a
+             -- type for the CASE expression itself (it resolves that independently of the
+             -- INSERT target column) and falls back to text, which then fails to assign into
+             -- this integer column. Confirmed in production: every new-account creation
+             -- through this path was failing with "column platform_fee_percent is of type
+             -- integer but expression is of type text" until this cast was added.
+             (CASE
                WHEN $2 = 'creator' AND (SELECT COUNT(*) FROM users WHERE role = 'creator') < $5 THEN $6
                ELSE $7
-             END
+             END)::integer
            )
            RETURNING id, email, role, display_name, session_version`,
           [
