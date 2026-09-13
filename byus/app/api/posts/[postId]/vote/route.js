@@ -22,7 +22,7 @@ export async function POST(request, { params }) {
 
   try {
     const postResult = await query(
-      `SELECT id, creator_id, visibility, poll_options FROM posts WHERE id = $1`,
+      `SELECT id, creator_id, visibility, poll_options, pending_review FROM posts WHERE id = $1`,
       [postId]
     );
     const post = postResult.rows[0];
@@ -39,7 +39,10 @@ export async function POST(request, { params }) {
     }
 
     const isOwner = session.userId === post.creator_id;
-    let isAuthorized = post.visibility === 'public' || isOwner;
+    // A pending-review post is never public, no matter what its own visibility column
+    // says -- same rule app/api/posts/[postId]/media/route.js already enforces; only its
+    // own creator can interact with it while ByUs's one-time initial review is pending.
+    let isAuthorized = (post.visibility === 'public' && !post.pending_review) || isOwner;
     if (!isAuthorized) {
       // Same reconciling check used everywhere else content is gated: trust the
       // paid-through date over the cached status column in case a webhook was missed.
