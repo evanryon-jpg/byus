@@ -40,6 +40,7 @@ const CREATORS = [
     quote: 'Teaching others to see the extraordinary in the everyday.',
     accent: 'olive',
     art: '/creators/maya-sinclair/hero.jpg',
+    href: '/demo/maya-sinclair',
   },
   {
     slug: 'liam-carter',
@@ -49,6 +50,7 @@ const CREATORS = [
     quote: 'Music brings people together in a way nothing else can.',
     accent: 'rust',
     art: '/creators/liam-carter/hero.jpg',
+    href: '/demo/liam-carter',
   },
   {
     slug: 'elena-park',
@@ -61,6 +63,7 @@ const CREATORS = [
     quote: 'Everyone deserves a way to be understood.',
     accent: 'clay',
     art: '/creators/elena-park/hero.jpg',
+    href: '/demo/elena-park',
   },
   {
     slug: 'sophie-lane',
@@ -70,6 +73,7 @@ const CREATORS = [
     quote: 'Creating with my hands keeps me grounded.',
     accent: 'plum',
     art: '/creators/sophie-lane/hero.jpg',
+    href: '/demo/sophie-lane',
   },
   {
     slug: 'noah-blake',
@@ -79,6 +83,7 @@ const CREATORS = [
     quote: "Progress isn't perfect. It's consistent.",
     accent: 'teal',
     art: '/creators/noah-blake/hero.jpg',
+    href: '/demo/noah-blake',
   },
 ];
 
@@ -158,7 +163,7 @@ function CreatorCard({ creator }) {
         </p>
 
         <div className="mt-2.5 sm:mt-4">
-          {creator.live && creator.href ? (
+          {creator.href ? (
             <a
               href={creator.href}
               className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-brand-paper shadow-sm transition hover:opacity-90 sm:px-4 sm:py-2 sm:text-sm ${accentClass}`}
@@ -176,7 +181,7 @@ function CreatorCard({ creator }) {
         </div>
 
         <p className="mt-2.5 hidden text-[11px] text-brand-paper/50 sm:block">
-          {creator.live ? 'Demonstration profile — interactive page shown is a live sandbox.' : 'Demonstration profile — interactive page coming soon.'}
+          Demonstration profile — interactive page shown is a live sandbox.
         </p>
       </div>
     </div>

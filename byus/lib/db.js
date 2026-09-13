@@ -5,12 +5,26 @@ import { Pool } from 'pg';
 
 let pool;
 
+function normalizedConnectionString(value) {
+  if (!value) return value;
+  try {
+    const url = new URL(value);
+    // TLS verification is configured explicitly on Pool below. Removing the legacy
+    // sslmode query option prevents pg-connection-string from emitting a warning on
+    // every serverless invocation while preserving any unrelated connection options.
+    url.searchParams.delete('sslmode');
+    return url.toString();
+  } catch {
+    return value;
+  }
+}
+
 // Reuse a single connection pool across requests (important in serverless environments
 // like Vercel, where creating a new pool per request would exhaust Neon's connection limit)
 function getPool() {
   if (!pool) {
     pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: normalizedConnectionString(process.env.DATABASE_URL),
       // Neon's endpoint presents a certificate signed by a public CA, so there's no
       // reason to skip verifying it — rejectUnauthorized: false would accept a
       // certificate from anyone, making it impossible to tell a MITM'd connection

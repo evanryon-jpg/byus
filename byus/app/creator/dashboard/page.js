@@ -94,6 +94,7 @@ export default function CreatorDashboard() {
   }
 
   const stripeConnected = Boolean(user?.stripe_connect_onboarded);
+  const hasProfile = Boolean(user?.display_name?.trim() && user?.bio?.trim() && user?.profile_image_url);
   const hasTier = tiers.length > 0;
   const hasPost = posts.length > 0;
 
@@ -114,8 +115,8 @@ export default function CreatorDashboard() {
 
       <PageUrlCard />
 
-      {!(stripeConnected && hasTier && hasPost) && (
-        <GettingStartedChecklist stripeConnected={stripeConnected} hasTier={hasTier} hasPost={hasPost} />
+      {!(hasProfile && stripeConnected && hasTier && hasPost) && (
+        <GettingStartedChecklist hasProfile={hasProfile} stripeConnected={stripeConnected} hasTier={hasTier} hasPost={hasPost} />
       )}
 
       {/* AI setup assistant */}
@@ -778,8 +779,9 @@ function AiSetupSection({ stripeConnected, onProfileSaved, onTierAdded }) {
 // a post), then connect Stripe last as the "go live" step. Tiers and posts don't need
 // Stripe to create; Stripe is just what turns a draft tier into one fans can actually
 // subscribe to. Shown until all three are done, then it gets out of the way.
-function GettingStartedChecklist({ stripeConnected, hasTier, hasPost }) {
+function GettingStartedChecklist({ hasProfile, stripeConnected, hasTier, hasPost }) {
   const steps = [
+    { label: 'Complete your profile', detail: 'Add a name, photo, and a short bio.', done: hasProfile },
     { label: 'Create a tier', done: hasTier },
     { label: 'Publish a post', done: hasPost },
     { label: 'Connect Stripe', done: stripeConnected },
@@ -789,12 +791,16 @@ function GettingStartedChecklist({ stripeConnected, hasTier, hasPost }) {
   return (
     <div className="mt-6 rounded-2xl border border-[#146359]/15 bg-[#146359]/5 p-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-[#146359]">Get set up to earn</h2>
+        <div>
+          <h2 className="text-sm font-semibold text-[#146359]">Your launch checklist</h2>
+          <p className="mt-0.5 text-xs text-brand-ink/60">Finish these steps before sharing your page.</p>
+        </div>
         <span className="text-xs font-medium text-[#146359]/70">{doneCount} of {steps.length} done</span>
       </div>
-      <ol className="mt-3 flex flex-col gap-2 sm:flex-row sm:gap-4">
+      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-brand-paper" aria-hidden="true"><div className="h-full rounded-full bg-[#146359] transition-all" style={{ width: `${(doneCount / steps.length) * 100}%` }} /></div>
+      <ol className="mt-4 grid gap-3 sm:grid-cols-2">
         {steps.map((step, i) => (
-          <li key={step.label} className="flex items-center gap-2 text-sm">
+          <li key={step.label} className="flex items-start gap-2 text-sm">
             <span
               className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
                 step.done ? 'bg-[#146359] text-white' : 'border border-[#146359]/30 text-[#146359]/60'
@@ -803,9 +809,7 @@ function GettingStartedChecklist({ stripeConnected, hasTier, hasPost }) {
             >
               {step.done ? '✓' : i + 1}
             </span>
-            <span className={step.done ? 'text-brand-ink/60 line-through' : 'font-medium text-brand-ink/90'}>
-              {step.label}
-            </span>
+            <span><span className={step.done ? 'text-brand-ink/60 line-through' : 'font-medium text-brand-ink/90'}>{step.label}</span>{step.detail && !step.done && <span className="mt-0.5 block text-xs text-brand-ink/55">{step.detail}</span>}</span>
           </li>
         ))}
       </ol>
