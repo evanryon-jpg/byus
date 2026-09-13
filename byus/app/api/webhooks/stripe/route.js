@@ -165,8 +165,9 @@ export async function POST(request) {
           // subscription-checkout logic below, then done with this case.
           if (checkoutSession.mode === 'payment') {
             if (!tipPaymentIntent) break;
-            const { type, fan_id, creator_id, message } = tipPaymentIntent.metadata || {};
-            if (type !== 'tip' || !fan_id || !creator_id) break;
+            const metadata = tipPaymentIntent.metadata || {};
+            const { type, fan_id, creator_id, message, product_id } = metadata;
+            if (!fan_id || !creator_id) break;
 
             const grossCents = tipPaymentIntent.amount;
             const feeCents = tipPaymentIntent.application_fee_amount || 0;
@@ -175,6 +176,58 @@ export async function POST(request) {
               typeof tipPaymentIntent.latest_charge === 'string'
                 ? tipPaymentIntent.latest_charge
                 : tipPaymentIntent.latest_charge?.id || null;
+
+            if (type === 'digital_product') {
+              if (!product_id) break;
+
+              // Re-read the product in our database instead of trusting Stripe metadata
+              // for its price or creator. The signed webhook proves payment; this lookup
+              // proves the purchased item still belongs to the expected creator.
+              const productResult = await client.query(
+                `SELECT creator_id, price_cents, access_type
+                 FROM digital_products WHERE id = $1`,
+                [product_id]
+              );
+              const product = productResult.rows[0];
+              if (!product || product.access_type !== 'purchase' ||
+                  product.creator_id !== creator_id || product.price_cents !== grossCents) {
+                console.error('Digital product checkout metadata did not match the product', product_id);
+                break;
+              }
+
+              await client.query(
+                `INSERT INTO digital_purchases
+                   (product_id, fan_id, creator_id, gross_amount_cents, platform_fee_cents,
+                    creator_net_cents, stripe_payment_intent_id, stripe_charge_id, status)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'succeeded')
+                 ON CONFLICT (stripe_payment_intent_id) DO NOTHING`,
+                [product_id, fan_id, creator_id, grossCents, feeCents, netCents,
+                 tipPaymentIntent.id, chargeId]
+              );
+
+              await client.query(
+                `INSERT INTO transactions
+                   (fan_id, creator_id, gross_amount_cents, platform_fee_cents,
+                    creator_net_cents, stripe_charge_id, status, message)
+                 VALUES ($1, $2, $3, $4, $5, $6, 'succeeded', $7)`,
+                [fan_id, creator_id, grossCents, feeCents, netCents, chargeId,
+                 `PDF purchase: ${product_id}`]
+              );
+
+              const result = await recordEarningAndCheckFeeTier(client, {
+                creatorId: creator_id,
+                stripeInvoiceId: `product_${tipPaymentIntent.id}`,
+                amountCents: grossCents,
+              });
+              if (result?.personalTierChange) {
+                feeTierCrossing = { creatorId: creator_id, feePercent: result.personalTierChange };
+              }
+              if (result?.crossedMilestones?.length > 0) platformMilestoneCrossed = true;
+              if (result?.referrerFeeGranted) referrerFeeGrant = result.referrerFeeGranted;
+              break;
+            }
+
+            if (type !== 'tip') break;
 
             await client.query(
               `INSERT INTO transactions
