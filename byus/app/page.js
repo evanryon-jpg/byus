@@ -526,16 +526,17 @@ function WhyWeBuiltByUs() {
           </h2>
           <div className="mt-6 space-y-4 text-base leading-relaxed text-brand-ink/75 sm:text-lg">
             <p>
-              ByUs began with a conversation. A creator told us that she received a $500 gift—but
-              after fees and deductions, only about $200 reached her.
+              ByUs began with a conversation. A creator told us that a supporter spent $500 sending
+              her virtual gifts on another platform—but only about $200 reached her.
             </p>
             <p className="font-display text-xl font-semibold text-brand-teal">
               That didn&rsquo;t feel right.
             </p>
             <p>
               Creators do the work, build the communities, and create the value. They deserve to
-              keep more of what they earn. We built ByUs to offer creators and their fans a simpler,
-              fairer way to support one another.
+              keep more of what they earn. ByUs gives fans a simpler, more transparent way to
+              support them through memberships or direct tips—without confusing coins or gift
+              conversions.
             </p>
           </div>
         </div>
