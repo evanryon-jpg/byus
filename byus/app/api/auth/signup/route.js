@@ -97,10 +97,15 @@ export async function POST(request) {
      )
      VALUES (
        $1, $2, $3, $4, now(), $5, $6,
-       CASE
+       -- Cast to integer: with both branches bare parameters, Postgres can't infer a type
+       -- for the CASE expression itself (it resolves that independently of the INSERT
+       -- target column) and falls back to text, which then fails to assign into this
+       -- integer column. Same fix applied to the Google and Apple OAuth callbacks, which
+       -- hit the identical bug on their own brand-new-account INSERTs.
+       (CASE
          WHEN $3 = 'creator' AND (SELECT COUNT(*) FROM users WHERE role = 'creator') < $7 THEN $8
          ELSE $9
-       END
+       END)::integer
      )
      RETURNING id, email, role, display_name, session_version`,
     [
