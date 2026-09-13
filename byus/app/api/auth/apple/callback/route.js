@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 // mirroring the same three-way merge the Google callback does.
 
 import { NextResponse } from 'next/server';
-import { query } from '@/lib/db';
+import { query, withTransaction } from '@/lib/db';
 import { createSessionToken, getSessionCookieOptions, SESSION_COOKIE_NAME } from '@/lib/auth';
 import { checkRateLimit, rateLimitResponse, getClientIp } from '@/lib/rate-limit';
 import { generateAppleClientSecret, verifyAppleIdToken } from '@/lib/apple-auth';
@@ -184,31 +184,40 @@ export async function POST(request) {
         // 3. Brand new person — create the account with the role the flow started
         // with (fan by default, or creator if they clicked Apple from the creator
         // signup tab).
-        const created = await query(
-          `INSERT INTO users (
-             email, role, display_name,
-             apple_sub, email_verified, terms_accepted_at, platform_fee_percent
-           )
-           VALUES (
-             $1, $2, $3, $4, true, now(),
-             -- Cast to integer: with both branches bare parameters, Postgres can't infer a
-             -- type for the CASE expression itself (it resolves that independently of the
-             -- INSERT target column) and falls back to text, which then fails to assign into
-             -- this integer column. Confirmed in production: every new-account creation
-             -- through this path was failing with "column platform_fee_percent is of type
-             -- integer but expression is of type text" until this cast was added.
-             (CASE
-               WHEN $2 = 'creator' AND (SELECT COUNT(*) FROM users WHERE role = 'creator') < $5 THEN $6
-               ELSE $7
-             END)::integer
-           )
-           RETURNING id, email, role, display_name, session_version`,
-          [
-            email, role, displayName, payload.sub,
-            FOUNDING_CREATOR_LIMIT, DISCOUNTED_FEE_PERCENT, STANDARD_FEE_PERCENT,
-          ]
-        );
-        user = created.rows[0];
+        //
+        // The advisory lock below serializes this INSERT's founding-creator COUNT check
+        // against every other concurrent creator signup -- across this callback, the
+        // Google callback, and the email/password signup route, all keyed on the same
+        // fixed lock name -- so a burst of simultaneous signups can't all read the count
+        // as still under FOUNDING_CREATOR_LIMIT and over-qualify for the discounted rate.
+        user = await withTransaction(async (client) => {
+          await client.query(`SELECT pg_advisory_xact_lock(hashtext('byus_founding_creator_signup'))`);
+          const created = await client.query(
+            `INSERT INTO users (
+               email, role, display_name,
+               apple_sub, email_verified, terms_accepted_at, platform_fee_percent
+             )
+             VALUES (
+               $1, $2, $3, $4, true, now(),
+               -- Cast to integer: with both branches bare parameters, Postgres can't infer a
+               -- type for the CASE expression itself (it resolves that independently of the
+               -- INSERT target column) and falls back to text, which then fails to assign into
+               -- this integer column. Confirmed in production: every new-account creation
+               -- through this path was failing with "column platform_fee_percent is of type
+               -- integer but expression is of type text" until this cast was added.
+               (CASE
+                 WHEN $2 = 'creator' AND (SELECT COUNT(*) FROM users WHERE role = 'creator') < $5 THEN $6
+                 ELSE $7
+               END)::integer
+             )
+             RETURNING id, email, role, display_name, session_version`,
+            [
+              email, role, displayName, payload.sub,
+              FOUNDING_CREATOR_LIMIT, DISCOUNTED_FEE_PERCENT, STANDARD_FEE_PERCENT,
+            ]
+          );
+          return created.rows[0];
+        });
         await attributeReferral(referralCode, user.id);
       }
     }
