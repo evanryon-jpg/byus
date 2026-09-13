@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
-import { isAdmin } from '@/lib/admin';
+import { isAdmin, getAdminEmails } from '@/lib/admin';
 import { containsUrl } from '@/lib/content-policy';
 import { paymentProvider } from '@/lib/payments';
 
@@ -155,6 +155,7 @@ export async function GET() {
       newFans: Number(row.new_fans),
     }));
 
+    const adminEmails = getAdminEmails();
     const creators = recentCreators.rows.map((row) => ({
       id: row.id,
       displayName: row.display_name,
@@ -169,9 +170,14 @@ export async function GET() {
       // their posts stay unpublished and fans can't subscribe/tip until an admin clears
       // them (POST /api/admin/users/:id/clear-review). bioFlagged: their bio contains
       // something that looks like a URL -- not blocked outright (see lib/content-policy.js),
-      // just worth a human actually reading it.
+      // just worth a human actually reading it. isProtectedAdmin: this row's email is on
+      // lib/admin.js's own allowlist, the same list app/api/admin/users/[id]/route.js checks
+      // before honoring a suspend request for real -- flagged per-row here (not just for
+      // whichever admin happens to be viewing) so the dashboard shows "Protected" for every
+      // admin/owner account, not only the one currently logged in.
       needsReview: !row.review_cleared_at,
       bioFlagged: containsUrl(row.bio),
+      isProtectedAdmin: Boolean(row.email && adminEmails.includes(row.email.toLowerCase())),
     }));
 
     const nowMs = Date.now();
@@ -207,7 +213,6 @@ export async function GET() {
     });
 
     return NextResponse.json({
-      currentAdminUserId: session.userId,
       creatorCount: counts.rows[0].creator_count,
       fanCount: counts.rows[0].fan_count,
       activeSubscriberCount: activeSubs.rows[0].count,
