@@ -17,11 +17,18 @@ export const dynamic = 'force-dynamic';
 // dashboard, not something to automate silently as a side effect of a triage click here.
 //
 // Gated by lib/admin.js's email allowlist, same as the rest of /api/admin.
+//
+// Admin/owner accounts can never be suspended through this route, enforced here rather
+// than only in the dashboard (app/admin/page.js's SuspendControl hides the button, but a
+// hidden button is a UI nicety, not a security boundary -- a raw request that skips the
+// dashboard entirely would otherwise sail right past it). Checked by email against
+// lib/admin.js's own allowlist rather than a separately hardcoded owner id, so this stays
+// correct automatically if a second admin is ever added -- no id to remember to update.
 
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
-import { isAdmin } from '@/lib/admin';
+import { isAdmin, getAdminEmails } from '@/lib/admin';
 
 const REASON_MAX = 500;
 
@@ -36,6 +43,15 @@ export async function PATCH(request, { params }) {
   // login and lock the team out of /admin entirely, with no other account able to undo it.
   if (params.id === session.userId) {
     return NextResponse.json({ error: "You can't suspend your own account." }, { status: 400 });
+  }
+
+  const targetResult = await query('SELECT email FROM users WHERE id = $1', [params.id]);
+  const targetEmail = targetResult.rows[0]?.email;
+  if (targetEmail && getAdminEmails().includes(targetEmail.toLowerCase())) {
+    return NextResponse.json(
+      { error: "Admin accounts can't be suspended from this dashboard." },
+      { status: 400 }
+    );
   }
 
   const { is_suspended, suspension_reason } = await request.json();
