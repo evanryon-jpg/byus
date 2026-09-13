@@ -9,10 +9,16 @@
 // every page.
 
 import { Suspense, useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { notFound, useRouter, useSearchParams } from 'next/navigation';
 import { PLATFORM_CREATOR_ID } from '@/lib/platform';
 
+// Keep the complete support-payment implementation available for a future Stripe
+// approval, but do not expose or execute it while approval is pending.
+const SUPPORT_PAYMENTS_ENABLED = false;
+
 export default function SupportPage() {
+  if (!SUPPORT_PAYMENTS_ENABLED) notFound();
+
   return (
     <Suspense fallback={<div className="p-12 text-center text-brand-ink/60">Loading…</div>}>
       <SupportPageContent />

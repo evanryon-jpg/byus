@@ -6,7 +6,6 @@ export default function Footer() {
         <p>&copy; {year} ByUs. All rights reserved.</p>
         <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
           <a href="/help" className="hover:text-brand-ink/80">Help Center</a>
-          <a href="/support" className="hover:text-brand-ink/80">Support ByUs</a>
           <a href="/terms" className="hover:text-brand-ink/80">Terms of Service</a>
           <a href="/privacy" className="hover:text-brand-ink/80">Privacy Policy</a>
           <a href="/photo-credits" className="hover:text-brand-ink/80">Photo Credits</a>
