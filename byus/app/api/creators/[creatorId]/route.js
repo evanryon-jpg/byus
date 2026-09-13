@@ -22,7 +22,7 @@ export async function GET(request, { params }) {
     // Links can point at a creator by their raw UUID (old/already-shared links, or any
     // creator who hasn't claimed a vanity URL) or by their slug (new short links). A UUID
     // always matches the id column directly; anything else can only ever be a slug.
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(creatorId);
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(creatorId);
     // is_suspended = false is part of the lookup itself, not a separate check after --
     // a suspended creator's page returns the exact same 404 a nonexistent slug would,
     // so there's no way to tell "never existed" apart from "taken down for a policy

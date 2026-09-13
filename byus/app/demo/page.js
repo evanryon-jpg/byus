@@ -16,10 +16,7 @@ const CREATOR = {
   tagline: 'Fantasy Concept Artist & Illustrator',
   bio: "I paint the landscapes and characters for worlds that don't exist yet — moody environments, portrait studies, and the sketches that get me there. New piece every week, a full process breakdown every month.",
   stats: { members: '1,240', posts: '89', since: '2022' },
-  socials: [
-    { label: 'YouTube', href: '#' },
-    { label: 'Instagram', href: '#' },
-  ],
+  socials: ['YouTube', 'Instagram'],
 };
 
 // Cumulative tiers -- joining a higher one is meant to read as "already includes the
@@ -170,14 +167,13 @@ function ProfileHeader() {
           <span>Posting since {CREATOR.stats.since}</span>
         </div>
         <div className="mt-3 flex flex-wrap gap-3">
-          {CREATOR.socials.map((s) => (
-            <a
-              key={s.label}
-              href={s.href}
-              className="border-b border-brand-ink/15 pb-0.5 text-xs font-bold text-brand-ink/55 transition hover:border-brand-teal hover:text-brand-teal"
+          {CREATOR.socials.map((label) => (
+            <span
+              key={label}
+              className="border-b border-brand-ink/15 pb-0.5 text-xs font-bold text-brand-ink/55"
             >
-              {s.label} ↗
-            </a>
+              {label} (demo)
+            </span>
           ))}
         </div>
       </div>

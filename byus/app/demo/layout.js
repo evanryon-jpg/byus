@@ -1,3 +1,9 @@
+export const metadata = {
+  title: 'Interactive Creator Demo — ByUs',
+  description: 'Explore a fictional ByUs creator page and see the fan and creator experience without signing up.',
+  alternates: { canonical: '/demo' },
+};
+
 export default function DemoLayout({ children }) {
   return (
     <div className="demo-route-scope">
