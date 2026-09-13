@@ -102,6 +102,13 @@ const limiters = {
     limiter: Ratelimit.slidingWindow(8, '24 h'),
     prefix: 'rl:ai-setup',
   }),
+  // Conversational Page Coach: enough turns for a real guided setup session while
+  // keeping paid model usage bounded per creator account.
+  'page-coach': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(30, '24 h'),
+    prefix: 'rl:page-coach',
+  }),
   // Guards starting a one-time tip checkout — same shape of risk as subscribe (a paid
   // Stripe API call per attempt), so it gets the same allowance.
   tip: new Ratelimit({
