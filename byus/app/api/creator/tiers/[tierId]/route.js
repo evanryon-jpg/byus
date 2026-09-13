@@ -132,7 +132,7 @@ export async function PATCH(request, { params }) {
   } catch (err) {
     console.error('creator/tiers PATCH failed:', err);
     return NextResponse.json(
-      { error: err.message || 'Could not update this tier. Try again.' },
+      { error: 'Could not update this tier. Try again.' },
       { status: 500 }
     );
   }
@@ -165,7 +165,7 @@ export async function DELETE(request, { params }) {
   } catch (err) {
     console.error('creator/tiers DELETE failed:', err);
     return NextResponse.json(
-      { error: err.message || 'Could not delete this tier. Try again.' },
+      { error: 'Could not delete this tier. Try again.' },
       { status: 500 }
     );
   }
