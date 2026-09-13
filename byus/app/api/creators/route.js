@@ -101,7 +101,7 @@ export async function GET(request) {
   } catch (err) {
     console.error('creators GET failed:', err);
     return NextResponse.json(
-      { error: err.message || 'Could not load creators. Try again.' },
+      { error: 'Could not load creators. Try again.' },
       { status: 500 }
     );
   }
