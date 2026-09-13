@@ -281,22 +281,48 @@ function SliderField({
       : position;
     onChange(Math.min(max, Math.max(min, next)));
   }
+
+  function adjustValue(direction) {
+    onChange(Math.min(max, Math.max(min, value + direction * step)));
+  }
   return (
     <div className="mb-6 last:mb-0">
       <div className="mb-2.5 flex items-baseline justify-between">
         <label className="text-[11px] font-bold uppercase tracking-wide text-brand-ink/60">{label}</label>
         {editable ? (
           <div className="text-right">
-            <input
-              type="number"
-              min={min}
-              max={max}
-              step={step}
-              value={value}
-              onChange={handleTypedValue}
-              aria-label={`${label} (enter an exact number)`}
-              className="w-40 rounded-lg border border-brand-ink/15 bg-brand-cream px-3 py-1.5 text-right font-display text-lg font-bold tabular-nums text-[#2B2420] outline-none focus:border-brand-teal"
-            />
+            <div className="flex items-stretch overflow-hidden rounded-lg border border-brand-ink/15 bg-brand-cream focus-within:border-brand-teal">
+              <input
+                type="number"
+                min={min}
+                max={max}
+                step={step}
+                value={value}
+                onChange={handleTypedValue}
+                aria-label={`${label} (enter an exact number)`}
+                className="w-36 bg-transparent px-3 py-1.5 text-right font-display text-lg font-bold tabular-nums text-[#2B2420] outline-none"
+              />
+              <div className="flex w-8 flex-col border-l border-brand-ink/15">
+                <button
+                  type="button"
+                  onClick={() => adjustValue(1)}
+                  disabled={value >= max}
+                  aria-label={`Increase ${label.toLowerCase()} by ${step}`}
+                  className="flex flex-1 items-center justify-center border-b border-brand-ink/15 text-[10px] leading-none text-brand-ink/65 hover:bg-brand-gold/15 hover:text-brand-ink disabled:cursor-not-allowed disabled:opacity-30"
+                >
+                  ▲
+                </button>
+                <button
+                  type="button"
+                  onClick={() => adjustValue(-1)}
+                  disabled={value <= min}
+                  aria-label={`Decrease ${label.toLowerCase()} by ${step}`}
+                  className="flex flex-1 items-center justify-center text-[10px] leading-none text-brand-ink/65 hover:bg-brand-gold/15 hover:text-brand-ink disabled:cursor-not-allowed disabled:opacity-30"
+                >
+                  ▼
+                </button>
+              </div>
+            </div>
             <span className="mt-1 block text-[10px] font-medium text-brand-ink/50">
               Up to {max.toLocaleString()}
             </span>
