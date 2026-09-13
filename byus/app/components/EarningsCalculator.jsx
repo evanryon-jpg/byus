@@ -215,7 +215,7 @@ export default function EarningsCalculator() {
 
             <div className="mt-3 flex items-center justify-between gap-2.5 rounded-xl border border-brand-ink/15 bg-brand-cream px-4 py-3 text-[12.5px]">
               <span className="text-brand-ink/70">
-                Patreon Standard (10% + estimated processing) would leave you
+                Competitor estimate (10% + processing) would leave you
               </span>
               <span className="tabular-nums font-bold text-brand-ink/70">{fmt(competitorNetDisplay)}</span>
             </div>
@@ -237,10 +237,9 @@ export default function EarningsCalculator() {
         </div>
 
         <p className="mt-7 text-xs text-brand-ink/55">
-          Estimate only — Patreon comparison assumes one standard domestic card charge per
-          subscriber at 2.9% + $0.30 processing. It doesn&rsquo;t account for failed, refunded,
-          international, or currency-converted charges. Real payouts land in your own Stripe
-          account on Stripe&rsquo;s standard schedule.
+          Estimate only. Competitor fees vary. ByUs includes standard domestic payment processing
+          in its fee. Other charges may apply for refunds, international payments, currency
+          conversion, or optional instant payouts.
         </p>
       </div>
     </section>
