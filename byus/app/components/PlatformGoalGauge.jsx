@@ -8,7 +8,7 @@ import { formatCompactUSD } from '@/lib/format';
 // itself has actually earned in its strongest month so far) against a ladder of
 // milestones. This USED to also drive a fee-reduction mechanic -- crossing a milestone
 // permanently lowered every creator's rate -- but that's retired (see lib/fees.js):
-// DISCOUNTED_FEE_PERCENT (7%) is already the lowest rate that covers Stripe's own cut, so
+// DISCOUNTED_FEE_PERCENT (10%) is already the lowest advertised rate, so
 // there was no room left to stack further cuts on top of it. Every `reduction_points`
 // value in `platform_milestones` is now purely cosmetic; crossing a checkpoint here is
 // just "thank you, we hit a number," nothing changes on anyone's bill. Self-fetching and

@@ -9,6 +9,7 @@ import EarningsSection from '../../components/EarningsSection';
 import PayoutsSection from '../../components/PayoutsSection';
 import { TRIAL_DAY_OPTIONS } from '@/lib/trials';
 import { MIN_DISCOUNT_PERCENT, MAX_DISCOUNT_PERCENT } from '@/lib/discounts';
+import { STANDARD_FEE_PERCENT } from '@/lib/pricing';
 
 export default function CreatorDashboard() {
   const [user, setUser] = useState(null);
@@ -125,7 +126,7 @@ export default function CreatorDashboard() {
         tiers={tiers}
         onCreated={load}
         stripeConnected={stripeConnected}
-        platformFeePercent={user?.effective_fee_percent ?? user?.platform_fee_percent ?? 10}
+        platformFeePercent={user?.effective_fee_percent ?? user?.platform_fee_percent ?? STANDARD_FEE_PERCENT}
         zeroFeePromoActive={Boolean(user?.zero_fee_promo_active)}
       />
 

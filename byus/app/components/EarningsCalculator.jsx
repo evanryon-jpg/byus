@@ -9,7 +9,9 @@ import { STANDARD_FEE_PERCENT, DISCOUNTED_FEE_PERCENT } from '@/lib/pricing';
 // about these numbers (this component included) never has to depend on the payments
 // layer that holds the actual Stripe secret key. No more hand-duplicated constants to
 // keep in sync.
-const COMPETITOR_FEE_PERCENT = 12; // Comparison-only figure, not a ByUs business rule.
+const PATREON_PLATFORM_FEE_PERCENT = 10;
+const ESTIMATED_PROCESSING_PERCENT = 2.9;
+const ESTIMATED_PROCESSING_FIXED_CENTS = 30;
 
 function fmt(cents) {
   const dollars = cents / 100;
@@ -103,7 +105,10 @@ export default function EarningsCalculator() {
   const feeCents = Math.round((grossCents * feePercent) / 100);
   const netCents = grossCents - feeCents;
 
-  const competitorFeeCents = Math.round((grossCents * COMPETITOR_FEE_PERCENT) / 100);
+  const competitorFeeCents = Math.round(
+    (grossCents * (PATREON_PLATFORM_FEE_PERCENT + ESTIMATED_PROCESSING_PERCENT)) / 100 +
+      subscribers * ESTIMATED_PROCESSING_FIXED_CENTS
+  );
   const competitorNetCents = grossCents - competitorFeeCents;
   const extraKeptCents = netCents - competitorNetCents;
 
@@ -210,7 +215,7 @@ export default function EarningsCalculator() {
 
             <div className="mt-3 flex items-center justify-between gap-2.5 rounded-xl border border-brand-ink/15 bg-brand-cream px-4 py-3 text-[12.5px]">
               <span className="text-brand-ink/70">
-                Typical flat platform ({COMPETITOR_FEE_PERCENT}%) would leave you
+                Patreon Standard (10% + estimated processing) would leave you
               </span>
               <span className="tabular-nums font-bold text-brand-ink/70">{fmt(competitorNetDisplay)}</span>
             </div>
@@ -232,9 +237,10 @@ export default function EarningsCalculator() {
         </div>
 
         <p className="mt-7 text-xs text-brand-ink/55">
-          Estimate only — assumes every subscriber renews and doesn&rsquo;t account for the
-          rare failed or refunded charge. Real payouts land in your own Stripe account on
-          Stripe&rsquo;s standard schedule.
+          Estimate only — Patreon comparison assumes one standard domestic card charge per
+          subscriber at 2.9% + $0.30 processing. It doesn&rsquo;t account for failed, refunded,
+          international, or currency-converted charges. Real payouts land in your own Stripe
+          account on Stripe&rsquo;s standard schedule.
         </p>
       </div>
     </section>

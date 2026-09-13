@@ -43,11 +43,11 @@ export default async function HomePage() {
 // counts real creator signups (`SELECT COUNT(*) FROM users WHERE role='creator'`) --
 // `stats.limit`/`stats.remaining`/`stats.claimed` are never hardcoded, so this section
 // can't drift from what a creator actually gets when they sign up. The literal "100
-// SPOTS. 7% FOREVER." framing from the brief is built from `stats.limit` rather than a
+// SPOTS. 10% FOREVER." framing from the brief is built from `stats.limit` rather than a
 // bare "100" so the copy stays correct if FOUNDING_CREATOR_LIMIT in lib/pricing.js ever
-// changes; "7%" is left as a literal since it mirrors that same file's permanent
+// changes; "10%" is left as a literal since it mirrors that same file's permanent
 // MIN_FEE_PERCENT/DISCOUNTED_FEE_PERCENT constant. Every claim below is scoped to what's
-// actually live: the fee is a permanent 7% (never "0%" or "keep 100%"), priority
+// actually live: the fee is a permanent 10% (never "0%" or "keep 100%"), priority
 // placement is real (see the is_founding ordering in /api/creators), and there's no
 // human-curation layer, brand-deal matching, or other feature ByUs doesn't have --
 // none of that is implied here.
@@ -72,7 +72,7 @@ function FoundingCreatorProgram({ stats }) {
     {
       icon: <FastForwardIcon />,
       title: 'Skip the $2,000/mo wait',
-      body: `Standard accounts reach 7% once they're earning $2,000/mo on ByUs. Founding creators start there, from day one.`,
+      body: `Standard accounts reach 10% once they're earning $2,000/mo on ByUs. Founding creators start there, from day one.`,
     },
   ];
 
@@ -89,7 +89,7 @@ function FoundingCreatorProgram({ stats }) {
           Founding Creator Program
         </span>
         <p className="mx-auto mt-4 max-w-2xl font-display text-4xl font-extrabold leading-tight text-brand-paper sm:text-5xl">
-          {stats.limit} spots. <span className="text-brand-gold">7% forever.</span>
+          {stats.limit} spots. <span className="text-brand-gold">10% forever.</span>
         </p>
         <p className="mx-auto mt-4 max-w-lg text-brand-paper/70">
           The first {stats.limit} creators to join lock in our lowest fee for good — everyone else
@@ -170,7 +170,7 @@ function Hero({ user }) {
             <h1 className="mt-6 font-display text-4xl font-extrabold leading-[1.08] tracking-tight text-brand-paper sm:text-5xl lg:text-[3.25rem]">
               You keep{' '}
               <span className="relative inline-block whitespace-nowrap">
-                90&ndash;93%
+                87&ndash;90%
                 <svg
                   className="absolute -bottom-1.5 left-0 w-full"
                   height="10"
@@ -190,7 +190,7 @@ function Hero({ user }) {
 
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-brand-paper/75">
               Build your page, connect payments, and share your work — tiers, posts, and
-              payouts handled, with Stripe's processing already covered in that fee.
+              payouts handled, with standard domestic payment processing covered in that fee.
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -238,7 +238,7 @@ function Hero({ user }) {
             </p>
 
             <p className="mt-4 text-base font-semibold text-brand-paper/85">
-              $0 to start&nbsp;&nbsp;·&nbsp;&nbsp;fee drops to 7% once you're earning $2k+/mo&nbsp;&nbsp;·&nbsp;&nbsp;cancel anytime
+              $0 to start&nbsp;&nbsp;·&nbsp;&nbsp;fee drops to 10% once you're earning $2k+/mo&nbsp;&nbsp;·&nbsp;&nbsp;cancel anytime
             </p>
           </div>
 
@@ -377,7 +377,7 @@ function PayoutDemo() {
         </p>
       </div>
 
-      {/* A real receipt, not a made-up one -- $10/mo at the 7% founding-creator rate,
+      {/* A real receipt, not a made-up one -- $10/mo at the 10% founding-creator rate,
           the same math the EarningsCalculator above uses. */}
       <div className="mt-6 rounded-xl border border-brand-ink/10 bg-[#F5E9D8] p-4">
         <div className="flex items-center justify-between text-sm">
@@ -385,12 +385,12 @@ function PayoutDemo() {
           <span className="font-display font-bold tabular-nums text-[#2B2420]">$10.00</span>
         </div>
         <div className="mt-2 flex items-center justify-between text-sm text-brand-ink/50">
-          <span>Platform fee (7%)</span>
-          <span className="tabular-nums">&minus;$0.70</span>
+          <span>Platform fee (10%)</span>
+          <span className="tabular-nums">&minus;$1.00</span>
         </div>
         <div className="mt-3 flex items-center justify-between border-t border-brand-ink/15 pt-3 text-sm font-bold">
           <span className="text-brand-teal">You receive</span>
-          <span className="font-display tabular-nums text-brand-teal">$9.30</span>
+          <span className="font-display tabular-nums text-brand-teal">$9.00</span>
         </div>
       </div>
     </div>
@@ -626,4 +626,3 @@ function FastForwardIcon() {
     </svg>
   );
 }
-

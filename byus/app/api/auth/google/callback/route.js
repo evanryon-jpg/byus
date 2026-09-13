@@ -12,6 +12,11 @@ import { createSessionToken, getSessionCookieOptions, SESSION_COOKIE_NAME } from
 import { checkRateLimit, rateLimitResponse, getClientIp } from '@/lib/rate-limit';
 import { attributeReferral } from '@/lib/referrals';
 import { recordPaymentEvidenceBestEffort } from '@/lib/payment-evidence';
+import {
+  STANDARD_FEE_PERCENT,
+  DISCOUNTED_FEE_PERCENT,
+  FOUNDING_CREATOR_LIMIT,
+} from '@/lib/pricing';
 
 const STATE_COOKIE_NAME = 'byus_oauth_state';
 const GENERIC_ERROR = 'Something went wrong signing in with Google. Please try again.';
@@ -155,11 +160,20 @@ export async function GET(request) {
         const created = await query(
           `INSERT INTO users (
              email, role, display_name, profile_image_url,
-             google_sub, email_verified, terms_accepted_at
+             google_sub, email_verified, terms_accepted_at, platform_fee_percent
            )
-           VALUES ($1, $2, $3, $4, $5, true, now())
+           VALUES (
+             $1, $2, $3, $4, $5, true, now(),
+             CASE
+               WHEN $2 = 'creator' AND (SELECT COUNT(*) FROM users WHERE role = 'creator') < $6 THEN $7
+               ELSE $8
+             END
+           )
            RETURNING id, email, role, display_name, session_version`,
-          [email, role, displayName, profileImageUrl, profile.sub]
+          [
+            email, role, displayName, profileImageUrl, profile.sub,
+            FOUNDING_CREATOR_LIMIT, DISCOUNTED_FEE_PERCENT, STANDARD_FEE_PERCENT,
+          ]
         );
         user = created.rows[0];
         await attributeReferral(referralCode, user.id);

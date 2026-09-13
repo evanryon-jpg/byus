@@ -15,25 +15,25 @@
 // detected (on each successful invoice, in the payment-provider webhook) and applied (to
 // that creator's stored rate and every one of their live subscriptions). Kept in one place
 // so it's easy to find/change — never hardcode these numbers elsewhere in the app.
-export const STANDARD_FEE_PERCENT = 10;
-export const DISCOUNTED_FEE_PERCENT = 7;
+export const STANDARD_FEE_PERCENT = 13;
+export const DISCOUNTED_FEE_PERCENT = 10;
 export const FEE_DISCOUNT_THRESHOLD_CENTS = 200000; // $2,000 gross revenue in a calendar month
 
 // Floor for the platform-wide milestone bonus in lib/fees.js. Set to match
 // DISCOUNTED_FEE_PERCENT exactly: Stripe's own processing (2.9% + $0.30/charge), Connect
 // active-account fee ($2/mo/creator), and payout fee (0.25% + $0.25/payout) all come out
 // of ByUs's side of the split, not the creator's -- see lib/fees.js and
-// app/api/subscribe/route.js -- and 7% is the lowest rate that reliably clears that cost.
+// app/api/subscribe/route.js -- and 10% is the lowest advertised rate.
 // Since the floor now equals the personal-tier rate, getPlatformMilestoneReductionPoints()
 // in lib/fees.js always returns 0 -- the platform-wide milestone bonus is retired, and
 // platform_milestones now only powers a celebratory "best month so far" stat on the
 // homepage gauge, with no effect on anyone's bill. This constant is kept as the hard floor
 // in case that ever changes. If a second payment provider is ever added with different fee
 // economics, this floor is the first number worth re-checking.
-export const MIN_FEE_PERCENT = 7;
+export const MIN_FEE_PERCENT = 10;
 
 // Launch promo: the first FOUNDING_CREATOR_LIMIT creator accounts ever created on ByUs
-// get DISCOUNTED_FEE_PERCENT (7%) permanently, from day one -- the $2,000/mo milestone in
+// get DISCOUNTED_FEE_PERCENT (10%) permanently, from day one -- the $2,000/mo milestone in
 // FEE_DISCOUNT_THRESHOLD_CENTS above is waived for them entirely rather than just started
 // at a lower point. See getFoundingCreatorRank / isFoundingCreator in lib/fees.js for how
 // "first 100" is determined (live off signup order, not a stamped flag).

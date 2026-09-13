@@ -3,7 +3,7 @@ export const metadata = {
   description: 'The terms that govern using ByUs as a creator or a fan.',
 };
 
-const LAST_UPDATED = 'September 12, 2026';
+const LAST_UPDATED = 'September 13, 2026';
 const CONTACT_EMAIL = 'support@byusapp.com';
 
 export default function TermsPage() {
@@ -40,14 +40,15 @@ export default function TermsPage() {
           <p>
             Creators can publish public and subscribers-only posts and set one or more monthly
             or annual subscription tiers. Payments are processed through Stripe, and each creator
-            connects their own Stripe account to receive payouts. ByUs&rsquo;s standard platform fee
-            is currently 10% of each payment. The first 100 founding creators receive a 7% platform
-            fee from day one, and other creators may qualify for a 7% rate when their gross ByUs
-            revenue reaches $2,000 in a calendar month. Separate promotional fee credits may also
-            apply. The rate actually charged is shown in the creator dashboard and checkout flow,
-            and ByUs routes the remaining proceeds to the creator&rsquo;s connected Stripe account.
-            Stripe may separately charge processing, payout, currency-conversion, dispute, or other
-            fees under Stripe&rsquo;s own terms.
+            connects their own Stripe account to receive payouts. ByUs&rsquo;s standard all-in fee is
+            currently 13% of each payment and includes standard domestic payment processing. The
+            first 100 founding creators receive a 10% rate from day one, and other creators qualify
+            for a 10% rate during calendar months when their gross ByUs revenue reaches $2,000.
+            Separate promotional fee credits may also apply. The rate actually charged is shown in
+            the creator dashboard and checkout flow, and ByUs routes the remaining proceeds to the
+            creator&rsquo;s connected Stripe account. Currency conversion, instant payouts, taxes,
+            disputes, nonstandard payment methods, or other exceptional processor charges may apply
+            separately and will be disclosed where applicable.
           </p>
           <p className="mt-3">
             You&rsquo;re responsible for the content you post and for honoring what you promise

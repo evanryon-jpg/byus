@@ -54,8 +54,8 @@ export default function EarningsSection() {
 
   return (
     <div className="mt-4 space-y-4">
-      {/* Fee tier — your own personal tier (10% -> 7% for any month you cross $2k, back to
-          10% the next month if you don't), plus whatever ByUs's own growth milestones have
+      {/* Fee tier — your own personal tier (13% -> 10% for any month you cross $2k, back to
+          13% the next month if you don't), plus whatever ByUs's own growth milestones have
           knocked off on top of that for everyone. */}
       <div className="rounded-xl bg-brand-ink/[0.03] p-4">
         {isDiscountedThisMonth ? (

@@ -10,7 +10,7 @@ import { useState } from 'react';
 const FAQS = [
   {
     q: 'How does the platform fee work?',
-    a: "Creators keep 90% of every payment a fan sends, paid straight into the creator's own Stripe account. ByUs's fee starts at 10% and drops to 7% for any month a creator's earnings on ByUs reach $2,000, moving back to 10% for a month that doesn't — no extra processing, currency conversion, or payout charges stacked on top of that.",
+    a: "Creators keep 87% of each standard domestic payment when starting out, paid straight into the creator's own Stripe account. ByUs's all-in fee starts at 13% and drops to 10% for any month a creator's earnings on ByUs reach $2,000, moving back to 13% for a month that doesn't. Standard domestic processing is included; currency conversion, instant payouts, taxes, disputes, and exceptional processor costs may apply separately and will be disclosed where applicable.",
   },
   {
     q: 'When and how do creators get paid?',
@@ -26,7 +26,7 @@ const FAQS = [
   },
   {
     q: 'Does it cost anything to become a creator?',
-    a: "No. Setting up a page is free, with no listing or setup fee. ByUs only makes money through its platform fee (10%, dropping to 7% for good as a creator grows), and only when a creator actually gets paid.",
+    a: "No. Setting up a page is free, with no listing or setup fee. ByUs only makes money when a creator gets paid: the all-in fee is 13%, dropping to 10% during months with at least $2,000 in ByUs earnings. The first 100 founding creators lock in 10% forever.",
   },
   {
     q: 'Can a creator offer more than one tier?',

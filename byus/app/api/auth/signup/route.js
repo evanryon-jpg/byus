@@ -10,6 +10,11 @@ import { hashPassword, createSessionToken, getSessionCookieOptions, SESSION_COOK
 import { checkRateLimit, rateLimitResponse, getClientIp } from '@/lib/rate-limit';
 import { sendVerificationEmail } from '@/lib/email';
 import { attributeReferral } from '@/lib/referrals';
+import {
+  STANDARD_FEE_PERCENT,
+  DISCOUNTED_FEE_PERCENT,
+  FOUNDING_CREATOR_LIMIT,
+} from '@/lib/pricing';
 
 const VERIFY_TOKEN_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -87,11 +92,21 @@ export async function POST(request) {
   const result = await query(
     `INSERT INTO users (
        email, password_hash, role, display_name,
-       terms_accepted_at, verification_token_hash, verification_token_expires_at
+       terms_accepted_at, verification_token_hash, verification_token_expires_at,
+       platform_fee_percent
      )
-     VALUES ($1, $2, $3, $4, now(), $5, $6)
+     VALUES (
+       $1, $2, $3, $4, now(), $5, $6,
+       CASE
+         WHEN $3 = 'creator' AND (SELECT COUNT(*) FROM users WHERE role = 'creator') < $7 THEN $8
+         ELSE $9
+       END
+     )
      RETURNING id, email, role, display_name, session_version`,
-    [email.toLowerCase(), passwordHash, role, displayName || null, verifyTokenHash, verifyExpiresAt]
+    [
+      email.toLowerCase(), passwordHash, role, displayName || null, verifyTokenHash,
+      verifyExpiresAt, FOUNDING_CREATOR_LIMIT, DISCOUNTED_FEE_PERCENT, STANDARD_FEE_PERCENT,
+    ]
   );
   const user = result.rows[0];
 

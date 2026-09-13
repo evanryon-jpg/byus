@@ -14,6 +14,11 @@ import { createSessionToken, getSessionCookieOptions, SESSION_COOKIE_NAME } from
 import { checkRateLimit, rateLimitResponse, getClientIp } from '@/lib/rate-limit';
 import { generateAppleClientSecret, verifyAppleIdToken } from '@/lib/apple-auth';
 import { attributeReferral } from '@/lib/referrals';
+import {
+  STANDARD_FEE_PERCENT,
+  DISCOUNTED_FEE_PERCENT,
+  FOUNDING_CREATOR_LIMIT,
+} from '@/lib/pricing';
 
 const STATE_COOKIE_NAME = 'byus_oauth_state';
 const GENERIC_ERROR = 'Something went wrong signing in with Apple. Please try again.';
@@ -173,11 +178,20 @@ export async function POST(request) {
         const created = await query(
           `INSERT INTO users (
              email, role, display_name,
-             apple_sub, email_verified, terms_accepted_at
+             apple_sub, email_verified, terms_accepted_at, platform_fee_percent
            )
-           VALUES ($1, $2, $3, $4, true, now())
+           VALUES (
+             $1, $2, $3, $4, true, now(),
+             CASE
+               WHEN $2 = 'creator' AND (SELECT COUNT(*) FROM users WHERE role = 'creator') < $5 THEN $6
+               ELSE $7
+             END
+           )
            RETURNING id, email, role, display_name, session_version`,
-          [email, role, displayName, payload.sub]
+          [
+            email, role, displayName, payload.sub,
+            FOUNDING_CREATOR_LIMIT, DISCOUNTED_FEE_PERCENT, STANDARD_FEE_PERCENT,
+          ]
         );
         user = created.rows[0];
         await attributeReferral(referralCode, user.id);

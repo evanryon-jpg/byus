@@ -59,7 +59,7 @@ export async function GET(request, { params }) {
       // for a creator who hasn't finished Stripe setup rather than showing a dead button.
       stripe_connect_onboarded: Boolean(creatorRow.stripe_connect_onboarded),
       // One of the first FOUNDING_CREATOR_LIMIT creators on ByUs (see lib/fees.js) — same
-      // check that grants the permanent 7% fee, reused here so the public "Founding
+      // check that grants the permanent 10% fee, reused here so the public "Founding
       // Creator" badge on this page can never drift out of sync with who actually has it.
       is_founding: await isFoundingCreator(query, id),
     };

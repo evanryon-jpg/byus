@@ -10,7 +10,7 @@
 //
 // There used to be a second, stacking discount here -- a platform-wide milestone bonus
 // that lowered every creator's fee further as ByUs's own revenue grew. It's retired:
-// DISCOUNTED_FEE_PERCENT (7%) is already the lowest rate that reliably covers Stripe's own
+// DISCOUNTED_FEE_PERCENT (10%) is the lowest advertised rate and covers Stripe's own
 // processing, Connect account, and payout fees (see lib/stripe.js), so there was no room
 // left to stack anything on top of it. getPlatformMilestoneReductionPoints() below always
 // returns 0 now, making applyPlatformMilestoneReduction() a no-op everywhere it's still
@@ -53,7 +53,7 @@ export async function getFoundingCreatorRank(queryFn, creatorId) {
 }
 
 // Founding promo: the first FOUNDING_CREATOR_LIMIT creators get DISCOUNTED_FEE_PERCENT
-// (7%) from day one, no $2,000/mo milestone required -- see recordEarningAndCheckFeeTier
+// (10%) from day one, no $2,000/mo milestone required -- see recordEarningAndCheckFeeTier
 // below, which is where this actually takes effect on billing.
 export async function isFoundingCreator(queryFn, creatorId) {
   const rank = await getFoundingCreatorRank(queryFn, creatorId);
@@ -73,7 +73,7 @@ const MILESTONE_POINTS_SQL = `
   SELECT COALESCE(SUM(reduction_points), 0)::int AS points
   FROM platform_milestones WHERE crossed_at IS NOT NULL`;
 
-// Retired: platform-wide milestones no longer reduce anyone's fee. 7% (== the existing
+// Retired: platform-wide milestones no longer reduce anyone's fee. 10% (== the existing
 // personal-tier rate, and == MIN_FEE_PERCENT in lib/stripe.js) is the sustainable floor --
 // Stripe's own processing, Connect account, and payout fees come out of ByUs's side of
 // every charge, and stacking further reductions on top of the personal tier didn't leave

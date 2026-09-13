@@ -1,6 +1,6 @@
 # ByUs
 
-A creator subscription platform. Fans pay creators monthly; ByUs takes a flat 10% fee via Stripe Connect, the rest goes directly to the creator's own Stripe account.
+A creator subscription platform. Fans pay creators monthly; ByUs charges an all-in 13% fee that drops to 10% during $2,000+ months, and the rest goes directly to the creator's own Stripe account. The first 100 founding creators lock in 10% forever.
 
 ## Stack
 - Next.js 14 (App Router)
