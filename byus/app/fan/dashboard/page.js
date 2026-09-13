@@ -10,6 +10,9 @@ export default function FanDashboard() {
   const [loadError, setLoadError] = useState(false);
   const [billingLoading, setBillingLoading] = useState(false);
   const [billingError, setBillingError] = useState('');
+  const [showCreatorConfirm, setShowCreatorConfirm] = useState(false);
+  const [creatorLoading, setCreatorLoading] = useState(false);
+  const [creatorError, setCreatorError] = useState('');
 
   useEffect(() => {
     load();
@@ -62,6 +65,26 @@ export default function FanDashboard() {
     }
   }
 
+  async function handleBecomeCreator() {
+    setCreatorLoading(true);
+    setCreatorError('');
+    try {
+      const res = await fetch('/api/me/become-creator', { method: 'POST' });
+      const result = await res.json();
+      if (!res.ok) {
+        setCreatorError(result.error || 'Could not switch this account. Try again.');
+        setShowCreatorConfirm(false);
+        return;
+      }
+      window.location.href = result.destination || '/creator/dashboard';
+    } catch {
+      setCreatorError('Network error — please try again.');
+      setShowCreatorConfirm(false);
+    } finally {
+      setCreatorLoading(false);
+    }
+  }
+
   if (loading) return <div className="p-12 text-center text-brand-ink/60">Loading…</div>;
   if (loadError) {
     return (
@@ -105,6 +128,68 @@ export default function FanDashboard() {
       </p>
 
       {user && !user.email_verified && <VerifyEmailBanner email={user.email} />}
+
+      <section className="mt-8 rounded-3xl border border-[#146359]/15 bg-[#F5E9D8] p-6 sm:flex sm:items-center sm:justify-between sm:gap-6">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#146359]">Create on ByUs</p>
+          <h2 className="mt-2 text-xl font-bold">Ready to build your own page?</h2>
+          <p className="mt-1 max-w-xl text-sm text-brand-ink/65">
+            Switch this account to a creator account, then use the AI helper to write your profile and plan your membership tiers.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setCreatorError('');
+            setShowCreatorConfirm(true);
+          }}
+          className="mt-5 shrink-0 rounded-full bg-[#146359] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#0f4d45] sm:mt-0"
+        >
+          Become a creator
+        </button>
+      </section>
+
+      {creatorError && (
+        <p className="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{creatorError}</p>
+      )}
+
+      {showCreatorConfirm && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/45 px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="become-creator-title"
+          onClick={() => !creatorLoading && setShowCreatorConfirm(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-3xl bg-brand-paper p-6 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="become-creator-title" className="text-xl font-bold">Switch to a creator account?</h2>
+            <p className="mt-2 text-sm text-brand-ink/65">
+              You’ll go directly to the creator dashboard, where the AI helper can help build your page. This change is intended for accounts without existing subscriptions.
+            </p>
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setShowCreatorConfirm(false)}
+                disabled={creatorLoading}
+                className="rounded-full border border-brand-ink/15 px-5 py-2.5 text-sm font-semibold hover:bg-brand-ink/5 disabled:opacity-50"
+              >
+                Keep fan account
+              </button>
+              <button
+                type="button"
+                onClick={handleBecomeCreator}
+                disabled={creatorLoading}
+                className="rounded-full bg-[#146359] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#0f4d45] disabled:opacity-50"
+              >
+                {creatorLoading ? 'Switching…' : 'Continue as creator'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ul className="mt-8 space-y-3">
         {subs.map((s) => (
