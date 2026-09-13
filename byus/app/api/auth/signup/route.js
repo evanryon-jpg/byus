@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 import crypto from 'crypto';
 import { NextResponse } from 'next/server';
-import { query } from '@/lib/db';
+import { query, withTransaction } from '@/lib/db';
 import { hashPassword, createSessionToken, getSessionCookieOptions, SESSION_COOKIE_NAME } from '@/lib/auth';
 import { checkRateLimit, rateLimitResponse, getClientIp } from '@/lib/rate-limit';
 import { sendVerificationEmail } from '@/lib/email';
@@ -89,31 +89,42 @@ export async function POST(request) {
   const verifyTokenHash = crypto.createHash('sha256').update(verifyToken).digest('hex');
   const verifyExpiresAt = new Date(Date.now() + VERIFY_TOKEN_TTL_MS);
 
-  const result = await query(
-    `INSERT INTO users (
-       email, password_hash, role, display_name,
-       terms_accepted_at, verification_token_hash, verification_token_expires_at,
-       platform_fee_percent
-     )
-     VALUES (
-       $1, $2, $3, $4, now(), $5, $6,
-       -- Cast to integer: with both branches bare parameters, Postgres can't infer a type
-       -- for the CASE expression itself (it resolves that independently of the INSERT
-       -- target column) and falls back to text, which then fails to assign into this
-       -- integer column. Same fix applied to the Google and Apple OAuth callbacks, which
-       -- hit the identical bug on their own brand-new-account INSERTs.
-       (CASE
-         WHEN $3 = 'creator' AND (SELECT COUNT(*) FROM users WHERE role = 'creator') < $7 THEN $8
-         ELSE $9
-       END)::integer
-     )
-     RETURNING id, email, role, display_name, session_version`,
-    [
-      email.toLowerCase(), passwordHash, role, displayName || null, verifyTokenHash,
-      verifyExpiresAt, FOUNDING_CREATOR_LIMIT, DISCOUNTED_FEE_PERCENT, STANDARD_FEE_PERCENT,
-    ]
-  );
-  const user = result.rows[0];
+  // Serializes concurrent signups against the founding-creator COUNT below inside one
+  // transaction -- without this, two creator accounts created at nearly the same instant
+  // could each read the count as still under FOUNDING_CREATOR_LIMIT and both qualify,
+  // letting more than the intended number lock in the discounted starting rate. The lock
+  // is scoped to this one fixed key (not per-row), so every concurrent creator signup
+  // across all three account-creation paths (this route, and the Google/Apple OAuth
+  // callbacks) queues up behind the same gate rather than racing each other.
+  const user = await withTransaction(async (client) => {
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext('byus_founding_creator_signup'))`);
+
+    const result = await client.query(
+      `INSERT INTO users (
+         email, password_hash, role, display_name,
+         terms_accepted_at, verification_token_hash, verification_token_expires_at,
+         platform_fee_percent
+       )
+       VALUES (
+         $1, $2, $3, $4, now(), $5, $6,
+         -- Cast to integer: with both branches bare parameters, Postgres can't infer a type
+         -- for the CASE expression itself (it resolves that independently of the INSERT
+         -- target column) and falls back to text, which then fails to assign into this
+         -- integer column. Same fix applied to the Google and Apple OAuth callbacks, which
+         -- hit the identical bug on their own brand-new-account INSERTs.
+         (CASE
+           WHEN $3 = 'creator' AND (SELECT COUNT(*) FROM users WHERE role = 'creator') < $7 THEN $8
+           ELSE $9
+         END)::integer
+       )
+       RETURNING id, email, role, display_name, session_version`,
+      [
+        email.toLowerCase(), passwordHash, role, displayName || null, verifyTokenHash,
+        verifyExpiresAt, FOUNDING_CREATOR_LIMIT, DISCOUNTED_FEE_PERCENT, STANDARD_FEE_PERCENT,
+      ]
+    );
+    return result.rows[0];
+  });
 
   await attributeReferral(referralCode, user.id);
 
