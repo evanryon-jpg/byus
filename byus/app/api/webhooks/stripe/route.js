@@ -47,6 +47,7 @@ import { paymentProvider } from '@/lib/payments';
 import { rewardReferrer } from '@/lib/referrals';
 import { sendWelcomeSubscriptionEmail, sendDisputeAlertEmail } from '@/lib/email';
 import { getAdminEmails } from '@/lib/admin';
+import { trackServerEvent } from '@/lib/analytics';
 import {
   recordEarningAndCheckFeeTier,
   syncActiveSubscriptionsToFeePercent,
@@ -137,6 +138,8 @@ export async function POST(request) {
     // read after commit — like the fee-tier sync above, an email send is a network call
     // and doesn't belong inside an open DB transaction/lock.
     let newSubscriptionWelcome = null;
+    let subscriptionActivated = null;
+    let subscriptionPayment = null;
 
     await withTransaction(async (client) => {
       // Idempotency: claim this event ID first, in the same transaction as the state change
@@ -252,6 +255,11 @@ export async function POST(request) {
               console.error('Referral reward failed (subscription still activated):', err);
             }
             newSubscriptionWelcome = { fanId: fan_id, creatorId: creator_id };
+            subscriptionActivated = {
+              billing_interval: stripeSubscription.metadata?.billing_interval || 'unknown',
+              price_cents: stripeSubscription.items?.data?.[0]?.price?.unit_amount || 0,
+              has_trial: Number(stripeSubscription.trial_end || 0) > 0,
+            };
           }
           break;
         }
@@ -342,6 +350,11 @@ export async function POST(request) {
             if (result?.referrerFeeGranted) {
               referrerFeeGrant = result.referrerFeeGranted;
             }
+            subscriptionPayment = {
+              amount_cents: invoice.amount_paid,
+              currency: invoice.currency || 'usd',
+              payment_kind: invoice.billing_reason === 'subscription_create' ? 'initial' : 'renewal',
+            };
           }
           break;
         }
@@ -571,6 +584,20 @@ export async function POST(request) {
       } catch (err) {
         console.error('Failed to send welcome subscription email:', err);
       }
+    }
+
+    if (subscriptionActivated) {
+      await trackServerEvent('funnel_subscription_activated', {
+        ...subscriptionActivated,
+        provider: 'stripe',
+      }, request);
+    }
+
+    if (subscriptionPayment) {
+      await trackServerEvent('subscription_payment_succeeded', {
+        ...subscriptionPayment,
+        provider: 'stripe',
+      }, request);
     }
   } catch (err) {
     console.error(`Error handling webhook event ${event.type}:`, err);

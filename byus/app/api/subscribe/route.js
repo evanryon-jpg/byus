@@ -11,6 +11,7 @@ import { paymentProvider } from '@/lib/payments';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { getReferralDiscount } from '@/lib/referrals';
 import { getPlatformMilestoneReductionPoints, applyPlatformMilestoneReduction } from '@/lib/fees';
+import { trackServerEvent } from '@/lib/analytics';
 import {
   TERMS_VERSION,
   MEMBERSHIP_REFUND_POLICY_VERSION,
@@ -133,6 +134,13 @@ export async function POST(request) {
         purchase_disclosure_shown: 'true',
       },
     });
+
+    await trackServerEvent('funnel_subscription_checkout_started', {
+      billing_interval: billingInterval,
+      price_cents: purchasePriceCents,
+      has_trial: Number(tier.trial_days) > 0,
+      provider: 'stripe',
+    }, request);
 
     return NextResponse.json({ url });
   } catch (err) {

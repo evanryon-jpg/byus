@@ -10,10 +10,7 @@ export default function ConversionAnalytics() {
 
   useEffect(() => {
     if (pathname === '/signup') {
-      track('Signup Page Viewed', { role: searchParams.get('role') === 'creator' ? 'creator' : 'fan' });
-    }
-    if (pathname?.startsWith('/creator/') && searchParams.get('subscribed') === 'true') {
-      track('Subscription Completed');
+      track('funnel_signup_viewed', { role: searchParams.get('role') === 'creator' ? 'creator' : 'fan' });
     }
   }, [pathname, searchParams]);
 
@@ -28,16 +25,18 @@ export default function ConversionAnalytics() {
         try { url = new URL(link.href, window.location.origin); } catch { return; }
         if (url.origin !== window.location.origin) return;
         const props = { source_path: window.location.pathname };
-        if (url.pathname === '/signup') track('Signup CTA Clicked', { ...props, role: url.searchParams.get('role') === 'creator' ? 'creator' : 'fan' });
-        else if (url.pathname === '/browse') track('Browse Creators Clicked', props);
-        else if (url.pathname === '/demo') track('Live Demo Clicked', props);
-        else if (url.pathname.startsWith('/creator/')) track('Creator Profile Clicked', props);
+        if (url.pathname === '/signup') track('funnel_signup_started', { ...props, role: url.searchParams.get('role') === 'creator' ? 'creator' : 'fan', provider: 'email_or_oauth' });
+        else if (url.pathname === '/api/auth/google') track('funnel_signup_started', { ...props, role: url.searchParams.get('role') === 'creator' ? 'creator' : 'fan', provider: 'google' });
+        else if (url.pathname === '/api/auth/apple') track('funnel_signup_started', { ...props, role: url.searchParams.get('role') === 'creator' ? 'creator' : 'fan', provider: 'apple' });
+        else if (url.pathname === '/browse') track('browse_creators_clicked', props);
+        else if (url.pathname === '/demo') track('live_demo_clicked', props);
+        else if (url.pathname.startsWith('/creator/')) track('creator_profile_clicked', props);
         return;
       }
 
       const button = target.closest('button');
       if (button?.textContent?.trim() === 'Subscribe') {
-        track('Subscribe Clicked', { source_path: window.location.pathname });
+        track('subscribe_clicked', { source_path: window.location.pathname });
       }
     }
 

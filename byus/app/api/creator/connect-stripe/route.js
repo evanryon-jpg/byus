@@ -9,6 +9,7 @@ import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { paymentProvider } from '@/lib/payments';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { trackServerEvent } from '@/lib/analytics';
 
 export async function POST(request) {
   const session = await getCurrentUser();
@@ -93,6 +94,12 @@ export async function POST(request) {
       refreshUrl: `${origin}/creator/onboarding?refresh=true`,
       returnUrl: `${origin}/creator/onboarding?complete=true`,
     });
+
+    await trackServerEvent('funnel_creator_onboarding_started', {
+      role: 'creator',
+      provider: 'stripe',
+      resumed: Boolean(user.stripe_connect_account_id),
+    }, request);
 
     return NextResponse.json({ url });
   } catch (err) {

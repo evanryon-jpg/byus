@@ -14,6 +14,7 @@ import { createSessionToken, getSessionCookieOptions, SESSION_COOKIE_NAME } from
 import { checkRateLimit, rateLimitResponse, getClientIp } from '@/lib/rate-limit';
 import { generateAppleClientSecret, verifyAppleIdToken } from '@/lib/apple-auth';
 import { attributeReferral } from '@/lib/referrals';
+import { trackServerEvent } from '@/lib/analytics';
 import {
   STANDARD_FEE_PERCENT,
   DISCOUNTED_FEE_PERCENT,
@@ -153,6 +154,7 @@ export async function POST(request) {
   }
 
   let user;
+  let accountCreated = false;
   try {
     // 1. Already linked — the common case for every login after the first.
     const bySub = await query(
@@ -218,6 +220,7 @@ export async function POST(request) {
           );
           return created.rows[0];
         });
+        accountCreated = true;
         await attributeReferral(referralCode, user.id);
       }
     }
@@ -242,5 +245,8 @@ export async function POST(request) {
   const response = NextResponse.redirect(new URL(destination, origin).toString(), REDIRECT_STATUS);
   response.cookies.set(SESSION_COOKIE_NAME, token, getSessionCookieOptions());
   response.cookies.set(STATE_COOKIE_NAME, '', { path: '/', maxAge: 0 });
+  if (accountCreated) {
+    await trackServerEvent('funnel_account_created', { role: user.role, provider: 'apple' }, request);
+  }
   return response;
 }

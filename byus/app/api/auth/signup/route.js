@@ -10,6 +10,7 @@ import { hashPassword, createSessionToken, getSessionCookieOptions, SESSION_COOK
 import { checkRateLimit, rateLimitResponse, getClientIp } from '@/lib/rate-limit';
 import { sendVerificationEmail } from '@/lib/email';
 import { attributeReferral } from '@/lib/referrals';
+import { trackServerEvent } from '@/lib/analytics';
 import {
   STANDARD_FEE_PERCENT,
   DISCOUNTED_FEE_PERCENT,
@@ -141,5 +142,6 @@ export async function POST(request) {
   const token = createSessionToken(user);
   const response = NextResponse.json({ user });
   response.cookies.set(SESSION_COOKIE_NAME, token, getSessionCookieOptions());
+  await trackServerEvent('funnel_account_created', { role: user.role, provider: 'email' }, request);
   return response;
 }

@@ -24,6 +24,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { withTransaction } from '@/lib/db';
 import { paymentProvider } from '@/lib/payments';
+import { trackServerEvent } from '@/lib/analytics';
 
 const webhookSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET;
 
@@ -40,6 +41,7 @@ export async function POST(request) {
   }
 
   try {
+    let onboardingCompleted = false;
     await withTransaction(async (client) => {
       // Same idempotency pattern as /api/webhooks/stripe — claim the event ID before
       // acting on it, in the same transaction, so a redelivered event is a safe no-op.
@@ -59,10 +61,14 @@ export async function POST(request) {
           // Always sync to what Stripe reports right now, in either direction, rather than
           // only ever setting this to true.
           const onboarded = Boolean(account.details_submitted && account.payouts_enabled);
-          await client.query(
-            `UPDATE users SET stripe_connect_onboarded = $1 WHERE stripe_connect_account_id = $2`,
+          const updated = await client.query(
+            `UPDATE users SET stripe_connect_onboarded = $1
+             WHERE stripe_connect_account_id = $2
+               AND stripe_connect_onboarded IS DISTINCT FROM $1
+             RETURNING id`,
             [onboarded, account.id]
           );
+          onboardingCompleted = onboarded && updated.rows.length > 0;
           break;
         }
 
@@ -81,6 +87,12 @@ export async function POST(request) {
           break;
       }
     });
+    if (onboardingCompleted) {
+      await trackServerEvent('funnel_creator_onboarding_completed', {
+        role: 'creator',
+        provider: 'stripe',
+      }, request);
+    }
   } catch (err) {
     console.error(`Error handling Connect webhook event ${event.type}:`, err);
     // Return 500 so Stripe retries — better to reprocess than silently drop an onboarding update.
