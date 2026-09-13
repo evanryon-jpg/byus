@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import LivePlayer from '../../components/LivePlayer';
+import DigitalProductShop from '../../components/DigitalProductShop';
 
 export default function CreatorProfilePage() {
   return (
@@ -190,6 +191,8 @@ function CreatorProfile() {
       )}
 
       <TopSupporters supporters={topSupporters} hasTiers={tiers.length > 0} />
+
+      <DigitalProductShop creatorId={creator.slug || creator.id} />
 
       {/* Live stream — sits above tiers/feed since "live right now" is the single most
           time-sensitive thing on this page when it's true. */}
