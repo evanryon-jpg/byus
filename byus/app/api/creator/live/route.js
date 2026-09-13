@@ -66,7 +66,7 @@ export async function POST() {
   } catch (err) {
     console.error('live stream setup failed:', err);
     return NextResponse.json(
-      { error: err.message || 'Could not set up live streaming. Try again.' },
+      { error: 'Could not set up live streaming. Try again.' },
       { status: 500 }
     );
   }
