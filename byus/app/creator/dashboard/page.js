@@ -29,7 +29,14 @@ export default function CreatorDashboard() {
     setLoading(true);
     setLoadError(false);
     try {
-      const meRes = await fetch('/api/me');
+      // These endpoints are independent. Start them together so dashboard content is
+      // available after the slowest request instead of four sequential round trips.
+      const [meRes, tiersRes, postsRes, linksRes] = await Promise.all([
+        fetch('/api/me'),
+        fetch('/api/creator/tiers'),
+        fetch('/api/creator/posts'),
+        fetch('/api/creator/links'),
+      ]);
       if (meRes.status === 401) {
         window.location.href = '/login';
         return;
@@ -44,11 +51,6 @@ export default function CreatorDashboard() {
       const { user } = await meRes.json();
       setUser(user);
 
-      const [tiersRes, postsRes, linksRes] = await Promise.all([
-        fetch('/api/creator/tiers'),
-        fetch('/api/creator/posts'),
-        fetch('/api/creator/links'),
-      ]);
       if (tiersRes.ok) setTiers((await tiersRes.json()).tiers);
       if (postsRes.ok) setPosts((await postsRes.json()).posts);
       if (linksRes.ok) setLinks((await linksRes.json()).links);
