@@ -8,6 +8,7 @@ import PendingReviewBanner from '../../components/PendingReviewBanner';
 import EarningsSection from '../../components/EarningsSection';
 import PayoutsSection from '../../components/PayoutsSection';
 import DigitalProductManager from '../../components/DigitalProductManager';
+import PageCoach from '../../components/PageCoach';
 import { TRIAL_DAY_OPTIONS } from '@/lib/trials';
 import { MIN_DISCOUNT_PERCENT, MAX_DISCOUNT_PERCENT } from '@/lib/discounts';
 import { STANDARD_FEE_PERCENT } from '@/lib/pricing';
@@ -122,9 +123,6 @@ export default function CreatorDashboard() {
         <GettingStartedChecklist hasProfile={hasProfile} stripeConnected={stripeConnected} hasTier={hasTier} hasPost={hasPost} />
       )}
 
-      {/* AI setup assistant */}
-      <AiSetupSection stripeConnected={stripeConnected} onProfileSaved={setUser} onTierAdded={load} />
-
       {/* Tiers — build these first; Stripe is the last step, once the page is worth publishing */}
       <TierSection
         tiers={tiers}
@@ -219,6 +217,8 @@ export default function CreatorDashboard() {
           core setup flow above. Works independently of Stripe; the gating that decides
           who can watch is "any active subscriber," same rule as subscriber-only posts. */}
       <LiveStreamSection />
+
+      <PageCoach onChanged={load} />
     </div>
   );
 }
