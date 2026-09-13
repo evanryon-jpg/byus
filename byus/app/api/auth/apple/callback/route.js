@@ -23,10 +23,19 @@ import {
 const STATE_COOKIE_NAME = 'byus_oauth_state';
 const GENERIC_ERROR = 'Something went wrong signing in with Apple. Please try again.';
 
+// NextResponse.redirect() defaults to a 307, which preserves the original request's
+// method -- fine for Google's GET-based callback, but this route only ever receives a
+// POST (Apple's response_mode=form_post). A 307 here makes the browser replay that POST
+// against whatever page we're redirecting to (/login, /browse, /creator/dashboard), and
+// since none of those are POST-handling routes, that replay 405s instead of rendering.
+// 303 (See Other) is the standard fix for a POST-then-redirect: it always downgrades the
+// follow-up request to a GET regardless of the original method.
+const REDIRECT_STATUS = 303;
+
 function loginErrorRedirect(origin, message) {
   const url = new URL('/login', origin);
   url.searchParams.set('error', message);
-  const response = NextResponse.redirect(url.toString());
+  const response = NextResponse.redirect(url.toString(), REDIRECT_STATUS);
   response.cookies.set(STATE_COOKIE_NAME, '', { path: '/', maxAge: 0 });
   return response;
 }
@@ -48,7 +57,7 @@ export async function POST(request) {
   // The person declined on Apple's consent screen, or Apple sent some other error —
   // either way, send them back to a normal login rather than a broken page.
   if (form.get('error')) {
-    const response = NextResponse.redirect(new URL('/login', origin).toString());
+    const response = NextResponse.redirect(new URL('/login', origin).toString(), REDIRECT_STATUS);
     response.cookies.set(STATE_COOKIE_NAME, '', { path: '/', maxAge: 0 });
     return response;
   }
@@ -215,7 +224,7 @@ export async function POST(request) {
 
   const token = createSessionToken(user);
   const destination = next || (user.role === 'creator' ? '/creator/dashboard' : '/browse');
-  const response = NextResponse.redirect(new URL(destination, origin).toString());
+  const response = NextResponse.redirect(new URL(destination, origin).toString(), REDIRECT_STATUS);
   response.cookies.set(SESSION_COOKIE_NAME, token, getSessionCookieOptions());
   response.cookies.set(STATE_COOKIE_NAME, '', { path: '/', maxAge: 0 });
   return response;
