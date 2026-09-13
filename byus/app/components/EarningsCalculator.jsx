@@ -158,7 +158,7 @@ export default function EarningsCalculator() {
               min={0}
               max={2_000_000}
               step={1}
-              sliderStep={1_000}
+              scale="log"
               editable
               onChange={setSubscribers}
               display={subscribers.toLocaleString()}
@@ -255,15 +255,30 @@ function SliderField({
   max,
   step,
   sliderStep = step,
+  scale = 'linear',
   editable = false,
   onChange,
   display,
 }) {
-  const pct = ((value - min) / (max - min)) * 100;
+  const usesLogScale = scale === 'log';
+  const sliderMin = usesLogScale ? 0 : min;
+  const sliderMax = usesLogScale ? 1000 : max;
+  const sliderValue = usesLogScale
+    ? (Math.log(value + 1) / Math.log(max + 1)) * sliderMax
+    : value;
+  const pct = ((sliderValue - sliderMin) / (sliderMax - sliderMin)) * 100;
 
   function handleTypedValue(e) {
     const next = Number(e.target.value);
     if (!Number.isFinite(next)) return;
+    onChange(Math.min(max, Math.max(min, next)));
+  }
+
+  function handleSliderValue(e) {
+    const position = Number(e.target.value);
+    const next = usesLogScale
+      ? Math.round(Math.pow(max + 1, position / sliderMax) - 1)
+      : position;
     onChange(Math.min(max, Math.max(min, next)));
   }
   return (
@@ -292,11 +307,11 @@ function SliderField({
       </div>
       <input
         type="range"
-        min={min}
-        max={max}
-        step={sliderStep}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
+        min={sliderMin}
+        max={sliderMax}
+        step={usesLogScale ? 1 : sliderStep}
+        value={sliderValue}
+        onChange={handleSliderValue}
         style={{
           background: `linear-gradient(to right, #C97C5D 0%, #C9A961 ${pct}%, rgba(43,36,32,0.08) ${pct}%, rgba(43,36,32,0.08) 100%)`,
         }}
