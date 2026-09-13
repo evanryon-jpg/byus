@@ -40,7 +40,7 @@ export async function GET(request, { params }) {
   } catch (err) {
     console.error('avatar/[userId] GET failed:', err);
     return NextResponse.json(
-      { error: err.message || 'Could not load this image. Try again.' },
+      { error: 'Could not load this image. Try again.' },
       { status: 500 }
     );
   }
