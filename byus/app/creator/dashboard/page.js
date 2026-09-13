@@ -7,6 +7,7 @@ import AcknowledgePolicyBanner from '../../components/AcknowledgePolicyBanner';
 import PendingReviewBanner from '../../components/PendingReviewBanner';
 import EarningsSection from '../../components/EarningsSection';
 import PayoutsSection from '../../components/PayoutsSection';
+import DigitalProductManager from '../../components/DigitalProductManager';
 import { TRIAL_DAY_OPTIONS } from '@/lib/trials';
 import { MIN_DISCOUNT_PERCENT, MAX_DISCOUNT_PERCENT } from '@/lib/discounts';
 import { STANDARD_FEE_PERCENT } from '@/lib/pricing';
@@ -140,6 +141,9 @@ export default function CreatorDashboard() {
 
       {/* Posts */}
       <PostSection posts={posts} onCreated={load} />
+
+      {/* Secure paid and member-only PDF downloads */}
+      <DigitalProductManager />
 
       {/* Message subscribers directly by email */}
       <BroadcastSection />
