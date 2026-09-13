@@ -473,14 +473,16 @@ function ReferralCard({ role }) {
     <section className="mt-6 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
       <h2 className="font-semibold">Refer a friend</h2>
       <p className="mt-1 text-sm text-brand-ink/65">
-        Share your link. When someone signs up and subscribes to a creator, you both get a
-        free month.
+        Share your link. When someone signs up and subscribes to a creator, you both receive one
+        month with no ByUs platform fee. Stripe's 3% payment-processing fee still applies
+        and is deducted from each payment.
       </p>
 
       {role === 'creator' && (
         <p className="mt-2 rounded-lg bg-brand-gold/15 px-3 py-2 text-sm font-semibold text-brand-ink">
-          🚀 Want 0% platform fees? Invite a creator friend — when their page gets its first
-          paying supporter, you get a full month at our 0% fee tier.
+          Want a month with no ByUs platform fee? Invite a creator friend — when their page
+          gets its first paying supporter, you receive one month at our 0% ByUs
+          platform-fee tier. Stripe's 3% payment-processing fee still applies.
         </p>
       )}
 
