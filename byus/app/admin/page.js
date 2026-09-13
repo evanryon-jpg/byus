@@ -54,7 +54,6 @@ export default function AdminPage() {
   }
 
   const {
-    currentAdminUserId,
     creatorCount,
     fanCount,
     activeSubscriberCount,
@@ -228,7 +227,7 @@ export default function AdminPage() {
                       userId={c.id}
                       initialSuspended={c.isSuspended}
                       initialReason={c.suspensionReason}
-                      protectedAccount={c.id === currentAdminUserId}
+                      protectedAccount={c.isProtectedAdmin}
                     />
                   </td>
                 </tr>
@@ -436,7 +435,7 @@ function SuspendControl({ userId, initialSuspended, initialReason, protectedAcco
     return (
       <span
         className="rounded-full bg-[#146359]/10 px-2 py-0.5 text-xs font-medium text-[#146359]"
-        title="Your owner account cannot be suspended from the admin dashboard."
+        title="Admin/owner accounts can't be suspended from the admin dashboard."
       >
         Protected
       </span>
