@@ -96,7 +96,7 @@ function useReveal() {
 
 export default function EarningsCalculator() {
   const [subscribers, setSubscribers] = useState(50);
-  const [price, setPrice] = useState(8);
+  const [price, setPrice] = useState(10);
   const [tier, setTier] = useState('starter'); // 'starter' | 'grown'
   const [revealRef, revealed] = useReveal();
 
