@@ -207,6 +207,7 @@ export async function GET() {
     });
 
     return NextResponse.json({
+      currentAdminUserId: session.userId,
       creatorCount: counts.rows[0].creator_count,
       fanCount: counts.rows[0].fan_count,
       activeSubscriberCount: activeSubs.rows[0].count,

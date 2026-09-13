@@ -54,6 +54,7 @@ export default function AdminPage() {
   }
 
   const {
+    currentAdminUserId,
     creatorCount,
     fanCount,
     activeSubscriberCount,
@@ -223,7 +224,12 @@ export default function AdminPage() {
                     <ReviewControl userId={c.id} initialNeedsReview={c.needsReview} />
                   </td>
                   <td className="py-2.5 pr-4">
-                    <SuspendControl userId={c.id} initialSuspended={c.isSuspended} initialReason={c.suspensionReason} />
+                    <SuspendControl
+                      userId={c.id}
+                      initialSuspended={c.isSuspended}
+                      initialReason={c.suspensionReason}
+                      protectedAccount={c.id === currentAdminUserId}
+                    />
                   </td>
                 </tr>
               ))}
@@ -418,13 +424,24 @@ function ReportRow({ report, onUpdate }) {
 // being independent of each other on this same page, and a full reload always shows the
 // current truth regardless. See app/api/admin/users/[id]/route.js for what this actually
 // does -- notably, it does NOT touch Stripe subscriptions or payouts.
-function SuspendControl({ userId, initialSuspended, initialReason }) {
+function SuspendControl({ userId, initialSuspended, initialReason, protectedAccount = false }) {
   const [suspended, setSuspended] = useState(Boolean(initialSuspended));
   const [reason, setReason] = useState(initialReason || '');
   const [open, setOpen] = useState(false);
   const [reasonInput, setReasonInput] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  if (protectedAccount) {
+    return (
+      <span
+        className="rounded-full bg-[#146359]/10 px-2 py-0.5 text-xs font-medium text-[#146359]"
+        title="Your owner account cannot be suspended from the admin dashboard."
+      >
+        Protected
+      </span>
+    );
+  }
 
   async function submit(nextSuspended, nextReason) {
     setSaving(true);
