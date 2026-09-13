@@ -383,7 +383,7 @@ function Sidebar({ subscribedPrice, onJoin }) {
       >
         {joined ? '✓ You\'re a member' : `Join ${UNLOCK_TIER.name} →`}
       </button>
-      <p className="mt-2.5 text-center text-[11.5px] text-brand-ink/40">$0 to browse — join anytime</p>
+      <p className="mt-2.5 text-center text-[11.5px] text-brand-ink/40">Free to browse · Membership optional</p>
     </div>
   );
 }
