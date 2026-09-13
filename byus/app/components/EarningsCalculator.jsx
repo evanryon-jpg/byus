@@ -156,8 +156,10 @@ export default function EarningsCalculator() {
               label="Subscribers"
               value={subscribers}
               min={0}
-              max={500}
+              max={2_000_000}
               step={1}
+              sliderStep={1_000}
+              editable
               onChange={setSubscribers}
               display={subscribers.toLocaleString()}
             />
@@ -246,19 +248,53 @@ export default function EarningsCalculator() {
   );
 }
 
-function SliderField({ label, value, min, max, step, onChange, display }) {
+function SliderField({
+  label,
+  value,
+  min,
+  max,
+  step,
+  sliderStep = step,
+  editable = false,
+  onChange,
+  display,
+}) {
   const pct = ((value - min) / (max - min)) * 100;
+
+  function handleTypedValue(e) {
+    const next = Number(e.target.value);
+    if (!Number.isFinite(next)) return;
+    onChange(Math.min(max, Math.max(min, next)));
+  }
   return (
     <div className="mb-6 last:mb-0">
       <div className="mb-2.5 flex items-baseline justify-between">
         <label className="text-[11px] font-bold uppercase tracking-wide text-brand-ink/60">{label}</label>
-        <span className="font-display text-lg font-bold tabular-nums text-[#2B2420]">{display}</span>
+        {editable ? (
+          <div className="text-right">
+            <input
+              type="number"
+              min={min}
+              max={max}
+              step={step}
+              value={value}
+              onChange={handleTypedValue}
+              aria-label={`${label} (enter an exact number)`}
+              className="w-40 rounded-lg border border-brand-ink/15 bg-brand-cream px-3 py-1.5 text-right font-display text-lg font-bold tabular-nums text-[#2B2420] outline-none focus:border-brand-teal"
+            />
+            <span className="mt-1 block text-[10px] font-medium text-brand-ink/50">
+              Up to {max.toLocaleString()}
+            </span>
+          </div>
+        ) : (
+          <span className="font-display text-lg font-bold tabular-nums text-[#2B2420]">{display}</span>
+        )}
       </div>
       <input
         type="range"
         min={min}
         max={max}
-        step={step}
+        step={sliderStep}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         style={{
