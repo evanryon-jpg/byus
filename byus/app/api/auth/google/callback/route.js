@@ -164,10 +164,15 @@ export async function GET(request) {
            )
            VALUES (
              $1, $2, $3, $4, $5, true, now(),
-             CASE
+             -- Cast to integer: with both branches bare parameters, Postgres can't infer a
+             -- type for the CASE expression itself (it resolves that independently of the
+             -- INSERT target column) and falls back to text, which then fails to assign into
+             -- this integer column. Same fix applied to the Apple callback and the
+             -- email/password signup route, which hit the identical bug.
+             (CASE
                WHEN $2 = 'creator' AND (SELECT COUNT(*) FROM users WHERE role = 'creator') < $6 THEN $7
                ELSE $8
-             END
+             END)::integer
            )
            RETURNING id, email, role, display_name, session_version`,
           [
