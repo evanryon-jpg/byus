@@ -12,6 +12,15 @@ import { NextResponse } from 'next/server';
 // browser Origin header at all, and they're authenticated separately via the
 // Stripe-Signature header instead.
 //
+// Apple's Sign in with Apple callback is exempt for a similar reason. Apple posts the
+// authorization code back with response_mode=form_post (see the initiation route), which
+// means the browser's cross-site POST genuinely comes from an appleid.apple.com origin --
+// this is by design, not a forged request, and there's no way to have Apple honor a
+// same-origin POST instead. The callback route already defends against forged/replayed
+// callbacks on its own, independent of Origin/Referer, via a random `state` value minted
+// at sign-in start and compared against an httpOnly state cookie -- so it doesn't need
+// (and can't pass) this check too.
+//
 // (An earlier version of this file also generated a per-request CSP nonce for page
 // requests, to run script-src without 'unsafe-inline'. That relied on Next.js
 // auto-nonce'ing its own inline hydration scripts from the `x-nonce` request header --
@@ -21,7 +30,7 @@ import { NextResponse } from 'next/server';
 export function middleware(request) {
   const { pathname } = request.nextUrl;
 
-  if (pathname.startsWith('/api/webhooks/')) {
+  if (pathname.startsWith('/api/webhooks/') || pathname === '/api/auth/apple/callback') {
     return NextResponse.next();
   }
 
