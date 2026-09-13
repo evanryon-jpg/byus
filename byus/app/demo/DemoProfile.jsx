@@ -20,7 +20,14 @@ export default function DemoProfile({ creator }) {
         {creatorView && <section className="mt-6 grid gap-3 rounded-2xl border border-brand-teal/15 bg-brand-teal/5 p-5 sm:grid-cols-3"><Stat label="Earned this month" value={`$${creator.monthly.toLocaleString()}`} /><Stat label="Members" value={creator.members.toLocaleString()} /><Stat label="Posts" value={creator.posts} /></section>}
 
         <section className="mt-6 overflow-hidden rounded-2xl border border-brand-ink/10 bg-brand-paper shadow-sm">
-          <div className="relative h-64 sm:h-80"><Image src={creator.image} alt={`${creator.name}, fictional ${creator.craft}`} fill priority sizes="(min-width: 896px) 896px, 100vw" className="object-cover" /><div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" /><div className="absolute inset-x-0 bottom-0 p-6 text-white sm:p-8"><p className="text-xs font-bold uppercase tracking-wider text-brand-gold">{creator.craft}</p><h1 className="mt-1 font-display text-3xl font-bold">{creator.name}</h1><p className="text-sm text-white/75">{creator.handle}</p></div></div>
+          {/* object-top keeps the crop anchored to the top of the source photo instead of
+              the default center -- these are wide, landscape-orientation portraits and this
+              h-64/h-80 banner is much shorter and wider than they are, so a center crop was
+              cutting heads off for most of the six (everyone except whoever happened to be
+              framed with their face already centered vertically in the shot). Anchoring top
+              keeps the whole head in frame for all of them and only trims a bit more of the
+              background/torso at the bottom instead. */}
+          <div className="relative h-64 sm:h-80"><Image src={creator.image} alt={`${creator.name}, fictional ${creator.craft}`} fill priority sizes="(min-width: 896px) 896px, 100vw" className="object-cover object-top" /><div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" /><div className="absolute inset-x-0 bottom-0 p-6 text-white sm:p-8"><p className="text-xs font-bold uppercase tracking-wider text-brand-gold">{creator.craft}</p><h1 className="mt-1 font-display text-3xl font-bold">{creator.name}</h1><p className="text-sm text-white/75">{creator.handle}</p></div></div>
           <div className="p-6 sm:p-8"><p className="max-w-2xl leading-relaxed text-brand-ink/75">{creator.bio}</p><p className="mt-3 text-sm text-brand-ink/55">{creator.members.toLocaleString()} members · {creator.posts} posts</p></div>
         </section>
 
