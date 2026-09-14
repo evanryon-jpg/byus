@@ -22,7 +22,7 @@ const CLOSED_DISPUTE_STATUSES = ['won', 'lost'];
 // a 12-month trailing series for the dashboard's charts, and a recent-creators list for
 // spotting problem accounts (never onboarded Stripe, zero earnings after weeks, etc).
 export async function loadAdminOverview() {
-  const [counts, activeSubs, follows, lifetime, monthlyResult, recentCreators, openDisputes, recentDisputes, needsReview] =
+  const [counts, activeSubs, follows, followConversions, lifetime, monthlyResult, recentCreators, openDisputes, recentDisputes, needsReview] =
     await Promise.all([
       query(
         `SELECT
@@ -32,6 +32,18 @@ export async function loadAdminOverview() {
       ),
       query(`SELECT COUNT(*)::int AS count FROM subscriptions WHERE status = 'active'`),
       query(`SELECT COUNT(*)::int AS count FROM creator_follows`),
+      query(
+        `SELECT COUNT(*) FILTER (
+           WHERE EXISTS (
+             SELECT 1 FROM subscriptions s
+             WHERE s.fan_id = f.fan_id
+               AND s.creator_id = f.creator_id
+               AND s.status = 'active'
+               AND (s.current_period_end IS NULL OR s.current_period_end > now())
+           )
+         )::int AS converted_count
+         FROM creator_follows f`
+      ),
       query(
         `SELECT
            COALESCE(SUM(amount_cents), 0)::bigint AS gross_cents,
@@ -201,12 +213,18 @@ export async function loadAdminOverview() {
   const lifetimePlatformFeeCents = Number(lifetime.rows[0].platform_fee_cents);
   const lifetimePaymentCount = Number(lifetime.rows[0].payment_count);
   const estimatedProcessorCents = Math.round(lifetimeGrossCents * 0.036 + lifetimePaymentCount * 30);
+  const followerCount = follows.rows[0].count;
+  const convertedFollowerCount = followConversions.rows[0].converted_count;
+  const followerConversionPercent =
+    followerCount > 0 ? Math.round((convertedFollowerCount / followerCount) * 1000) / 10 : 0;
 
   return {
     creatorCount: counts.rows[0].creator_count,
     fanCount: counts.rows[0].fan_count,
     activeSubscriberCount: activeSubs.rows[0].count,
-    followerCount: follows.rows[0].count,
+    followerCount,
+    convertedFollowerCount,
+    followerConversionPercent,
     lifetimeGrossCents,
     lifetimePlatformFeeCents,
     lifetimePaymentCount,
