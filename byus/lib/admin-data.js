@@ -133,6 +133,7 @@ export async function loadAdminOverview() {
       Math.round(Number(row.gross_cents) * 0.036 + Number(row.payment_count) * 30),
     newCreators: Number(row.new_creators),
     newFans: Number(row.new_fans),
+    newFollows: Number(row.new_follows),
   }));
 
   const adminEmails = getAdminEmails();
