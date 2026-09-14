@@ -11,21 +11,24 @@ export async function GET() {
   }
 
   const result = await query(
-    `SELECT p.id, p.title, p.description, p.file_name, p.file_size_bytes,
+    `SELECT p.id, p.title, p.description,
             u.display_name AS creator_name, u.slug AS creator_slug,
-            dp.created_at AS purchased_at
+            dp.created_at AS purchased_at,
+            COALESCE(
+              json_agg(
+                json_build_object('id', f.id, 'file_name', f.file_name, 'file_size_bytes', f.file_size_bytes, 'kind', f.kind)
+                ORDER BY f.position, f.created_at
+              ) FILTER (WHERE f.id IS NOT NULL), '[]'
+            ) AS files
      FROM digital_purchases dp
      JOIN digital_products p ON p.id = dp.product_id
      JOIN users u ON u.id = dp.creator_id
+     LEFT JOIN digital_product_files f ON f.product_id = p.id
      WHERE dp.fan_id = $1 AND dp.status = 'succeeded'
+     GROUP BY p.id, u.display_name, u.slug, dp.created_at
      ORDER BY dp.created_at DESC`,
     [session.userId]
   );
 
-  return NextResponse.json({
-    downloads: result.rows.map((item) => ({
-      ...item,
-      download_url: `/api/products/${item.id}/download`,
-    })),
-  });
+  return NextResponse.json({ downloads: result.rows });
 }
