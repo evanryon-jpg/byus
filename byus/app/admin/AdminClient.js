@@ -19,10 +19,14 @@ export default function AdminClient({
 }) {
   const {
     creatorCount,
+    recentCreatorCount,
     fanCount,
+    recentFanCount,
     activeSubscriberCount,
     followerCount,
+    recentFollowerCount,
     convertedFollowerCount,
+    recentConvertedFollowerCount,
     followerConversionPercent,
     lifetimeGrossCents,
     lifetimePlatformFeeCents,
@@ -47,13 +51,25 @@ export default function AdminClient({
         <StatTile label="Estimated processor costs" value={formatCompactUSD(estimatedProcessorCents)} />
         <StatTile label="Recorded payments" value={lifetimePaymentCount.toLocaleString()} />
         <StatTile label="Gross processed, lifetime" value={formatCompactUSD(lifetimeGrossCents)} />
-        <StatTile label="Creators" value={creatorCount.toLocaleString()} />
-        <StatTile label="Fans" value={fanCount.toLocaleString()} />
-        <StatTile label="Free creator follows" value={followerCount.toLocaleString()} />
+        <StatTile
+          label="Creators"
+          value={creatorCount.toLocaleString()}
+          detail={`+${recentCreatorCount.toLocaleString()} in the last 7 days`}
+        />
+        <StatTile
+          label="Fans"
+          value={fanCount.toLocaleString()}
+          detail={`+${recentFanCount.toLocaleString()} in the last 7 days`}
+        />
+        <StatTile
+          label="Free creator follows"
+          value={followerCount.toLocaleString()}
+          detail={`+${recentFollowerCount.toLocaleString()} in the last 7 days`}
+        />
         <StatTile
           label="Follower-to-paid conversion"
           value={`${followerConversionPercent.toLocaleString()}%`}
-          detail={`${convertedFollowerCount.toLocaleString()} became paid after following`}
+          detail={`${convertedFollowerCount.toLocaleString()} total · +${recentConvertedFollowerCount.toLocaleString()} in the last 7 days`}
         />
         <StatTile label="Active subscriptions" value={activeSubscriberCount.toLocaleString()} />
         <StatTile
