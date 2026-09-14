@@ -33,7 +33,17 @@ export async function loadAdminOverview() {
            )::int AS recent_creator_count,
            COUNT(*) FILTER (
              WHERE role = 'fan' AND created_at >= now() - interval '7 days'
-           )::int AS recent_fan_count
+           )::int AS recent_fan_count,
+           COUNT(*) FILTER (WHERE acquisition_source = 'instagram')::int AS instagram_signup_count,
+           COUNT(*) FILTER (
+             WHERE acquisition_source = 'instagram' AND created_at >= now() - interval '7 days'
+           )::int AS recent_instagram_signup_count,
+           COUNT(*) FILTER (
+             WHERE acquisition_source = 'instagram' AND role = 'creator'
+           )::int AS instagram_creator_count,
+           COUNT(*) FILTER (
+             WHERE acquisition_source = 'instagram' AND role = 'fan'
+           )::int AS instagram_fan_count
          FROM users`
       ),
       query(`SELECT COUNT(*)::int AS count FROM subscriptions WHERE status = 'active'`),
@@ -278,6 +288,10 @@ export async function loadAdminOverview() {
     recentCreatorCount: counts.rows[0].recent_creator_count,
     fanCount: counts.rows[0].fan_count,
     recentFanCount: counts.rows[0].recent_fan_count,
+    instagramSignupCount: counts.rows[0].instagram_signup_count,
+    recentInstagramSignupCount: counts.rows[0].recent_instagram_signup_count,
+    instagramCreatorCount: counts.rows[0].instagram_creator_count,
+    instagramFanCount: counts.rows[0].instagram_fan_count,
     activeSubscriberCount: activeSubs.rows[0].count,
     followerCount,
     recentFollowerCount: follows.rows[0].recent_count,
