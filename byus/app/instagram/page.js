@@ -73,15 +73,15 @@ export default function InstagramWelcomePage() {
               Send your opinion
             </a>
             <a
-              href="/waitlist?source=instagram_campaign"
+              href="/signup?role=creator&source=instagram"
               className="rounded-full border border-[#0F766E] px-6 py-3 font-semibold text-[#0F766E] hover:bg-[#0F766E]/5"
             >
-              Apply for a founding spot
+              Create a free creator account
             </a>
           </div>
           <p className="mt-4 text-xs text-brand-ink/55">
-            Joining the waitlist only saves your place. It does not charge you or require you to
-            leave another platform.
+            Creating an account is free. You are not charged and do not need to leave another
+            platform.
           </p>
         </div>
       </section>
