@@ -34,7 +34,8 @@ export async function loadAdminOverview() {
       query(
         `SELECT
            COALESCE(SUM(amount_cents), 0)::bigint AS gross_cents,
-           COALESCE(ROUND(SUM(amount_cents * fee_percent_applied) / 100.0), 0)::bigint AS platform_fee_cents
+           COALESCE(ROUND(SUM(amount_cents * fee_percent_applied) / 100.0), 0)::bigint AS platform_fee_cents,
+           COUNT(*)::bigint AS payment_count
          FROM creator_earnings`
       ),
       query(
@@ -46,7 +47,8 @@ export async function loadAdminOverview() {
            SELECT
              date_trunc('month', created_at) AS month_start,
              SUM(amount_cents) AS gross_cents,
-             ROUND(SUM(amount_cents * fee_percent_applied) / 100.0) AS platform_fee_cents
+             ROUND(SUM(amount_cents * fee_percent_applied) / 100.0) AS platform_fee_cents,
+             COUNT(*) AS payment_count
            FROM creator_earnings
            WHERE created_at >= date_trunc('month', now()) - ($1::int - 1 || ' months')::interval
            GROUP BY 1
@@ -64,6 +66,7 @@ export async function loadAdminOverview() {
            to_char(m.month_start, 'YYYY-MM') AS month,
            COALESCE(e.gross_cents, 0)::bigint AS gross_cents,
            COALESCE(e.platform_fee_cents, 0)::bigint AS platform_fee_cents,
+           COALESCE(e.payment_count, 0)::bigint AS payment_count,
            COALESCE(s.new_creators, 0)::bigint AS new_creators,
            COALESCE(s.new_fans, 0)::bigint AS new_fans
          FROM months m
@@ -76,10 +79,14 @@ export async function loadAdminOverview() {
         `SELECT
            u.id, u.display_name, u.email, u.bio, u.created_at, u.stripe_connect_onboarded,
            u.platform_fee_percent, u.is_suspended, u.suspension_reason, u.review_cleared_at,
-           COALESCE(e.gross_cents, 0)::bigint AS lifetime_gross_cents
+           COALESCE(e.gross_cents, 0)::bigint AS lifetime_gross_cents,
+           COALESCE(e.platform_fee_cents, 0)::bigint AS lifetime_platform_fee_cents,
+           COALESCE(e.payment_count, 0)::bigint AS lifetime_payment_count
          FROM users u
          LEFT JOIN (
-           SELECT creator_id, SUM(amount_cents) AS gross_cents
+           SELECT creator_id, SUM(amount_cents) AS gross_cents,
+                  ROUND(SUM(amount_cents * fee_percent_applied) / 100.0) AS platform_fee_cents,
+                  COUNT(*) AS payment_count
            FROM creator_earnings GROUP BY creator_id
          ) e ON e.creator_id = u.id
          WHERE u.role = 'creator'
@@ -118,6 +125,11 @@ export async function loadAdminOverview() {
     month: row.month,
     grossCents: Number(row.gross_cents),
     platformFeeCents: Number(row.platform_fee_cents),
+    paymentCount: Number(row.payment_count),
+    estimatedProcessorCents: Math.round(Number(row.gross_cents) * 0.036 + Number(row.payment_count) * 30),
+    estimatedContributionCents:
+      Number(row.platform_fee_cents) -
+      Math.round(Number(row.gross_cents) * 0.036 + Number(row.payment_count) * 30),
     newCreators: Number(row.new_creators),
     newFans: Number(row.new_fans),
   }));
@@ -131,6 +143,13 @@ export async function loadAdminOverview() {
     stripeConnectOnboarded: row.stripe_connect_onboarded,
     platformFeePercent: row.platform_fee_percent,
     lifetimeGrossCents: Number(row.lifetime_gross_cents),
+    lifetimePlatformFeeCents: Number(row.lifetime_platform_fee_cents),
+    lifetimePaymentCount: Number(row.lifetime_payment_count),
+    estimatedProcessorCents:
+      Math.round(Number(row.lifetime_gross_cents) * 0.036 + Number(row.lifetime_payment_count) * 30),
+    estimatedContributionCents:
+      Number(row.lifetime_platform_fee_cents) -
+      Math.round(Number(row.lifetime_gross_cents) * 0.036 + Number(row.lifetime_payment_count) * 30),
     isSuspended: row.is_suspended,
     suspensionReason: row.suspension_reason,
     // needsReview: this creator hasn't cleared ByUs's one-time initial review yet --
@@ -176,12 +195,20 @@ export async function loadAdminOverview() {
     };
   });
 
+  const lifetimeGrossCents = Number(lifetime.rows[0].gross_cents);
+  const lifetimePlatformFeeCents = Number(lifetime.rows[0].platform_fee_cents);
+  const lifetimePaymentCount = Number(lifetime.rows[0].payment_count);
+  const estimatedProcessorCents = Math.round(lifetimeGrossCents * 0.036 + lifetimePaymentCount * 30);
+
   return {
     creatorCount: counts.rows[0].creator_count,
     fanCount: counts.rows[0].fan_count,
     activeSubscriberCount: activeSubs.rows[0].count,
-    lifetimeGrossCents: Number(lifetime.rows[0].gross_cents),
-    lifetimePlatformFeeCents: Number(lifetime.rows[0].platform_fee_cents),
+    lifetimeGrossCents,
+    lifetimePlatformFeeCents,
+    lifetimePaymentCount,
+    estimatedProcessorCents,
+    estimatedContributionCents: lifetimePlatformFeeCents - estimatedProcessorCents,
     openDisputeCount: openDisputes.rows[0].count,
     needsReviewCount: needsReview.rows[0].count,
     monthly,
