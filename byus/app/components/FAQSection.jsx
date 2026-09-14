@@ -9,6 +9,10 @@ import { useState } from 'react';
 // answers are plain text so search engines and no-JS visitors still get them.
 const FAQS = [
   {
+    q: 'Why do I have to apply instead of signing up instantly?',
+    a: "ByUs is brand new, and our payment processor (Stripe) is finishing a standard review of our account before we can activate payouts to creators — a normal step for a new platform handling multi-party payments, and we expect it to clear soon. Rather than start you on a signup that dead-ends right at that step, we're taking applications for the Founding Creator Program instead. Apply with your email and we'll invite you the moment payouts go live — before it opens up to everyone else. Fans aren't affected: browsing and subscribing to a creator who's already live works normally.",
+  },
+  {
     q: 'How does the platform fee work?',
     a: "ByUs's fee is evaluated fresh each calendar month — it's never locked in permanently either way. Every creator starts the month at 13%; earn $2,000 or more on ByUs within that month and the fee automatically drops to 10% for the rest of it, no action needed. A new month always starts back at 13% until $2,000 is crossed again, so a slower month simply means the standard rate, not a penalty. Creators keep 87% (90% once discounted) of each standard domestic payment, paid straight into the creator's own Stripe account. Standard domestic processing is included; currency conversion, instant payouts, taxes, disputes, and exceptional processor costs may apply separately and will be disclosed where applicable.",
   },
