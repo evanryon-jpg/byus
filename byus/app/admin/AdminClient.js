@@ -74,7 +74,7 @@ export default function AdminClient({
         <ChartCard title="Estimated contribution" subtitle="ByUs fees minus estimated Payments + Billing costs">
           <MonthlyBarChart data={monthly} valueKey="estimatedContributionCents" formatValue={formatUSD} formatAxisTick={formatUSD} color="#0F766E" hoverColor="#115E59" />
         </ChartCard>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-3">
           <ChartCard title="New creators" subtitle="Signups, by month">
             <MonthlyBarChart
               data={monthly}
@@ -91,6 +91,16 @@ export default function AdminClient({
               formatAxisTick={(n) => n.toLocaleString()}
               color="#0F766E"
               hoverColor="#a5854a"
+            />
+          </ChartCard>
+          <ChartCard title="New free follows" subtitle="Creator follows, by month">
+            <MonthlyBarChart
+              data={monthly}
+              valueKey="newFollows"
+              formatValue={(n) => `${n.toLocaleString()} new`}
+              formatAxisTick={(n) => n.toLocaleString()}
+              color="#B45309"
+              hoverColor="#92400E"
             />
           </ChartCard>
         </div>
