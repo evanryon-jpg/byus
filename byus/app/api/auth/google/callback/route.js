@@ -73,6 +73,7 @@ export async function GET(request) {
       ? saved.next
       : '';
   const referralCode = typeof saved.referralCode === 'string' ? saved.referralCode : '';
+  const acquisitionSource = saved.acquisitionSource === 'instagram' ? 'instagram' : null;
 
   // --- Exchange the authorization code for tokens ---
   let tokenData;
@@ -170,7 +171,7 @@ export async function GET(request) {
           const created = await client.query(
             `INSERT INTO users (
                email, role, display_name, profile_image_url,
-               google_sub, email_verified, terms_accepted_at, platform_fee_percent
+               google_sub, email_verified, terms_accepted_at, platform_fee_percent, acquisition_source
              )
              VALUES (
                $1, $2, $3, $4, $5, true, now(),
@@ -182,12 +183,14 @@ export async function GET(request) {
                (CASE
                  WHEN $2 = 'creator' AND (SELECT COUNT(*) FROM users WHERE role = 'creator') < $6 THEN $7
                  ELSE $8
-               END)::integer
+               END)::integer,
+               $9
              )
              RETURNING id, email, role, display_name, session_version`,
             [
               email, role, displayName, profileImageUrl, profile.sub,
               FOUNDING_CREATOR_LIMIT, DISCOUNTED_FEE_PERCENT, STANDARD_FEE_PERCENT,
+              acquisitionSource,
             ]
           );
           return created.rows[0];
@@ -229,7 +232,11 @@ export async function GET(request) {
   response.cookies.set(SESSION_COOKIE_NAME, token, getSessionCookieOptions());
   response.cookies.set(STATE_COOKIE_NAME, '', { path: '/', maxAge: 0 });
   if (accountCreated) {
-    await trackServerEvent('funnel_account_created', { role: user.role, provider: 'google' }, request);
+    await trackServerEvent(
+      'funnel_account_created',
+      { role: user.role, provider: 'google', source: acquisitionSource || 'unattributed' },
+      request
+    );
   }
   return response;
 }
