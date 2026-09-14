@@ -263,9 +263,17 @@ function SliderField({
   const usesLogScale = scale === 'log';
   const sliderMin = usesLogScale ? 0 : min;
   const sliderMax = usesLogScale ? 1000 : max;
-  const sliderValue = usesLogScale
+  // Rounded before it ever reaches the <input> -- the browser only snaps this to a whole
+  // step (step is 1 on the log scale) once the page hydrates, so leaving it as a raw
+  // float here means the exact unrounded decimal (e.g. 270.9985698253165) sits in the
+  // server-rendered HTML's value="" attribute until then, visible in page source and to
+  // anything reading the page before JS runs. Rounding up front matches what the browser
+  // was already going to coerce it to, so this changes nothing about behavior or the
+  // rendered slider position -- it just never exposes the unrounded number.
+  const rawSliderValue = usesLogScale
     ? (Math.log(value + 1) / Math.log(max + 1)) * sliderMax
     : value;
+  const sliderValue = usesLogScale ? Math.round(rawSliderValue) : rawSliderValue;
   const pct = ((sliderValue - sliderMin) / (sliderMax - sliderMin)) * 100;
 
   function handleTypedValue(e) {

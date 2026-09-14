@@ -61,7 +61,8 @@ export default function EarningsSection() {
         {isDiscountedThisMonth ? (
           <p className="text-sm text-[#0F766E]">
             🎉 You've crossed ${(thresholdCents / 100).toLocaleString()} in earnings this month —
-            {' '}{feePercent}% platform fee for the rest of the month.
+            {' '}{feePercent}% platform fee for the rest of the month. Starting next month you're
+            back to the standard rate unless you cross ${(thresholdCents / 100).toLocaleString()} again.
           </p>
         ) : (
           <>

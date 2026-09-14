@@ -10,7 +10,7 @@ import { useState } from 'react';
 const FAQS = [
   {
     q: 'How does the platform fee work?',
-    a: "Creators keep 87% of each standard domestic payment when starting out, paid straight into the creator's own Stripe account. ByUs's all-in fee starts at 13% and drops to 10% for any month a creator's earnings on ByUs reach $2,000, moving back to 13% for a month that doesn't. Standard domestic processing is included; currency conversion, instant payouts, taxes, disputes, and exceptional processor costs may apply separately and will be disclosed where applicable.",
+    a: "ByUs's fee is evaluated fresh each calendar month — it's never locked in permanently either way. Every creator starts the month at 13%; earn $2,000 or more on ByUs within that month and the fee automatically drops to 10% for the rest of it, no action needed. A new month always starts back at 13% until $2,000 is crossed again, so a slower month simply means the standard rate, not a penalty. Creators keep 87% (90% once discounted) of each standard domestic payment, paid straight into the creator's own Stripe account. Standard domestic processing is included; currency conversion, instant payouts, taxes, disputes, and exceptional processor costs may apply separately and will be disclosed where applicable.",
   },
   {
     q: 'When and how do creators get paid?',
@@ -26,7 +26,7 @@ const FAQS = [
   },
   {
     q: 'Does it cost anything to become a creator?',
-    a: "No. Setting up a page is free, with no listing or setup fee. ByUs only makes money when a creator gets paid: the all-in fee is 13%, dropping to 10% during months with at least $2,000 in ByUs earnings. The first 100 founding creators lock in 10% forever.",
+    a: "No. Setting up a page is free, with no listing or setup fee. ByUs only makes money when a creator gets paid: the all-in fee is 13%, dropping to 10% for any month with at least $2,000 in ByUs earnings and returning to 13% the following month if it doesn't happen again. The first 100 founding creators lock in 10% forever, no threshold required.",
   },
   {
     q: 'Can a creator offer more than one tier?',
