@@ -158,7 +158,7 @@ function CreatorProfile() {
           <h1 className="text-2xl font-bold">{creator.display_name}</h1>
           {creator.is_founding && (
             <span className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-brand-clay px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-[#F8FAFC]">
-              🚀 Founding creator
+              Founding creator
             </span>
           )}
           <div className="mt-1">
