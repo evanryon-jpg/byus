@@ -2,6 +2,7 @@ import Image from 'next/image';
 import { getCurrentUser } from '@/lib/session';
 import { query } from '@/lib/db';
 import { getFoundingPromoStats } from '@/lib/fees';
+import { getWaitlistCount } from '@/lib/waitlist';
 import FAQSection from './components/FAQSection';
 import CreatorSearch from './components/CreatorSearch';
 import FeaturedCreators from './components/FeaturedCreators';
@@ -14,13 +15,14 @@ import CreatorShowcase from './components/CreatorShowcase';
 export default async function HomePage() {
   const session = await getCurrentUser();
   const foundingStats = await getFoundingPromoStats(query);
+  const waitlistCount = await getWaitlistCount(query);
 
   return (
     <div>
       <Hero user={session} />
       <CreatorShowcase />
       <EarningsCalculator />
-      <FoundingCreatorProgram stats={foundingStats} />
+      <FoundingCreatorProgram stats={foundingStats} waitlistCount={waitlistCount} />
       <Features />
       <HowItWorks />
       <LookingForSomeoneSection />
@@ -56,7 +58,18 @@ export default async function HomePage() {
 // background, so "Founding Creator Program" reads as a distinct, limited offer rather
 // than another feature bullet -- the treatment the brief asked for when it said this
 // needed to be "more visible."
-function FoundingCreatorProgram({ stats }) {
+//
+// While Stripe Connect onboarding is paused for platform review (see
+// app/api/creator/connect-stripe/route.js), the CTA below points to /waitlist instead of
+// straight into signup+Stripe -- nobody should hit a dead end at the one step that's
+// currently broken. `waitlistCount` (real rows in founding_waitlist, see lib/waitlist.js)
+// stands in for `stats.remaining`'s "spots left" framing here on purpose: with signup
+// itself funneled to the waitlist, the real founding-creator count barely moves, so
+// showing it here would make the program look stalled instead of in-demand. The
+// underlying fee math (stats.limit/remaining) is untouched -- once Stripe clears review
+// and real signups resume, applying here is what determines who actually gets one of the
+// first stats.limit spots.
+function FoundingCreatorProgram({ stats, waitlistCount }) {
   const soldOut = stats.remaining <= 0;
   const perks = [
     {
@@ -95,6 +108,9 @@ function FoundingCreatorProgram({ stats }) {
           The first {stats.limit} creators to join lock in our lowest fee for good — everyone else
           earns their way there at $2,000/mo.
         </p>
+        <p className="mx-auto mt-2 max-w-lg text-sm font-medium text-brand-gold">
+          Now taking applications for our beta — see below.
+        </p>
 
         <div className="mx-auto mt-8 grid max-w-3xl gap-4 text-left sm:grid-cols-3">
           {perks.map((p) => (
@@ -117,14 +133,22 @@ function FoundingCreatorProgram({ stats }) {
           ) : (
             <>
               <a
-                href="/signup?role=creator"
+                href="/waitlist?source=founding_section"
                 className="inline-block rounded-full bg-brand-gold px-8 py-3.5 text-base font-bold text-[#172554] shadow-[0_16px_30px_-14px_rgba(15,118,110,0.5)] transition hover:-translate-y-0.5"
               >
-                Claim a Founding Spot →
+                Apply for a Founding Spot →
               </a>
               <p className="mt-3 text-sm font-medium tabular-nums text-brand-paper/55">
-                <strong className="font-display text-base text-brand-paper">{stats.remaining}</strong> of{' '}
-                {stats.limit} spots left
+                {waitlistCount > 0 ? (
+                  <>
+                    <strong className="font-display text-base text-brand-paper">
+                      {waitlistCount.toLocaleString()}
+                    </strong>{' '}
+                    {waitlistCount === 1 ? 'creator has' : 'creators have'} already applied
+                  </>
+                ) : (
+                  'Be the first to apply'
+                )}
               </p>
             </>
           )}
@@ -203,10 +227,10 @@ function Hero({ user }) {
                 </a>
               ) : (
                 <a
-                  href="/signup?role=creator"
+                  href="/waitlist?source=hero"
                   className="rounded-full bg-[#0F766E] px-7 py-3.5 text-base font-semibold text-brand-paper shadow-[0_16px_30px_-14px_rgba(15,118,110,0.38)] transition hover:-translate-y-0.5 hover:bg-[#115E59]"
                 >
-                  Start Creating →
+                  Apply for a Founding Spot →
                 </a>
               )}
 
