@@ -380,3 +380,36 @@ export async function loadAdminSuggestions() {
   );
   return result.rows;
 }
+
+export async function loadOutreachContacts() {
+  const result = await query(
+    `SELECT id, instagram_handle, follower_count, latest_content_note, status,
+            messaged_at, follow_up_due_at, followed_up_at, notes, created_at, updated_at
+     FROM outreach_contacts
+     ORDER BY
+       CASE
+         WHEN status = 'messaged' AND followed_up_at IS NULL AND follow_up_due_at <= now() THEN 0
+         WHEN status = 'messaged' AND followed_up_at IS NULL THEN 1
+         WHEN status = 'replied' THEN 2
+         WHEN status = 'interested' THEN 3
+         ELSE 4
+       END,
+       follow_up_due_at ASC NULLS LAST,
+       created_at DESC
+     LIMIT 500`
+  );
+
+  return result.rows.map((row) => ({
+    id: row.id,
+    instagramHandle: row.instagram_handle,
+    followerCount: row.follower_count === null ? null : Number(row.follower_count),
+    latestContentNote: row.latest_content_note || '',
+    status: row.status,
+    messagedAt: row.messaged_at,
+    followUpDueAt: row.follow_up_due_at,
+    followedUpAt: row.followed_up_at,
+    notes: row.notes || '',
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }));
+}
