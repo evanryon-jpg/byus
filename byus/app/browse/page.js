@@ -160,13 +160,19 @@ export default function BrowsePage({ searchParams }) {
                       Founding
                     </span>
                   )}
-                  {c.active_subscriber_count > 0 && (
-                    <span className="shrink-0 text-xs font-medium text-brand-ink/60">
-                      {c.active_subscriber_count.toLocaleString()} subscriber{c.active_subscriber_count === 1 ? '' : 's'}
-                    </span>
-                  )}
                 </div>
                 {c.bio && <p className="mt-1 text-sm text-brand-ink/65 line-clamp-2">{c.bio}</p>}
+                {(c.follower_count > 0 || c.active_subscriber_count > 0) && (
+                  <p className="mt-1.5 text-xs text-brand-ink/55">
+                    {c.follower_count > 0 && (
+                      <span>{c.follower_count.toLocaleString()} follower{c.follower_count === 1 ? '' : 's'}</span>
+                    )}
+                    {c.follower_count > 0 && c.active_subscriber_count > 0 && <span> · </span>}
+                    {c.active_subscriber_count > 0 && (
+                      <span>{c.active_subscriber_count.toLocaleString()} paid member{c.active_subscriber_count === 1 ? '' : 's'}</span>
+                    )}
+                  </p>
+                )}
                 {c.tags && c.tags.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1">
                     {c.tags.map((t) => (
