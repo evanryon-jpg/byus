@@ -22,7 +22,7 @@ const CLOSED_DISPUTE_STATUSES = ['won', 'lost'];
 // a 12-month trailing series for the dashboard's charts, and a recent-creators list for
 // spotting problem accounts (never onboarded Stripe, zero earnings after weeks, etc).
 export async function loadAdminOverview() {
-  const [counts, activeSubs, follows, followConversions, instagramWaitlist, lifetime, monthlyResult, recentCreators, openDisputes, recentDisputes, needsReview] =
+  const [counts, activeSubs, follows, followConversions, instagramWaitlist, campaignMetrics, lifetime, monthlyResult, recentCreators, openDisputes, recentDisputes, needsReview] =
     await Promise.all([
       query(
         `SELECT
@@ -83,6 +83,15 @@ export async function loadAdminOverview() {
            COUNT(*) FILTER (WHERE created_at >= now() - interval '7 days')::int AS recent_count
          FROM founding_waitlist
          WHERE source = 'instagram_campaign'`
+      ),
+      query(
+        `SELECT
+           event,
+           COALESCE(SUM(event_count), 0)::bigint AS total_count,
+           COALESCE(SUM(event_count) FILTER (WHERE day >= CURRENT_DATE - 6), 0)::bigint AS recent_count
+         FROM campaign_metrics
+         WHERE campaign = 'instagram'
+         GROUP BY event`
       ),
       query(
         `SELECT
@@ -289,6 +298,12 @@ export async function loadAdminOverview() {
   const convertedFollowerCount = followConversions.rows[0].converted_count;
   const followerConversionPercent =
     followerCount > 0 ? Math.round((convertedFollowerCount / followerCount) * 1000) / 10 : 0;
+  const instagramCampaignMetrics = Object.fromEntries(
+    campaignMetrics.rows.map((row) => [
+      row.event,
+      { total: Number(row.total_count), recent: Number(row.recent_count) },
+    ])
+  );
 
   return {
     creatorCount: counts.rows[0].creator_count,
@@ -301,6 +316,7 @@ export async function loadAdminOverview() {
     instagramFanCount: counts.rows[0].instagram_fan_count,
     instagramWaitlistCount: instagramWaitlist.rows[0].count,
     recentInstagramWaitlistCount: instagramWaitlist.rows[0].recent_count,
+    instagramCampaignMetrics,
     activeSubscriberCount: activeSubs.rows[0].count,
     followerCount,
     recentFollowerCount: follows.rows[0].recent_count,
