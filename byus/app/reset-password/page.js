@@ -55,7 +55,7 @@ function ResetPasswordForm() {
         <h1 className="text-2xl font-bold">Reset your password</h1>
         <p className="mt-4 text-sm text-red-600">
           This link is missing a reset token. Request a new one from the{' '}
-          <a href="/forgot-password" className="text-[#2563EB] underline">forgot password</a> page.
+          <a href="/forgot-password" className="text-[#0F766E] underline">forgot password</a> page.
         </p>
       </div>
     );
@@ -73,7 +73,7 @@ function ResetPasswordForm() {
             minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-xl border border-brand-ink/10 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+            className="w-full rounded-xl border border-brand-ink/10 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#0F766E]"
           />
         </label>
         <label className="block">
@@ -84,7 +84,7 @@ function ResetPasswordForm() {
             minLength={8}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full rounded-xl border border-brand-ink/10 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+            className="w-full rounded-xl border border-brand-ink/10 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#0F766E]"
           />
         </label>
 
@@ -94,7 +94,7 @@ function ResetPasswordForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-full bg-[#2563EB] py-3 font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-50"
+          className="w-full rounded-full bg-[#0F766E] py-3 font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
         >
           {loading ? 'Resetting…' : 'Reset password'}
         </button>
