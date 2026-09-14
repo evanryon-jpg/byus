@@ -18,7 +18,7 @@ export default function TipPage() {
   );
 }
 
-const TIP_PRESETS_CENTS = [300, 500, 1000, 2000];
+const TIP_PRESETS_CENTS = [500, 1000, 2000];
 const MAX_MESSAGE_LENGTH = 300;
 
 function TipPageContent() {
@@ -91,8 +91,8 @@ function TipPageContent() {
   function handleCustomSubmit(e) {
     e.preventDefault();
     const cents = Math.round(parseFloat(custom) * 100);
-    if (!Number.isFinite(cents) || cents < 100) {
-      setError('Enter at least $1.00.');
+    if (!Number.isFinite(cents) || cents < 500) {
+      setError('Enter at least $5.00.');
       return;
     }
     sendTip(cents);
@@ -162,7 +162,7 @@ function TipPageContent() {
               <span className="text-sm text-brand-ink/60">$</span>
               <input
                 type="number"
-                min="1"
+                min="5"
                 step="1"
                 placeholder="Other amount"
                 value={custom}
