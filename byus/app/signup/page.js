@@ -23,6 +23,7 @@ function SignupForm() {
   // body (for email signup) and appended to the OAuth hrefs below (for Google/Apple
   // signup), so however someone completes the form, the referral still gets recorded.
   const referralCode = searchParams.get('ref') || '';
+  const acquisitionSource = searchParams.get('source') === 'instagram' ? 'instagram' : '';
 
   const [role, setRole] = useState(defaultRole);
   const [email, setEmail] = useState('');
@@ -36,8 +37,8 @@ function SignupForm() {
   const [error, setError] = useState(searchParams.get('error') || '');
   const [loading, setLoading] = useState(false);
 
-  const googleHref = `/api/auth/google?role=${role}${next ? `&next=${encodeURIComponent(next)}` : ''}${referralCode ? `&ref=${encodeURIComponent(referralCode)}` : ''}`;
-  const appleHref = `/api/auth/apple?role=${role}${next ? `&next=${encodeURIComponent(next)}` : ''}${referralCode ? `&ref=${encodeURIComponent(referralCode)}` : ''}`;
+  const googleHref = `/api/auth/google?role=${role}${next ? `&next=${encodeURIComponent(next)}` : ''}${referralCode ? `&ref=${encodeURIComponent(referralCode)}` : ''}${acquisitionSource ? `&source=${acquisitionSource}` : ''}`;
+  const appleHref = `/api/auth/apple?role=${role}${next ? `&next=${encodeURIComponent(next)}` : ''}${referralCode ? `&ref=${encodeURIComponent(referralCode)}` : ''}${acquisitionSource ? `&source=${acquisitionSource}` : ''}`;
 
   function validate() {
     const errors = {};
@@ -72,6 +73,7 @@ function SignupForm() {
           termsAccepted,
           website,
           referralCode: referralCode || undefined,
+          acquisitionSource: acquisitionSource || undefined,
         }),
       });
       const data = await res.json();
