@@ -74,6 +74,12 @@ export async function loadAdminOverview() {
            FROM users
            WHERE created_at >= date_trunc('month', now()) - ($1::int - 1 || ' months')::interval
            GROUP BY 1
+         ),
+         follows_by_month AS (
+           SELECT date_trunc('month', created_at) AS month_start, COUNT(*) AS new_follows
+           FROM creator_follows
+           WHERE created_at >= date_trunc('month', now()) - ($1::int - 1 || ' months')::interval
+           GROUP BY 1
          )
          SELECT
            to_char(m.month_start, 'YYYY-MM') AS month,
@@ -81,10 +87,12 @@ export async function loadAdminOverview() {
            COALESCE(e.platform_fee_cents, 0)::bigint AS platform_fee_cents,
            COALESCE(e.payment_count, 0)::bigint AS payment_count,
            COALESCE(s.new_creators, 0)::bigint AS new_creators,
-           COALESCE(s.new_fans, 0)::bigint AS new_fans
+           COALESCE(s.new_fans, 0)::bigint AS new_fans,
+           COALESCE(f.new_follows, 0)::bigint AS new_follows
          FROM months m
          LEFT JOIN earnings_by_month e ON e.month_start = m.month_start
          LEFT JOIN signups_by_month s ON s.month_start = m.month_start
+         LEFT JOIN follows_by_month f ON f.month_start = m.month_start
          ORDER BY m.month_start ASC`,
         [MONTHS_OF_HISTORY]
       ),
@@ -94,7 +102,9 @@ export async function loadAdminOverview() {
            u.platform_fee_percent, u.is_suspended, u.suspension_reason, u.review_cleared_at,
            COALESCE(e.gross_cents, 0)::bigint AS lifetime_gross_cents,
            COALESCE(e.platform_fee_cents, 0)::bigint AS lifetime_platform_fee_cents,
-           COALESCE(e.payment_count, 0)::bigint AS lifetime_payment_count
+           COALESCE(e.payment_count, 0)::bigint AS lifetime_payment_count,
+           COALESCE(f.follower_count, 0)::int AS follower_count,
+           COALESCE(f.converted_follower_count, 0)::int AS converted_follower_count
          FROM users u
          LEFT JOIN (
            SELECT creator_id, SUM(amount_cents) AS gross_cents,
@@ -102,6 +112,21 @@ export async function loadAdminOverview() {
                   COUNT(*) AS payment_count
            FROM creator_earnings GROUP BY creator_id
          ) e ON e.creator_id = u.id
+         LEFT JOIN LATERAL (
+           SELECT
+             COUNT(*)::int AS follower_count,
+             COUNT(*) FILTER (
+               WHERE EXISTS (
+                 SELECT 1 FROM subscriptions s
+                 WHERE s.fan_id = cf.fan_id
+                   AND s.creator_id = cf.creator_id
+                   AND s.status = 'active'
+                   AND (s.current_period_end IS NULL OR s.current_period_end > now())
+               )
+             )::int AS converted_follower_count
+           FROM creator_follows cf
+           WHERE cf.creator_id = u.id
+         ) f ON true
          WHERE u.role = 'creator'
          ORDER BY u.created_at DESC
          LIMIT $1`,
@@ -159,6 +184,12 @@ export async function loadAdminOverview() {
     lifetimeGrossCents: Number(row.lifetime_gross_cents),
     lifetimePlatformFeeCents: Number(row.lifetime_platform_fee_cents),
     lifetimePaymentCount: Number(row.lifetime_payment_count),
+    followerCount: Number(row.follower_count),
+    convertedFollowerCount: Number(row.converted_follower_count),
+    followerConversionPercent:
+      Number(row.follower_count) > 0
+        ? Math.round((Number(row.converted_follower_count) / Number(row.follower_count)) * 1000) / 10
+        : 0,
     estimatedProcessorCents:
       Math.round(Number(row.lifetime_gross_cents) * 0.036 + Number(row.lifetime_payment_count) * 30),
     estimatedContributionCents:
