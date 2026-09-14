@@ -26,6 +26,7 @@ export default function DashboardClient({
   initialPosts,
   initialLinks,
   initialFollowerCount = 0,
+  initialConvertedFollowerCount = 0,
 }) {
   const [user, setUser] = useState(initialUser);
   const [tiers, setTiers] = useState(initialTiers);
@@ -110,6 +111,10 @@ export default function DashboardClient({
   const hasProfile = Boolean(user?.display_name?.trim() && user?.bio?.trim() && user?.profile_image_url);
   const hasTier = tiers.length > 0;
   const hasPost = posts.length > 0;
+  const followerCount = Number(initialFollowerCount);
+  const convertedFollowerCount = Number(initialConvertedFollowerCount);
+  const followerConversionPercent =
+    followerCount > 0 ? Math.round((convertedFollowerCount / followerCount) * 1000) / 10 : 0;
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-12">
@@ -127,16 +132,31 @@ export default function DashboardClient({
       {user && user.role === 'creator' && !user.review_cleared_at && <PendingReviewBanner />}
 
       <section className="mt-6 rounded-2xl border border-[#0F766E]/15 bg-[#0F766E]/5 p-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#0F766E]">Your free audience</p>
-        <div className="mt-2 flex items-end gap-2">
-          <strong className="text-3xl text-brand-ink">{Number(initialFollowerCount).toLocaleString()}</strong>
-          <span className="pb-1 text-sm text-brand-ink/65">
-            {Number(initialFollowerCount) === 1 ? 'follower' : 'followers'}
-          </span>
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#0F766E]">Your audience</p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div className="rounded-xl bg-white/70 p-4">
+            <strong className="text-3xl text-brand-ink">{followerCount.toLocaleString()}</strong>
+            <p className="mt-1 text-sm text-brand-ink/65">
+              Free {followerCount === 1 ? 'follower' : 'followers'}
+            </p>
+          </div>
+          <div className="rounded-xl bg-white/70 p-4">
+            <strong className="text-3xl text-brand-ink">{convertedFollowerCount.toLocaleString()}</strong>
+            <p className="mt-1 text-sm text-brand-ink/65">
+              Became active paid members after following
+            </p>
+            <p className="mt-1 text-xs text-brand-ink/55">
+              {followerCount >= 10
+                ? `${followerConversionPercent.toLocaleString()}% conversion`
+                : followerCount > 0
+                  ? 'Early data — percentage appears at 10 followers'
+                  : 'Conversion starts tracking with your first follower'}
+            </p>
+          </div>
         </div>
-        <p className="mt-2 text-sm text-brand-ink/65">
-          These people followed your page without buying a membership. They can find you again from their dashboard;
-          following does not automatically add them to an email list.
+        <p className="mt-3 text-sm text-brand-ink/65">
+          Free followers can find your page again from their dashboard. Following does not add anyone to an email
+          list or unlock paid content.
         </p>
         <a href={`/creator/${user?.slug || user?.id}`} className="mt-3 inline-block text-sm font-semibold text-[#0F766E] hover:underline">
           View your public page
