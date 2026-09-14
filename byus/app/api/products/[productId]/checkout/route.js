@@ -6,6 +6,7 @@ import { getCurrentUser } from '@/lib/session';
 import { paymentProvider } from '@/lib/payments';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { getPlatformMilestoneReductionPoints, applyPlatformMilestoneReduction } from '@/lib/fees';
+import { MIN_DIGITAL_PRODUCT_PRICE_CENTS } from '@/lib/pricing';
 
 export async function POST(request, { params }) {
   const session = await getCurrentUser();
@@ -31,6 +32,12 @@ export async function POST(request, { params }) {
     if (!product) return NextResponse.json({ error: 'Product not found.' }, { status: 404 });
     if (product.access_type !== 'purchase') {
       return NextResponse.json({ error: 'This download is included with an active membership.' }, { status: 400 });
+    }
+    if (!Number.isInteger(product.price_cents) || product.price_cents < MIN_DIGITAL_PRODUCT_PRICE_CENTS) {
+      return NextResponse.json(
+        { error: 'This product is below ByUs’s $5 minimum for new purchases.' },
+        { status: 400 }
+      );
     }
     if (!product.email_verified) return NextResponse.json({ error: 'Verify your email before purchasing.' }, { status: 403 });
     if (!product.stripe_connect_onboarded || !product.review_cleared_at) {
