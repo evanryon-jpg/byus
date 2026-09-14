@@ -149,6 +149,13 @@ const limiters = {
     limiter: Ratelimit.slidingWindow(5, '1 h'),
     prefix: 'rl:waitlist',
   }),
+  // Anonymous campaign metrics store aggregate counts only. This limit prevents a
+  // single visitor or bot from materially inflating those totals.
+  'campaign-metric': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(20, '10 m'),
+    prefix: 'rl:campaign-metric',
+  }),
 };
 
 // Best-effort client IP. Vercel always sets x-forwarded-for in production; the
