@@ -6,8 +6,71 @@
 // "pending" so /api/subscribe and the Stripe webhook can grant the free-month
 // reward to both sides once the referred person actually subscribes.
 
+import crypto from 'crypto';
 import { query } from '@/lib/db';
 import { paymentProvider } from '@/lib/payments';
+
+// Avoids visually ambiguous characters (0/O, 1/I/L) since this code gets typed,
+// texted, and read off a screen by real people, not just pasted from a link.
+const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const CODE_LENGTH = 8;
+
+function generateCode() {
+  const bytes = crypto.randomBytes(CODE_LENGTH);
+  let code = '';
+  for (let i = 0; i < CODE_LENGTH; i++) {
+    code += CODE_ALPHABET[bytes[i] % CODE_ALPHABET.length];
+  }
+  return code;
+}
+
+// Collisions are vanishingly unlikely at this alphabet/length (32^8), but a couple
+// of retries costs nothing and turns "vanishingly unlikely" into "effectively never".
+async function assignReferralCode(userId) {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const code = generateCode();
+    try {
+      const result = await query(
+        'UPDATE users SET referral_code = $1 WHERE id = $2 RETURNING referral_code',
+        [code, userId]
+      );
+      return result.rows[0].referral_code;
+    } catch (err) {
+      if (err?.code === '23505') continue; // unique_violation — try another code
+      throw err;
+    }
+  }
+  throw new Error('Could not generate a unique referral code.');
+}
+
+// Used by both GET /api/me/referral and the settings page's server-side initial load
+// (app/settings/page.js) so the two can't report different numbers for the same user.
+// `origin` is the site origin to build the shareable link against (the caller's own
+// request.url on the API route, this deployment's own host on the server-rendered page).
+export async function loadReferralSummary(userId, origin) {
+  const userResult = await query('SELECT referral_code FROM users WHERE id = $1', [userId]);
+  let referralCode = userResult.rows[0]?.referral_code;
+  if (!referralCode) {
+    referralCode = await assignReferralCode(userId);
+  }
+
+  const statsResult = await query(
+    `SELECT
+       count(*)::int AS referred_count,
+       count(*) FILTER (WHERE status = 'rewarded')::int AS rewarded_count
+     FROM referrals
+     WHERE referrer_id = $1`,
+    [userId]
+  );
+  const stats = statsResult.rows[0] || { referred_count: 0, rewarded_count: 0 };
+
+  return {
+    referralCode,
+    referralLink: `${origin}/signup?ref=${referralCode}`,
+    referredCount: stats.referred_count,
+    rewardedCount: stats.rewarded_count,
+  };
+}
 
 export async function attributeReferral(referralCode, referredUserId) {
   if (!referralCode || typeof referralCode !== 'string') return;
