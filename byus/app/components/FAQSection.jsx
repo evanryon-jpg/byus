@@ -9,8 +9,8 @@ import { useState } from 'react';
 // answers are plain text so search engines and no-JS visitors still get them.
 const FAQS = [
   {
-    q: 'Why do I have to apply instead of signing up instantly?',
-    a: "ByUs is brand new, and our payment processor (Stripe) is finishing a standard review of our account before we can activate payouts to creators — a normal step for a new platform handling multi-party payments, and we expect it to clear soon. Rather than start you on a signup that dead-ends right at that step, we're taking applications for the Founding Creator Program instead. Apply with your email and we'll invite you the moment payouts go live — before it opens up to everyone else. Fans aren't affected: browsing and subscribing to a creator who's already live works normally.",
+    q: 'Can creators sign up and connect Stripe now?',
+    a: "Yes. Creator signup and Stripe Connect onboarding are open. Creating a ByUs account is free, and creators can build their page before accepting payments. Stripe separately reviews each connected account and may request verification information before enabling its payments or payouts.",
   },
   {
     q: 'How does the platform fee work?',
