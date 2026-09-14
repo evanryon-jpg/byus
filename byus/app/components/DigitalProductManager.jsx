@@ -85,7 +85,7 @@ export default function DigitalProductManager() {
           <span>I own this content or have permission to sell it, and it follows the ByUs content guidelines.</span>
         </label>
         <button disabled={saving}
-          className="rounded-full bg-[#2563EB] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50 sm:justify-self-start">
+          className="rounded-full bg-[#0F766E] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50 sm:justify-self-start">
           {saving ? 'Uploading…' : 'Add PDF'}
         </button>
         {message && <p className="text-sm text-brand-ink/70">{message}</p>}
@@ -101,7 +101,7 @@ export default function DigitalProductManager() {
               </div>
               <div className="flex gap-2">
                 <a href={`/api/products/${product.id}/download`}
-                  className="rounded-full border border-[#2563EB]/30 px-3 py-1.5 text-xs font-semibold text-[#2563EB]">Preview</a>
+                  className="rounded-full border border-[#0F766E]/30 px-3 py-1.5 text-xs font-semibold text-[#0F766E]">Preview</a>
                 <button onClick={() => toggle(product)}
                   className="rounded-full border border-brand-ink/15 px-3 py-1.5 text-xs font-semibold">
                   {product.active ? 'Hide' : 'Publish'}

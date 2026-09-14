@@ -36,7 +36,7 @@ export default function PayoutsSection() {
         {years.length > 0 && (
           <a
             href="/api/creator/payouts/export"
-            className="text-xs font-medium text-[#2563EB] hover:underline"
+            className="text-xs font-medium text-[#0F766E] hover:underline"
           >
             Download all-time CSV
           </a>
@@ -78,7 +78,7 @@ export default function PayoutsSection() {
                   <td className="py-2 text-right">
                     <a
                       href={`/api/creator/payouts/export?year=${y.year}`}
-                      className="text-xs font-medium text-[#2563EB] hover:underline"
+                      className="text-xs font-medium text-[#0F766E] hover:underline"
                     >
                       CSV
                     </a>

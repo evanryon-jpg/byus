@@ -59,7 +59,7 @@ export default function EarningsSection() {
           knocked off on top of that for everyone. */}
       <div className="rounded-xl bg-brand-ink/[0.03] p-4">
         {isDiscountedThisMonth ? (
-          <p className="text-sm text-[#2563EB]">
+          <p className="text-sm text-[#0F766E]">
             🎉 You've crossed ${(thresholdCents / 100).toLocaleString()} in earnings this month —
             {' '}{feePercent}% platform fee for the rest of the month.
           </p>
@@ -72,7 +72,7 @@ export default function EarningsSection() {
             </p>
             <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-brand-ink/10">
               <div
-                className="h-full rounded-full bg-[#2563EB] transition-all"
+                className="h-full rounded-full bg-[#0F766E] transition-all"
                 style={{ width: `${progress * 100}%` }}
               />
             </div>

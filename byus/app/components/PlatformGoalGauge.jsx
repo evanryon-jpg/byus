@@ -21,7 +21,7 @@ import { formatCompactUSD } from '@/lib/format';
 // each checkpoint is a real, named event (a fee cut for every creator, or the final growth
 // goal), so it gets its own marker and label rather than being folded into a single
 // continuous fill.
-const TEAL = '#2563EB';
+const TEAL = '#0F766E';
 const TRACK = 'rgba(20,99,89,0.12)'; // a lighter step of the same teal, not a flat gray
 const GOLD = '#0F766E';
 
@@ -87,9 +87,9 @@ export default function PlatformGoalGauge() {
             </p>
           </div>
           {crossedCount > 0 && (
-            <div className="shrink-0 rounded-2xl bg-[#2563EB]/10 px-4 py-3 text-center">
-              <div className="font-display text-2xl font-semibold text-[#2563EB]">{crossedCount}/{milestones.length}</div>
-              <div className="text-[11px] font-medium uppercase tracking-wide text-[#2563EB]/70">
+            <div className="shrink-0 rounded-2xl bg-[#0F766E]/10 px-4 py-3 text-center">
+              <div className="font-display text-2xl font-semibold text-[#0F766E]">{crossedCount}/{milestones.length}</div>
+              <div className="text-[11px] font-medium uppercase tracking-wide text-[#0F766E]/70">
                 milestones hit
               </div>
             </div>

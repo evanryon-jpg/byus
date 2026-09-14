@@ -22,7 +22,6 @@ const CREATORS = [
     craft: 'Digital Artist',
     tagline: 'Fantasy worlds. Real emotions.',
     quote: 'Art is a way of seeing the world differently.',
-    accent: 'teal',
     // Deliberately a different file from /creators/alex-rivers/hero.jpg -- that one
     // is his landscape painting, reused on the homepage hero as an example of his
     // artwork. This showcase card uses a photo of Alex himself, matching the other
@@ -38,7 +37,6 @@ const CREATORS = [
     craft: 'Photographer',
     tagline: 'Wild places. Honest moments.',
     quote: 'Teaching others to see the extraordinary in the everyday.',
-    accent: 'olive',
     art: '/creators/maya-sinclair/hero.jpg',
     href: '/demo/maya-sinclair',
   },
@@ -48,7 +46,6 @@ const CREATORS = [
     craft: 'Musician',
     tagline: 'Songs. Stories. Community.',
     quote: 'Music brings people together in a way nothing else can.',
-    accent: 'rust',
     art: '/creators/liam-carter/hero.jpg',
     href: '/demo/liam-carter',
   },
@@ -61,7 +58,6 @@ const CREATORS = [
     craft: 'ASL Educator',
     tagline: 'Language. Connection. Community.',
     quote: 'Everyone deserves a way to be understood.',
-    accent: 'clay',
     art: '/creators/elena-park/hero.jpg',
     href: '/demo/elena-park',
   },
@@ -71,7 +67,6 @@ const CREATORS = [
     craft: 'Maker & Craft',
     tagline: 'Handmade for a slower world.',
     quote: 'Creating with my hands keeps me grounded.',
-    accent: 'plum',
     art: '/creators/sophie-lane/hero.jpg',
     href: '/demo/sophie-lane',
   },
@@ -81,24 +76,10 @@ const CREATORS = [
     craft: 'Fitness Creator',
     tagline: 'Stronger habits. A better you.',
     quote: "Progress isn't perfect. It's consistent.",
-    accent: 'teal',
     art: '/creators/noah-blake/hero.jpg',
     href: '/demo/noah-blake',
   },
 ];
-
-// One accent per craft, echoing the reference's per-card CTA colors while staying
-// inside ByUs's own restrained, muted palette (no neon, nothing outside what the
-// brand's cream/paper/ink page already lives on). Reused rather than invented fresh
-// per card: teal repeats for Alex and Noah on purpose -- six distinct crafts don't
-// need six distinct hues to read as different people.
-const ACCENTS = {
-  teal: 'bg-brand-teal',
-  olive: 'bg-[#5c6b4f]',
-  rust: 'bg-[#a8532f]',
-  clay: 'bg-brand-clay',
-  plum: 'bg-[#6b3a4c]',
-};
 
 export default function CreatorShowcase() {
   return (
@@ -130,8 +111,6 @@ export default function CreatorShowcase() {
 }
 
 function CreatorCard({ creator }) {
-  const accentClass = ACCENTS[creator.accent] || ACCENTS.teal;
-
   return (
     <div className="group relative overflow-hidden rounded-sm border border-brand-ink/10 shadow-sm">
       <ArtSlot
@@ -166,13 +145,13 @@ function CreatorCard({ creator }) {
           {creator.href ? (
             <a
               href={creator.href}
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-brand-paper shadow-sm transition hover:opacity-90 sm:px-4 sm:py-2 sm:text-sm ${accentClass}`}
+              className="inline-flex items-center gap-1.5 rounded-full bg-brand-teal px-3 py-1.5 text-xs font-semibold text-brand-paper shadow-sm transition hover:opacity-90 sm:px-4 sm:py-2 sm:text-sm"
             >
               {creator.cta || 'View Creator'} →
             </a>
           ) : (
             <span
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-brand-paper opacity-80 sm:px-4 sm:py-2 sm:text-sm ${accentClass}`}
+              className="inline-flex items-center gap-1.5 rounded-full bg-brand-teal px-3 py-1.5 text-xs font-semibold text-brand-paper opacity-80 sm:px-4 sm:py-2 sm:text-sm"
               aria-disabled="true"
             >
               View Creator →

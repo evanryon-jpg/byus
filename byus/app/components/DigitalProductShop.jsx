@@ -49,7 +49,7 @@ export default function DigitalProductShop({ creatorId }) {
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         {products.map((product) => (
           <article key={product.id} className="rounded-2xl border border-brand-ink/10 bg-brand-paper p-5">
-            <span className="text-xs font-semibold uppercase tracking-wide text-[#2563EB]">PDF download</span>
+            <span className="text-xs font-semibold uppercase tracking-wide text-[#0F766E]">PDF download</span>
             <h3 className="mt-2 font-semibold">{product.title}</h3>
             {product.description && <p className="mt-1 text-sm text-brand-ink/65">{product.description}</p>}
             <p className="mt-3 text-sm font-semibold">
@@ -59,16 +59,16 @@ export default function DigitalProductShop({ creatorId }) {
             </p>
             {product.downloadable ? (
               <a href={`/api/products/${product.id}/download`}
-                className="mt-4 inline-flex rounded-full bg-[#2563EB] px-4 py-2 text-sm font-semibold text-white">
+                className="mt-4 inline-flex rounded-full bg-[#0F766E] px-4 py-2 text-sm font-semibold text-white">
                 Download PDF
               </a>
             ) : product.access_type === 'purchase' ? (
               <button onClick={() => purchase(product.id)} disabled={busy === product.id}
-                className="mt-4 rounded-full bg-[#2563EB] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+                className="mt-4 rounded-full bg-[#0F766E] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
                 {busy === product.id ? 'Opening checkout…' : 'Buy PDF'}
               </button>
             ) : (
-              <a href="#tiers" className="mt-4 inline-flex rounded-full border border-[#2563EB] px-4 py-2 text-sm font-semibold text-[#2563EB]">
+              <a href="#tiers" className="mt-4 inline-flex rounded-full border border-[#0F766E] px-4 py-2 text-sm font-semibold text-[#0F766E]">
                 Join to download
               </a>
             )}

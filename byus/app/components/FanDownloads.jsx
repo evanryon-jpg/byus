@@ -26,7 +26,7 @@ export default function FanDownloads() {
               <p className="text-sm text-brand-ink/60">by {item.creator_name} · {item.file_name}</p>
             </div>
             <a href={item.download_url}
-              className="rounded-full bg-[#2563EB] px-4 py-2 text-sm font-semibold text-white">
+              className="rounded-full bg-[#0F766E] px-4 py-2 text-sm font-semibold text-white">
               Download PDF
             </a>
           </div>

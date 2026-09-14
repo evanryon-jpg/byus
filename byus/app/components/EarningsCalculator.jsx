@@ -136,7 +136,7 @@ export default function EarningsCalculator() {
         <div
           className="mt-4 h-1.5 w-[52px] rounded-full"
           style={{
-            background: 'repeating-linear-gradient(115deg, #0F766E 0 8px, #0F766E 8px 16px, #2563EB 16px 24px)',
+            background: 'repeating-linear-gradient(115deg, #0F766E 0 8px, #0F766E 8px 16px, #0F766E 16px 24px)',
           }}
           aria-hidden="true"
         />
@@ -195,7 +195,7 @@ export default function EarningsCalculator() {
               always visible now rather than sitting behind a checkbox, since it's the
               platform's actual value proposition. */}
           <div>
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-teal to-[#0e4a42] p-5 text-brand-paper shadow-[0_22px_44px_-22px_rgba(14,74,66,0.6)] after:absolute after:-right-9 after:-top-12 after:h-[180px] after:w-[180px] after:rounded-full after:bg-[radial-gradient(circle,rgba(249,115,96,0.26),transparent_70%)] after:content-['']">
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-teal to-[#0e4a42] p-5 text-brand-paper shadow-[0_22px_44px_-22px_rgba(14,74,66,0.6)] after:absolute after:-right-9 after:-top-12 after:h-[180px] after:w-[180px] after:rounded-full after:bg-[radial-gradient(circle,rgba(248,250,252,0.18),transparent_70%)] after:content-['']">
               <span className="relative text-[11px] font-bold uppercase tracking-wide text-brand-gold">
                 With ByUs
               </span>

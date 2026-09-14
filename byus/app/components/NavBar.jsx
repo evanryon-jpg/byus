@@ -57,7 +57,7 @@ export default function NavBar() {
     <>
       <a
         href="/browse"
-        className="block rounded-lg px-3 py-2 hover:bg-[#2563EB]/5 hover:text-[#2563EB]"
+        className="block rounded-lg px-3 py-2 hover:bg-[#0F766E]/5 hover:text-[#0F766E]"
         onClick={() => setMenuOpen(false)}
       >
         Browse creators
@@ -67,14 +67,14 @@ export default function NavBar() {
         <>
           <a
             href={dashboardHref}
-            className="block rounded-lg px-3 py-2 hover:bg-[#2563EB]/5 hover:text-[#2563EB]"
+            className="block rounded-lg px-3 py-2 hover:bg-[#0F766E]/5 hover:text-[#0F766E]"
             onClick={() => setMenuOpen(false)}
           >
             Dashboard
           </a>
           <a
             href="/settings"
-            className="block rounded-lg px-3 py-2 hover:bg-[#2563EB]/5 hover:text-[#2563EB]"
+            className="block rounded-lg px-3 py-2 hover:bg-[#0F766E]/5 hover:text-[#0F766E]"
             onClick={() => setMenuOpen(false)}
           >
             Settings
@@ -82,7 +82,7 @@ export default function NavBar() {
           {user?.is_admin && (
             <a
               href="/admin"
-              className="block rounded-lg px-3 py-2 hover:bg-[#2563EB]/5 hover:text-[#2563EB]"
+              className="block rounded-lg px-3 py-2 hover:bg-[#0F766E]/5 hover:text-[#0F766E]"
               onClick={() => setMenuOpen(false)}
             >
               Admin
@@ -91,7 +91,7 @@ export default function NavBar() {
           <button
             type="button"
             onClick={handleLogout}
-            className="w-full rounded-full border border-[#2563EB] px-4 py-2.5 text-left text-[#2563EB] hover:bg-[#2563EB]/5 sm:ml-2 sm:w-auto sm:text-center"
+            className="w-full rounded-full border border-[#0F766E] px-4 py-2.5 text-left text-[#0F766E] hover:bg-[#0F766E]/5 sm:ml-2 sm:w-auto sm:text-center"
           >
             Log out
           </button>
@@ -102,14 +102,14 @@ export default function NavBar() {
         <>
           <a
             href="/login"
-            className="block rounded-lg px-3 py-2 hover:bg-[#2563EB]/5 hover:text-[#2563EB]"
+            className="block rounded-lg px-3 py-2 hover:bg-[#0F766E]/5 hover:text-[#0F766E]"
             onClick={() => setMenuOpen(false)}
           >
             Log in
           </a>
           <a
             href="/signup"
-            className="block rounded-full bg-[#2563EB] px-4 py-2.5 text-center text-white hover:bg-[#1D4ED8] sm:ml-2 sm:inline-block"
+            className="block rounded-full bg-[#0F766E] px-4 py-2.5 text-center text-white hover:bg-[#115E59] sm:ml-2 sm:inline-block"
             onClick={() => setMenuOpen(false)}
           >
             Sign up
@@ -147,7 +147,7 @@ export default function NavBar() {
           onClick={() => setMenuOpen((open) => !open)}
           aria-expanded={menuOpen}
           aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-          className="flex h-11 w-11 items-center justify-center rounded-lg border border-brand-ink/15 text-[#2563EB] hover:bg-[#2563EB]/5 sm:hidden"
+          className="flex h-11 w-11 items-center justify-center rounded-lg border border-brand-ink/15 text-[#0F766E] hover:bg-[#0F766E]/5 sm:hidden"
         >
           {menuOpen ? (
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
