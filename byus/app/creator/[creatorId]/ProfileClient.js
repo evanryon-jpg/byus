@@ -578,9 +578,9 @@ function SupportGoalBar({ goal }) {
 }
 
 // One-time "buy a coffee" payment — no tier, no commitment, just a thank-you. Presets
-// cover the common cases; the custom field takes anything from $1 up to MAX_TIP_CENTS
+// cover the common cases; the custom field takes anything from $5 up to MAX_TIP_CENTS
 // (enforced server-side in /api/creators/:creatorId/tip).
-const TIP_PRESETS_CENTS = [300, 500, 1000];
+const TIP_PRESETS_CENTS = [500, 1000, 2000];
 
 function TipWidget({ creatorId, creatorName }) {
   const router = useRouter();
@@ -619,8 +619,8 @@ function TipWidget({ creatorId, creatorName }) {
   function handleCustomSubmit(e) {
     e.preventDefault();
     const cents = Math.round(parseFloat(custom) * 100);
-    if (!Number.isFinite(cents) || cents < 100) {
-      setError('Enter at least $1.00.');
+    if (!Number.isFinite(cents) || cents < 500) {
+      setError('Enter at least $5.00.');
       return;
     }
     sendTip(cents);
@@ -646,7 +646,7 @@ function TipWidget({ creatorId, creatorName }) {
           <span className="text-sm text-brand-ink/60">$</span>
           <input
             type="number"
-            min="1"
+            min="5"
             step="1"
             placeholder="Other"
             value={custom}
