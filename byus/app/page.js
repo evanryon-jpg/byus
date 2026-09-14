@@ -258,47 +258,80 @@ function Hero({ user }) {
 // section's own `overflow-hidden`, so the small negative offsets that give the pinned
 // look never cause page-level horizontal scroll.
 function HeroArtCollage() {
+  const creators = [
+    {
+      name: 'Maya Sinclair',
+      specialty: 'Illustrator & artist',
+      image: '/creators/maya-sinclair/hero.jpg',
+      accent: 'bg-brand-clay',
+      detail: 'Process posts · Brush packs',
+    },
+    {
+      name: 'Liam Carter',
+      specialty: 'Fitness coach',
+      image: '/creators/liam-carter/hero.jpg',
+      accent: 'bg-brand-teal',
+      detail: 'Workouts · Member guides',
+    },
+    {
+      name: 'Elena Park',
+      specialty: 'Educator',
+      image: '/creators/elena-park/hero.jpg',
+      accent: 'bg-brand-clay',
+      detail: 'Lessons · PDF downloads',
+    },
+  ];
+
   return (
-    <div className="relative mx-auto w-full max-w-sm lg:max-w-none">
-      <div className="relative aspect-[9/10] w-full">
-        <div className="absolute inset-x-[6%] top-0 h-[62%] -rotate-2 overflow-hidden rounded-sm border-[5px] border-brand-paper shadow-[0_30px_55px_-20px_rgba(0,0,0,0.55)]">
-          <Image
-            src="/creators/alex-rivers/hero.jpg"
-            alt="A landscape illustration from a ByUs creator's page — an example of the artwork a member's public feed can show"
-            fill
-            sizes="(min-width: 1024px) 34vw, 78vw"
-            className="object-cover"
-            priority
-          />
-        </div>
+    <div className="relative mx-auto w-full max-w-xl pb-8 lg:max-w-none">
+      <div
+        aria-hidden="true"
+        className="absolute inset-x-[8%] inset-y-[5%] rounded-full bg-blue-300/20 blur-3xl"
+      />
 
-        <div className="absolute bottom-[4%] left-0 h-[42%] w-[54%] rotate-1 overflow-hidden rounded-sm border-[5px] border-brand-paper shadow-[0_22px_44px_-18px_rgba(0,0,0,0.5)]">
-          <Image
-            src="/creators/alex-rivers/portrait-process.jpg"
-            alt="A portrait study from a ByUs creator's page"
-            fill
-            sizes="(min-width: 1024px) 20vw, 42vw"
-            className="object-cover"
-            style={{ objectPosition: '78% 42%' }}
-          />
-        </div>
-
-        <div className="absolute bottom-[10%] right-0 h-[34%] w-[38%] rotate-3 overflow-hidden rounded-sm border-[5px] border-brand-paper shadow-[0_18px_36px_-16px_rgba(0,0,0,0.5)]">
-          <Image
-            src="/creators/alex-rivers/member-exclusive.jpg"
-            alt="A members-only piece from a ByUs creator's page, shown blurred behind its lock"
-            fill
-            sizes="(min-width: 1024px) 16vw, 30vw"
-            className="object-cover blur-[2px] scale-105"
-          />
-          <div className="absolute inset-0 flex items-center justify-center bg-[#172033]/35">
-            <LockGlyphLarge />
-          </div>
-        </div>
+      <div className="relative grid min-h-[430px] grid-cols-2 items-center gap-3 sm:min-h-[470px] sm:gap-4">
+        {creators.map((creator, index) => (
+          <article
+            key={creator.name}
+            className={`overflow-hidden rounded-2xl border-[5px] border-white bg-white shadow-[0_24px_55px_-22px_rgba(23,37,84,0.45)] ${
+              index === 0
+                ? '-rotate-3 self-end'
+                : index === 1
+                ? 'z-10 row-span-2 rotate-1'
+                : 'col-start-1 row-start-2 -mt-5 rotate-2'
+            }`}
+          >
+            <div className="relative aspect-[16/9] overflow-hidden rounded-xl bg-slate-100">
+              <Image
+                src={creator.image}
+                alt={`${creator.name}, an example ByUs creator`}
+                fill
+                sizes="(min-width: 1024px) 20vw, 42vw"
+                className="object-cover"
+                priority={index === 1}
+              />
+            </div>
+            <div className="p-3 sm:p-4">
+              <div className="flex items-center gap-2.5">
+                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${creator.accent}`}>
+                  {creator.name.split(' ').map((part) => part[0]).join('')}
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold text-brand-ink">{creator.name}</p>
+                  <p className="truncate text-xs text-brand-ink/55">{creator.specialty}</p>
+                </div>
+              </div>
+              <p className="mt-3 text-xs font-medium text-brand-ink/65">{creator.detail}</p>
+              <div className={`mt-3 rounded-full px-3 py-2 text-center text-xs font-bold text-white ${creator.accent}`}>
+                View creator page
+              </div>
+            </div>
+          </article>
+        ))}
       </div>
 
-      <p className="mt-5 text-center text-xs text-brand-paper/40 lg:text-left">
-        From Alex Rivers's page — see the full interactive version in the live demo.
+      <p className="relative mt-1 text-center text-xs text-brand-ink/45">
+        Memberships, posts, and downloads — all in one creator page.
       </p>
     </div>
   );
