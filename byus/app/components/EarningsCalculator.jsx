@@ -95,9 +95,18 @@ function useReveal() {
 }
 
 export default function EarningsCalculator() {
-  const [subscribers, setSubscribers] = useState(50);
-  const [price, setPrice] = useState(10);
-  const [tier, setTier] = useState('starter'); // 'starter' | 'grown'
+  // Defaults land on a believable "already have some traction" creator (150 subs at
+  // $15/mo = $2,250/mo gross) rather than a token 50-subscriber toy example. That gross
+  // clears the $2,000/mo discount threshold (see lib/pricing.js), so defaulting the tier
+  // to 'grown' here matches what this creator would actually be billed -- it's not
+  // picking a rosier tier than their own numbers support. The old defaults (50 subs,
+  // $10/mo, starter tier) computed to just ~$14.50/mo more than a Patreon-style
+  // competitor, because the 13% starter fee is barely below Patreon's blended ~12.9% +
+  // $0.30/charge -- not a compelling first impression for someone sizing up whether
+  // switching is worth it.
+  const [subscribers, setSubscribers] = useState(150);
+  const [price, setPrice] = useState(15);
+  const [tier, setTier] = useState('grown'); // 'starter' | 'grown'
   const [revealRef, revealed] = useReveal();
 
   const feePercent = tier === 'grown' ? DISCOUNTED_FEE_PERCENT : STANDARD_FEE_PERCENT;
