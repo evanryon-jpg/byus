@@ -20,7 +20,13 @@ import { STANDARD_FEE_PERCENT } from '@/lib/pricing';
 // refresh path only, used after creating a tier/post (onCreated) and by the "Try
 // again" retry button, both of which are genuinely user-triggered and have nothing to
 // do with first paint.
-export default function DashboardClient({ initialUser, initialTiers, initialPosts, initialLinks }) {
+export default function DashboardClient({
+  initialUser,
+  initialTiers,
+  initialPosts,
+  initialLinks,
+  initialFollowerCount = 0,
+}) {
   const [user, setUser] = useState(initialUser);
   const [tiers, setTiers] = useState(initialTiers);
   const [posts, setPosts] = useState(initialPosts);
@@ -119,6 +125,23 @@ export default function DashboardClient({ initialUser, initialTiers, initialPost
       )}
 
       {user && user.role === 'creator' && !user.review_cleared_at && <PendingReviewBanner />}
+
+      <section className="mt-6 rounded-2xl border border-[#0F766E]/15 bg-[#0F766E]/5 p-5">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#0F766E]">Your free audience</p>
+        <div className="mt-2 flex items-end gap-2">
+          <strong className="text-3xl text-brand-ink">{Number(initialFollowerCount).toLocaleString()}</strong>
+          <span className="pb-1 text-sm text-brand-ink/65">
+            {Number(initialFollowerCount) === 1 ? 'follower' : 'followers'}
+          </span>
+        </div>
+        <p className="mt-2 text-sm text-brand-ink/65">
+          These people followed your page without buying a membership. They can find you again from their dashboard;
+          following does not automatically add them to an email list.
+        </p>
+        <a href={`/creator/${user?.slug || user?.id}`} className="mt-3 inline-block text-sm font-semibold text-[#0F766E] hover:underline">
+          View your public page
+        </a>
+      </section>
 
       <PageUrlCard />
 
