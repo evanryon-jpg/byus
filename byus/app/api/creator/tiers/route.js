@@ -52,9 +52,9 @@ export async function POST(request) {
     );
   }
 
-  if (!name || !Number.isInteger(priceCents) || priceCents < 100) {
+  if (!name || !Number.isInteger(priceCents) || priceCents < 500) {
     return NextResponse.json(
-      { error: 'A tier needs a name and a price of at least $1.00 (100 cents).' },
+      { error: 'A tier needs a name and a price of at least $5.00.' },
       { status: 400 }
     );
   }
@@ -77,9 +77,9 @@ export async function POST(request) {
   // the PATCH handler's comment): once created, editing a tier can never change either price,
   // only deactivate and recreate.
   const hasAnnual = annualPriceCents !== undefined && annualPriceCents !== null;
-  if (hasAnnual && (!Number.isInteger(annualPriceCents) || annualPriceCents < 100)) {
+  if (hasAnnual && (!Number.isInteger(annualPriceCents) || annualPriceCents < 500)) {
     return NextResponse.json(
-      { error: 'Annual price must be at least $1.00, or left blank.' },
+      { error: 'Annual price must be at least $5.00, or left blank.' },
       { status: 400 }
     );
   }
