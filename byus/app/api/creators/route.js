@@ -92,7 +92,7 @@ export async function GET(request) {
          ) f ON f.creator_id = u.id
          WHERE ${conditions.join(' AND ')}
          ORDER BY ${SORTS[sort]}
-         LIMIT 25 OFFSET ${i}`,
+         LIMIT 25 OFFSET $${i}`,
         [...values, offset]
       ),
       query(
