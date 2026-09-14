@@ -16,7 +16,7 @@ import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 const DESCRIPTION_MAX = 500;
 const BIO_MAX = 280;
 const TAG_MAX = 30;
-const MIN_PRICE_CENTS = 100;
+const MIN_PRICE_CENTS = 500;
 const MAX_PRICE_CENTS = 200000; // keep in sync with app/api/creator/tiers/route.js
 
 // Configurable so a model rename/retirement doesn't require a code change --
