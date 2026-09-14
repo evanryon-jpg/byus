@@ -23,6 +23,8 @@ export const FEE_DISCOUNT_THRESHOLD_CENTS = 200000; // $2,000 gross revenue in a
 // may renew unchanged, but no new supporter can start a below-floor checkout.
 export const MIN_MEMBERSHIP_PRICE_CENTS = 500; // $5.00
 export const MIN_DIGITAL_PRODUCT_PRICE_CENTS = 500; // $5.00
+// Annual plans may discount two months at most (10 monthly payments for 12 months).
+export const MIN_ANNUAL_BILLING_MONTHS = 10;
 
 // Floor for the platform-wide milestone bonus in lib/fees.js. Set to match
 // DISCOUNTED_FEE_PERCENT exactly: Stripe's own processing (2.9% + $0.30/charge), Connect
