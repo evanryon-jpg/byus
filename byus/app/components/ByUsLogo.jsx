@@ -8,7 +8,9 @@ export default function ByUsLogo({ className = 'h-9 w-auto' }) {
       xmlns="http://www.w3.org/2000/svg"
     >
       <g aria-hidden="true">
-        <path
+        <rect x="0" y="0" width="40" height="40" rx="10" fill="#172554" />
+        <g transform="translate(3 3) scale(.85)">
+          <path
           fill="#2563EB"
           d="M11.5 2.5a6.4 6.4 0 0 0-5.4 9.8C3.5 15 2 18.8 2 23v2.5C2 32.4 7.6 38 14.5 38H20V25.2c-4.4 0-7.3-3-7.3-7.4v-1.6c1.8-.3 3.3-1.1 4.5-2.4l-2.2-.9 2.5-1.5a6.4 6.4 0 0 0-6-8.9Z"
         />
@@ -21,6 +23,7 @@ export default function ByUsLogo({ className = 'h-9 w-auto' }) {
         <text x="20" y="23" textAnchor="middle" fill="#172554" fontFamily="Arial, sans-serif" fontSize="6.2" fontWeight="700">
           ByUs
         </text>
+        </g>
       </g>
       <text
         x="47"
