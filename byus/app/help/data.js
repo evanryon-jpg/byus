@@ -71,6 +71,10 @@ export const HELP_CATEGORIES = [
         q: 'Can I support more than one creator?',
         a: 'Yes — there’s no limit. Every subscription and tip you’ve sent is tracked separately in your fan dashboard.',
       },
+      {
+        q: 'What does “Follow for free” mean?',
+        a: 'Following saves a creator to the “Creators you follow” section of your fan dashboard so their page is easy to find again. It does not charge you, start a trial, unlock members-only posts, or add you to an email list. You can unfollow from the creator’s page at any time.',
+      },
     ],
   },
   {
@@ -207,6 +211,10 @@ export const HELP_CATEGORIES = [
     title: 'Growing your audience',
     description: 'Referrals, goals, and welcome messages.',
     articles: [
+      {
+        q: 'What is the difference between followers and paid members?',
+        a: 'Followers have saved your page for free and can return to it from their dashboard. Paid members have an active subscription and can access the benefits and members-only content included with their tier. Your creator dashboard shows free followers separately so the two audiences are never confused.',
+      },
       {
         q: "What's the referral program?",
         a: 'Every account has a referral link (find it under Settings → Refer a friend). When someone signs up through it and becomes a paying subscriber, both sides get a free month — it’s a two-way reward, not just a discount for the person you referred.',
