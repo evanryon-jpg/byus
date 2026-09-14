@@ -125,7 +125,7 @@ function AvatarCard({ user, onChanged }) {
             className="h-20 w-20 rounded-full object-cover"
           />
         ) : (
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#2563EB]/10 text-2xl font-semibold text-[#2563EB]">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#0F766E]/10 text-2xl font-semibold text-[#0F766E]">
             {initial}
           </div>
         )}
@@ -135,7 +135,7 @@ function AvatarCard({ user, onChanged }) {
               type="button"
               onClick={() => fileRef.current?.click()}
               disabled={busy}
-              className="rounded-full border border-[#2563EB] px-4 py-2 text-sm font-medium text-[#2563EB] hover:bg-[#2563EB]/5 disabled:opacity-50"
+              className="rounded-full border border-[#0F766E] px-4 py-2 text-sm font-medium text-[#0F766E] hover:bg-[#0F766E]/5 disabled:opacity-50"
             >
               {uploading ? 'Uploading…' : 'Upload photo'}
             </button>
@@ -183,7 +183,7 @@ function AvatarCard({ user, onChanged }) {
                 onClick={() => handlePickPreset(id)}
                 disabled={settingPreset !== null}
                 aria-label={`Use this avatar`}
-                className="aspect-square overflow-hidden rounded-full ring-2 ring-transparent transition hover:ring-[#2563EB]/50 disabled:opacity-50"
+                className="aspect-square overflow-hidden rounded-full ring-2 ring-transparent transition hover:ring-[#0F766E]/50 disabled:opacity-50"
               >
                 {/* Plain <img>, not next/image -- these are small built-in static
                     assets, not remote/user content, so there's nothing next/image's
@@ -288,10 +288,10 @@ function ProfileCard({ user, onChanged }) {
                     aria-pressed={active}
                     className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
                       active
-                        ? 'border-[#2563EB] bg-[#2563EB] text-white'
+                        ? 'border-[#0F766E] bg-[#0F766E] text-white'
                         : atCap
                         ? 'cursor-not-allowed border-brand-ink/10 text-brand-ink/30'
-                        : 'border-brand-ink/15 text-brand-ink/70 hover:border-[#2563EB]/40 hover:text-[#2563EB]'
+                        : 'border-brand-ink/15 text-brand-ink/70 hover:border-[#0F766E]/40 hover:text-[#0F766E]'
                     }`}
                   >
                     {cat}
@@ -308,7 +308,7 @@ function ProfileCard({ user, onChanged }) {
           <button
             type="submit"
             disabled={saving}
-            className="rounded-full bg-[#2563EB] px-5 py-2 text-sm font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-50"
+            className="rounded-full bg-[#0F766E] px-5 py-2 text-sm font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Save profile'}
           </button>
@@ -370,7 +370,7 @@ function NotificationsCard({ user, onChanged }) {
           checked={enabled}
           disabled={saving}
           onChange={handleToggle}
-          className="h-5 w-5 shrink-0 accent-[#2563EB]"
+          className="h-5 w-5 shrink-0 accent-[#0F766E]"
         />
       </label>
       {status && <p className="mt-2 text-xs text-red-600">{status.text}</p>}
@@ -430,7 +430,7 @@ function SupportVisibilityCard({ user, onChanged }) {
           checked={enabled}
           disabled={saving}
           onChange={handleToggle}
-          className="h-5 w-5 shrink-0 accent-[#2563EB]"
+          className="h-5 w-5 shrink-0 accent-[#0F766E]"
         />
       </label>
       {status && <p className="mt-2 text-xs text-red-600">{status.text}</p>}
@@ -501,7 +501,7 @@ function ReferralCard({ role }) {
             <button
               type="button"
               onClick={handleCopy}
-              className="shrink-0 rounded-full bg-[#2563EB] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1D4ED8]"
+              className="shrink-0 rounded-full bg-[#0F766E] px-4 py-2 text-sm font-semibold text-white hover:bg-[#115E59]"
             >
               {copied ? 'Copied!' : 'Copy link'}
             </button>
@@ -605,7 +605,7 @@ function SuggestionBoxCard() {
           <button
             type="submit"
             disabled={sending || !message.trim()}
-            className="rounded-full bg-[#2563EB] px-5 py-2 text-sm font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-50"
+            className="rounded-full bg-[#0F766E] px-5 py-2 text-sm font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
           >
             {sending ? 'Sending…' : 'Send suggestion'}
           </button>
@@ -732,7 +732,7 @@ function PasswordCard() {
           <button
             type="submit"
             disabled={saving}
-            className="rounded-full bg-[#2563EB] px-5 py-2 text-sm font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-50"
+            className="rounded-full bg-[#0F766E] px-5 py-2 text-sm font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Change password'}
           </button>
