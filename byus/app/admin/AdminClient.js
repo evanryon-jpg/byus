@@ -53,7 +53,7 @@ export default function AdminClient({
         <StatTile
           label="Follower-to-paid conversion"
           value={`${followerConversionPercent.toLocaleString()}%`}
-          detail={`${convertedFollowerCount.toLocaleString()} active paid relationship${convertedFollowerCount === 1 ? '' : 's'}`}
+          detail={`${convertedFollowerCount.toLocaleString()} became paid after following`}
         />
         <StatTile label="Active subscriptions" value={activeSubscriberCount.toLocaleString()} />
         <StatTile
@@ -170,8 +170,9 @@ export default function AdminClient({
         <h2 className="font-semibold">Recent creators</h2>
         <p className="mt-1 text-sm text-brand-ink/65">
           Most recent signups first — worth a look if Stripe was never connected or earnings stayed at $0.
-          A creator flagged &ldquo;Needs review&rdquo; has no posts live and can&rsquo;t accept a fan&rsquo;s
-          first payment yet — see the Review column.
+          Follow → paid counts active memberships that started after the supporter followed. A creator
+          flagged &ldquo;Needs review&rdquo; has no posts live and can&rsquo;t accept a fan&rsquo;s first
+          payment yet — see the Review column.
         </p>
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[980px] border-collapse text-sm">
