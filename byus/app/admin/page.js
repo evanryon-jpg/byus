@@ -108,7 +108,7 @@ export default function AdminPage() {
               valueKey="newFans"
               formatValue={(n) => `${n.toLocaleString()} new`}
               formatAxisTick={(n) => n.toLocaleString()}
-              color="#C2410C"
+              color="#0F766E"
               hoverColor="#a5854a"
             />
           </ChartCard>

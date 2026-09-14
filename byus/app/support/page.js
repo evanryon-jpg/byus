@@ -140,7 +140,7 @@ function SupportPageContent() {
                   type="button"
                   onClick={() => sendSupport(cents)}
                   disabled={sending}
-                  className="rounded-full bg-[#F97360] px-5 py-2 text-sm font-semibold text-white hover:bg-[#b3945a] disabled:opacity-50"
+                  className="rounded-full bg-[#0F766E] px-5 py-2 text-sm font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
                 >
                   ${(cents / 100).toFixed(0)}
                 </button>
@@ -179,7 +179,7 @@ function SupportPageContent() {
               <button
                 type="button"
                 onClick={() => setShowMessage(true)}
-                className="mt-4 text-xs font-medium text-[#C2410C] hover:underline"
+                className="mt-4 text-xs font-medium text-[#0F766E] hover:underline"
               >
                 + Add a message
               </button>

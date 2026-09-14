@@ -9,7 +9,7 @@
 export default function PendingReviewBanner() {
   return (
     <div className="mb-6 rounded-2xl border border-brand-gold/30 bg-brand-gold/10 p-4 text-sm">
-      <p className="font-semibold text-[#C2410C]">Your page is completing an initial review</p>
+      <p className="font-semibold text-[#0F766E]">Your page is completing an initial review</p>
       <p className="mt-0.5 text-brand-ink/70">
         This is a one-time check we run on every new creator before their page can accept its
         first paying fan. Keep building — add tiers, links, and posts in the meantime — anything

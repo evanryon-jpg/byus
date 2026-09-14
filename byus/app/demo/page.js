@@ -442,7 +442,7 @@ function CreatorDashboardPanel() {
         <div
           className="h-1.5 w-[52px] rounded-full"
           style={{
-            background: 'repeating-linear-gradient(115deg, #F97360 0 8px, #F97360 8px 16px, #2563EB 16px 24px)',
+            background: 'repeating-linear-gradient(115deg, #0F766E 0 8px, #0F766E 8px 16px, #2563EB 16px 24px)',
           }}
           aria-hidden="true"
         />
@@ -621,7 +621,7 @@ function Toast({ message }) {
   );
 }
 
-const CONFETTI_COLORS = ['#2563EB', '#F97360', '#F97360', '#F8FAFC', '#1D4ED8'];
+const CONFETTI_COLORS = ['#2563EB', '#0F766E', '#0F766E', '#F8FAFC', '#1D4ED8'];
 
 // Hand-rolled instead of pulling in a confetti package -- this only needs one
 // one-shot burst, so a tiny canvas particle sim keeps the demo dependency-free.

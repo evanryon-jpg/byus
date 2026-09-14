@@ -34,9 +34,9 @@ export default function AcknowledgePolicyBanner({ onAcknowledged }) {
   }
 
   return (
-    <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-[#F97360]/30 bg-[#F97360]/10 p-4 text-sm">
+    <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-[#0F766E]/30 bg-[#0F766E]/10 p-4 text-sm">
       <div>
-        <p className="font-semibold text-[#a35a3d]">One more thing before you keep going</p>
+        <p className="font-semibold text-[#115E59]">One more thing before you keep going</p>
         <p className="mt-0.5 text-brand-ink/70">
           Your Stripe account was connected before we added an explicit content-policy
           acknowledgment step. Please confirm the same thing every creator confirms when

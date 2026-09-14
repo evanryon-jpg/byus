@@ -9,14 +9,14 @@ export default function ByUsLogo({ className = 'h-9 w-auto' }) {
     >
       <g aria-hidden="true">
         <circle cx="9" cy="7" r="5" fill="#2563EB" />
-        <circle cx="27" cy="7" r="5" fill="#F97360" />
+        <circle cx="27" cy="7" r="5" fill="#0F766E" />
         <path
           d="M3 14c0 10.5 5.1 17 15 17V21c-4.1 0-6-2.2-6-7H3Z"
           fill="#2563EB"
         />
         <path
           d="M33 14c0 10.5-5.1 17-15 17V21c4.1 0 6-2.2 6-7h9Z"
-          fill="#F97360"
+          fill="#0F766E"
         />
       </g>
       <text

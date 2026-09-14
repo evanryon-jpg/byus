@@ -136,7 +136,7 @@ export default function EarningsCalculator() {
         <div
           className="mt-4 h-1.5 w-[52px] rounded-full"
           style={{
-            background: 'repeating-linear-gradient(115deg, #F97360 0 8px, #F97360 8px 16px, #2563EB 16px 24px)',
+            background: 'repeating-linear-gradient(115deg, #0F766E 0 8px, #0F766E 8px 16px, #2563EB 16px 24px)',
           }}
           aria-hidden="true"
         />
@@ -339,7 +339,7 @@ function SliderField({
         value={sliderValue}
         onChange={handleSliderValue}
         style={{
-          background: `linear-gradient(to right, #F97360 0%, #F97360 ${pct}%, rgba(43,36,32,0.08) ${pct}%, rgba(43,36,32,0.08) 100%)`,
+          background: `linear-gradient(to right, #0F766E 0%, #0F766E ${pct}%, rgba(43,36,32,0.08) ${pct}%, rgba(43,36,32,0.08) 100%)`,
         }}
         className="h-[9px] w-full cursor-pointer appearance-none rounded-full outline-none [&::-moz-range-thumb]:h-[23px] [&::-moz-range-thumb]:w-[23px] [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-4 [&::-moz-range-thumb]:border-brand-clay [&::-moz-range-thumb]:bg-brand-paper [&::-moz-range-thumb]:shadow-[0_2px_6px_rgba(43,36,32,0.3)] [&::-webkit-slider-thumb]:h-[23px] [&::-webkit-slider-thumb]:w-[23px] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-4 [&::-webkit-slider-thumb]:border-brand-clay [&::-webkit-slider-thumb]:bg-brand-paper [&::-webkit-slider-thumb]:shadow-[0_2px_6px_rgba(43,36,32,0.3)] [&::-webkit-slider-thumb]:transition active:[&::-webkit-slider-thumb]:scale-125"
       />

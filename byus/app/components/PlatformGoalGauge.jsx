@@ -23,7 +23,7 @@ import { formatCompactUSD } from '@/lib/format';
 // continuous fill.
 const TEAL = '#2563EB';
 const TRACK = 'rgba(20,99,89,0.12)'; // a lighter step of the same teal, not a flat gray
-const GOLD = '#F97360';
+const GOLD = '#0F766E';
 
 export default function PlatformGoalGauge() {
   const [data, setData] = useState(null);
@@ -72,7 +72,7 @@ export default function PlatformGoalGauge() {
       <div className="rounded-3xl border border-brand-ink/5 bg-brand-paper p-6 sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full bg-[#F97360]/15 px-3 py-1 text-xs font-semibold tracking-wide text-[#C2410C]">
+            <span className="inline-flex items-center gap-2 rounded-full bg-[#0F766E]/15 px-3 py-1 text-xs font-semibold tracking-wide text-[#0F766E]">
               ByUs growth
             </span>
             <h2 className="mt-3 font-display text-2xl font-semibold text-[#172033] sm:text-3xl">

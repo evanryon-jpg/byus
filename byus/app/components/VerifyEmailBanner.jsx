@@ -30,7 +30,7 @@ export default function VerifyEmailBanner({ email }) {
   return (
     <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-brand-gold/30 bg-brand-gold/10 p-4 text-sm sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <p className="font-semibold text-[#C2410C]">Verify your email address</p>
+        <p className="font-semibold text-[#0F766E]">Verify your email address</p>
         <p className="mt-0.5 text-brand-ink/70">
           {sent
             ? `We sent a new link to ${email}. Check your inbox.`
@@ -41,7 +41,7 @@ export default function VerifyEmailBanner({ email }) {
       <button
         onClick={handleResend}
         disabled={sending || sent}
-        className="shrink-0 rounded-full border border-[#C2410C]/40 px-4 py-2 text-xs font-semibold text-[#C2410C] hover:bg-brand-gold/15 disabled:opacity-50"
+        className="shrink-0 rounded-full border border-[#0F766E]/40 px-4 py-2 text-xs font-semibold text-[#0F766E] hover:bg-brand-gold/15 disabled:opacity-50"
       >
         {sending ? 'Sending…' : sent ? 'Sent' : 'Resend email'}
       </button>

@@ -315,7 +315,7 @@ function PageUrlCard() {
           <button
             type="button"
             onClick={() => handleCopy(`${data.profileUrl}/tip`, 'tip')}
-            className="rounded-full border border-[#F97360]/40 bg-[#F97360]/10 px-4 py-2 text-sm font-semibold text-[#C2410C] hover:bg-[#F97360]/20"
+            className="rounded-full border border-[#0F766E]/40 bg-[#0F766E]/10 px-4 py-2 text-sm font-semibold text-[#0F766E] hover:bg-[#0F766E]/20"
           >
             {copied === 'tip' ? 'Copied!' : '☕ Copy tip link'}
           </button>
@@ -1458,14 +1458,14 @@ function RecentTipsSection() {
   if (!tips || tips.length === 0) return null;
 
   return (
-    <div className="mt-8 rounded-2xl border border-[#F97360]/25 bg-[#F97360]/5 p-6">
+    <div className="mt-8 rounded-2xl border border-[#0F766E]/25 bg-[#0F766E]/5 p-6">
       <h2 className="font-semibold">☕ Recent tips</h2>
       <p className="mt-1 text-sm text-brand-ink/65">One-time tips from fans, newest first.</p>
       <ul className="mt-4 space-y-3">
         {tips.map((tip) => (
           <li key={tip.id} className="rounded-xl bg-brand-paper p-3">
             <div className="flex items-baseline justify-between gap-3">
-              <span className="font-semibold text-[#C2410C]">${(tip.amountCents / 100).toFixed(2)}</span>
+              <span className="font-semibold text-[#0F766E]">${(tip.amountCents / 100).toFixed(2)}</span>
               <span className="text-xs text-brand-ink/60">
                 {tip.fanDisplayName || 'A supporter'} · {formatRelativeDate(tip.createdAt)}
               </span>

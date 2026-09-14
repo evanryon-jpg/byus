@@ -136,7 +136,7 @@ function CreatorProfile() {
         </p>
       )}
       {justTipped && (
-        <p className="mb-6 rounded-xl bg-[#F97360]/15 px-4 py-3 text-sm text-[#C2410C]">
+        <p className="mb-6 rounded-xl bg-[#0F766E]/15 px-4 py-3 text-sm text-[#0F766E]">
           ☕ Thanks for the coffee! {creator.display_name} really appreciates the support.
         </p>
       )}
@@ -684,7 +684,7 @@ function TipWidget({ creatorId, creatorName }) {
   }
 
   return (
-    <div className="mt-6 rounded-2xl border border-[#F97360]/25 bg-[#F97360]/5 p-4">
+    <div className="mt-6 rounded-2xl border border-[#0F766E]/25 bg-[#0F766E]/5 p-4">
       <p className="text-sm font-semibold text-[#172033]">☕ Buy {creatorName} a coffee</p>
       <p className="mt-1 text-xs text-brand-ink/65">A one-time thank-you — no subscription, no commitment.</p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -694,7 +694,7 @@ function TipWidget({ creatorId, creatorName }) {
             type="button"
             onClick={() => sendTip(cents)}
             disabled={sending}
-            className="rounded-full bg-[#F97360] px-4 py-1.5 text-sm font-semibold text-white hover:bg-[#b3945a] disabled:opacity-50"
+            className="rounded-full bg-[#0F766E] px-4 py-1.5 text-sm font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
           >
             ${(cents / 100).toFixed(0)}
           </button>
@@ -713,7 +713,7 @@ function TipWidget({ creatorId, creatorName }) {
           <button
             type="submit"
             disabled={sending}
-            className="text-sm font-semibold text-[#C2410C] hover:underline disabled:opacity-50"
+            className="text-sm font-semibold text-[#0F766E] hover:underline disabled:opacity-50"
           >
             {sending ? 'Sending…' : 'Send'}
           </button>
@@ -731,7 +731,7 @@ function TipWidget({ creatorId, creatorName }) {
         <button
           type="button"
           onClick={() => setShowMessage(true)}
-          className="mt-3 text-xs font-medium text-[#C2410C] hover:underline"
+          className="mt-3 text-xs font-medium text-[#0F766E] hover:underline"
         >
           + Add a message
         </button>
@@ -853,7 +853,7 @@ function LockedPostPreview({ hasTiers }) {
   return (
     <div className="relative mt-3 overflow-hidden rounded-xl">
       <div
-        className="pointer-events-none h-28 w-full bg-gradient-to-br from-[#2563EB]/10 via-brand-ink/5 to-[#F97360]/10 blur-[2px]"
+        className="pointer-events-none h-28 w-full bg-gradient-to-br from-[#2563EB]/10 via-brand-ink/5 to-[#0F766E]/10 blur-[2px]"
         aria-hidden="true"
       />
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-white/40 text-center backdrop-blur-sm">

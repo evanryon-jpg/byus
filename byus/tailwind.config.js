@@ -8,8 +8,8 @@ module.exports = {
       colors: {
         brand: {
           teal: '#2563EB',
-          gold: '#F97360',
-          clay: '#F97360',
+          gold: '#0F766E',
+          clay: '#0F766E',
           // Warm neutrals -- replace the old pure-white/black-opacity scale everywhere
           // (cards, text, borders, dividers) so the whole site sits on one warm-brown
           // neutral instead of a cold gray one. `cream` is the page background (already

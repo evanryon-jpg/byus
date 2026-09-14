@@ -85,7 +85,7 @@ export default function EarningsSection() {
           Based on what you earn each month, not lifetime — it resets on the 1st.
         </p>
         {hasPlatformBonus && (
-          <p className="mt-2 text-xs text-[#C2410C]">
+          <p className="mt-2 text-xs text-[#0F766E]">
             🌱 Plus an extra {platformReductionPoints}pt off from ByUs's own growth milestones — you're
             actually paying {effectiveFeePercent}% right now. See the goal gauge on the homepage.
           </p>

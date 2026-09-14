@@ -178,7 +178,7 @@ function Hero({ user }) {
                   preserveAspectRatio="none"
                   aria-hidden="true"
                 >
-                  <path d="M2 6 Q 50 1, 100 5 T 198 6" stroke="#F97360" strokeWidth="4" fill="none" strokeLinecap="round" />
+                  <path d="M2 6 Q 50 1, 100 5 T 198 6" stroke="#0F766E" strokeWidth="4" fill="none" strokeLinecap="round" />
                 </svg>
               </span>
               . Period.
@@ -438,7 +438,7 @@ function TiersDemo() {
   ];
   return (
     <div className="rounded-2xl border border-brand-ink/15 bg-brand-paper p-6 shadow-sm">
-      <span className="text-xs font-extrabold uppercase tracking-wide text-[#C2410C]">Tiered memberships</span>
+      <span className="text-xs font-extrabold uppercase tracking-wide text-[#0F766E]">Tiered memberships</span>
       <h3 className="mt-2 font-display text-lg font-bold text-[#172033]">Fans pick what fits</h3>
       <div className="mt-4 space-y-2">
         {tiers.map((t) => (
