@@ -16,6 +16,7 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/session';
 import { loadEnrichedUser } from '@/lib/user-profile';
 import { loadCreatorTiers, loadCreatorPosts, loadCreatorLinks } from '@/lib/creator-dashboard-data';
+import { query } from '@/lib/db';
 import DashboardClient from './DashboardClient';
 
 export const dynamic = 'force-dynamic';
@@ -55,7 +56,7 @@ export default async function CreatorDashboardPage() {
   // any one of them shouldn't take down the whole dashboard, so each degrades to an
   // empty list instead of throwing, same as the old client-side load() silently kept
   // whatever array was already there on a non-ok response.
-  const [tiers, posts, links] = await Promise.all([
+  const [tiers, posts, links, followerCount] = await Promise.all([
     loadCreatorTiers(session.userId).catch((err) => {
       console.error('creator/dashboard: tiers load failed:', err);
       return [];
@@ -68,7 +69,21 @@ export default async function CreatorDashboardPage() {
       console.error('creator/dashboard: links load failed:', err);
       return [];
     }),
+    query('SELECT COUNT(*)::int AS count FROM creator_follows WHERE creator_id = $1', [session.userId])
+      .then((result) => result.rows[0].count)
+      .catch((err) => {
+        console.error('creator/dashboard: follower count load failed:', err);
+        return 0;
+      }),
   ]);
 
-  return <DashboardClient initialUser={user} initialTiers={tiers} initialPosts={posts} initialLinks={links} />;
+  return (
+    <DashboardClient
+      initialUser={user}
+      initialTiers={tiers}
+      initialPosts={posts}
+      initialLinks={links}
+      initialFollowerCount={followerCount}
+    />
+  );
 }
