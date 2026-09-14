@@ -31,7 +31,8 @@ const DISPLAY_NAME_MAX = 100;
 const PASSWORD_MAX = 72;
 
 export async function POST(request) {
-  const { email, password, role, displayName, termsAccepted, website, referralCode } = await request.json();
+  const { email, password, role, displayName, termsAccepted, website, referralCode, acquisitionSource } = await request.json();
+  const normalizedSource = acquisitionSource === 'instagram' ? 'instagram' : null;
 
   // --- Honeypot ---
   // "website" is a hidden field real users never see or fill in. A non-empty value
@@ -104,7 +105,7 @@ export async function POST(request) {
       `INSERT INTO users (
          email, password_hash, role, display_name,
          terms_accepted_at, verification_token_hash, verification_token_expires_at,
-         platform_fee_percent
+         platform_fee_percent, acquisition_source
        )
        VALUES (
          $1, $2, $3, $4, now(), $5, $6,
@@ -116,12 +117,14 @@ export async function POST(request) {
          (CASE
            WHEN $3 = 'creator' AND (SELECT COUNT(*) FROM users WHERE role = 'creator') < $7 THEN $8
            ELSE $9
-         END)::integer
+         END)::integer,
+         $10
        )
        RETURNING id, email, role, display_name, session_version`,
       [
         email.toLowerCase(), passwordHash, role, displayName || null, verifyTokenHash,
         verifyExpiresAt, FOUNDING_CREATOR_LIMIT, DISCOUNTED_FEE_PERCENT, STANDARD_FEE_PERCENT,
+        normalizedSource,
       ]
     );
     return result.rows[0];
@@ -142,6 +145,10 @@ export async function POST(request) {
   const token = createSessionToken(user);
   const response = NextResponse.json({ user });
   response.cookies.set(SESSION_COOKIE_NAME, token, getSessionCookieOptions());
-  await trackServerEvent('funnel_account_created', { role: user.role, provider: 'email' }, request);
+  await trackServerEvent(
+    'funnel_account_created',
+    { role: user.role, provider: 'email', source: normalizedSource || 'unattributed' },
+    request
+  );
   return response;
 }
