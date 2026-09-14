@@ -22,7 +22,7 @@ const CLOSED_DISPUTE_STATUSES = ['won', 'lost'];
 // a 12-month trailing series for the dashboard's charts, and a recent-creators list for
 // spotting problem accounts (never onboarded Stripe, zero earnings after weeks, etc).
 export async function loadAdminOverview() {
-  const [counts, activeSubs, follows, followConversions, lifetime, monthlyResult, recentCreators, openDisputes, recentDisputes, needsReview] =
+  const [counts, activeSubs, follows, followConversions, instagramWaitlist, lifetime, monthlyResult, recentCreators, openDisputes, recentDisputes, needsReview] =
     await Promise.all([
       query(
         `SELECT
@@ -76,6 +76,13 @@ export async function loadAdminOverview() {
            )
          )::int AS recent_converted_count
          FROM creator_follows f`
+      ),
+      query(
+        `SELECT
+           COUNT(*)::int AS count,
+           COUNT(*) FILTER (WHERE created_at >= now() - interval '7 days')::int AS recent_count
+         FROM founding_waitlist
+         WHERE source = 'instagram_campaign'`
       ),
       query(
         `SELECT
@@ -292,6 +299,8 @@ export async function loadAdminOverview() {
     recentInstagramSignupCount: counts.rows[0].recent_instagram_signup_count,
     instagramCreatorCount: counts.rows[0].instagram_creator_count,
     instagramFanCount: counts.rows[0].instagram_fan_count,
+    instagramWaitlistCount: instagramWaitlist.rows[0].count,
+    recentInstagramWaitlistCount: instagramWaitlist.rows[0].recent_count,
     activeSubscriberCount: activeSubs.rows[0].count,
     followerCount,
     recentFollowerCount: follows.rows[0].recent_count,
