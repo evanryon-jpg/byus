@@ -26,7 +26,7 @@ export default function SupportPage() {
   );
 }
 
-const AMOUNT_PRESETS_CENTS = [300, 500, 1000, 2000];
+const AMOUNT_PRESETS_CENTS = [500, 1000, 2000];
 const MAX_MESSAGE_LENGTH = 300;
 
 function SupportPageContent() {
@@ -94,8 +94,8 @@ function SupportPageContent() {
   function handleCustomSubmit(e) {
     e.preventDefault();
     const cents = Math.round(parseFloat(custom) * 100);
-    if (!Number.isFinite(cents) || cents < 100) {
-      setError('Enter at least $1.00.');
+    if (!Number.isFinite(cents) || cents < 500) {
+      setError('Enter at least $5.00.');
       return;
     }
     sendSupport(cents);
@@ -151,7 +151,7 @@ function SupportPageContent() {
               <span className="text-sm text-brand-ink/60">$</span>
               <input
                 type="number"
-                min="1"
+                min="5"
                 step="1"
                 placeholder="Other amount"
                 value={custom}
