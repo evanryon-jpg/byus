@@ -19,7 +19,7 @@ export default function HelpCategoryPage() {
     return (
       <div className="mx-auto max-w-xl px-6 py-24 text-center">
         <p className="text-brand-ink/70">We couldn't find that help topic.</p>
-        <Link href="/help" className="mt-4 inline-block font-semibold text-[#2563EB] hover:underline">
+        <Link href="/help" className="mt-4 inline-block font-semibold text-[#0F766E] hover:underline">
           ← Back to the Help Center
         </Link>
       </div>
@@ -28,13 +28,13 @@ export default function HelpCategoryPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-16">
-      <Link href="/help" className="text-sm font-medium text-[#2563EB] hover:underline">
+      <Link href="/help" className="text-sm font-medium text-[#0F766E] hover:underline">
         ← Help Center
       </Link>
 
       <div className="mt-4 flex items-center gap-3">
         <span
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#2563EB]/10 text-xl"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#0F766E]/10 text-xl"
           aria-hidden="true"
         >
           {category.icon}
@@ -77,9 +77,9 @@ export default function HelpCategoryPage() {
         })}
       </div>
 
-      <p className="mt-10 rounded-2xl bg-[#2563EB]/5 px-5 py-4 text-center text-sm text-brand-ink/70">
+      <p className="mt-10 rounded-2xl bg-[#0F766E]/5 px-5 py-4 text-center text-sm text-brand-ink/70">
         Didn't find your answer?{' '}
-        <a href="mailto:support@byusapp.com" className="font-semibold text-[#2563EB] hover:underline">
+        <a href="mailto:support@byusapp.com" className="font-semibold text-[#0F766E] hover:underline">
           Email support@byusapp.com
         </a>{' '}
         and we'll help directly.
