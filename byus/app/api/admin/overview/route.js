@@ -7,19 +7,15 @@ export const dynamic = 'force-dynamic';
 // spotting problem accounts (never onboarded Stripe, zero earnings after weeks, etc).
 // Gated by lib/admin.js's email allowlist rather than the `role` column — see that file
 // for why.
+//
+// The actual query logic lives in lib/admin-data.js (loadAdminOverview), shared with
+// the /admin page's server-side initial load (app/admin/page.js) so the two can't
+// report different numbers.
 
 import { NextResponse } from 'next/server';
-import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
-import { isAdmin, getAdminEmails } from '@/lib/admin';
-import { containsUrl } from '@/lib/content-policy';
-
-const MONTHS_OF_HISTORY = 12;
-const RECENT_CREATORS_LIMIT = 25;
-const RECENT_DISPUTES_LIMIT = 25;
-// Stripe's terminal dispute statuses -- everything else ('needs_response',
-// 'under_review', 'warning_needs_response', etc.) still needs a human to look at it.
-const CLOSED_DISPUTE_STATUSES = ['won', 'lost'];
+import { isAdmin } from '@/lib/admin';
+import { loadAdminOverview } from '@/lib/admin-data';
 
 export async function GET() {
   const session = await getCurrentUser();
@@ -28,174 +24,8 @@ export async function GET() {
   }
 
   try {
-    const [counts, activeSubs, lifetime, monthlyResult, recentCreators, openDisputes, recentDisputes, needsReview] = await Promise.all([
-      query(
-        `SELECT
-           COUNT(*) FILTER (WHERE role = 'creator')::int AS creator_count,
-           COUNT(*) FILTER (WHERE role = 'fan')::int AS fan_count
-         FROM users`
-      ),
-      query(`SELECT COUNT(*)::int AS count FROM subscriptions WHERE status = 'active'`),
-      query(
-        `SELECT
-           COALESCE(SUM(amount_cents), 0)::bigint AS gross_cents,
-           COALESCE(ROUND(SUM(amount_cents * fee_percent_applied) / 100.0), 0)::bigint AS platform_fee_cents
-         FROM creator_earnings`
-      ),
-      query(
-        `WITH months AS (
-           SELECT date_trunc('month', now()) - (n || ' months')::interval AS month_start
-           FROM generate_series(0, $1::int - 1) AS n
-         ),
-         earnings_by_month AS (
-           SELECT
-             date_trunc('month', created_at) AS month_start,
-             SUM(amount_cents) AS gross_cents,
-             ROUND(SUM(amount_cents * fee_percent_applied) / 100.0) AS platform_fee_cents
-           FROM creator_earnings
-           WHERE created_at >= date_trunc('month', now()) - ($1::int - 1 || ' months')::interval
-           GROUP BY 1
-         ),
-         signups_by_month AS (
-           SELECT
-             date_trunc('month', created_at) AS month_start,
-             COUNT(*) FILTER (WHERE role = 'creator') AS new_creators,
-             COUNT(*) FILTER (WHERE role = 'fan') AS new_fans
-           FROM users
-           WHERE created_at >= date_trunc('month', now()) - ($1::int - 1 || ' months')::interval
-           GROUP BY 1
-         )
-         SELECT
-           to_char(m.month_start, 'YYYY-MM') AS month,
-           COALESCE(e.gross_cents, 0)::bigint AS gross_cents,
-           COALESCE(e.platform_fee_cents, 0)::bigint AS platform_fee_cents,
-           COALESCE(s.new_creators, 0)::bigint AS new_creators,
-           COALESCE(s.new_fans, 0)::bigint AS new_fans
-         FROM months m
-         LEFT JOIN earnings_by_month e ON e.month_start = m.month_start
-         LEFT JOIN signups_by_month s ON s.month_start = m.month_start
-         ORDER BY m.month_start ASC`,
-        [MONTHS_OF_HISTORY]
-      ),
-      query(
-        `SELECT
-           u.id, u.display_name, u.email, u.bio, u.created_at, u.stripe_connect_onboarded,
-           u.platform_fee_percent, u.is_suspended, u.suspension_reason, u.review_cleared_at,
-           COALESCE(e.gross_cents, 0)::bigint AS lifetime_gross_cents
-         FROM users u
-         LEFT JOIN (
-           SELECT creator_id, SUM(amount_cents) AS gross_cents
-           FROM creator_earnings GROUP BY creator_id
-         ) e ON e.creator_id = u.id
-         WHERE u.role = 'creator'
-         ORDER BY u.created_at DESC
-         LIMIT $1`,
-        [RECENT_CREATORS_LIMIT]
-      ),
-      query(
-        `SELECT COUNT(*)::int AS count FROM stripe_disputes WHERE status != ALL($1::text[])`,
-        [CLOSED_DISPUTE_STATUSES]
-      ),
-      query(
-        `SELECT
-           d.id, d.stripe_dispute_id, d.amount_cents, d.currency, d.reason, d.status,
-           d.opened_at, d.closed_at, d.response_due_at, d.alert_sent_at,
-           creator.display_name AS creator_name, creator.email AS creator_email,
-           fan.display_name AS fan_name, fan.email AS fan_email
-         FROM stripe_disputes d
-         LEFT JOIN users creator ON creator.id = d.creator_id
-         LEFT JOIN users fan ON fan.id = d.fan_id
-         ORDER BY
-           CASE
-             WHEN d.status NOT IN ('won', 'lost') AND d.response_due_at IS NOT NULL THEN 0
-             WHEN d.status NOT IN ('won', 'lost') THEN 1
-             ELSE 2
-           END,
-           d.response_due_at ASC NULLS LAST,
-           d.opened_at DESC
-         LIMIT $1`,
-        [RECENT_DISPUTES_LIMIT]
-      ),
-      query(`SELECT COUNT(*)::int AS count FROM users WHERE role = 'creator' AND review_cleared_at IS NULL`),
-    ]);
-
-    const monthly = monthlyResult.rows.map((row) => ({
-      month: row.month,
-      grossCents: Number(row.gross_cents),
-      platformFeeCents: Number(row.platform_fee_cents),
-      newCreators: Number(row.new_creators),
-      newFans: Number(row.new_fans),
-    }));
-
-    const adminEmails = getAdminEmails();
-    const creators = recentCreators.rows.map((row) => ({
-      id: row.id,
-      displayName: row.display_name,
-      email: row.email,
-      createdAt: row.created_at,
-      stripeConnectOnboarded: row.stripe_connect_onboarded,
-      platformFeePercent: row.platform_fee_percent,
-      lifetimeGrossCents: Number(row.lifetime_gross_cents),
-      isSuspended: row.is_suspended,
-      suspensionReason: row.suspension_reason,
-      // needsReview: this creator hasn't cleared ByUs's one-time initial review yet --
-      // their posts stay unpublished and fans can't subscribe/tip until an admin clears
-      // them (POST /api/admin/users/:id/clear-review). bioFlagged: their bio contains
-      // something that looks like a URL -- not blocked outright (see lib/content-policy.js),
-      // just worth a human actually reading it. isProtectedAdmin: this row's email is on
-      // lib/admin.js's own allowlist, the same list app/api/admin/users/[id]/route.js checks
-      // before honoring a suspend request for real -- flagged per-row here (not just for
-      // whichever admin happens to be viewing) so the dashboard shows "Protected" for every
-      // admin/owner account, not only the one currently logged in.
-      needsReview: !row.review_cleared_at,
-      bioFlagged: containsUrl(row.bio),
-      isProtectedAdmin: Boolean(row.email && adminEmails.includes(row.email.toLowerCase())),
-    }));
-
-    const nowMs = Date.now();
-    const disputes = recentDisputes.rows.map((row) => {
-      const responseDueAt = row.response_due_at || null;
-      const millisecondsRemaining = responseDueAt
-        ? new Date(responseDueAt).getTime() - nowMs
-        : null;
-      const hoursRemaining = millisecondsRemaining === null
-        ? null
-        : Math.ceil(millisecondsRemaining / (60 * 60 * 1000));
-      const isClosed = CLOSED_DISPUTE_STATUSES.includes(row.status);
-
-      return {
-        id: row.id,
-        stripeDisputeId: row.stripe_dispute_id,
-        amountCents: row.amount_cents,
-        currency: row.currency,
-        reason: row.reason,
-        status: row.status,
-        openedAt: row.opened_at,
-        closedAt: row.closed_at,
-        responseDueAt,
-        hoursRemaining,
-        responseOverdue: !isClosed && hoursRemaining !== null && hoursRemaining < 0,
-        responseUrgent: !isClosed && hoursRemaining !== null && hoursRemaining >= 0 && hoursRemaining <= 72,
-        alertSentAt: row.alert_sent_at,
-        creatorName: row.creator_name,
-        creatorEmail: row.creator_email,
-        fanName: row.fan_name,
-        fanEmail: row.fan_email,
-      };
-    });
-
-    return NextResponse.json({
-      creatorCount: counts.rows[0].creator_count,
-      fanCount: counts.rows[0].fan_count,
-      activeSubscriberCount: activeSubs.rows[0].count,
-      lifetimeGrossCents: Number(lifetime.rows[0].gross_cents),
-      lifetimePlatformFeeCents: Number(lifetime.rows[0].platform_fee_cents),
-      openDisputeCount: openDisputes.rows[0].count,
-      needsReviewCount: needsReview.rows[0].count,
-      monthly,
-      creators,
-      disputes,
-    });
+    const overview = await loadAdminOverview();
+    return NextResponse.json(overview);
   } catch (err) {
     console.error('admin/overview GET failed:', err);
     return NextResponse.json({ error: 'Could not load platform overview.' }, { status: 500 });
