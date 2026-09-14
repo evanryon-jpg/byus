@@ -345,6 +345,7 @@ function CreatorOpinionInvitations({ initialContacts, initialError }) {
   const [error, setError] = useState(initialError || '');
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState('');
+  const [filter, setFilter] = useState('all');
   const [form, setForm] = useState({
     instagramHandle: '',
     followerCount: '',
@@ -399,12 +400,42 @@ function CreatorOpinionInvitations({ initialContacts, initialError }) {
     }
   }
 
+  const now = Date.now();
+  const contactList = contacts || [];
+  const isDue = (contact) =>
+    contact.status === 'messaged' &&
+    !contact.followedUpAt &&
+    contact.followUpDueAt &&
+    new Date(contact.followUpDueAt).getTime() <= now;
+  const isWaiting = (contact) =>
+    contact.status === 'messaged' &&
+    !contact.followedUpAt &&
+    contact.followUpDueAt &&
+    new Date(contact.followUpDueAt).getTime() > now;
+  const isResponse = (contact) => ['replied', 'interested', 'not_interested'].includes(contact.status);
+  const dueCount = contactList.filter(isDue).length;
+  const waitingCount = contactList.filter(isWaiting).length;
+  const responseCount = contactList.filter(isResponse).length;
+  const visibleContacts = contactList.filter((contact) => {
+    if (filter === 'due') return isDue(contact);
+    if (filter === 'waiting') return isWaiting(contact);
+    if (filter === 'responses') return isResponse(contact);
+    return true;
+  });
+
   return (
     <section className="mt-8 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
       <h2 className="font-semibold text-[#172033]">Creator opinion invitations</h2>
       <p className="mt-1 text-sm text-brand-ink/65">
         Keep track of creators you ask for honest feedback. This is not a sales-pitch list.
       </p>
+
+      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <TrackerSummary label="Due now" value={dueCount} alert={dueCount > 0} />
+        <TrackerSummary label="Waiting" value={waitingCount} />
+        <TrackerSummary label="Responses" value={responseCount} />
+        <TrackerSummary label="Total creators" value={contactList.length} />
+      </div>
 
       <div className="mt-5 grid gap-4 lg:grid-cols-2">
         <ScriptCard
@@ -477,7 +508,27 @@ function CreatorOpinionInvitations({ initialContacts, initialError }) {
       ) : contacts.length === 0 ? (
         <p className="mt-5 text-sm text-brand-ink/60">No creators added yet.</p>
       ) : (
-        <div className="mt-5 overflow-x-auto">
+        <div className="mt-5">
+          <div className="mb-3 flex flex-wrap gap-2">
+            {[
+              ['all', 'All', contactList.length],
+              ['due', 'Due now', dueCount],
+              ['waiting', 'Waiting', waitingCount],
+              ['responses', 'Responses', responseCount],
+            ].map(([value, label, count]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setFilter(value)}
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
+                  filter === value ? 'bg-[#0F766E] text-white' : 'bg-brand-ink/5 text-brand-ink/65'
+                }`}
+              >
+                {label} ({count})
+              </button>
+            ))}
+          </div>
+          <div className="overflow-x-auto">
           <table className="w-full min-w-[900px] border-collapse text-sm">
             <thead>
               <tr className="border-b border-brand-ink/10 text-left text-xs font-medium uppercase tracking-wide text-brand-ink/60">
@@ -489,14 +540,33 @@ function CreatorOpinionInvitations({ initialContacts, initialError }) {
               </tr>
             </thead>
             <tbody>
-              {contacts.map((contact) => (
+              {visibleContacts.map((contact) => (
                 <OpinionInvitationRow key={contact.id} contact={contact} onUpdate={updateContact} />
               ))}
+              {visibleContacts.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="py-6 text-center text-brand-ink/55">
+                    Nothing in this group right now.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </section>
+  );
+}
+
+function TrackerSummary({ label, value, alert = false }) {
+  return (
+    <div className={`rounded-xl border px-4 py-3 ${alert ? 'border-amber-300 bg-amber-50' : 'border-brand-ink/10 bg-white'}`}>
+      <p className={`text-2xl font-semibold tabular-nums ${alert ? 'text-amber-700' : 'text-[#172033]'}`}>
+        {value.toLocaleString()}
+      </p>
+      <p className="mt-1 text-xs text-brand-ink/60">{label}</p>
+    </div>
   );
 }
 
