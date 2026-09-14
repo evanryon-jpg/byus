@@ -199,10 +199,28 @@ export async function loadCreatorProfile(creatorId, session) {
     }
   }
 
+  // Free follows are separate from paid subscriptions: visitors can keep their current
+  // platform and still build a lightweight audience connection on ByUs.
+  const followerResult = await query(
+    'SELECT COUNT(*)::int AS count FROM creator_follows WHERE creator_id = $1',
+    [id]
+  );
+  let isFollowing = false;
+  if (session && session.userId !== id) {
+    const followingResult = await query(
+      'SELECT 1 FROM creator_follows WHERE fan_id = $1 AND creator_id = $2',
+      [session.userId, id]
+    );
+    isFollowing = Boolean(followingResult.rows[0]);
+  }
+
   return {
     creator,
     tiers: tiersResult.rows,
     hasActiveSubscription,
+    followerCount: followerResult.rows[0].count,
+    isFollowing,
+    canFollow: Boolean(session && session.userId !== id),
     posts,
     live,
     topSupporters,
