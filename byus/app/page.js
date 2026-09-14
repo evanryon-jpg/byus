@@ -101,10 +101,6 @@ function FoundingCreatorProgram({ stats }) {
           The first {stats.limit} creators to join lock in our lowest fee for good — everyone else
           earns their way there at $2,000/mo.
         </p>
-        <p className="mx-auto mt-2 max-w-lg text-sm font-medium text-brand-gold">
-          Now taking applications for our beta — see below.
-        </p>
-
         <div className="mx-auto mt-8 grid max-w-3xl gap-4 text-left sm:grid-cols-3">
           {perks.map((p) => (
             <div key={p.title} className="rounded-xl border border-brand-paper/15 bg-brand-paper/5 p-5">
