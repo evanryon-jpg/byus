@@ -721,7 +721,7 @@ function SuggestionRow({ suggestion, onUpdate }) {
 // more open disputes) -- shifts the tile to a warm border/value color instead of the
 // neutral default, the same "don't make them hunt for it" reasoning as the dashboard's
 // other status pills.
-function StatTile({ label, value, hero, flag, className = '' }) {
+function StatTile({ label, value, detail, hero, flag, className = '' }) {
   return (
     <div
       className={`rounded-xl border p-4 ${
@@ -736,6 +736,7 @@ function StatTile({ label, value, hero, flag, className = '' }) {
       >
         {value}
       </p>
+      {detail && <p className="mt-1 text-[11px] text-brand-ink/55">{detail}</p>}
     </div>
   );
 }
