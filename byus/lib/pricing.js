@@ -19,6 +19,11 @@ export const STANDARD_FEE_PERCENT = 13;
 export const DISCOUNTED_FEE_PERCENT = 10;
 export const FEE_DISCOUNT_THRESHOLD_CENTS = 200000; // $2,000 gross revenue in a calendar month
 
+// Sustainable floors for new paid checkouts. Existing subscriptions below this amount
+// may renew unchanged, but no new supporter can start a below-floor checkout.
+export const MIN_MEMBERSHIP_PRICE_CENTS = 500; // $5.00
+export const MIN_DIGITAL_PRODUCT_PRICE_CENTS = 500; // $5.00
+
 // Floor for the platform-wide milestone bonus in lib/fees.js. Set to match
 // DISCOUNTED_FEE_PERCENT exactly: Stripe's own processing (2.9% + $0.30/charge), Connect
 // active-account fee ($2/mo/creator), and payout fee (0.25% + $0.25/payout) all come out
