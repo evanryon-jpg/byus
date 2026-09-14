@@ -41,13 +41,14 @@ export async function GET(request) {
   // link (/signup?ref=CODE) that routes through "Continue with Google" still gets
   // attributed instead of silently dropping the referral.
   const referralCode = searchParams.get('ref') || '';
+  const acquisitionSource = searchParams.get('source') === 'instagram' ? 'instagram' : '';
 
   // Random, unguessable CSRF token. It rides along in a short-lived httpOnly cookie
   // together with the role/next/ref we need to remember across the trip to Google
   // and back, then gets compared against the `state` Google hands back on the
   // callback — if they don't match, this browser isn't the one that started the flow.
   const state = crypto.randomBytes(24).toString('hex');
-  const payload = Buffer.from(JSON.stringify({ state, role, next, referralCode })).toString('base64url');
+  const payload = Buffer.from(JSON.stringify({ state, role, next, referralCode, acquisitionSource })).toString('base64url');
 
   const googleUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
   googleUrl.searchParams.set('client_id', process.env.GOOGLE_CLIENT_ID);
