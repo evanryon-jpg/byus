@@ -38,6 +38,7 @@ export async function loadAdminOverview() {
              SELECT 1 FROM subscriptions s
              WHERE s.fan_id = f.fan_id
                AND s.creator_id = f.creator_id
+               AND s.created_at >= f.created_at
                AND s.status = 'active'
                AND (s.current_period_end IS NULL OR s.current_period_end > now())
            )
@@ -120,6 +121,7 @@ export async function loadAdminOverview() {
                  SELECT 1 FROM subscriptions s
                  WHERE s.fan_id = cf.fan_id
                    AND s.creator_id = cf.creator_id
+                   AND s.created_at >= cf.created_at
                    AND s.status = 'active'
                    AND (s.current_period_end IS NULL OR s.current_period_end > now())
                )
