@@ -6,9 +6,10 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
-import { getPollVoteCounts, buildPollPayload } from '@/lib/polls';
+import { buildPollPayload } from '@/lib/polls';
 import { sendNewPostEmail } from '@/lib/email';
 import { containsBlockedContent } from '@/lib/content-policy';
+import { loadCreatorPosts } from '@/lib/creator-dashboard-data';
 
 const TITLE_MAX = 200;
 const BODY_MAX = 20000;
@@ -41,21 +42,7 @@ export async function GET() {
   }
 
   try {
-    const result = await query(
-      `SELECT id, title, body, media_url, visibility, poll_options, pending_review, created_at
-       FROM posts WHERE creator_id = $1 ORDER BY created_at DESC`,
-      [session.userId]
-    );
-    const pollPostIds = result.rows.filter((p) => p.poll_options).map((p) => p.id);
-    const voteCounts = await getPollVoteCounts(pollPostIds);
-
-    // media_url in the DB is a private Blob pathname, never expose it directly —
-    // point the client at our own gated route instead.
-    const posts = result.rows.map((post) => ({
-      ...post,
-      media_url: post.media_url ? `/api/posts/${post.id}/media` : null,
-      poll: buildPollPayload(post, voteCounts[post.id]),
-    }));
+    const posts = await loadCreatorPosts(session.userId);
     return NextResponse.json({ posts });
   } catch (err) {
     console.error('creator/posts GET failed:', err);
