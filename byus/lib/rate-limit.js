@@ -161,6 +161,14 @@ const limiters = {
     limiter: Ratelimit.slidingWindow(60, '10 m'),
     prefix: 'rl:outreach',
   }),
+  // Guards the anonymous homepage feedback widget (see app/api/feedback/route.js) --
+  // same shape of risk as waitlist: no session to key off of, so IP is the only thing
+  // standing between this and a script filling the table with rows.
+  feedback: new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(8, '1 h'),
+    prefix: 'rl:feedback',
+  }),
 };
 
 // Best-effort client IP. Vercel always sets x-forwarded-for in production; the

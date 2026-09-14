@@ -413,3 +413,22 @@ export async function loadOutreachContacts() {
     updatedAt: row.updated_at,
   }));
 }
+
+// Every anonymous homepage-widget feedback row (see app/api/feedback/route.js and
+// app/components/FeedbackWidget.jsx), newest-first, unreviewed-first within that.
+export async function loadSiteFeedback() {
+  const result = await query(
+    `SELECT id, reaction, message, page_path, status, created_at
+     FROM site_feedback
+     ORDER BY CASE WHEN status = 'new' THEN 0 ELSE 1 END, created_at DESC
+     LIMIT 500`
+  );
+  return result.rows.map((row) => ({
+    id: row.id,
+    reaction: row.reaction,
+    message: row.message || '',
+    pagePath: row.page_path || '',
+    status: row.status,
+    createdAt: row.created_at,
+  }));
+}
