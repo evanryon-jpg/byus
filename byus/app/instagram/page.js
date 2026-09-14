@@ -1,3 +1,5 @@
+import { InstagramCampaignLink, InstagramCampaignView } from './InstagramCampaignTracking';
+
 export const metadata = {
   title: 'Creators, we want your opinion | ByUs',
   description:
@@ -7,6 +9,7 @@ export const metadata = {
 export default function InstagramWelcomePage() {
   return (
     <main className="bg-brand-cream">
+      <InstagramCampaignView />
       <section className="relative overflow-hidden bg-gradient-to-b from-[#172554] via-[#134B61] to-brand-cream">
         <div
           aria-hidden="true"
@@ -29,18 +32,20 @@ export default function InstagramWelcomePage() {
           </p>
 
           <div className="mt-9 flex flex-wrap justify-center gap-3">
-            <a
+            <InstagramCampaignLink
               href="/demo"
+              event="demo_click"
               className="rounded-full bg-[#0F766E] px-7 py-3.5 font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-[#115E59]"
             >
               See the live demo
-            </a>
-            <a
+            </InstagramCampaignLink>
+            <InstagramCampaignLink
               href="/browse"
+              event="browse_click"
               className="rounded-full border-2 border-brand-paper/30 bg-brand-paper/10 px-7 py-3.5 font-semibold text-brand-paper transition hover:border-brand-gold hover:bg-brand-paper/15"
             >
               Browse creators
-            </a>
+            </InstagramCampaignLink>
           </div>
         </div>
       </section>
@@ -66,18 +71,20 @@ export default function InstagramWelcomePage() {
             polite answer.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <a
+            <InstagramCampaignLink
               href="mailto:support@byusapp.com?subject=My%20honest%20feedback%20on%20ByUs"
+              event="feedback_click"
               className="rounded-full bg-[#0F766E] px-6 py-3 font-semibold text-white hover:bg-[#115E59]"
             >
               Send your opinion
-            </a>
-            <a
+            </InstagramCampaignLink>
+            <InstagramCampaignLink
               href="/signup?role=creator&source=instagram"
+              event="signup_click"
               className="rounded-full border border-[#0F766E] px-6 py-3 font-semibold text-[#0F766E] hover:bg-[#0F766E]/5"
             >
               Create a free creator account
-            </a>
+            </InstagramCampaignLink>
           </div>
           <p className="mt-4 text-xs text-brand-ink/55">
             Creating an account is free. You are not charged and do not need to leave another
