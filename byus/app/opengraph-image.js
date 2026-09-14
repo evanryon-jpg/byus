@@ -28,9 +28,9 @@ export default async function Image() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: '#E8DCC4',
+          backgroundColor: '#F8FAFC',
           backgroundImage:
-            'radial-gradient(circle at 15% 20%, rgba(201,169,97,0.25) 0%, rgba(201,169,97,0) 45%), radial-gradient(circle at 85% 15%, rgba(20,99,89,0.12) 0%, rgba(20,99,89,0) 45%)',
+            'radial-gradient(circle at 15% 20%, rgba(249,115,96,0.25) 0%, rgba(249,115,96,0) 45%), radial-gradient(circle at 85% 15%, rgba(20,99,89,0.12) 0%, rgba(20,99,89,0) 45%)',
         }}
       >
         {/* The same ampersand mark used for the app icon -- "by us", not tied to any
@@ -46,7 +46,7 @@ export default async function Image() {
             display: 'flex',
             fontSize: 68,
             fontWeight: 600,
-            color: '#2B2420',
+            color: '#172033',
             letterSpacing: '-0.02em',
           }}
         >

@@ -44,11 +44,11 @@ export default async function Image({ params }) {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: '#E8DCC4',
+            backgroundColor: '#F8FAFC',
           }}
         >
           <img src={iconDataUri} width={100} height={100} style={{ display: 'flex', marginBottom: 32 }} />
-          <div style={{ display: 'flex', fontSize: 52, fontWeight: 600, color: '#2B2420' }}>
+          <div style={{ display: 'flex', fontSize: 52, fontWeight: 600, color: '#172033' }}>
             Creator not found
           </div>
         </div>
@@ -74,14 +74,14 @@ export default async function Image({ params }) {
           display: 'flex',
           flexDirection: 'column',
           padding: '72px 88px',
-          backgroundColor: '#E8DCC4',
+          backgroundColor: '#F8FAFC',
           backgroundImage:
-            'radial-gradient(circle at 15% 20%, rgba(201,169,97,0.22) 0%, rgba(201,169,97,0) 45%), radial-gradient(circle at 88% 82%, rgba(20,99,89,0.14) 0%, rgba(20,99,89,0) 45%)',
+            'radial-gradient(circle at 15% 20%, rgba(249,115,96,0.22) 0%, rgba(249,115,96,0) 45%), radial-gradient(circle at 88% 82%, rgba(20,99,89,0.14) 0%, rgba(20,99,89,0) 45%)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <img src={iconDataUri} width={40} height={40} style={{ display: 'flex' }} />
-          <div style={{ display: 'flex', fontSize: 28, fontWeight: 600, color: '#146359' }}>ByUs</div>
+          <div style={{ display: 'flex', fontSize: 28, fontWeight: 600, color: '#2563EB' }}>ByUs</div>
         </div>
 
         <div style={{ display: 'flex', flex: 1, alignItems: 'center', gap: 56 }}>
@@ -100,7 +100,7 @@ export default async function Image({ params }) {
                 height: 220,
                 borderRadius: '50%',
                 backgroundColor: 'rgba(20,99,89,0.1)',
-                color: '#146359',
+                color: '#2563EB',
                 fontSize: 96,
                 fontWeight: 600,
                 alignItems: 'center',
@@ -116,7 +116,7 @@ export default async function Image({ params }) {
                 display: 'flex',
                 fontSize: 64,
                 fontWeight: 600,
-                color: '#2B2420',
+                color: '#172033',
                 letterSpacing: '-0.02em',
               }}
             >

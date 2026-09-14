@@ -104,7 +104,7 @@ function SignupForm() {
 
       <a
         href={googleHref}
-        className="mt-6 flex w-full items-center justify-center gap-3 rounded-full border border-brand-ink/10 bg-brand-paper py-3 font-semibold text-[#2B2420] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+        className="mt-6 flex w-full items-center justify-center gap-3 rounded-full border border-brand-ink/10 bg-brand-paper py-3 font-semibold text-[#172033] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
       >
         <GoogleIcon />
         Continue with Google
@@ -190,15 +190,15 @@ function SignupForm() {
             type="checkbox"
             checked={termsAccepted}
             onChange={(e) => setTermsAccepted(e.target.checked)}
-            className="mt-0.5 h-4 w-4 shrink-0 rounded border-brand-ink/20 text-[#146359] focus:ring-[#146359]"
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border-brand-ink/20 text-[#2563EB] focus:ring-[#2563EB]"
           />
           <span>
             I agree to the{' '}
-            <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-[#146359] underline">
+            <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-[#2563EB] underline">
               Terms of Service
             </a>{' '}
             and{' '}
-            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-[#146359] underline">
+            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-[#2563EB] underline">
               Privacy Policy
             </a>
             .
@@ -210,7 +210,7 @@ function SignupForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-full bg-[#146359] py-3 font-semibold text-white hover:bg-[#0f4d45] disabled:opacity-50"
+          className="w-full rounded-full bg-[#2563EB] py-3 font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-50"
         >
           {loading ? 'Creating account…' : 'Sign up'}
         </button>
@@ -218,7 +218,7 @@ function SignupForm() {
 
       <p className="mt-6 text-center text-sm text-brand-ink/65">
         Already have an account?{' '}
-        <a href={next ? `/login?next=${encodeURIComponent(next)}` : '/login'} className="text-[#146359] underline">
+        <a href={next ? `/login?next=${encodeURIComponent(next)}` : '/login'} className="text-[#2563EB] underline">
           Log in
         </a>
       </p>
@@ -231,7 +231,7 @@ function SignupForm() {
           padding: 0.65rem 0.9rem;
           font-size: 0.95rem;
         }
-        .input:focus { outline: 2px solid #146359; border-color: transparent; }
+        .input:focus { outline: 2px solid #2563EB; border-color: transparent; }
         .input-error { border-color: #f87171; }
         .input-error:focus { outline: 2px solid #f87171; }
       `}</style>
@@ -245,7 +245,7 @@ function RoleTab({ label, active, onClick }) {
       type="button"
       onClick={onClick}
       className={`flex-1 rounded-full py-2 text-sm font-medium transition ${
-        active ? 'bg-brand-paper shadow text-[#146359]' : 'text-brand-ink/65'
+        active ? 'bg-brand-paper shadow text-[#2563EB]' : 'text-brand-ink/65'
       }`}
     >
       {label}

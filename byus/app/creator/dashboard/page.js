@@ -89,7 +89,7 @@ export default function CreatorDashboard() {
         <p className="text-brand-ink/70">Couldn't load your dashboard. Check your connection and try again.</p>
         <button
           onClick={load}
-          className="mt-4 rounded-full bg-[#146359] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#0f4d45]"
+          className="mt-4 rounded-full bg-[#2563EB] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#1D4ED8]"
         >
           Try again
         </button>
@@ -192,18 +192,18 @@ export default function CreatorDashboard() {
                     type="checkbox"
                     checked={policyAccepted}
                     onChange={(e) => setPolicyAccepted(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-brand-ink/30 text-[#146359] focus:ring-[#146359]"
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-brand-ink/30 text-[#2563EB] focus:ring-[#2563EB]"
                   />
                   <span>
                     I agree that everything I publish on ByUs follows the{' '}
-                    <a href="/terms" target="_blank" className="text-[#146359] underline">content guidelines</a>
+                    <a href="/terms" target="_blank" className="text-[#2563EB] underline">content guidelines</a>
                     {' '}— no adult content, ever, and nothing that endangers minors.
                   </span>
                 </label>
                 <button
                   onClick={handleConnectStripe}
                   disabled={connecting || !policyAccepted}
-                  className="mt-4 w-full rounded-2xl bg-[#146359] px-6 py-5 text-lg font-semibold text-white hover:bg-[#0f4d45] disabled:opacity-50 sm:w-auto sm:px-10"
+                  className="mt-4 w-full rounded-2xl bg-[#2563EB] px-6 py-5 text-lg font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-50 sm:w-auto sm:px-10"
                 >
                   {connecting ? 'Redirecting…' : 'Connect Stripe & start earning →'}
                 </button>
@@ -301,21 +301,21 @@ function PageUrlCard() {
           <button
             type="button"
             onClick={() => handleCopy(data.profileUrl, 'profile')}
-            className="rounded-full bg-[#146359] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0f4d45]"
+            className="rounded-full bg-[#2563EB] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1D4ED8]"
           >
             {copied === 'profile' ? 'Copied!' : 'Copy link'}
           </button>
           <button
             type="button"
             onClick={() => setEditing(true)}
-            className="text-sm font-medium text-[#146359] hover:text-[#0f4d45]"
+            className="text-sm font-medium text-[#2563EB] hover:text-[#1D4ED8]"
           >
             Change
           </button>
           <button
             type="button"
             onClick={() => handleCopy(`${data.profileUrl}/tip`, 'tip')}
-            className="rounded-full border border-[#C9A961]/40 bg-[#C9A961]/10 px-4 py-2 text-sm font-semibold text-[#8a6b2f] hover:bg-[#C9A961]/20"
+            className="rounded-full border border-[#F97360]/40 bg-[#F97360]/10 px-4 py-2 text-sm font-semibold text-[#C2410C] hover:bg-[#F97360]/20"
           >
             {copied === 'tip' ? 'Copied!' : '☕ Copy tip link'}
           </button>
@@ -335,7 +335,7 @@ function PageUrlCard() {
           />
           <button
             disabled={saving}
-            className="rounded-full bg-[#146359] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+            className="rounded-full bg-[#2563EB] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
           >
             {saving ? 'Saving…' : data.claimed ? 'Save' : 'Claim this URL'}
           </button>
@@ -440,7 +440,7 @@ function LiveStreamSection() {
           href="https://obsproject.com/download"
           target="_blank"
           rel="noopener noreferrer"
-          className="font-medium text-[#146359] underline"
+          className="font-medium text-[#2563EB] underline"
         >
           OBS Studio
         </a>{' '}
@@ -453,7 +453,7 @@ function LiveStreamSection() {
           type="button"
           onClick={handleSetUp}
           disabled={settingUp}
-          className="mt-4 rounded-full bg-[#146359] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#0f4d45] disabled:opacity-50"
+          className="mt-4 rounded-full bg-[#2563EB] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-50"
         >
           {settingUp ? 'Setting up…' : 'Set up live streaming'}
         </button>
@@ -490,14 +490,14 @@ function LiveStreamSection() {
               <button
                 type="button"
                 onClick={() => setShowKey((s) => !s)}
-                className="text-xs font-medium text-[#146359] hover:text-[#0f4d45]"
+                className="text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]"
               >
                 {showKey ? 'Hide' : 'Show'}
               </button>
               <button
                 type="button"
                 onClick={() => handleCopy('key', data.streamKey)}
-                className="rounded-full border border-[#146359] px-3 py-1.5 text-xs font-semibold text-[#146359] hover:bg-[#146359]/5"
+                className="rounded-full border border-[#2563EB] px-3 py-1.5 text-xs font-semibold text-[#2563EB] hover:bg-[#2563EB]/5"
               >
                 {copied === 'key' ? 'Copied!' : 'Copy'}
               </button>
@@ -524,7 +524,7 @@ function Field({ label, value, onCopy, copied }) {
         <button
           type="button"
           onClick={onCopy}
-          className="rounded-full border border-[#146359] px-3 py-1.5 text-xs font-semibold text-[#146359] hover:bg-[#146359]/5"
+          className="rounded-full border border-[#2563EB] px-3 py-1.5 text-xs font-semibold text-[#2563EB] hover:bg-[#2563EB]/5"
         >
           {copied ? 'Copied!' : 'Copy'}
         </button>
@@ -613,7 +613,7 @@ function BroadcastSection() {
         )}
         <button
           disabled={sending || subscriberCount === 0}
-          className="rounded-full bg-[#146359] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          className="rounded-full bg-[#2563EB] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
         >
           {sending ? 'Sending…' : 'Send update'}
         </button>
@@ -695,8 +695,8 @@ function AiSetupSection({ stripeConnected, onProfileSaved, onTierAdded }) {
   }
 
   return (
-    <div className="mt-6 rounded-2xl border border-[#146359]/15 bg-[#146359]/5 p-5">
-      <h2 className="text-sm font-semibold text-[#146359]">AI setup assistant</h2>
+    <div className="mt-6 rounded-2xl border border-[#2563EB]/15 bg-[#2563EB]/5 p-5">
+      <h2 className="text-sm font-semibold text-[#2563EB]">AI setup assistant</h2>
       <p className="mt-1 text-sm text-brand-ink/70">
         Describe what you make or post about and get a starter bio, categories, and tier ideas —
         review and use whichever ones fit.
@@ -715,7 +715,7 @@ function AiSetupSection({ stripeConnected, onProfileSaved, onTierAdded }) {
         <div className="flex items-center gap-3">
           <button
             disabled={loading}
-            className="rounded-full bg-[#146359] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+            className="rounded-full bg-[#2563EB] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
           >
             {loading ? 'Thinking…' : 'Suggest my setup'}
           </button>
@@ -724,7 +724,7 @@ function AiSetupSection({ stripeConnected, onProfileSaved, onTierAdded }) {
       </form>
 
       {suggestions && (
-        <div className="mt-5 space-y-5 border-t border-[#146359]/15 pt-4">
+        <div className="mt-5 space-y-5 border-t border-[#2563EB]/15 pt-4">
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-brand-ink/60">Suggested bio</p>
             <p className="mt-1 rounded-xl bg-brand-paper p-3 text-sm text-brand-ink/80">{suggestions.bio}</p>
@@ -741,7 +741,7 @@ function AiSetupSection({ stripeConnected, onProfileSaved, onTierAdded }) {
               type="button"
               onClick={applyBio}
               disabled={applyingBio || bioApplied}
-              className="mt-2 rounded-full border border-[#146359] px-3 py-1.5 text-xs font-semibold text-[#146359] hover:bg-brand-paper disabled:opacity-50"
+              className="mt-2 rounded-full border border-[#2563EB] px-3 py-1.5 text-xs font-semibold text-[#2563EB] hover:bg-brand-paper disabled:opacity-50"
             >
               {bioApplied ? 'Applied ✓' : applyingBio ? 'Applying…' : 'Use this bio & categories'}
             </button>
@@ -759,7 +759,7 @@ function AiSetupSection({ stripeConnected, onProfileSaved, onTierAdded }) {
                 <div key={i} className="rounded-xl bg-brand-paper p-3">
                   <p className="text-sm font-semibold">{tier.name}</p>
                   <p className="text-xs text-brand-ink/65">{tier.description}</p>
-                  <p className="mt-1 text-sm font-bold text-[#146359]">
+                  <p className="mt-1 text-sm font-bold text-[#2563EB]">
                     ${(tier.priceCents / 100).toFixed(2)}
                     <span className="text-xs font-normal text-brand-ink/60">/mo</span>
                   </p>
@@ -767,7 +767,7 @@ function AiSetupSection({ stripeConnected, onProfileSaved, onTierAdded }) {
                     type="button"
                     onClick={() => addTier(tier, i)}
                     disabled={addingTierIndex === i || addedTiers.includes(i)}
-                    className="mt-2 w-full rounded-full border border-[#146359] py-1 text-xs font-semibold text-[#146359] hover:bg-[#146359]/5 disabled:opacity-50"
+                    className="mt-2 w-full rounded-full border border-[#2563EB] py-1 text-xs font-semibold text-[#2563EB] hover:bg-[#2563EB]/5 disabled:opacity-50"
                   >
                     {addedTiers.includes(i) ? 'Added ✓' : addingTierIndex === i ? 'Adding…' : 'Add this tier'}
                   </button>
@@ -795,21 +795,21 @@ function GettingStartedChecklist({ hasProfile, stripeConnected, hasTier, hasPost
   const doneCount = steps.filter((s) => s.done).length;
 
   return (
-    <div className="mt-6 rounded-2xl border border-[#146359]/15 bg-[#146359]/5 p-5">
+    <div className="mt-6 rounded-2xl border border-[#2563EB]/15 bg-[#2563EB]/5 p-5">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-sm font-semibold text-[#146359]">Your launch checklist</h2>
+          <h2 className="text-sm font-semibold text-[#2563EB]">Your launch checklist</h2>
           <p className="mt-0.5 text-xs text-brand-ink/60">Finish these steps before sharing your page.</p>
         </div>
-        <span className="text-xs font-medium text-[#146359]/70">{doneCount} of {steps.length} done</span>
+        <span className="text-xs font-medium text-[#2563EB]/70">{doneCount} of {steps.length} done</span>
       </div>
-      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-brand-paper" aria-hidden="true"><div className="h-full rounded-full bg-[#146359] transition-all" style={{ width: `${(doneCount / steps.length) * 100}%` }} /></div>
+      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-brand-paper" aria-hidden="true"><div className="h-full rounded-full bg-[#2563EB] transition-all" style={{ width: `${(doneCount / steps.length) * 100}%` }} /></div>
       <ol className="mt-4 grid gap-3 sm:grid-cols-2">
         {steps.map((step, i) => (
           <li key={step.label} className="flex items-start gap-2 text-sm">
             <span
               className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-                step.done ? 'bg-[#146359] text-white' : 'border border-[#146359]/30 text-[#146359]/60'
+                step.done ? 'bg-[#2563EB] text-white' : 'border border-[#2563EB]/30 text-[#2563EB]/60'
               }`}
               aria-hidden="true"
             >
@@ -908,7 +908,7 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent, ze
     <div className="mt-8 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
       <div className="flex items-center justify-between">
         <h2 className="font-semibold">Subscription tiers</h2>
-        <button onClick={() => setOpen(!open)} className="text-sm font-medium text-[#146359]">
+        <button onClick={() => setOpen(!open)} className="text-sm font-medium text-[#2563EB]">
           {open ? 'Cancel' : '+ New tier'}
         </button>
       </div>
@@ -933,7 +933,7 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent, ze
                 key={preset.label}
                 type="button"
                 onClick={() => applyPreset(preset)}
-                className="rounded-full bg-[#146359]/10 px-3 py-1.5 text-xs font-medium text-[#146359] hover:bg-[#146359]/20"
+                className="rounded-full bg-[#2563EB]/10 px-3 py-1.5 text-xs font-medium text-[#2563EB] hover:bg-[#2563EB]/20"
               >
                 {preset.label} — ${preset.price}/mo
               </button>
@@ -943,7 +943,7 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent, ze
               type="button"
               onClick={handleQuickSetup}
               disabled={quickSetupBusy}
-              className="rounded-full border border-[#146359] px-3 py-1.5 text-xs font-semibold text-[#146359] hover:bg-[#146359]/5 disabled:opacity-50"
+              className="rounded-full border border-[#2563EB] px-3 py-1.5 text-xs font-semibold text-[#2563EB] hover:bg-[#2563EB]/5 disabled:opacity-50"
             >
               {quickSetupBusy ? 'Setting up…' : 'Add all three'}
             </button>
@@ -966,7 +966,7 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent, ze
                 key={preset.label}
                 type="button"
                 onClick={() => applyPreset(preset)}
-                className="rounded-full border border-[#146359]/25 px-3 py-1 text-xs font-medium text-[#146359] hover:bg-[#146359]/5"
+                className="rounded-full border border-[#2563EB]/25 px-3 py-1 text-xs font-medium text-[#2563EB] hover:bg-[#2563EB]/5"
               >
                 Use "{preset.label}"
               </button>
@@ -1040,7 +1040,7 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent, ze
                 </p>
               )}
               {error && <p className="text-sm text-red-600">{error}</p>}
-              <button disabled={saving} className="rounded-full bg-[#146359] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+              <button disabled={saving} className="rounded-full bg-[#2563EB] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
                 {saving ? 'Creating…' : 'Create tier'}
               </button>
             </form>
@@ -1051,22 +1051,22 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent, ze
               <p className="mb-2 text-xs font-medium uppercase tracking-wide text-brand-ink/60">
                 How fans will see it
               </p>
-              <div className="rounded-2xl border border-brand-ink/5 bg-[#E8DCC4] p-6">
+              <div className="rounded-2xl border border-brand-ink/5 bg-[#F8FAFC] p-6">
                 <h3 className="font-semibold">{name || 'Tier name'}</h3>
                 {description && <p className="mt-1 text-sm text-brand-ink/65">{description}</p>}
                 {trialDays > 0 && (
-                  <p className="mt-1 inline-block rounded-full bg-[#146359]/10 px-2 py-0.5 text-xs font-semibold text-[#146359]">
+                  <p className="mt-1 inline-block rounded-full bg-[#2563EB]/10 px-2 py-0.5 text-xs font-semibold text-[#2563EB]">
                     {trialDays}-day free trial
                   </p>
                 )}
-                <p className="mt-3 text-lg font-bold text-[#146359]">
+                <p className="mt-3 text-lg font-bold text-[#2563EB]">
                   ${(previewPriceCents / 100).toFixed(2)}
                   <span className="text-sm font-normal text-brand-ink/60">/mo</span>
                 </p>
                 <p className="mt-1 text-xs text-brand-ink/60">
                   You keep ${(previewKeptCents / 100).toFixed(2)}/mo
                 </p>
-                <div className="mt-4 w-full rounded-full bg-[#146359] py-2 text-center text-sm font-semibold text-white opacity-90">
+                <div className="mt-4 w-full rounded-full bg-[#2563EB] py-2 text-center text-sm font-semibold text-white opacity-90">
                   Subscribe
                 </div>
               </div>
@@ -1161,7 +1161,7 @@ function TierRow({ tier, onChanged }) {
           </p>
           {error && <p className="text-sm text-red-600">{error}</p>}
           <div className="flex gap-3">
-            <button disabled={saving} className="rounded-full bg-[#146359] px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-50">
+            <button disabled={saving} className="rounded-full bg-[#2563EB] px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-50">
               {saving ? 'Saving…' : 'Save'}
             </button>
             <button type="button" onClick={() => setEditing(false)} className="text-sm text-brand-ink/65 hover:text-brand-ink/80">
@@ -1182,16 +1182,16 @@ function TierRow({ tier, onChanged }) {
             <span className="ml-2 text-xs font-normal uppercase tracking-wide text-brand-ink/60">Inactive</span>
           )}
         </span>
-        <span className="text-[#146359] font-semibold">${(tier.price_cents / 100).toFixed(2)}/mo</span>
+        <span className="text-[#2563EB] font-semibold">${(tier.price_cents / 100).toFixed(2)}/mo</span>
       </div>
       {tier.description && <p className="mt-1 text-sm text-brand-ink/65">{tier.description}</p>}
       {tier.trial_days > 0 && (
-        <p className="mt-1 inline-block rounded-full bg-[#146359]/10 px-2 py-0.5 text-xs font-semibold text-[#146359]">
+        <p className="mt-1 inline-block rounded-full bg-[#2563EB]/10 px-2 py-0.5 text-xs font-semibold text-[#2563EB]">
           {tier.trial_days}-day free trial
         </p>
       )}
       <div className="mt-2 flex gap-4 text-xs font-medium">
-        <button onClick={() => setEditing(true)} className="text-[#146359] hover:text-[#0f4d45]">
+        <button onClick={() => setEditing(true)} className="text-[#2563EB] hover:text-[#1D4ED8]">
           Edit
         </button>
         <button onClick={handleToggleActive} disabled={working} className="text-brand-ink/65 hover:text-red-600 disabled:opacity-50">
@@ -1271,7 +1271,7 @@ function DiscountSection({ tiers }) {
     <div className="mt-8 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
       <div className="flex items-center justify-between">
         <h2 className="font-semibold">Discount codes</h2>
-        <button onClick={() => setOpen(!open)} className="text-sm font-medium text-[#146359]">
+        <button onClick={() => setOpen(!open)} className="text-sm font-medium text-[#2563EB]">
           {open ? 'Cancel' : '+ New code'}
         </button>
       </div>
@@ -1293,7 +1293,7 @@ function DiscountSection({ tiers }) {
                     </span>
                   )}
                 </span>
-                <span className="text-[#146359] font-semibold">{c.percentOff}% off</span>
+                <span className="text-[#2563EB] font-semibold">{c.percentOff}% off</span>
               </div>
               <p className="mt-1 text-xs text-brand-ink/60">
                 {c.tierName ? `${c.tierName} tier only` : 'Any tier'} · used {c.timesRedeemed}
@@ -1361,7 +1361,7 @@ function DiscountSection({ tiers }) {
             className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
           />
           {error && <p className="text-sm text-red-600">{error}</p>}
-          <button disabled={creating} className="rounded-full bg-[#146359] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+          <button disabled={creating} className="rounded-full bg-[#2563EB] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
             {creating ? 'Creating…' : 'Create code'}
           </button>
         </form>
@@ -1430,7 +1430,7 @@ function GoalSection({ initialGoalCents, onSaved }) {
             className="w-28 rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
           />
         </div>
-        <button disabled={saving} className="rounded-full bg-[#146359] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+        <button disabled={saving} className="rounded-full bg-[#2563EB] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
           {saving ? 'Saving…' : 'Save'}
         </button>
         {saved && <span className="text-sm text-green-700">Saved.</span>}
@@ -1458,14 +1458,14 @@ function RecentTipsSection() {
   if (!tips || tips.length === 0) return null;
 
   return (
-    <div className="mt-8 rounded-2xl border border-[#C9A961]/25 bg-[#C9A961]/5 p-6">
+    <div className="mt-8 rounded-2xl border border-[#F97360]/25 bg-[#F97360]/5 p-6">
       <h2 className="font-semibold">☕ Recent tips</h2>
       <p className="mt-1 text-sm text-brand-ink/65">One-time tips from fans, newest first.</p>
       <ul className="mt-4 space-y-3">
         {tips.map((tip) => (
           <li key={tip.id} className="rounded-xl bg-brand-paper p-3">
             <div className="flex items-baseline justify-between gap-3">
-              <span className="font-semibold text-[#8a6b2f]">${(tip.amountCents / 100).toFixed(2)}</span>
+              <span className="font-semibold text-[#C2410C]">${(tip.amountCents / 100).toFixed(2)}</span>
               <span className="text-xs text-brand-ink/60">
                 {tip.fanDisplayName || 'A supporter'} · {formatRelativeDate(tip.createdAt)}
               </span>
@@ -1595,7 +1595,7 @@ function LinksSection({ links: savedLinks, onSaved }) {
               onClick={() => addQuickPlatform(platform)}
               className={`flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-base font-semibold transition ${
                 added
-                  ? 'border-2 border-[#146359] bg-[#146359]/5 text-[#146359]'
+                  ? 'border-2 border-[#2563EB] bg-[#2563EB]/5 text-[#2563EB]'
                   : `${platform.badgeClass} hover:opacity-90`
               }`}
             >
@@ -1636,13 +1636,13 @@ function LinksSection({ links: savedLinks, onSaved }) {
             type="button"
             onClick={addRow}
             disabled={rows.length >= MAX_LINKS}
-            className="text-sm font-medium text-[#146359] disabled:opacity-40"
+            className="text-sm font-medium text-[#2563EB] disabled:opacity-40"
           >
             + Add another link
           </button>
           <button
             disabled={saving}
-            className="rounded-full bg-[#146359] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+            className="rounded-full bg-[#2563EB] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Save links'}
           </button>
@@ -1732,7 +1732,7 @@ function PostSection({ posts, onCreated }) {
     <div className="mt-8 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
       <div className="flex items-center justify-between">
         <h2 className="font-semibold">Posts</h2>
-        <button onClick={() => setOpen(!open)} className="text-sm font-medium text-[#146359]">
+        <button onClick={() => setOpen(!open)} className="text-sm font-medium text-[#2563EB]">
           {open ? 'Cancel' : '+ New post'}
         </button>
       </div>
@@ -1810,7 +1810,7 @@ function PostSection({ posts, onCreated }) {
                 <button
                   type="button"
                   onClick={addPollOption}
-                  className="text-xs font-medium text-[#146359] hover:text-[#0f4d45]"
+                  className="text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]"
                 >
                   + Add option
                 </button>
@@ -1819,7 +1819,7 @@ function PostSection({ posts, onCreated }) {
           )}
 
           {error && <p className="text-sm text-red-600">{error}</p>}
-          <button disabled={saving} className="rounded-full bg-[#146359] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+          <button disabled={saving} className="rounded-full bg-[#2563EB] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
             {saving ? (file ? 'Uploading…' : 'Posting…') : 'Post'}
           </button>
         </form>
@@ -1884,7 +1884,7 @@ function PostRow({ post, onChanged }) {
           </select>
           {error && <p className="text-sm text-red-600">{error}</p>}
           <div className="flex gap-3">
-            <button disabled={saving} className="rounded-full bg-[#146359] px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-50">
+            <button disabled={saving} className="rounded-full bg-[#2563EB] px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-50">
               {saving ? 'Saving…' : 'Save'}
             </button>
             <button type="button" onClick={() => setEditing(false)} className="text-sm text-brand-ink/65 hover:text-brand-ink/80">
@@ -1902,7 +1902,7 @@ function PostRow({ post, onChanged }) {
         <span className="font-medium">
           {post.title || '(untitled)'}
           {post.poll && (
-            <span className="ml-2 rounded-full bg-[#146359]/10 px-2 py-0.5 text-xs font-medium text-[#146359]">
+            <span className="ml-2 rounded-full bg-[#2563EB]/10 px-2 py-0.5 text-xs font-medium text-[#2563EB]">
               Poll
             </span>
           )}
@@ -1929,7 +1929,7 @@ function PostRow({ post, onChanged }) {
       <p className="mt-1 text-sm text-brand-ink/70">{post.body}</p>
       {post.poll && <PollTally poll={post.poll} />}
       <div className="mt-2 flex gap-4 text-xs font-medium">
-        <button onClick={() => setEditing(true)} className="text-[#146359] hover:text-[#0f4d45]">
+        <button onClick={() => setEditing(true)} className="text-[#2563EB] hover:text-[#1D4ED8]">
           Edit
         </button>
         <button onClick={handleDelete} disabled={deleting} className="text-brand-ink/65 hover:text-red-600 disabled:opacity-50">
@@ -1956,7 +1956,7 @@ function PollTally({ poll }) {
               <span className="text-brand-ink/60">{count} ({pct}%)</span>
             </div>
             <div className="mt-0.5 h-1.5 w-full overflow-hidden rounded-full bg-brand-ink/5">
-              <div className="h-full rounded-full bg-[#146359]/60" style={{ width: `${pct}%` }} />
+              <div className="h-full rounded-full bg-[#2563EB]/60" style={{ width: `${pct}%` }} />
             </div>
           </div>
         );

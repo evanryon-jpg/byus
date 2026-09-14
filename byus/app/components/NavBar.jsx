@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import ByUsLogo from './ByUsLogo';
 
 // Client component so it can check login state after the page loads.
 // The rest of the site is server-rendered, but "am I logged in" can only be
@@ -56,7 +57,7 @@ export default function NavBar() {
     <>
       <a
         href="/browse"
-        className="block rounded-lg px-3 py-2 hover:bg-[#146359]/5 hover:text-[#146359]"
+        className="block rounded-lg px-3 py-2 hover:bg-[#2563EB]/5 hover:text-[#2563EB]"
         onClick={() => setMenuOpen(false)}
       >
         Browse creators
@@ -66,14 +67,14 @@ export default function NavBar() {
         <>
           <a
             href={dashboardHref}
-            className="block rounded-lg px-3 py-2 hover:bg-[#146359]/5 hover:text-[#146359]"
+            className="block rounded-lg px-3 py-2 hover:bg-[#2563EB]/5 hover:text-[#2563EB]"
             onClick={() => setMenuOpen(false)}
           >
             Dashboard
           </a>
           <a
             href="/settings"
-            className="block rounded-lg px-3 py-2 hover:bg-[#146359]/5 hover:text-[#146359]"
+            className="block rounded-lg px-3 py-2 hover:bg-[#2563EB]/5 hover:text-[#2563EB]"
             onClick={() => setMenuOpen(false)}
           >
             Settings
@@ -81,7 +82,7 @@ export default function NavBar() {
           {user?.is_admin && (
             <a
               href="/admin"
-              className="block rounded-lg px-3 py-2 hover:bg-[#146359]/5 hover:text-[#146359]"
+              className="block rounded-lg px-3 py-2 hover:bg-[#2563EB]/5 hover:text-[#2563EB]"
               onClick={() => setMenuOpen(false)}
             >
               Admin
@@ -90,7 +91,7 @@ export default function NavBar() {
           <button
             type="button"
             onClick={handleLogout}
-            className="w-full rounded-full border border-[#146359] px-4 py-2.5 text-left text-[#146359] hover:bg-[#146359]/5 sm:ml-2 sm:w-auto sm:text-center"
+            className="w-full rounded-full border border-[#2563EB] px-4 py-2.5 text-left text-[#2563EB] hover:bg-[#2563EB]/5 sm:ml-2 sm:w-auto sm:text-center"
           >
             Log out
           </button>
@@ -101,14 +102,14 @@ export default function NavBar() {
         <>
           <a
             href="/login"
-            className="block rounded-lg px-3 py-2 hover:bg-[#146359]/5 hover:text-[#146359]"
+            className="block rounded-lg px-3 py-2 hover:bg-[#2563EB]/5 hover:text-[#2563EB]"
             onClick={() => setMenuOpen(false)}
           >
             Log in
           </a>
           <a
             href="/signup"
-            className="block rounded-full bg-[#146359] px-4 py-2.5 text-center text-white hover:bg-[#0f4d45] sm:ml-2 sm:inline-block"
+            className="block rounded-full bg-[#2563EB] px-4 py-2.5 text-center text-white hover:bg-[#1D4ED8] sm:ml-2 sm:inline-block"
             onClick={() => setMenuOpen(false)}
           >
             Sign up
@@ -117,7 +118,7 @@ export default function NavBar() {
       )}
 
       {status === 'loading' && (
-        <span className="text-[#2B2420]/30" aria-hidden="true">···</span>
+        <span className="text-[#172033]/30" aria-hidden="true">···</span>
       )}
     </>
   );
@@ -131,11 +132,10 @@ export default function NavBar() {
       <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
         <a
           href="/"
-          className="flex items-center gap-2 text-xl font-bold text-[#146359]"
+          className="flex items-center"
           onClick={() => setMenuOpen(false)}
         >
-          <span className="inline-block h-4 w-4 -rotate-6 rounded-[3px] bg-brand-clay" aria-hidden="true" />
-          ByUs
+          <ByUsLogo className="h-9 w-auto" />
         </a>
 
         {/* Full inline nav from the small-tablet breakpoint up. */}
@@ -147,7 +147,7 @@ export default function NavBar() {
           onClick={() => setMenuOpen((open) => !open)}
           aria-expanded={menuOpen}
           aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-          className="flex h-11 w-11 items-center justify-center rounded-lg border border-brand-ink/15 text-[#146359] hover:bg-[#146359]/5 sm:hidden"
+          className="flex h-11 w-11 items-center justify-center rounded-lg border border-brand-ink/15 text-[#2563EB] hover:bg-[#2563EB]/5 sm:hidden"
         >
           {menuOpen ? (
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
@@ -169,7 +169,7 @@ export default function NavBar() {
           previously it opened as a few plain lines of text that were easy to miss
           tapping into on a small screen. */}
       {menuOpen && (
-        <div className="space-y-1 border-t border-brand-ink/15 bg-[#F5E9D8] px-4 py-4 text-sm font-semibold shadow-lg sm:hidden">
+        <div className="space-y-1 border-t border-brand-ink/15 bg-[#F8FAFC] px-4 py-4 text-sm font-semibold shadow-lg sm:hidden">
           {links}
         </div>
       )}

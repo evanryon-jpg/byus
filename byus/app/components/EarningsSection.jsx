@@ -59,7 +59,7 @@ export default function EarningsSection() {
           knocked off on top of that for everyone. */}
       <div className="rounded-xl bg-brand-ink/[0.03] p-4">
         {isDiscountedThisMonth ? (
-          <p className="text-sm text-[#146359]">
+          <p className="text-sm text-[#2563EB]">
             🎉 You've crossed ${(thresholdCents / 100).toLocaleString()} in earnings this month —
             {' '}{feePercent}% platform fee for the rest of the month.
           </p>
@@ -72,7 +72,7 @@ export default function EarningsSection() {
             </p>
             <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-brand-ink/10">
               <div
-                className="h-full rounded-full bg-[#146359] transition-all"
+                className="h-full rounded-full bg-[#2563EB] transition-all"
                 style={{ width: `${progress * 100}%` }}
               />
             </div>
@@ -85,7 +85,7 @@ export default function EarningsSection() {
           Based on what you earn each month, not lifetime — it resets on the 1st.
         </p>
         {hasPlatformBonus && (
-          <p className="mt-2 text-xs text-[#8a6b2f]">
+          <p className="mt-2 text-xs text-[#C2410C]">
             🌱 Plus an extra {platformReductionPoints}pt off from ByUs's own growth milestones — you're
             actually paying {effectiveFeePercent}% right now. See the goal gauge on the homepage.
           </p>
@@ -153,7 +153,7 @@ function StatTile({ label, value, hero, className = '' }) {
   return (
     <div className={`rounded-xl border border-brand-ink/5 bg-brand-paper p-4 ${className}`}>
       <p className="text-xs text-brand-ink/65">{label}</p>
-      <p className={`mt-1 font-semibold text-[#2B2420] ${hero ? 'text-2xl' : 'text-xl'}`}>{value}</p>
+      <p className={`mt-1 font-semibold text-[#172033] ${hero ? 'text-2xl' : 'text-xl'}`}>{value}</p>
     </div>
   );
 }
@@ -162,7 +162,7 @@ function ChartCard({ title, subtitle, children }) {
   return (
     <div className="rounded-xl border border-brand-ink/5 bg-brand-paper p-4">
       <div className="flex items-baseline justify-between">
-        <h3 className="text-sm font-semibold text-[#2B2420]">{title}</h3>
+        <h3 className="text-sm font-semibold text-[#172033]">{title}</h3>
         <span className="text-xs text-brand-ink/60">{subtitle}</span>
       </div>
       {/* Wide content scrolls inside its own container rather than the page -- the

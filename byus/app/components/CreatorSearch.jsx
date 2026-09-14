@@ -122,7 +122,7 @@ export default function CreatorSearch() {
                   </div>
                 )}
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-[#2B2420]">
+                  <p className="truncate text-sm font-semibold text-[#172033]">
                     {c.display_name || 'Unnamed creator'}
                   </p>
                   {c.bio && <p className="truncate text-xs text-brand-ink/60">{c.bio}</p>}

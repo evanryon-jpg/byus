@@ -7,9 +7,9 @@ module.exports = {
     extend: {
       colors: {
         brand: {
-          teal: '#146359',
-          gold: '#C9A961',
-          clay: '#C97C5D',
+          teal: '#2563EB',
+          gold: '#F97360',
+          clay: '#F97360',
           // Warm neutrals -- replace the old pure-white/black-opacity scale everywhere
           // (cards, text, borders, dividers) so the whole site sits on one warm-brown
           // neutral instead of a cold gray one. `cream` is the page background (already
@@ -18,9 +18,9 @@ module.exports = {
           // `ink` replaces `black` as the base for every text/border/divider opacity
           // utility (e.g. `text-brand-ink/60` instead of `text-black/60`) so muted text
           // and hairline borders read as warm taupe instead of cold gray.
-          cream: '#E8DCC4',
-          paper: '#FFFCF6',
-          ink: '#2B2420',
+          cream: '#F8FAFC',
+          paper: '#FFFFFF',
+          ink: '#172033',
         },
       },
       fontFamily: {

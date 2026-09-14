@@ -23,7 +23,7 @@ export default function ArtSlot({
   label,
 }) {
   return (
-    <div className={`relative overflow-hidden rounded-sm bg-[#F5E9D8] ${aspect} ${className}`}>
+    <div className={`relative overflow-hidden rounded-sm bg-[#F8FAFC] ${aspect} ${className}`}>
       {src ? (
         <Image src={src} alt={alt} fill sizes={sizes} priority={priority} className="object-cover" />
       ) : (

@@ -107,7 +107,7 @@ export default function CreatorShowcase() {
         <span className="text-xs font-extrabold uppercase tracking-wide text-brand-clay">
           Demonstration creator pages
         </span>
-        <h2 className="mt-3 font-display text-3xl font-bold leading-tight text-[#2B2420] sm:text-4xl">
+        <h2 className="mt-3 font-display text-3xl font-bold leading-tight text-[#172033] sm:text-4xl">
           See what your page could look like
         </h2>
         <p className="mt-3 text-brand-ink/70">

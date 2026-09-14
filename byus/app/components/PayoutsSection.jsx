@@ -32,11 +32,11 @@ export default function PayoutsSection() {
   return (
     <div className="mt-4 rounded-xl border border-brand-ink/5 bg-brand-paper p-4">
       <div className="flex items-baseline justify-between">
-        <h3 className="text-sm font-semibold text-[#2B2420]">Tax & payout reporting</h3>
+        <h3 className="text-sm font-semibold text-[#172033]">Tax & payout reporting</h3>
         {years.length > 0 && (
           <a
             href="/api/creator/payouts/export"
-            className="text-xs font-medium text-[#146359] hover:underline"
+            className="text-xs font-medium text-[#2563EB] hover:underline"
           >
             Download all-time CSV
           </a>
@@ -70,15 +70,15 @@ export default function PayoutsSection() {
             <tbody>
               {years.map((y) => (
                 <tr key={y.year} className="border-b border-brand-ink/5 last:border-0">
-                  <td className="py-2 pr-3 font-medium text-[#2B2420]">{y.year}</td>
+                  <td className="py-2 pr-3 font-medium text-[#172033]">{y.year}</td>
                   <td className="py-2 pr-3 tabular-nums text-brand-ink/70">{y.paymentCount.toLocaleString()}</td>
                   <td className="py-2 pr-3 tabular-nums text-brand-ink/70">{formatUSD(y.grossCents)}</td>
                   <td className="py-2 pr-3 tabular-nums text-brand-ink/70">{formatUSD(y.feeCents)}</td>
-                  <td className="py-2 pr-3 tabular-nums font-semibold text-[#2B2420]">{formatUSD(y.netCents)}</td>
+                  <td className="py-2 pr-3 tabular-nums font-semibold text-[#172033]">{formatUSD(y.netCents)}</td>
                   <td className="py-2 text-right">
                     <a
                       href={`/api/creator/payouts/export?year=${y.year}`}
-                      className="text-xs font-medium text-[#146359] hover:underline"
+                      className="text-xs font-medium text-[#2563EB] hover:underline"
                     >
                       CSV
                     </a>

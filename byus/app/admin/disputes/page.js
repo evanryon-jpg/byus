@@ -44,13 +44,13 @@ export default function AdminDisputesPage() {
     <div className="mx-auto max-w-5xl px-6 py-12">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-sm font-medium text-[#146359]">Payments & risk</p>
-          <h1 className="mt-1 text-2xl font-bold text-[#2B2420]">Dispute response queue</h1>
+          <p className="text-sm font-medium text-[#2563EB]">Payments & risk</p>
+          <h1 className="mt-1 text-2xl font-bold text-[#172033]">Dispute response queue</h1>
           <p className="mt-1 text-sm text-brand-ink/65">
             Open disputes are ordered by Stripe's response deadline so the most urgent case stays on top.
           </p>
         </div>
-        <a href="/admin" className="text-sm font-semibold text-[#146359] hover:underline">
+        <a href="/admin" className="text-sm font-semibold text-[#2563EB] hover:underline">
           ← Platform overview
         </a>
       </div>
@@ -62,7 +62,7 @@ export default function AdminDisputesPage() {
       </div>
 
       <section className="mt-8 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
-        <h2 className="font-semibold text-[#2B2420]">Needs attention</h2>
+        <h2 className="font-semibold text-[#172033]">Needs attention</h2>
         <p className="mt-1 text-sm text-brand-ink/65">
           Use the evidence package to review what ByUs can prove, then submit the actual response through Stripe.
         </p>
@@ -76,7 +76,7 @@ export default function AdminDisputesPage() {
 
       {closed.length > 0 && (
         <section className="mt-8 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
-          <h2 className="font-semibold text-[#2B2420]">Recently resolved</h2>
+          <h2 className="font-semibold text-[#172033]">Recently resolved</h2>
           <div className="mt-4 space-y-3">
             {closed.map((d) => <DisputeCard key={d.id} dispute={d} compact />)}
           </div>
@@ -90,7 +90,7 @@ function SummaryCard({ label, value, flag }) {
   return (
     <div className={`rounded-2xl border p-4 ${flag ? 'border-red-200 bg-red-50' : 'border-brand-ink/5 bg-brand-paper'}`}>
       <p className="text-xs font-medium uppercase tracking-wide text-brand-ink/60">{label}</p>
-      <p className={`mt-1 text-2xl font-bold ${flag ? 'text-red-700' : 'text-[#2B2420]'}`}>{value}</p>
+      <p className={`mt-1 text-2xl font-bold ${flag ? 'text-red-700' : 'text-[#172033]'}`}>{value}</p>
     </div>
   );
 }
@@ -103,7 +103,7 @@ function DisputeCard({ dispute, compact = false }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-semibold text-[#2B2420]">{formatUSD(dispute.amountCents)}</span>
+            <span className="font-semibold text-[#172033]">{formatUSD(dispute.amountCents)}</span>
             <span className="rounded-full bg-brand-ink/5 px-2 py-0.5 text-xs font-medium text-brand-ink/70">
               {formatLabel(dispute.status)}
             </span>
@@ -133,7 +133,7 @@ function DisputeCard({ dispute, compact = false }) {
             href={`/api/admin/payments/disputes/${encodeURIComponent(dispute.stripeDisputeId || dispute.id)}/evidence`}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-semibold text-[#146359] hover:underline"
+            className="font-semibold text-[#2563EB] hover:underline"
           >
             View evidence package ↗
           </a>
@@ -189,13 +189,13 @@ function getDeadlineState(dispute) {
 
   return {
     containerClass: dispute.responseUrgent ? 'border-red-200 bg-red-50/40' : 'border-brand-ink/5 bg-white',
-    textClass: dispute.responseUrgent ? 'text-red-700' : 'text-[#2B2420]',
+    textClass: dispute.responseUrgent ? 'text-red-700' : 'text-[#172033]',
     primary: remaining,
     secondary: `Due ${formatDateTime(due)}`,
     badge: dispute.responseUrgent ? 'Urgent' : 'Open',
     badgeClass: dispute.responseUrgent
       ? 'rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700'
-      : 'rounded-full bg-[#146359]/10 px-2 py-0.5 text-xs font-semibold text-[#146359]',
+      : 'rounded-full bg-[#2563EB]/10 px-2 py-0.5 text-xs font-semibold text-[#2563EB]',
   };
 }
 

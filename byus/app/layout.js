@@ -11,7 +11,7 @@ const fraunces = Fraunces({ subsets: ['latin'], weight: ['500', '600', '700', '8
 const karla = Karla({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-body', display: 'swap' });
 const SITE_URL = process.env.APP_URL || 'https://byus-ten.vercel.app';
 
-export const viewport = { themeColor: '#146359' };
+export const viewport = { themeColor: '#2563EB' };
 export const metadata = {
   metadataBase: new URL(SITE_URL),
   title: 'ByUs — Creator subscriptions, simplified',
@@ -24,7 +24,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${fraunces.variable} ${karla.variable}`}>
-      <body className="flex min-h-screen flex-col bg-[#E8DCC4] text-[#2B2420] antialiased">
+      <body className="flex min-h-screen flex-col bg-[#F8FAFC] text-[#172033] antialiased">
         <NavBar />
         <main className="flex-1">{children}</main>
         <Footer />

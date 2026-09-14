@@ -48,7 +48,7 @@ const CREDITS = [
 export default function PhotoCreditsPage() {
   return (
     <div className="mx-auto max-w-2xl px-6 py-16">
-      <h1 className="font-display text-2xl font-bold text-[#2B2420]">Photo credits</h1>
+      <h1 className="font-display text-2xl font-bold text-[#172033]">Photo credits</h1>
       <p className="mt-3 text-brand-ink/68">
         The homepage and the Browse creators page used to open with a background photo of
         real people at work; those banners have since been removed to get visitors to the
@@ -59,7 +59,7 @@ export default function PhotoCreditsPage() {
       <ul className="mt-8 space-y-5">
         {CREDITS.map((c) => (
           <li key={c.url} className="border-b border-brand-ink/10 pb-5">
-            <p className="font-semibold text-[#2B2420]">{c.title}</p>
+            <p className="font-semibold text-[#172033]">{c.title}</p>
             <p className="mt-1 text-sm text-brand-ink/68">
               Photo by {c.photographer} · {c.license}
             </p>

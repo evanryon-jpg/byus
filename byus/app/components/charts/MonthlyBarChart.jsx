@@ -17,7 +17,7 @@ export default function MonthlyBarChart({
   valueKey,
   formatValue,
   formatAxisTick,
-  color = '#146359',
+  color = '#2563EB',
   hoverColor = '#1c8577',
   ariaLabel,
 }) {
@@ -124,7 +124,7 @@ export default function MonthlyBarChart({
                   textAnchor="middle"
                   fontSize="11"
                   fontWeight="600"
-                  fill="#2B2420"
+                  fill="#172033"
                   pointerEvents="none"
                 >
                   {formatValue(value)}

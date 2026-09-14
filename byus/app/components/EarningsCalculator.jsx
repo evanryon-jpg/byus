@@ -126,7 +126,7 @@ export default function EarningsCalculator() {
           revealed ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
         }`}
       >
-        <span className="inline-flex items-center gap-2 rounded-full bg-[#2B2420] px-3.5 py-1.5 text-xs font-bold tracking-wide text-brand-cream">
+        <span className="inline-flex items-center gap-2 rounded-full bg-[#172033] px-3.5 py-1.5 text-xs font-bold tracking-wide text-brand-cream">
           Earnings calculator
         </span>
 
@@ -136,12 +136,12 @@ export default function EarningsCalculator() {
         <div
           className="mt-4 h-1.5 w-[52px] rounded-full"
           style={{
-            background: 'repeating-linear-gradient(115deg, #C97C5D 0 8px, #C9A961 8px 16px, #146359 16px 24px)',
+            background: 'repeating-linear-gradient(115deg, #F97360 0 8px, #F97360 8px 16px, #2563EB 16px 24px)',
           }}
           aria-hidden="true"
         />
 
-        <h2 className="mt-3.5 font-display text-2xl font-bold leading-tight text-[#2B2420] sm:text-3xl">
+        <h2 className="mt-3.5 font-display text-2xl font-bold leading-tight text-[#172033] sm:text-3xl">
           See what you&rsquo;d actually keep
         </h2>
         <p className="mt-2 max-w-xl text-sm leading-relaxed text-brand-ink/70">
@@ -195,7 +195,7 @@ export default function EarningsCalculator() {
               always visible now rather than sitting behind a checkbox, since it's the
               platform's actual value proposition. */}
           <div>
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-teal to-[#0e4a42] p-5 text-brand-paper shadow-[0_22px_44px_-22px_rgba(14,74,66,0.6)] after:absolute after:-right-9 after:-top-12 after:h-[180px] after:w-[180px] after:rounded-full after:bg-[radial-gradient(circle,rgba(201,169,97,0.26),transparent_70%)] after:content-['']">
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-teal to-[#0e4a42] p-5 text-brand-paper shadow-[0_22px_44px_-22px_rgba(14,74,66,0.6)] after:absolute after:-right-9 after:-top-12 after:h-[180px] after:w-[180px] after:rounded-full after:bg-[radial-gradient(circle,rgba(249,115,96,0.26),transparent_70%)] after:content-['']">
               <span className="relative text-[11px] font-bold uppercase tracking-wide text-brand-gold">
                 With ByUs
               </span>
@@ -300,7 +300,7 @@ function SliderField({
                 value={value}
                 onChange={handleTypedValue}
                 aria-label={`${label} (enter an exact number)`}
-                className="w-36 bg-transparent px-3 py-1.5 text-right font-display text-lg font-bold tabular-nums text-[#2B2420] outline-none"
+                className="w-36 bg-transparent px-3 py-1.5 text-right font-display text-lg font-bold tabular-nums text-[#172033] outline-none"
               />
               <div className="flex w-8 flex-col border-l border-brand-ink/15">
                 <button
@@ -328,7 +328,7 @@ function SliderField({
             </span>
           </div>
         ) : (
-          <span className="font-display text-lg font-bold tabular-nums text-[#2B2420]">{display}</span>
+          <span className="font-display text-lg font-bold tabular-nums text-[#172033]">{display}</span>
         )}
       </div>
       <input
@@ -339,7 +339,7 @@ function SliderField({
         value={sliderValue}
         onChange={handleSliderValue}
         style={{
-          background: `linear-gradient(to right, #C97C5D 0%, #C9A961 ${pct}%, rgba(43,36,32,0.08) ${pct}%, rgba(43,36,32,0.08) 100%)`,
+          background: `linear-gradient(to right, #F97360 0%, #F97360 ${pct}%, rgba(43,36,32,0.08) ${pct}%, rgba(43,36,32,0.08) 100%)`,
         }}
         className="h-[9px] w-full cursor-pointer appearance-none rounded-full outline-none [&::-moz-range-thumb]:h-[23px] [&::-moz-range-thumb]:w-[23px] [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-4 [&::-moz-range-thumb]:border-brand-clay [&::-moz-range-thumb]:bg-brand-paper [&::-moz-range-thumb]:shadow-[0_2px_6px_rgba(43,36,32,0.3)] [&::-webkit-slider-thumb]:h-[23px] [&::-webkit-slider-thumb]:w-[23px] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-4 [&::-webkit-slider-thumb]:border-brand-clay [&::-webkit-slider-thumb]:bg-brand-paper [&::-webkit-slider-thumb]:shadow-[0_2px_6px_rgba(43,36,32,0.3)] [&::-webkit-slider-thumb]:transition active:[&::-webkit-slider-thumb]:scale-125"
       />

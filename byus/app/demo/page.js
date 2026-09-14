@@ -288,7 +288,7 @@ function LockedHeroPiece({ unlocked, onUnlock }) {
             <button
               type="button"
               onClick={onUnlock}
-              className="rounded-full bg-brand-gold px-5 py-2.5 text-[13.5px] font-bold text-[#2B2420] shadow-sm transition hover:brightness-95"
+              className="rounded-full bg-brand-gold px-5 py-2.5 text-[13.5px] font-bold text-[#172033] shadow-sm transition hover:brightness-95"
             >
               Unlock — join "{UNLOCK_TIER.name}" (${UNLOCK_TIER.price}/mo)
             </button>
@@ -374,7 +374,7 @@ function Sidebar({ subscribedPrice, onJoin }) {
         onClick={onJoin}
         disabled={joined}
         className={`mt-5 w-full rounded-full px-4 py-3 text-sm font-bold shadow-sm transition ${
-          joined ? 'cursor-default bg-brand-teal/10 text-brand-teal' : 'bg-brand-teal text-brand-paper hover:bg-[#0f4d45]'
+          joined ? 'cursor-default bg-brand-teal/10 text-brand-teal' : 'bg-brand-teal text-brand-paper hover:bg-[#1D4ED8]'
         }`}
       >
         {joined ? '✓ You\'re a member' : `Join ${UNLOCK_TIER.name} →`}
@@ -437,12 +437,12 @@ function CreatorDashboardPanel() {
   const payout = gross - fee;
 
   return (
-    <div className="border-b border-brand-ink/10 bg-[#F5E9D8] px-6 py-8">
+    <div className="border-b border-brand-ink/10 bg-[#F8FAFC] px-6 py-8">
       <div className="mx-auto max-w-3xl">
         <div
           className="h-1.5 w-[52px] rounded-full"
           style={{
-            background: 'repeating-linear-gradient(115deg, #C97C5D 0 8px, #C9A961 8px 16px, #146359 16px 24px)',
+            background: 'repeating-linear-gradient(115deg, #F97360 0 8px, #F97360 8px 16px, #2563EB 16px 24px)',
           }}
           aria-hidden="true"
         />
@@ -541,7 +541,7 @@ function CheckoutModal({ tier, onClose, onSimulate }) {
         <button
           type="button"
           onClick={onSimulate}
-          className="mt-4 w-full rounded-full bg-brand-teal px-5 py-3 text-sm font-semibold text-brand-paper shadow-sm transition hover:bg-[#0f4d45]"
+          className="mt-4 w-full rounded-full bg-brand-teal px-5 py-3 text-sm font-semibold text-brand-paper shadow-sm transition hover:bg-[#1D4ED8]"
         >
           Simulate Fan Payment
         </button>
@@ -621,7 +621,7 @@ function Toast({ message }) {
   );
 }
 
-const CONFETTI_COLORS = ['#146359', '#C9A961', '#C97C5D', '#F5E9D8', '#0f4d45'];
+const CONFETTI_COLORS = ['#2563EB', '#F97360', '#F97360', '#F8FAFC', '#1D4ED8'];
 
 // Hand-rolled instead of pulling in a confetti package -- this only needs one
 // one-shot burst, so a tiny canvas particle sim keeps the demo dependency-free.

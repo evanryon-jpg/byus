@@ -93,7 +93,7 @@ export default function FanDashboard() {
         <p className="text-brand-ink/70">Couldn't load your dashboard. Check your connection and try again.</p>
         <button
           onClick={load}
-          className="mt-4 rounded-full bg-[#146359] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#0f4d45]"
+          className="mt-4 rounded-full bg-[#2563EB] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#1D4ED8]"
         >
           Try again
         </button>
@@ -115,7 +115,7 @@ export default function FanDashboard() {
             type="button"
             onClick={handleManageBilling}
             disabled={billingLoading}
-            className="rounded-full border border-[#146359] px-4 py-2 text-sm font-semibold text-[#146359] hover:bg-[#146359]/5 disabled:opacity-50"
+            className="rounded-full border border-[#2563EB] px-4 py-2 text-sm font-semibold text-[#2563EB] hover:bg-[#2563EB]/5 disabled:opacity-50"
           >
             {billingLoading ? 'Opening…' : 'Manage billing'}
           </button>
@@ -130,9 +130,9 @@ export default function FanDashboard() {
 
       {user && !user.email_verified && <VerifyEmailBanner email={user.email} />}
 
-      <section className="mt-8 rounded-3xl border border-[#146359]/15 bg-[#F5E9D8] p-6 sm:flex sm:items-center sm:justify-between sm:gap-6">
+      <section className="mt-8 rounded-3xl border border-[#2563EB]/15 bg-[#F8FAFC] p-6 sm:flex sm:items-center sm:justify-between sm:gap-6">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#146359]">Create on ByUs</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2563EB]">Create on ByUs</p>
           <h2 className="mt-2 text-xl font-bold">Ready to build your own page?</h2>
           <p className="mt-1 max-w-xl text-sm text-brand-ink/65">
             Switch this account to a creator account, then use the AI helper to write your profile and plan your membership tiers.
@@ -144,7 +144,7 @@ export default function FanDashboard() {
             setCreatorError('');
             setShowCreatorConfirm(true);
           }}
-          className="mt-5 shrink-0 rounded-full bg-[#146359] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#0f4d45] sm:mt-0"
+          className="mt-5 shrink-0 rounded-full bg-[#2563EB] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#1D4ED8] sm:mt-0"
         >
           Become a creator
         </button>
@@ -183,7 +183,7 @@ export default function FanDashboard() {
                 type="button"
                 onClick={handleBecomeCreator}
                 disabled={creatorLoading}
-                className="rounded-full bg-[#146359] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#0f4d45] disabled:opacity-50"
+                className="rounded-full bg-[#2563EB] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-50"
               >
                 {creatorLoading ? 'Switching…' : 'Continue as creator'}
               </button>
@@ -199,7 +199,7 @@ export default function FanDashboard() {
           <li key={s.id}>
             <a
               href={`/creator/${s.creator_slug || s.creator_id}`}
-              className="flex items-center justify-between rounded-2xl border border-brand-ink/5 bg-brand-paper p-5 hover:border-[#146359]/30"
+              className="flex items-center justify-between rounded-2xl border border-brand-ink/5 bg-brand-paper p-5 hover:border-[#2563EB]/30"
             >
               <div>
                 <p className="font-medium">{s.creator_name}</p>
@@ -217,7 +217,7 @@ export default function FanDashboard() {
         ))}
         {subs.length === 0 && (
           <p className="text-brand-ink/60">
-            No subscriptions yet. <a href="/browse" className="text-[#146359] underline">Browse creators</a>
+            No subscriptions yet. <a href="/browse" className="text-[#2563EB] underline">Browse creators</a>
           </p>
         )}
       </ul>

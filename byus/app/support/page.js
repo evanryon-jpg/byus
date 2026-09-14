@@ -108,7 +108,7 @@ function SupportPageContent() {
           <span className="rotate-6 text-xl font-bold text-white">B</span>
         </div>
 
-        <h1 className="mt-4 font-display text-2xl font-semibold leading-tight text-[#2B2420]">
+        <h1 className="mt-4 font-display text-2xl font-semibold leading-tight text-[#172033]">
           Support ByUs
         </h1>
         <p className="mx-auto mt-2 max-w-xs text-sm text-brand-ink/65">
@@ -118,7 +118,7 @@ function SupportPageContent() {
         </p>
 
         {justSupported ? (
-          <div className="mt-6 rounded-xl bg-[#146359]/10 p-4 text-sm font-medium text-[#146359]">
+          <div className="mt-6 rounded-xl bg-[#2563EB]/10 p-4 text-sm font-medium text-[#2563EB]">
             Thank you! It genuinely helps keep ByUs running.
           </div>
         ) : loadError ? (
@@ -140,7 +140,7 @@ function SupportPageContent() {
                   type="button"
                   onClick={() => sendSupport(cents)}
                   disabled={sending}
-                  className="rounded-full bg-[#C9A961] px-5 py-2 text-sm font-semibold text-white hover:bg-[#b3945a] disabled:opacity-50"
+                  className="rounded-full bg-[#F97360] px-5 py-2 text-sm font-semibold text-white hover:bg-[#b3945a] disabled:opacity-50"
                 >
                   ${(cents / 100).toFixed(0)}
                 </button>
@@ -161,7 +161,7 @@ function SupportPageContent() {
               <button
                 type="submit"
                 disabled={sending}
-                className="rounded-full bg-[#146359] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0f4d45] disabled:opacity-50"
+                className="rounded-full bg-[#2563EB] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-50"
               >
                 {sending ? 'Sending…' : 'Send'}
               </button>
@@ -179,7 +179,7 @@ function SupportPageContent() {
               <button
                 type="button"
                 onClick={() => setShowMessage(true)}
-                className="mt-4 text-xs font-medium text-[#8a6b2f] hover:underline"
+                className="mt-4 text-xs font-medium text-[#C2410C] hover:underline"
               >
                 + Add a message
               </button>

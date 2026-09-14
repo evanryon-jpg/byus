@@ -125,7 +125,7 @@ function AvatarCard({ user, onChanged }) {
             className="h-20 w-20 rounded-full object-cover"
           />
         ) : (
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#146359]/10 text-2xl font-semibold text-[#146359]">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#2563EB]/10 text-2xl font-semibold text-[#2563EB]">
             {initial}
           </div>
         )}
@@ -135,7 +135,7 @@ function AvatarCard({ user, onChanged }) {
               type="button"
               onClick={() => fileRef.current?.click()}
               disabled={busy}
-              className="rounded-full border border-[#146359] px-4 py-2 text-sm font-medium text-[#146359] hover:bg-[#146359]/5 disabled:opacity-50"
+              className="rounded-full border border-[#2563EB] px-4 py-2 text-sm font-medium text-[#2563EB] hover:bg-[#2563EB]/5 disabled:opacity-50"
             >
               {uploading ? 'Uploading…' : 'Upload photo'}
             </button>
@@ -183,7 +183,7 @@ function AvatarCard({ user, onChanged }) {
                 onClick={() => handlePickPreset(id)}
                 disabled={settingPreset !== null}
                 aria-label={`Use this avatar`}
-                className="aspect-square overflow-hidden rounded-full ring-2 ring-transparent transition hover:ring-[#146359]/50 disabled:opacity-50"
+                className="aspect-square overflow-hidden rounded-full ring-2 ring-transparent transition hover:ring-[#2563EB]/50 disabled:opacity-50"
               >
                 {/* Plain <img>, not next/image -- these are small built-in static
                     assets, not remote/user content, so there's nothing next/image's
@@ -288,10 +288,10 @@ function ProfileCard({ user, onChanged }) {
                     aria-pressed={active}
                     className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
                       active
-                        ? 'border-[#146359] bg-[#146359] text-white'
+                        ? 'border-[#2563EB] bg-[#2563EB] text-white'
                         : atCap
                         ? 'cursor-not-allowed border-brand-ink/10 text-brand-ink/30'
-                        : 'border-brand-ink/15 text-brand-ink/70 hover:border-[#146359]/40 hover:text-[#146359]'
+                        : 'border-brand-ink/15 text-brand-ink/70 hover:border-[#2563EB]/40 hover:text-[#2563EB]'
                     }`}
                   >
                     {cat}
@@ -308,7 +308,7 @@ function ProfileCard({ user, onChanged }) {
           <button
             type="submit"
             disabled={saving}
-            className="rounded-full bg-[#146359] px-5 py-2 text-sm font-semibold text-white hover:bg-[#0f4d45] disabled:opacity-50"
+            className="rounded-full bg-[#2563EB] px-5 py-2 text-sm font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Save profile'}
           </button>
@@ -360,7 +360,7 @@ function NotificationsCard({ user, onChanged }) {
       <h2 className="font-semibold">Notifications</h2>
       <label className="mt-4 flex items-center justify-between gap-4">
         <span>
-          <span className="block text-sm font-medium text-[#2B2420]">New post emails</span>
+          <span className="block text-sm font-medium text-[#172033]">New post emails</span>
           <span className="mt-0.5 block text-xs text-brand-ink/65">
             Get an email when a creator you're subscribed to publishes something new.
           </span>
@@ -370,7 +370,7 @@ function NotificationsCard({ user, onChanged }) {
           checked={enabled}
           disabled={saving}
           onChange={handleToggle}
-          className="h-5 w-5 shrink-0 accent-[#146359]"
+          className="h-5 w-5 shrink-0 accent-[#2563EB]"
         />
       </label>
       {status && <p className="mt-2 text-xs text-red-600">{status.text}</p>}
@@ -418,7 +418,7 @@ function SupportVisibilityCard({ user, onChanged }) {
       <h2 className="font-semibold">Support visibility</h2>
       <label className="mt-4 flex items-center justify-between gap-4">
         <span>
-          <span className="block text-sm font-medium text-[#2B2420]">Show me as a top supporter</span>
+          <span className="block text-sm font-medium text-[#172033]">Show me as a top supporter</span>
           <span className="mt-0.5 block text-xs text-brand-ink/65">
             Your name and photo appear in the "Top supporters" row on the page of any
             creator you're actively subscribed to. Off by default — nobody sees this
@@ -430,7 +430,7 @@ function SupportVisibilityCard({ user, onChanged }) {
           checked={enabled}
           disabled={saving}
           onChange={handleToggle}
-          className="h-5 w-5 shrink-0 accent-[#146359]"
+          className="h-5 w-5 shrink-0 accent-[#2563EB]"
         />
       </label>
       {status && <p className="mt-2 text-xs text-red-600">{status.text}</p>}
@@ -501,7 +501,7 @@ function ReferralCard({ role }) {
             <button
               type="button"
               onClick={handleCopy}
-              className="shrink-0 rounded-full bg-[#146359] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0f4d45]"
+              className="shrink-0 rounded-full bg-[#2563EB] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1D4ED8]"
             >
               {copied ? 'Copied!' : 'Copy link'}
             </button>
@@ -605,7 +605,7 @@ function SuggestionBoxCard() {
           <button
             type="submit"
             disabled={sending || !message.trim()}
-            className="rounded-full bg-[#146359] px-5 py-2 text-sm font-semibold text-white hover:bg-[#0f4d45] disabled:opacity-50"
+            className="rounded-full bg-[#2563EB] px-5 py-2 text-sm font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-50"
           >
             {sending ? 'Sending…' : 'Send suggestion'}
           </button>
@@ -732,7 +732,7 @@ function PasswordCard() {
           <button
             type="submit"
             disabled={saving}
-            className="rounded-full bg-[#146359] px-5 py-2 text-sm font-semibold text-white hover:bg-[#0f4d45] disabled:opacity-50"
+            className="rounded-full bg-[#2563EB] px-5 py-2 text-sm font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Change password'}
           </button>

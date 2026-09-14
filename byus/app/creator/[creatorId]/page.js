@@ -102,7 +102,7 @@ function CreatorProfile() {
         <p className="text-brand-ink/70">Couldn't load this page. Check your connection and try again.</p>
         <button
           onClick={load}
-          className="mt-4 rounded-full bg-[#146359] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#0f4d45]"
+          className="mt-4 rounded-full bg-[#2563EB] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#1D4ED8]"
         >
           Try again
         </button>
@@ -136,7 +136,7 @@ function CreatorProfile() {
         </p>
       )}
       {justTipped && (
-        <p className="mb-6 rounded-xl bg-[#C9A961]/15 px-4 py-3 text-sm text-[#8a6b2f]">
+        <p className="mb-6 rounded-xl bg-[#F97360]/15 px-4 py-3 text-sm text-[#C2410C]">
           ☕ Thanks for the coffee! {creator.display_name} really appreciates the support.
         </p>
       )}
@@ -150,14 +150,14 @@ function CreatorProfile() {
             className="h-16 w-16 shrink-0 rounded-full object-cover"
           />
         ) : (
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#146359]/10 text-2xl font-semibold text-[#146359]">
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#2563EB]/10 text-2xl font-semibold text-[#2563EB]">
             {(creator.display_name || '?').trim().charAt(0).toUpperCase()}
           </div>
         )}
         <div>
           <h1 className="text-2xl font-bold">{creator.display_name}</h1>
           {creator.is_founding && (
-            <span className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-brand-clay px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-[#F5E9D8]">
+            <span className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-brand-clay px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-[#F8FAFC]">
               🚀 Founding creator
             </span>
           )}
@@ -176,7 +176,7 @@ function CreatorProfile() {
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-full border border-[#146359]/20 px-3 py-1.5 text-sm font-medium text-[#146359] hover:bg-[#146359]/5"
+              className="rounded-full border border-[#2563EB]/20 px-3 py-1.5 text-sm font-medium text-[#2563EB] hover:bg-[#2563EB]/5"
             >
               {link.label} ↗
             </a>
@@ -216,7 +216,7 @@ function CreatorProfile() {
                   ? (
                     <>
                       Subscribe to watch —{' '}
-                      <a href="#tiers" className="text-[#146359] underline">see tiers below</a>.
+                      <a href="#tiers" className="text-[#2563EB] underline">see tiers below</a>.
                     </>
                   )
                   : 'Subscribe to watch this live stream.'}
@@ -235,7 +235,7 @@ function CreatorProfile() {
                 <button
                   type="button"
                   onClick={() => setBillingInterval('month')}
-                  className={billingInterval === 'month' ? 'font-semibold text-[#146359]' : 'text-brand-ink/60'}
+                  className={billingInterval === 'month' ? 'font-semibold text-[#2563EB]' : 'text-brand-ink/60'}
                 >
                   Monthly
                 </button>
@@ -243,7 +243,7 @@ function CreatorProfile() {
                 <button
                   type="button"
                   onClick={() => setBillingInterval('year')}
-                  className={billingInterval === 'year' ? 'font-semibold text-[#146359]' : 'text-brand-ink/60'}
+                  className={billingInterval === 'year' ? 'font-semibold text-[#2563EB]' : 'text-brand-ink/60'}
                 >
                   Annually
                 </button>
@@ -260,23 +260,23 @@ function CreatorProfile() {
                     <h3 className="font-semibold">{t.name}</h3>
                     {t.description && <p className="mt-1 text-sm text-brand-ink/65">{t.description}</p>}
                     {Number.isInteger(t.trial_days) && t.trial_days > 0 && (
-                      <p className="mt-1 inline-block rounded-full bg-[#146359]/10 px-2 py-0.5 text-xs font-semibold text-[#146359]">
+                      <p className="mt-1 inline-block rounded-full bg-[#2563EB]/10 px-2 py-0.5 text-xs font-semibold text-[#2563EB]">
                         {t.trial_days}-day free trial
                       </p>
                     )}
-                    <p className="mt-3 text-lg font-bold text-[#146359]">
+                    <p className="mt-3 text-lg font-bold text-[#2563EB]">
                       ${(displayCents / 100).toFixed(2)}
                       <span className="text-sm font-normal text-brand-ink/60">{useAnnual ? '/yr' : '/mo'}</span>
                     </p>
                     {useAnnual && savingsCents > 0 && (
-                      <p className="mt-1 text-xs text-[#146359]">
+                      <p className="mt-1 text-xs text-[#2563EB]">
                         Save ${(savingsCents / 100).toFixed(2)}/yr vs. paying monthly
                       </p>
                     )}
                     <button
                       onClick={() => handleSubscribe(t.id, useAnnual ? 'year' : 'month')}
                       disabled={subscribing === t.id}
-                      className="mt-4 w-full rounded-full bg-[#146359] py-2 text-sm font-semibold text-white hover:bg-[#0f4d45] disabled:opacity-50"
+                      className="mt-4 w-full rounded-full bg-[#2563EB] py-2 text-sm font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-50"
                     >
                       {subscribing === t.id ? 'Redirecting…' : 'Subscribe'}
                     </button>
@@ -437,7 +437,7 @@ function ReportButton({ creatorId, postId }) {
       onSubmit={handleSubmit}
       className="mt-1 max-w-xs rounded-xl border border-brand-ink/10 bg-brand-paper p-3 text-left shadow-sm"
     >
-      <p className="text-xs font-semibold text-[#2B2420]">Report {postId ? 'this post' : 'this creator'}</p>
+      <p className="text-xs font-semibold text-[#172033]">Report {postId ? 'this post' : 'this creator'}</p>
       <select
         value={reason}
         onChange={(e) => setReason(e.target.value)}
@@ -461,7 +461,7 @@ function ReportButton({ creatorId, postId }) {
         <button
           type="submit"
           disabled={submitting || !reason}
-          className="rounded-full bg-[#146359] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f4d45] disabled:opacity-50"
+          className="rounded-full bg-[#2563EB] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-50"
         >
           {submitting ? 'Sending…' : 'Send report'}
         </button>
@@ -513,7 +513,7 @@ function PostFilters({ typeFilter, onTypeFilter, accessFilter, onAccessFilter, s
           onChange={(e) => onSearch(e.target.value)}
           placeholder="Search posts"
           aria-label="Search posts"
-          className="w-full rounded-full border border-brand-ink/10 bg-brand-paper py-2 pl-9 pr-4 text-sm placeholder:text-brand-ink/50 focus:border-[#146359]/40 focus:outline-none"
+          className="w-full rounded-full border border-brand-ink/10 bg-brand-paper py-2 pl-9 pr-4 text-sm placeholder:text-brand-ink/50 focus:border-[#2563EB]/40 focus:outline-none"
         />
       </div>
       <div className="flex flex-wrap items-center gap-1.5">
@@ -540,7 +540,7 @@ function FilterChip({ active, onClick, children }) {
       onClick={onClick}
       className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
         active
-          ? 'border-[#146359] bg-[#146359] text-white'
+          ? 'border-[#2563EB] bg-[#2563EB] text-white'
           : 'border-brand-ink/10 text-brand-ink/65 hover:bg-brand-ink/5'
       }`}
     >
@@ -576,7 +576,7 @@ function TopSupporters({ supporters, hasTiers }) {
                   className="h-10 w-10 rounded-full border-2 border-white object-cover"
                 />
               ) : (
-                <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-[#146359]/10 text-sm font-semibold text-[#146359]">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-[#2563EB]/10 text-sm font-semibold text-[#2563EB]">
                   {(s.displayName || '?').trim().charAt(0).toUpperCase()}
                 </div>
               )}
@@ -592,14 +592,14 @@ function TopSupporters({ supporters, hasTiers }) {
         )}
       </div>
       <div className="min-w-0">
-        <p className="text-sm font-semibold text-[#2B2420]">Top supporters</p>
+        <p className="text-sm font-semibold text-[#172033]">Top supporters</p>
         <p className="text-xs text-brand-ink/65">
           {hasSupporters
             ? `${supporters.length} supporter${supporters.length === 1 ? '' : 's'} shown here by their own choice.`
             : hasTiers ? (
               <>
                 This spot is open —{' '}
-                <a href="#tiers" className="text-[#146359] underline">
+                <a href="#tiers" className="text-[#2563EB] underline">
                   be the first supporter shown here
                 </a>
                 .
@@ -621,14 +621,14 @@ function SupportGoalBar({ goal }) {
   return (
     <div className="mt-6 rounded-2xl border border-brand-ink/5 bg-brand-paper p-4">
       <div className="flex items-baseline justify-between gap-3">
-        <p className="text-sm font-semibold text-[#2B2420]">This month's goal</p>
+        <p className="text-sm font-semibold text-[#172033]">This month's goal</p>
         <p className="text-xs text-brand-ink/65">
           ${(goal.progressCents / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })} of $
           {(goal.goalCents / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}
         </p>
       </div>
       <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-brand-ink/10">
-        <div className="h-full rounded-full bg-[#146359] transition-all" style={{ width: `${pct}%` }} />
+        <div className="h-full rounded-full bg-[#2563EB] transition-all" style={{ width: `${pct}%` }} />
       </div>
     </div>
   );
@@ -684,8 +684,8 @@ function TipWidget({ creatorId, creatorName }) {
   }
 
   return (
-    <div className="mt-6 rounded-2xl border border-[#C9A961]/25 bg-[#C9A961]/5 p-4">
-      <p className="text-sm font-semibold text-[#2B2420]">☕ Buy {creatorName} a coffee</p>
+    <div className="mt-6 rounded-2xl border border-[#F97360]/25 bg-[#F97360]/5 p-4">
+      <p className="text-sm font-semibold text-[#172033]">☕ Buy {creatorName} a coffee</p>
       <p className="mt-1 text-xs text-brand-ink/65">A one-time thank-you — no subscription, no commitment.</p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {TIP_PRESETS_CENTS.map((cents) => (
@@ -694,7 +694,7 @@ function TipWidget({ creatorId, creatorName }) {
             type="button"
             onClick={() => sendTip(cents)}
             disabled={sending}
-            className="rounded-full bg-[#C9A961] px-4 py-1.5 text-sm font-semibold text-white hover:bg-[#b3945a] disabled:opacity-50"
+            className="rounded-full bg-[#F97360] px-4 py-1.5 text-sm font-semibold text-white hover:bg-[#b3945a] disabled:opacity-50"
           >
             ${(cents / 100).toFixed(0)}
           </button>
@@ -713,7 +713,7 @@ function TipWidget({ creatorId, creatorName }) {
           <button
             type="submit"
             disabled={sending}
-            className="text-sm font-semibold text-[#8a6b2f] hover:underline disabled:opacity-50"
+            className="text-sm font-semibold text-[#C2410C] hover:underline disabled:opacity-50"
           >
             {sending ? 'Sending…' : 'Send'}
           </button>
@@ -731,7 +731,7 @@ function TipWidget({ creatorId, creatorName }) {
         <button
           type="button"
           onClick={() => setShowMessage(true)}
-          className="mt-3 text-xs font-medium text-[#8a6b2f] hover:underline"
+          className="mt-3 text-xs font-medium text-[#C2410C] hover:underline"
         >
           + Add a message
         </button>
@@ -797,7 +797,7 @@ function PollBlock({ postId, poll: initialPoll }) {
             type="button"
             onClick={() => handleVote(i)}
             disabled={voting !== null}
-            className="block w-full rounded-lg border border-[#146359]/25 px-3 py-2 text-left text-sm font-medium text-[#146359] hover:bg-[#146359]/5 disabled:opacity-50"
+            className="block w-full rounded-lg border border-[#2563EB]/25 px-3 py-2 text-left text-sm font-medium text-[#2563EB] hover:bg-[#2563EB]/5 disabled:opacity-50"
           >
             {voting === i ? 'Voting…' : option}
           </button>
@@ -821,7 +821,7 @@ function PollBlock({ postId, poll: initialPoll }) {
             disabled={voting !== null}
             className="block w-full text-left text-sm disabled:opacity-50"
           >
-            <div className={`flex justify-between ${mine ? 'font-semibold text-[#146359]' : 'text-brand-ink/70'}`}>
+            <div className={`flex justify-between ${mine ? 'font-semibold text-[#2563EB]' : 'text-brand-ink/70'}`}>
               <span>
                 {option}
                 {mine && ' ✓'}
@@ -830,7 +830,7 @@ function PollBlock({ postId, poll: initialPoll }) {
             </div>
             <div className="mt-0.5 h-1.5 w-full overflow-hidden rounded-full bg-brand-ink/5">
               <div
-                className={`h-full rounded-full ${mine ? 'bg-[#146359]' : 'bg-[#146359]/40'}`}
+                className={`h-full rounded-full ${mine ? 'bg-[#2563EB]' : 'bg-[#2563EB]/40'}`}
                 style={{ width: `${pct}%` }}
               />
             </div>
@@ -853,7 +853,7 @@ function LockedPostPreview({ hasTiers }) {
   return (
     <div className="relative mt-3 overflow-hidden rounded-xl">
       <div
-        className="pointer-events-none h-28 w-full bg-gradient-to-br from-[#146359]/10 via-brand-ink/5 to-[#C9A961]/10 blur-[2px]"
+        className="pointer-events-none h-28 w-full bg-gradient-to-br from-[#2563EB]/10 via-brand-ink/5 to-[#F97360]/10 blur-[2px]"
         aria-hidden="true"
       />
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-white/40 text-center backdrop-blur-sm">
@@ -865,7 +865,7 @@ function LockedPostPreview({ hasTiers }) {
         </span>
         <p className="text-xs font-medium text-brand-ink/70">
           {hasTiers ? (
-            <a href="#tiers" className="text-[#146359] underline">
+            <a href="#tiers" className="text-[#2563EB] underline">
               Subscribe to view this post
             </a>
           ) : (

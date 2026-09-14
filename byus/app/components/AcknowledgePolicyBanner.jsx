@@ -34,7 +34,7 @@ export default function AcknowledgePolicyBanner({ onAcknowledged }) {
   }
 
   return (
-    <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-[#C97C5D]/30 bg-[#C97C5D]/10 p-4 text-sm">
+    <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-[#F97360]/30 bg-[#F97360]/10 p-4 text-sm">
       <div>
         <p className="font-semibold text-[#a35a3d]">One more thing before you keep going</p>
         <p className="mt-0.5 text-brand-ink/70">
@@ -48,11 +48,11 @@ export default function AcknowledgePolicyBanner({ onAcknowledged }) {
           type="checkbox"
           checked={checked}
           onChange={(e) => setChecked(e.target.checked)}
-          className="mt-0.5 h-4 w-4 shrink-0 rounded border-brand-ink/30 text-[#146359] focus:ring-[#146359]"
+          className="mt-0.5 h-4 w-4 shrink-0 rounded border-brand-ink/30 text-[#2563EB] focus:ring-[#2563EB]"
         />
         <span>
           I agree that everything I publish on ByUs follows the{' '}
-          <a href="/terms" target="_blank" className="text-[#146359] underline">content guidelines</a>
+          <a href="/terms" target="_blank" className="text-[#2563EB] underline">content guidelines</a>
           {' '}— no adult content, ever, and nothing that endangers minors.
         </span>
       </label>
@@ -60,7 +60,7 @@ export default function AcknowledgePolicyBanner({ onAcknowledged }) {
       <button
         onClick={handleConfirm}
         disabled={saving || !checked}
-        className="self-start rounded-full bg-[#146359] px-5 py-2 text-xs font-semibold text-white hover:bg-[#0f4d45] disabled:opacity-50"
+        className="self-start rounded-full bg-[#2563EB] px-5 py-2 text-xs font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-50"
       >
         {saving ? 'Saving…' : 'Confirm'}
       </button>

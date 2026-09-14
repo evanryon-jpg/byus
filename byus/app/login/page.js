@@ -70,7 +70,7 @@ function LoginForm() {
 
       <a
         href={googleHref}
-        className="mt-6 flex w-full items-center justify-center gap-3 rounded-full border border-brand-ink/10 bg-brand-paper py-3 font-semibold text-[#2B2420] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+        className="mt-6 flex w-full items-center justify-center gap-3 rounded-full border border-brand-ink/10 bg-brand-paper py-3 font-semibold text-[#172033] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
       >
         <GoogleIcon />
         Continue with Google
@@ -114,7 +114,7 @@ function LoginForm() {
             className={`w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${
               fieldErrors.email
                 ? 'border-red-400 focus:ring-red-300'
-                : 'border-brand-ink/10 focus:ring-[#146359]'
+                : 'border-brand-ink/10 focus:ring-[#2563EB]'
             }`}
           />
           {fieldErrors.email && <p className="mt-1 text-xs text-red-600">{fieldErrors.email}</p>}
@@ -122,7 +122,7 @@ function LoginForm() {
         <label className="block">
           <div className="mb-1 flex items-center justify-between">
             <span className="text-sm font-medium text-brand-ink/70">Password</span>
-            <a href="/forgot-password" className="text-xs text-[#146359] underline">
+            <a href="/forgot-password" className="text-xs text-[#2563EB] underline">
               Forgot password?
             </a>
           </div>
@@ -137,7 +137,7 @@ function LoginForm() {
             className={`w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${
               fieldErrors.password
                 ? 'border-red-400 focus:ring-red-300'
-                : 'border-brand-ink/10 focus:ring-[#146359]'
+                : 'border-brand-ink/10 focus:ring-[#2563EB]'
             }`}
           />
           {fieldErrors.password && <p className="mt-1 text-xs text-red-600">{fieldErrors.password}</p>}
@@ -148,14 +148,14 @@ function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-full bg-[#146359] py-3 text-sm font-semibold text-white hover:bg-[#0f4d45] disabled:opacity-50"
+          className="w-full rounded-full bg-[#2563EB] py-3 text-sm font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-50"
         >
           {loading ? 'Logging in…' : 'Log in'}
         </button>
       </form>
       <p className="mt-6 text-center text-sm text-brand-ink/65">
         No account yet?{' '}
-        <a href={next ? `/signup?next=${encodeURIComponent(next)}` : '/signup'} className="text-[#146359] underline">
+        <a href={next ? `/signup?next=${encodeURIComponent(next)}` : '/signup'} className="text-[#2563EB] underline">
           Sign up
         </a>
       </p>

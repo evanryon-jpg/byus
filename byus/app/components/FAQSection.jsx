@@ -44,7 +44,7 @@ export default function FAQSection() {
   return (
     <section>
       <div className="mx-auto max-w-3xl px-6 py-16">
-        <h2 className="text-center font-display text-3xl font-semibold text-[#2B2420]">
+        <h2 className="text-center font-display text-3xl font-semibold text-[#172033]">
           Questions, answered
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-center text-brand-ink/70">
@@ -63,7 +63,7 @@ export default function FAQSection() {
                   aria-expanded={open}
                   className="flex w-full items-center justify-between gap-4 py-5 text-left"
                 >
-                  <span className="font-semibold text-[#2B2420]">{item.q}</span>
+                  <span className="font-semibold text-[#172033]">{item.q}</span>
                   <span
                     className={`shrink-0 text-brand-teal transition-transform ${open ? 'rotate-45' : ''}`}
                     aria-hidden="true"

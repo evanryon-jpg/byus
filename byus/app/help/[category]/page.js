@@ -19,7 +19,7 @@ export default function HelpCategoryPage() {
     return (
       <div className="mx-auto max-w-xl px-6 py-24 text-center">
         <p className="text-brand-ink/70">We couldn't find that help topic.</p>
-        <Link href="/help" className="mt-4 inline-block font-semibold text-[#146359] hover:underline">
+        <Link href="/help" className="mt-4 inline-block font-semibold text-[#2563EB] hover:underline">
           ← Back to the Help Center
         </Link>
       </div>
@@ -28,19 +28,19 @@ export default function HelpCategoryPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-16">
-      <Link href="/help" className="text-sm font-medium text-[#146359] hover:underline">
+      <Link href="/help" className="text-sm font-medium text-[#2563EB] hover:underline">
         ← Help Center
       </Link>
 
       <div className="mt-4 flex items-center gap-3">
         <span
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#146359]/10 text-xl"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#2563EB]/10 text-xl"
           aria-hidden="true"
         >
           {category.icon}
         </span>
         <div>
-          <h1 className="font-display text-2xl font-semibold leading-tight text-[#2B2420] sm:text-3xl">
+          <h1 className="font-display text-2xl font-semibold leading-tight text-[#172033] sm:text-3xl">
             {category.title}
           </h1>
           <p className="text-sm text-brand-ink/65">{category.description}</p>
@@ -58,7 +58,7 @@ export default function HelpCategoryPage() {
                 aria-expanded={open}
                 className="flex w-full items-center justify-between gap-4 py-5 text-left"
               >
-                <span className="font-semibold text-[#2B2420]">{article.q}</span>
+                <span className="font-semibold text-[#172033]">{article.q}</span>
                 <span
                   className={`shrink-0 text-brand-teal transition-transform ${open ? 'rotate-45' : ''}`}
                   aria-hidden="true"
@@ -77,9 +77,9 @@ export default function HelpCategoryPage() {
         })}
       </div>
 
-      <p className="mt-10 rounded-2xl bg-[#146359]/5 px-5 py-4 text-center text-sm text-brand-ink/70">
+      <p className="mt-10 rounded-2xl bg-[#2563EB]/5 px-5 py-4 text-center text-sm text-brand-ink/70">
         Didn't find your answer?{' '}
-        <a href="mailto:support@byusapp.com" className="font-semibold text-[#146359] hover:underline">
+        <a href="mailto:support@byusapp.com" className="font-semibold text-[#2563EB] hover:underline">
           Email support@byusapp.com
         </a>{' '}
         and we'll help directly.

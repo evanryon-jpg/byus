@@ -41,9 +41,9 @@ export default function AdminPage() {
   if (status === 'forbidden') {
     return (
       <div className="mx-auto max-w-md px-6 py-24 text-center">
-        <h1 className="text-xl font-semibold text-[#2B2420]">Not authorized</h1>
+        <h1 className="text-xl font-semibold text-[#172033]">Not authorized</h1>
         <p className="mt-2 text-sm text-brand-ink/65">This page is only visible to the ByUs team.</p>
-        <a href="/" className="mt-6 inline-block text-sm font-semibold text-[#146359] hover:underline">
+        <a href="/" className="mt-6 inline-block text-sm font-semibold text-[#2563EB] hover:underline">
           Back to ByUs →
         </a>
       </div>
@@ -108,7 +108,7 @@ export default function AdminPage() {
               valueKey="newFans"
               formatValue={(n) => `${n.toLocaleString()} new`}
               formatAxisTick={(n) => n.toLocaleString()}
-              color="#8a6b2f"
+              color="#C2410C"
               hoverColor="#a5854a"
             />
           </ChartCard>
@@ -137,14 +137,14 @@ export default function AdminPage() {
               {disputes.map((d) => (
                 <tr key={d.id} className="border-b border-brand-ink/5">
                   <td className="py-2.5 pr-4">
-                    <div className="font-medium text-[#2B2420]">{d.fanName || 'Unknown fan'}</div>
+                    <div className="font-medium text-[#172033]">{d.fanName || 'Unknown fan'}</div>
                     <div className="text-xs text-brand-ink/60">{d.fanEmail || '—'}</div>
                   </td>
                   <td className="py-2.5 pr-4">
-                    <div className="font-medium text-[#2B2420]">{d.creatorName || 'Unknown creator'}</div>
+                    <div className="font-medium text-[#172033]">{d.creatorName || 'Unknown creator'}</div>
                     <div className="text-xs text-brand-ink/60">{d.creatorEmail || '—'}</div>
                   </td>
-                  <td className="py-2.5 pr-4 text-right font-medium text-[#2B2420]" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                  <td className="py-2.5 pr-4 text-right font-medium text-[#172033]" style={{ fontVariantNumeric: 'tabular-nums' }}>
                     {formatUSD(d.amountCents)}
                   </td>
                   <td className="py-2.5 pr-4 text-brand-ink/70">{d.reason ? formatDisputeLabel(d.reason) : '—'}</td>
@@ -192,7 +192,7 @@ export default function AdminPage() {
               {creators.map((c) => (
                 <tr key={c.id} className="border-b border-brand-ink/5">
                   <td className="py-2.5 pr-4">
-                    <div className="font-medium text-[#2B2420]">
+                    <div className="font-medium text-[#172033]">
                       {c.displayName || 'Unnamed creator'}
                       {c.bioFlagged && (
                         <span
@@ -210,13 +210,13 @@ export default function AdminPage() {
                   </td>
                   <td className="py-2.5 pr-4">
                     {c.stripeConnectOnboarded ? (
-                      <span className="rounded-full bg-[#146359]/10 px-2 py-0.5 text-xs font-medium text-[#146359]">Connected</span>
+                      <span className="rounded-full bg-[#2563EB]/10 px-2 py-0.5 text-xs font-medium text-[#2563EB]">Connected</span>
                     ) : (
                       <span className="rounded-full bg-brand-ink/5 px-2 py-0.5 text-xs font-medium text-brand-ink/60">Not connected</span>
                     )}
                   </td>
                   <td className="py-2.5 pr-4 text-brand-ink/70">{c.platformFeePercent}%</td>
-                  <td className="py-2.5 pr-4 text-right font-medium text-[#2B2420]" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                  <td className="py-2.5 pr-4 text-right font-medium text-[#172033]" style={{ fontVariantNumeric: 'tabular-nums' }}>
                     {formatUSD(c.lifetimeGrossCents)}
                   </td>
                   <td className="py-2.5 pr-4">
@@ -351,7 +351,7 @@ function ReportRow({ report, onUpdate }) {
     <div className="rounded-lg border border-brand-ink/10 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="font-medium text-[#2B2420]">
+          <div className="font-medium text-[#172033]">
             <a href={`/creator/${report.creator_slug || report.creator_id}`} target="_blank" className="hover:underline">
               {report.creator_name || 'Unnamed creator'}
             </a>
@@ -383,7 +383,7 @@ function ReportRow({ report, onUpdate }) {
         </select>
       </div>
 
-      <p className="mt-3 text-sm font-medium text-[#2B2420]">
+      <p className="mt-3 text-sm font-medium text-[#172033]">
         {REPORT_REASON_LABELS[report.reason] || report.reason}
       </p>
       {report.details && <p className="mt-1 text-sm text-brand-ink/80">{report.details}</p>}
@@ -407,7 +407,7 @@ function ReportRow({ report, onUpdate }) {
           type="button"
           onClick={handleSaveNote}
           disabled={savingNote || note === (report.admin_note || '')}
-          className="shrink-0 rounded-full border border-[#146359] px-3 py-1.5 text-xs font-medium text-[#146359] hover:bg-[#146359]/5 disabled:opacity-50"
+          className="shrink-0 rounded-full border border-[#2563EB] px-3 py-1.5 text-xs font-medium text-[#2563EB] hover:bg-[#2563EB]/5 disabled:opacity-50"
         >
           {savingNote ? 'Saving…' : 'Save note'}
         </button>
@@ -434,7 +434,7 @@ function SuspendControl({ userId, initialSuspended, initialReason, protectedAcco
   if (protectedAccount) {
     return (
       <span
-        className="rounded-full bg-[#146359]/10 px-2 py-0.5 text-xs font-medium text-[#146359]"
+        className="rounded-full bg-[#2563EB]/10 px-2 py-0.5 text-xs font-medium text-[#2563EB]"
         title="Admin/owner accounts can't be suspended from the admin dashboard."
       >
         Protected
@@ -477,7 +477,7 @@ function SuspendControl({ userId, initialSuspended, initialReason, protectedAcco
           type="button"
           onClick={() => submit(false, '')}
           disabled={saving}
-          className="text-xs font-medium text-[#146359] hover:underline disabled:opacity-50"
+          className="text-xs font-medium text-[#2563EB] hover:underline disabled:opacity-50"
         >
           {saving ? 'Reinstating…' : 'Reinstate'}
         </button>
@@ -495,7 +495,7 @@ function SuspendControl({ userId, initialSuspended, initialReason, protectedAcco
 
   return (
     <div className="w-64 rounded-lg border border-brand-ink/10 bg-white p-3 shadow-sm">
-      <p className="text-xs font-semibold text-[#2B2420]">Suspend this account?</p>
+      <p className="text-xs font-semibold text-[#172033]">Suspend this account?</p>
       <p className="mt-1 text-xs text-brand-ink/60">
         Blocks login immediately and hides their public page from Browse and search. Doesn&rsquo;t
         touch Stripe — cancel subscriptions or payouts there separately if that&rsquo;s warranted.
@@ -572,7 +572,7 @@ function ReviewControl({ userId, initialNeedsReview }) {
           type="button"
           onClick={clearReview}
           disabled={saving}
-          className="text-xs font-medium text-[#146359] hover:underline disabled:opacity-50"
+          className="text-xs font-medium text-[#2563EB] hover:underline disabled:opacity-50"
         >
           {saving ? 'Clearing…' : 'Clear for review'}
         </button>
@@ -673,7 +673,7 @@ function SuggestionRow({ suggestion, onUpdate }) {
     <div className="rounded-lg border border-brand-ink/10 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="font-medium text-[#2B2420]">
+          <div className="font-medium text-[#172033]">
             {suggestion.display_name || 'Unnamed'}{' '}
             <span className="font-normal text-brand-ink/50">({suggestion.role})</span>
           </div>
@@ -713,7 +713,7 @@ function SuggestionRow({ suggestion, onUpdate }) {
           type="button"
           onClick={handleSaveNote}
           disabled={savingNote || note === (suggestion.admin_note || '')}
-          className="shrink-0 rounded-full border border-[#146359] px-3 py-1.5 text-xs font-medium text-[#146359] hover:bg-[#146359]/5 disabled:opacity-50"
+          className="shrink-0 rounded-full border border-[#2563EB] px-3 py-1.5 text-xs font-medium text-[#2563EB] hover:bg-[#2563EB]/5 disabled:opacity-50"
         >
           {savingNote ? 'Saving…' : 'Save reply'}
         </button>
@@ -735,7 +735,7 @@ function StatTile({ label, value, hero, flag, className = '' }) {
     >
       <p className="text-xs text-brand-ink/65">{label}</p>
       <p
-        className={`mt-1 font-semibold ${flag ? 'text-amber-700' : 'text-[#2B2420]'} ${
+        className={`mt-1 font-semibold ${flag ? 'text-amber-700' : 'text-[#172033]'} ${
           hero ? 'text-2xl' : 'text-xl'
         }`}
       >
@@ -770,7 +770,7 @@ function ChartCard({ title, subtitle, children }) {
   return (
     <div className="rounded-xl border border-brand-ink/5 bg-brand-paper p-4">
       <div className="flex items-baseline justify-between">
-        <h3 className="text-sm font-semibold text-[#2B2420]">{title}</h3>
+        <h3 className="text-sm font-semibold text-[#172033]">{title}</h3>
         <span className="text-xs text-brand-ink/60">{subtitle}</span>
       </div>
       <div className="mt-3 overflow-x-auto">{children}</div>

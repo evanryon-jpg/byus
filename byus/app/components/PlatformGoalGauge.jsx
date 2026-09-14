@@ -21,9 +21,9 @@ import { formatCompactUSD } from '@/lib/format';
 // each checkpoint is a real, named event (a fee cut for every creator, or the final growth
 // goal), so it gets its own marker and label rather than being folded into a single
 // continuous fill.
-const TEAL = '#146359';
+const TEAL = '#2563EB';
 const TRACK = 'rgba(20,99,89,0.12)'; // a lighter step of the same teal, not a flat gray
-const GOLD = '#C9A961';
+const GOLD = '#F97360';
 
 export default function PlatformGoalGauge() {
   const [data, setData] = useState(null);
@@ -72,10 +72,10 @@ export default function PlatformGoalGauge() {
       <div className="rounded-3xl border border-brand-ink/5 bg-brand-paper p-6 sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full bg-[#C9A961]/15 px-3 py-1 text-xs font-semibold tracking-wide text-[#8a6b2f]">
+            <span className="inline-flex items-center gap-2 rounded-full bg-[#F97360]/15 px-3 py-1 text-xs font-semibold tracking-wide text-[#C2410C]">
               ByUs growth
             </span>
-            <h2 className="mt-3 font-display text-2xl font-semibold text-[#2B2420] sm:text-3xl">
+            <h2 className="mt-3 font-display text-2xl font-semibold text-[#172033] sm:text-3xl">
               {allCrossed
                 ? "We've hit every milestone — thank you."
                 : "Every creator here is part of this number"}
@@ -87,9 +87,9 @@ export default function PlatformGoalGauge() {
             </p>
           </div>
           {crossedCount > 0 && (
-            <div className="shrink-0 rounded-2xl bg-[#146359]/10 px-4 py-3 text-center">
-              <div className="font-display text-2xl font-semibold text-[#146359]">{crossedCount}/{milestones.length}</div>
-              <div className="text-[11px] font-medium uppercase tracking-wide text-[#146359]/70">
+            <div className="shrink-0 rounded-2xl bg-[#2563EB]/10 px-4 py-3 text-center">
+              <div className="font-display text-2xl font-semibold text-[#2563EB]">{crossedCount}/{milestones.length}</div>
+              <div className="text-[11px] font-medium uppercase tracking-wide text-[#2563EB]/70">
                 milestones hit
               </div>
             </div>
@@ -147,7 +147,7 @@ export default function PlatformGoalGauge() {
                     textAnchor="middle"
                     fontSize="12"
                     fontWeight={crossed ? '600' : '500'}
-                    fill={crossed ? '#2B2420' : '#898781'}
+                    fill={crossed ? '#172033' : '#898781'}
                   >
                     {formatMilestoneLabel(m.thresholdCents)}
                   </text>

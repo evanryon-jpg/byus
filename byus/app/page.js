@@ -77,11 +77,11 @@ function FoundingCreatorProgram({ stats }) {
   ];
 
   return (
-    <section className="relative overflow-hidden bg-[#0e2620]">
+    <section className="relative overflow-hidden bg-[#172554]">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -left-24 -top-24 h-96 w-96 rounded-full blur-3xl"
-        style={{ background: 'radial-gradient(circle, rgba(201,169,97,0.18), transparent 65%)' }}
+        style={{ background: 'radial-gradient(circle, rgba(249,115,96,0.18), transparent 65%)' }}
       />
 
       <div className="relative mx-auto max-w-5xl px-6 py-14 text-center">
@@ -118,7 +118,7 @@ function FoundingCreatorProgram({ stats }) {
             <>
               <a
                 href="/signup?role=creator"
-                className="inline-block rounded-full bg-brand-gold px-8 py-3.5 text-base font-bold text-[#0e2620] shadow-[0_16px_30px_-14px_rgba(201,169,97,0.5)] transition hover:-translate-y-0.5"
+                className="inline-block rounded-full bg-brand-gold px-8 py-3.5 text-base font-bold text-[#172554] shadow-[0_16px_30px_-14px_rgba(249,115,96,0.5)] transition hover:-translate-y-0.5"
               >
                 Claim a Founding Spot →
               </a>
@@ -143,7 +143,7 @@ function Hero({ user }) {
     // right, so the hero shows what a ByUs page actually looks like instead of telling
     // you. Stacks to a single column on mobile, art below the copy, so the CTAs and
     // fine print still come first for outreach traffic.
-    <section className="relative overflow-hidden bg-gradient-to-b from-[#0f201c] via-[#142c26] to-brand-cream">
+    <section className="relative overflow-hidden bg-gradient-to-b from-[#172554] via-[#1E3A8A] to-brand-cream">
       {/* Two blurred, ambiently drifting color blobs -- clay top-right, gold
           bottom-left -- give the dark band some depth instead of a flat fill. Purely
           decorative background motion, kept separate from the live-pulse dot on the
@@ -152,12 +152,12 @@ function Hero({ user }) {
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -right-40 -top-28 h-[560px] w-[560px] rounded-full blur-md motion-safe:animate-byus-drift"
-        style={{ background: 'radial-gradient(circle, rgba(201,124,93,0.28), transparent 65%)' }}
+        style={{ background: 'radial-gradient(circle, rgba(249,115,96,0.28), transparent 65%)' }}
       />
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -left-36 bottom-[10%] h-[420px] w-[420px] rounded-full"
-        style={{ background: 'radial-gradient(circle, rgba(201,169,97,0.16), transparent 65%)' }}
+        style={{ background: 'radial-gradient(circle, rgba(249,115,96,0.16), transparent 65%)' }}
       />
 
       <div className="relative mx-auto max-w-6xl px-6 pt-14 pb-16">
@@ -178,7 +178,7 @@ function Hero({ user }) {
                   preserveAspectRatio="none"
                   aria-hidden="true"
                 >
-                  <path d="M2 6 Q 50 1, 100 5 T 198 6" stroke="#C9A961" strokeWidth="4" fill="none" strokeLinecap="round" />
+                  <path d="M2 6 Q 50 1, 100 5 T 198 6" stroke="#F97360" strokeWidth="4" fill="none" strokeLinecap="round" />
                 </svg>
               </span>
               . Period.
@@ -197,14 +197,14 @@ function Hero({ user }) {
               {user ? (
                 <a
                   href={dashboardHref}
-                  className="rounded-full bg-gradient-to-br from-brand-clay to-[#b6613f] px-7 py-3.5 text-base font-semibold text-brand-paper shadow-[0_16px_30px_-14px_rgba(201,124,93,0.65)] transition hover:-translate-y-0.5"
+                  className="rounded-full bg-gradient-to-br from-brand-clay to-[#EA580C] px-7 py-3.5 text-base font-semibold text-brand-paper shadow-[0_16px_30px_-14px_rgba(249,115,96,0.65)] transition hover:-translate-y-0.5"
                 >
                   {user.role === 'creator' ? 'Go to your dashboard' : 'Your subscriptions'} →
                 </a>
               ) : (
                 <a
                   href="/signup?role=creator"
-                  className="rounded-full bg-gradient-to-br from-brand-clay to-[#b6613f] px-7 py-3.5 text-base font-semibold text-brand-paper shadow-[0_16px_30px_-14px_rgba(201,124,93,0.65)] transition hover:-translate-y-0.5"
+                  className="rounded-full bg-gradient-to-br from-brand-clay to-[#EA580C] px-7 py-3.5 text-base font-semibold text-brand-paper shadow-[0_16px_30px_-14px_rgba(249,115,96,0.65)] transition hover:-translate-y-0.5"
                 >
                   Start Creating →
                 </a>
@@ -291,7 +291,7 @@ function HeroArtCollage() {
             sizes="(min-width: 1024px) 16vw, 30vw"
             className="object-cover blur-[2px] scale-105"
           />
-          <div className="absolute inset-0 flex items-center justify-center bg-[#0f1a16]/35">
+          <div className="absolute inset-0 flex items-center justify-center bg-[#172033]/35">
             <LockGlyphLarge />
           </div>
         </div>
@@ -306,7 +306,7 @@ function HeroArtCollage() {
 
 function LockGlyphLarge() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFCF6" strokeWidth="2" aria-hidden="true">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" aria-hidden="true">
       <rect x="4" y="11" width="16" height="10" rx="2" />
       <path d="M8 11V7a4 4 0 0 1 8 0v4" />
     </svg>
@@ -342,7 +342,7 @@ function Features() {
   return (
     <section className="mx-auto max-w-5xl px-6 py-16">
       <div className="text-center">
-        <h2 className="font-display text-3xl font-semibold text-[#2B2420]">
+        <h2 className="font-display text-3xl font-semibold text-[#172033]">
           Everything a membership needs, nothing it doesn&rsquo;t
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-brand-ink/70">
@@ -370,7 +370,7 @@ function PayoutDemo() {
     <div className="flex h-full flex-col justify-between rounded-2xl border border-brand-teal/30 bg-brand-paper p-8 shadow-sm">
       <div>
         <span className="text-xs font-extrabold uppercase tracking-wide text-brand-teal">Direct payouts</span>
-        <h3 className="mt-2 font-display text-xl font-bold text-[#2B2420]">Every charge, split automatically</h3>
+        <h3 className="mt-2 font-display text-xl font-bold text-[#172033]">Every charge, split automatically</h3>
         <p className="mt-2 max-w-md text-brand-ink/70">
           Each creator connects their own Stripe Express account. Payouts land there directly — no
           manual transfers, no waiting on ByUs to release funds.
@@ -379,10 +379,10 @@ function PayoutDemo() {
 
       {/* A real receipt, not a made-up one -- $10/mo at the 10% founding-creator rate,
           the same math the EarningsCalculator above uses. */}
-      <div className="mt-6 rounded-xl border border-brand-ink/10 bg-[#F5E9D8] p-4">
+      <div className="mt-6 rounded-xl border border-brand-ink/10 bg-[#F8FAFC] p-4">
         <div className="flex items-center justify-between text-sm">
           <span className="font-medium text-brand-ink/70">Membership charge</span>
-          <span className="font-display font-bold tabular-nums text-[#2B2420]">$10.00</span>
+          <span className="font-display font-bold tabular-nums text-[#172033]">$10.00</span>
         </div>
         <div className="mt-2 flex items-center justify-between text-sm text-brand-ink/50">
           <span>Platform fee (10%)</span>
@@ -405,8 +405,8 @@ function TiersDemo() {
   ];
   return (
     <div className="rounded-2xl border border-brand-ink/15 bg-brand-paper p-6 shadow-sm">
-      <span className="text-xs font-extrabold uppercase tracking-wide text-[#8a6b2f]">Tiered memberships</span>
-      <h3 className="mt-2 font-display text-lg font-bold text-[#2B2420]">Fans pick what fits</h3>
+      <span className="text-xs font-extrabold uppercase tracking-wide text-[#C2410C]">Tiered memberships</span>
+      <h3 className="mt-2 font-display text-lg font-bold text-[#172033]">Fans pick what fits</h3>
       <div className="mt-4 space-y-2">
         {tiers.map((t) => (
           <div
@@ -415,7 +415,7 @@ function TiersDemo() {
               t.popular ? 'border-brand-gold bg-brand-gold/10' : 'border-brand-ink/15'
             }`}
           >
-            <span className="text-sm font-semibold text-[#2B2420]">{t.name}</span>
+            <span className="text-sm font-semibold text-[#172033]">{t.name}</span>
             <span className="text-sm font-bold tabular-nums text-brand-ink/70">${t.price}/mo</span>
           </div>
         ))}
@@ -435,8 +435,8 @@ function GatedContentDemo() {
           sizes="(min-width: 1024px) 22vw, 90vw"
           className="object-cover blur-[3px] scale-105"
         />
-        <div className="absolute inset-0 flex items-center justify-center bg-[#0f1a16]/45">
-          <span className="flex items-center gap-1.5 rounded-full bg-brand-paper/95 px-3.5 py-1.5 text-xs font-bold text-[#2B2420]">
+        <div className="absolute inset-0 flex items-center justify-center bg-[#172033]/45">
+          <span className="flex items-center gap-1.5 rounded-full bg-brand-paper/95 px-3.5 py-1.5 text-xs font-bold text-[#172033]">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true">
               <rect x="4" y="11" width="16" height="10" rx="2" />
               <path d="M8 11V7a4 4 0 0 1 8 0v4" />
@@ -482,7 +482,7 @@ function HowItWorks() {
   return (
     <section id="how-it-works" className="bg-brand-paper">
       <div className="mx-auto max-w-5xl px-6 py-16">
-        <h2 className="text-center font-display text-3xl font-semibold text-[#2B2420]">
+        <h2 className="text-center font-display text-3xl font-semibold text-[#172033]">
           Up and running in four steps
         </h2>
 
@@ -490,7 +490,7 @@ function HowItWorks() {
           {steps.map((s, i) => (
             <div key={s.n} className="relative text-left">
               <span className="font-display text-3xl font-semibold text-brand-gold/70">{s.n}</span>
-              <h3 className="mt-3 font-semibold text-[#2B2420]">{s.title}</h3>
+              <h3 className="mt-3 font-semibold text-[#172033]">{s.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-brand-ink/70">{s.body}</p>
               {i < steps.length - 1 && (
                 <span
@@ -521,7 +521,7 @@ function WhyWeBuiltByUs() {
           <span className="text-xs font-extrabold uppercase tracking-[0.18em] text-brand-clay">
             Our reason for building ByUs
           </span>
-          <h2 className="mt-4 font-display text-3xl font-semibold text-[#2B2420] sm:text-4xl">
+          <h2 className="mt-4 font-display text-3xl font-semibold text-[#172033] sm:text-4xl">
             Creators deserve better.
           </h2>
           <div className="mt-6 space-y-4 text-base leading-relaxed text-brand-ink/75 sm:text-lg">

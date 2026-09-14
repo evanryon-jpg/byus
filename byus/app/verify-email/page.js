@@ -49,7 +49,7 @@ function VerifyEmailContent() {
     <div className="mx-auto max-w-md px-6 py-20 text-center">
       {status === 'verifying' && (
         <>
-          <h1 className="font-display text-2xl font-semibold text-[#2B2420]">Verifying your email…</h1>
+          <h1 className="font-display text-2xl font-semibold text-[#172033]">Verifying your email…</h1>
           <p className="mt-3 text-brand-ink/65">One moment.</p>
         </>
       )}
@@ -59,13 +59,13 @@ function VerifyEmailContent() {
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-teal/10 text-brand-teal">
             ✓
           </div>
-          <h1 className="mt-4 font-display text-2xl font-semibold text-[#2B2420]">Email verified</h1>
+          <h1 className="mt-4 font-display text-2xl font-semibold text-[#172033]">Email verified</h1>
           <p className="mt-3 text-brand-ink/70">
             Your email address is confirmed. You&rsquo;re all set to use ByUs.
           </p>
           <a
             href="/"
-            className="mt-8 inline-block rounded-full bg-brand-teal px-6 py-2.5 font-semibold text-white hover:bg-[#0f4d45]"
+            className="mt-8 inline-block rounded-full bg-brand-teal px-6 py-2.5 font-semibold text-white hover:bg-[#1D4ED8]"
           >
             Go to ByUs
           </a>
@@ -74,7 +74,7 @@ function VerifyEmailContent() {
 
       {status === 'error' && (
         <>
-          <h1 className="font-display text-2xl font-semibold text-[#2B2420]">Verification failed</h1>
+          <h1 className="font-display text-2xl font-semibold text-[#172033]">Verification failed</h1>
           <p className="mt-3 text-brand-ink/70">{error}</p>
           <p className="mt-6 text-sm text-brand-ink/60">
             You can request a new verification link from your dashboard.

@@ -8,8 +8,8 @@ export default function manifest() {
     description: 'Join creator memberships on ByUs. Creators keep 87–90% of every subscription payment.',
     start_url: '/',
     display: 'standalone',
-    background_color: '#E8DCC4',
-    theme_color: '#146359',
+    background_color: '#F8FAFC',
+    theme_color: '#2563EB',
     icons: [
       {
         src: '/icon.png',
