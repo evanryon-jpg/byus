@@ -7,9 +7,18 @@ module.exports = {
     extend: {
       colors: {
         brand: {
+          // teal is the primary accent (unchanged -- chosen deliberately in a prior
+          // commit specifically to avoid a UKG brand-color collision). gold and clay
+          // were accidentally collapsed onto this same hex during an earlier "replace
+          // coral accents" pass and have rendered as flat teal ever since, everywhere
+          // from CTA buttons to "Founding" badges. Restored here as their own distinct
+          // hues -- gold matches this repo's own original, git-historied brand gold;
+          // clay is deepened from that same history's terracotta (#C97C5D) so white
+          // badge text (FeaturedCreators, ProfileClient, browse, demo) stays readable
+          // against it (~5.8:1 contrast, was ~3.1:1).
           teal: '#0F766E',
-          gold: '#0F766E',
-          clay: '#0F766E',
+          gold: '#C9A961',
+          clay: '#A6432E',
           // Warm neutrals -- replace the old pure-white/black-opacity scale everywhere
           // (cards, text, borders, dividers) so the whole site sits on one warm-brown
           // neutral instead of a cold gray one. `cream` is the page background (already
