@@ -190,15 +190,15 @@ function SignupForm() {
             type="checkbox"
             checked={termsAccepted}
             onChange={(e) => setTermsAccepted(e.target.checked)}
-            className="mt-0.5 h-4 w-4 shrink-0 rounded border-brand-ink/20 text-[#2563EB] focus:ring-[#2563EB]"
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border-brand-ink/20 text-[#0F766E] focus:ring-[#0F766E]"
           />
           <span>
             I agree to the{' '}
-            <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-[#2563EB] underline">
+            <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-[#0F766E] underline">
               Terms of Service
             </a>{' '}
             and{' '}
-            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-[#2563EB] underline">
+            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-[#0F766E] underline">
               Privacy Policy
             </a>
             .
@@ -210,7 +210,7 @@ function SignupForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-full bg-[#2563EB] py-3 font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-50"
+          className="w-full rounded-full bg-[#0F766E] py-3 font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
         >
           {loading ? 'Creating account…' : 'Sign up'}
         </button>
@@ -218,7 +218,7 @@ function SignupForm() {
 
       <p className="mt-6 text-center text-sm text-brand-ink/65">
         Already have an account?{' '}
-        <a href={next ? `/login?next=${encodeURIComponent(next)}` : '/login'} className="text-[#2563EB] underline">
+        <a href={next ? `/login?next=${encodeURIComponent(next)}` : '/login'} className="text-[#0F766E] underline">
           Log in
         </a>
       </p>
@@ -231,7 +231,7 @@ function SignupForm() {
           padding: 0.65rem 0.9rem;
           font-size: 0.95rem;
         }
-        .input:focus { outline: 2px solid #2563EB; border-color: transparent; }
+        .input:focus { outline: 2px solid #0F766E; border-color: transparent; }
         .input-error { border-color: #f87171; }
         .input-error:focus { outline: 2px solid #f87171; }
       `}</style>
@@ -245,7 +245,7 @@ function RoleTab({ label, active, onClick }) {
       type="button"
       onClick={onClick}
       className={`flex-1 rounded-full py-2 text-sm font-medium transition ${
-        active ? 'bg-brand-paper shadow text-[#2563EB]' : 'text-brand-ink/65'
+        active ? 'bg-brand-paper shadow text-[#0F766E]' : 'text-brand-ink/65'
       }`}
     >
       {label}
