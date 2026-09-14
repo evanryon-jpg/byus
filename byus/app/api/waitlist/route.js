@@ -3,12 +3,9 @@ export const dynamic = 'force-dynamic';
 // POST /api/waitlist
 // Joins the Founding Creator waitlist: { email, displayName?, source?, referralCode?, website }
 //
-// Deliberately separate from /api/auth/signup — no account, no password, no role. While
-// Stripe Connect onboarding is paused for platform review (see app/api/creator/connect-stripe
-// /route.js), sending a would-be creator through real signup just walks them into that dead
-// end one step later. This captures interest and an email address to invite from the moment
-// Stripe clears review, and nothing more. Public/unauthenticated by design — this is the
-// first thing a brand-new visitor hits, same as signup.
+// Legacy founding-interest endpoint retained for previously submitted forms and historical
+// attribution. The public /waitlist page now redirects to normal creator signup because
+// Stripe Connect onboarding is open. No account, password, or role is created here.
 
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
