@@ -76,12 +76,12 @@ export default async function Image({ params }) {
           padding: '72px 88px',
           backgroundColor: '#F8FAFC',
           backgroundImage:
-            'radial-gradient(circle at 15% 20%, rgba(249,115,96,0.22) 0%, rgba(249,115,96,0) 45%), radial-gradient(circle at 88% 82%, rgba(20,99,89,0.14) 0%, rgba(20,99,89,0) 45%)',
+            'radial-gradient(circle at 15% 20%, rgba(15,118,110,0.14) 0%, rgba(15,118,110,0) 45%), radial-gradient(circle at 88% 82%, rgba(20,99,89,0.14) 0%, rgba(20,99,89,0) 45%)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <img src={iconDataUri} width={40} height={40} style={{ display: 'flex' }} />
-          <div style={{ display: 'flex', fontSize: 28, fontWeight: 600, color: '#2563EB' }}>ByUs</div>
+          <div style={{ display: 'flex', fontSize: 28, fontWeight: 600, color: '#0F766E' }}>ByUs</div>
         </div>
 
         <div style={{ display: 'flex', flex: 1, alignItems: 'center', gap: 56 }}>
@@ -100,7 +100,7 @@ export default async function Image({ params }) {
                 height: 220,
                 borderRadius: '50%',
                 backgroundColor: 'rgba(20,99,89,0.1)',
-                color: '#2563EB',
+                color: '#0F766E',
                 fontSize: 96,
                 fontWeight: 600,
                 alignItems: 'center',

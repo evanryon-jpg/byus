@@ -102,7 +102,7 @@ function CreatorProfile() {
         <p className="text-brand-ink/70">Couldn't load this page. Check your connection and try again.</p>
         <button
           onClick={load}
-          className="mt-4 rounded-full bg-[#2563EB] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#1D4ED8]"
+          className="mt-4 rounded-full bg-[#0F766E] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#115E59]"
         >
           Try again
         </button>
@@ -150,7 +150,7 @@ function CreatorProfile() {
             className="h-16 w-16 shrink-0 rounded-full object-cover"
           />
         ) : (
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#2563EB]/10 text-2xl font-semibold text-[#2563EB]">
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#0F766E]/10 text-2xl font-semibold text-[#0F766E]">
             {(creator.display_name || '?').trim().charAt(0).toUpperCase()}
           </div>
         )}
@@ -176,7 +176,7 @@ function CreatorProfile() {
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-full border border-[#2563EB]/20 px-3 py-1.5 text-sm font-medium text-[#2563EB] hover:bg-[#2563EB]/5"
+              className="rounded-full border border-[#0F766E]/20 px-3 py-1.5 text-sm font-medium text-[#0F766E] hover:bg-[#0F766E]/5"
             >
               {link.label} ↗
             </a>
@@ -216,7 +216,7 @@ function CreatorProfile() {
                   ? (
                     <>
                       Subscribe to watch —{' '}
-                      <a href="#tiers" className="text-[#2563EB] underline">see tiers below</a>.
+                      <a href="#tiers" className="text-[#0F766E] underline">see tiers below</a>.
                     </>
                   )
                   : 'Subscribe to watch this live stream.'}
@@ -235,7 +235,7 @@ function CreatorProfile() {
                 <button
                   type="button"
                   onClick={() => setBillingInterval('month')}
-                  className={billingInterval === 'month' ? 'font-semibold text-[#2563EB]' : 'text-brand-ink/60'}
+                  className={billingInterval === 'month' ? 'font-semibold text-[#0F766E]' : 'text-brand-ink/60'}
                 >
                   Monthly
                 </button>
@@ -243,7 +243,7 @@ function CreatorProfile() {
                 <button
                   type="button"
                   onClick={() => setBillingInterval('year')}
-                  className={billingInterval === 'year' ? 'font-semibold text-[#2563EB]' : 'text-brand-ink/60'}
+                  className={billingInterval === 'year' ? 'font-semibold text-[#0F766E]' : 'text-brand-ink/60'}
                 >
                   Annually
                 </button>
@@ -260,23 +260,23 @@ function CreatorProfile() {
                     <h3 className="font-semibold">{t.name}</h3>
                     {t.description && <p className="mt-1 text-sm text-brand-ink/65">{t.description}</p>}
                     {Number.isInteger(t.trial_days) && t.trial_days > 0 && (
-                      <p className="mt-1 inline-block rounded-full bg-[#2563EB]/10 px-2 py-0.5 text-xs font-semibold text-[#2563EB]">
+                      <p className="mt-1 inline-block rounded-full bg-[#0F766E]/10 px-2 py-0.5 text-xs font-semibold text-[#0F766E]">
                         {t.trial_days}-day free trial
                       </p>
                     )}
-                    <p className="mt-3 text-lg font-bold text-[#2563EB]">
+                    <p className="mt-3 text-lg font-bold text-[#0F766E]">
                       ${(displayCents / 100).toFixed(2)}
                       <span className="text-sm font-normal text-brand-ink/60">{useAnnual ? '/yr' : '/mo'}</span>
                     </p>
                     {useAnnual && savingsCents > 0 && (
-                      <p className="mt-1 text-xs text-[#2563EB]">
+                      <p className="mt-1 text-xs text-[#0F766E]">
                         Save ${(savingsCents / 100).toFixed(2)}/yr vs. paying monthly
                       </p>
                     )}
                     <button
                       onClick={() => handleSubscribe(t.id, useAnnual ? 'year' : 'month')}
                       disabled={subscribing === t.id}
-                      className="mt-4 w-full rounded-full bg-[#2563EB] py-2 text-sm font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-50"
+                      className="mt-4 w-full rounded-full bg-[#0F766E] py-2 text-sm font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
                     >
                       {subscribing === t.id ? 'Redirecting…' : 'Subscribe'}
                     </button>
@@ -461,7 +461,7 @@ function ReportButton({ creatorId, postId }) {
         <button
           type="submit"
           disabled={submitting || !reason}
-          className="rounded-full bg-[#2563EB] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-50"
+          className="rounded-full bg-[#0F766E] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
         >
           {submitting ? 'Sending…' : 'Send report'}
         </button>
@@ -513,7 +513,7 @@ function PostFilters({ typeFilter, onTypeFilter, accessFilter, onAccessFilter, s
           onChange={(e) => onSearch(e.target.value)}
           placeholder="Search posts"
           aria-label="Search posts"
-          className="w-full rounded-full border border-brand-ink/10 bg-brand-paper py-2 pl-9 pr-4 text-sm placeholder:text-brand-ink/50 focus:border-[#2563EB]/40 focus:outline-none"
+          className="w-full rounded-full border border-brand-ink/10 bg-brand-paper py-2 pl-9 pr-4 text-sm placeholder:text-brand-ink/50 focus:border-[#0F766E]/40 focus:outline-none"
         />
       </div>
       <div className="flex flex-wrap items-center gap-1.5">
@@ -540,7 +540,7 @@ function FilterChip({ active, onClick, children }) {
       onClick={onClick}
       className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
         active
-          ? 'border-[#2563EB] bg-[#2563EB] text-white'
+          ? 'border-[#0F766E] bg-[#0F766E] text-white'
           : 'border-brand-ink/10 text-brand-ink/65 hover:bg-brand-ink/5'
       }`}
     >
@@ -576,7 +576,7 @@ function TopSupporters({ supporters, hasTiers }) {
                   className="h-10 w-10 rounded-full border-2 border-white object-cover"
                 />
               ) : (
-                <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-[#2563EB]/10 text-sm font-semibold text-[#2563EB]">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-[#0F766E]/10 text-sm font-semibold text-[#0F766E]">
                   {(s.displayName || '?').trim().charAt(0).toUpperCase()}
                 </div>
               )}
@@ -599,7 +599,7 @@ function TopSupporters({ supporters, hasTiers }) {
             : hasTiers ? (
               <>
                 This spot is open —{' '}
-                <a href="#tiers" className="text-[#2563EB] underline">
+                <a href="#tiers" className="text-[#0F766E] underline">
                   be the first supporter shown here
                 </a>
                 .
@@ -628,7 +628,7 @@ function SupportGoalBar({ goal }) {
         </p>
       </div>
       <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-brand-ink/10">
-        <div className="h-full rounded-full bg-[#2563EB] transition-all" style={{ width: `${pct}%` }} />
+        <div className="h-full rounded-full bg-[#0F766E] transition-all" style={{ width: `${pct}%` }} />
       </div>
     </div>
   );
@@ -797,7 +797,7 @@ function PollBlock({ postId, poll: initialPoll }) {
             type="button"
             onClick={() => handleVote(i)}
             disabled={voting !== null}
-            className="block w-full rounded-lg border border-[#2563EB]/25 px-3 py-2 text-left text-sm font-medium text-[#2563EB] hover:bg-[#2563EB]/5 disabled:opacity-50"
+            className="block w-full rounded-lg border border-[#0F766E]/25 px-3 py-2 text-left text-sm font-medium text-[#0F766E] hover:bg-[#0F766E]/5 disabled:opacity-50"
           >
             {voting === i ? 'Voting…' : option}
           </button>
@@ -821,7 +821,7 @@ function PollBlock({ postId, poll: initialPoll }) {
             disabled={voting !== null}
             className="block w-full text-left text-sm disabled:opacity-50"
           >
-            <div className={`flex justify-between ${mine ? 'font-semibold text-[#2563EB]' : 'text-brand-ink/70'}`}>
+            <div className={`flex justify-between ${mine ? 'font-semibold text-[#0F766E]' : 'text-brand-ink/70'}`}>
               <span>
                 {option}
                 {mine && ' ✓'}
@@ -830,7 +830,7 @@ function PollBlock({ postId, poll: initialPoll }) {
             </div>
             <div className="mt-0.5 h-1.5 w-full overflow-hidden rounded-full bg-brand-ink/5">
               <div
-                className={`h-full rounded-full ${mine ? 'bg-[#2563EB]' : 'bg-[#2563EB]/40'}`}
+                className={`h-full rounded-full ${mine ? 'bg-[#0F766E]' : 'bg-[#0F766E]/40'}`}
                 style={{ width: `${pct}%` }}
               />
             </div>
@@ -853,7 +853,7 @@ function LockedPostPreview({ hasTiers }) {
   return (
     <div className="relative mt-3 overflow-hidden rounded-xl">
       <div
-        className="pointer-events-none h-28 w-full bg-gradient-to-br from-[#2563EB]/10 via-brand-ink/5 to-[#0F766E]/10 blur-[2px]"
+        className="pointer-events-none h-28 w-full bg-gradient-to-br from-[#0F766E]/10 via-brand-ink/5 to-[#0F766E]/10 blur-[2px]"
         aria-hidden="true"
       />
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-white/40 text-center backdrop-blur-sm">
@@ -865,7 +865,7 @@ function LockedPostPreview({ hasTiers }) {
         </span>
         <p className="text-xs font-medium text-brand-ink/70">
           {hasTiers ? (
-            <a href="#tiers" className="text-[#2563EB] underline">
+            <a href="#tiers" className="text-[#0F766E] underline">
               Subscribe to view this post
             </a>
           ) : (
