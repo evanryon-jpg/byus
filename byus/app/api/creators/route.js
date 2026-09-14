@@ -67,12 +67,14 @@ export async function GET(request) {
                 COALESCE(s.active_subscriber_count, 0)::int AS active_subscriber_count,
                 COALESCE(r.recent_subscriber_count, 0)::int AS recent_subscriber_count,
                 COALESCE(f.follower_count, 0)::int AS follower_count,
-                (ranked.rn <= ${FOUNDING_CREATOR_LIMIT}) AS is_founding
+                (founding.id IS NOT NULL) AS is_founding
          FROM users u
-         JOIN (
-           SELECT id, ROW_NUMBER() OVER (ORDER BY created_at, id) AS rn
-           FROM users WHERE role = 'creator'
-         ) ranked ON ranked.id = u.id
+         LEFT JOIN (
+           SELECT id FROM users
+           WHERE role = 'creator'
+           ORDER BY created_at, id
+           LIMIT ${FOUNDING_CREATOR_LIMIT}
+         ) founding ON founding.id = u.id
          LEFT JOIN (
            SELECT creator_id, COUNT(*) AS active_subscriber_count
            FROM subscriptions WHERE status = 'active' GROUP BY creator_id
