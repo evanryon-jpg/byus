@@ -25,6 +25,8 @@ export default function BrowsePage({ searchParams }) {
   const [tag, setTag] = useState(initialTag);
   const [sort, setSort] = useState(initialSort);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [nextOffset, setNextOffset] = useState(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -41,6 +43,7 @@ export default function BrowsePage({ searchParams }) {
         .then((data) => {
           setCreators(data.creators || []);
           setAvailableTags(data.availableTags || []);
+          setNextOffset(data.nextOffset ?? null);
         })
         .catch((err) => {
           if (err.name !== 'AbortError') console.error('creators fetch failed:', err);
@@ -53,6 +56,27 @@ export default function BrowsePage({ searchParams }) {
       controller.abort();
     };
   }, [q, tag, sort]);
+
+  async function loadMore() {
+    if (nextOffset === null || loadingMore) return;
+    setLoadingMore(true);
+    const params = new URLSearchParams({ offset: String(nextOffset) });
+    if (q.trim()) params.set('q', q.trim());
+    if (tag) params.set('tag', tag);
+    if (sort !== 'newest') params.set('sort', sort);
+    try {
+      const response = await fetch(`/api/creators?${params.toString()}`);
+      const data = await response.json();
+      if (response.ok) {
+        setCreators((current) => [...current, ...(data.creators || [])]);
+        setNextOffset(data.nextOffset ?? null);
+      }
+    } catch (err) {
+      console.error('more creators fetch failed:', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   const isFiltered = Boolean(q.trim() || tag);
 
@@ -187,6 +211,18 @@ export default function BrowsePage({ searchParams }) {
           </li>
         ))}
       </ul>
+      {!loading && nextOffset !== null && (
+        <div className="mt-8 text-center">
+          <button
+            type="button"
+            onClick={loadMore}
+            disabled={loadingMore}
+            className="rounded-full border border-[#0F766E] px-6 py-2.5 text-sm font-semibold text-[#0F766E] hover:bg-[#0F766E]/5 disabled:opacity-50"
+          >
+            {loadingMore ? 'Loading…' : 'Show more creators'}
+          </button>
+        </div>
+      )}
       </div>
     </div>
   );
