@@ -10,7 +10,7 @@ import { containsBlockedContent } from '@/lib/content-policy';
 const MAX_PDF_BYTES = 25 * 1024 * 1024;
 const TITLE_MAX = 160;
 const DESCRIPTION_MAX = 3000;
-const MIN_PRICE_CENTS = 100;
+const MIN_PRICE_CENTS = 500;
 const MAX_PRICE_CENTS = 500000;
 
 export async function GET() {
@@ -61,7 +61,7 @@ export async function POST(request) {
     }
     if (accessType === 'purchase' &&
         (!Number.isInteger(priceCents) || priceCents < MIN_PRICE_CENTS || priceCents > MAX_PRICE_CENTS)) {
-      return NextResponse.json({ error: 'Price must be between $1.00 and $5,000.00.' }, { status: 400 });
+      return NextResponse.json({ error: 'Price must be between $5.00 and $5,000.00.' }, { status: 400 });
     }
     if (!file || typeof file === 'string') {
       return NextResponse.json({ error: 'Choose a PDF to upload.' }, { status: 400 });
