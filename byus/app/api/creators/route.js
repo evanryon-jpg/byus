@@ -63,6 +63,7 @@ export async function GET(request) {
         `SELECT u.id, u.display_name, u.bio, u.profile_image_url, u.tags, u.slug,
                 COALESCE(s.active_subscriber_count, 0)::int AS active_subscriber_count,
                 COALESCE(r.recent_subscriber_count, 0)::int AS recent_subscriber_count,
+                COALESCE(f.follower_count, 0)::int AS follower_count,
                 (ranked.rn <= ${FOUNDING_CREATOR_LIMIT}) AS is_founding
          FROM users u
          JOIN (
