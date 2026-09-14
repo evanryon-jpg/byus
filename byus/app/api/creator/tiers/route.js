@@ -10,7 +10,7 @@ import { paymentProvider } from '@/lib/payments';
 import { TRIAL_DAY_OPTIONS } from '@/lib/trials';
 import { containsBlockedContent } from '@/lib/content-policy';
 import { loadCreatorTiers } from '@/lib/creator-dashboard-data';
-import { MIN_MEMBERSHIP_PRICE_CENTS } from '@/lib/pricing';
+import { MIN_ANNUAL_BILLING_MONTHS, MIN_MEMBERSHIP_PRICE_CENTS } from '@/lib/pricing';
 
 // Stripe itself caps unit_amount well above this, but there's no legitimate reason for
 // a creator subscription tier to cost more than $2,000/month — bounding it here catches
@@ -81,6 +81,12 @@ export async function POST(request) {
   if (hasAnnual && (!Number.isInteger(annualPriceCents) || annualPriceCents < MIN_MEMBERSHIP_PRICE_CENTS)) {
     return NextResponse.json(
       { error: 'Annual price must be at least $5.00, or left blank.' },
+      { status: 400 }
+    );
+  }
+  if (hasAnnual && annualPriceCents < priceCents * MIN_ANNUAL_BILLING_MONTHS) {
+    return NextResponse.json(
+      { error: 'Annual price must be at least 10 months of the monthly price (up to two months free).' },
       { status: 400 }
     );
   }
