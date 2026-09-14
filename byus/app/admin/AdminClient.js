@@ -28,6 +28,7 @@ export default function AdminClient({
     instagramFanCount,
     instagramWaitlistCount,
     recentInstagramWaitlistCount,
+    instagramCampaignMetrics = {},
     activeSubscriberCount,
     followerCount,
     recentFollowerCount,
@@ -45,6 +46,7 @@ export default function AdminClient({
     creators,
     disputes,
   } = data;
+  const campaignRecent = (event) => Number(instagramCampaignMetrics[event]?.recent || 0);
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-12">
@@ -99,6 +101,28 @@ export default function AdminClient({
           flag={needsReviewCount > 0}
         />
       </div>
+
+      <section className="mt-6 rounded-2xl border border-[#0F766E]/15 bg-brand-paper p-5">
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h2 className="font-semibold text-[#172033]">Instagram campaign funnel</h2>
+            <p className="mt-1 text-sm text-brand-ink/60">Anonymous activity totals from the last 7 days</p>
+          </div>
+          <p className="text-sm font-semibold text-[#0F766E]">
+            {recentInstagramSignupCount.toLocaleString()} completed account {recentInstagramSignupCount === 1 ? 'signup' : 'signups'}
+          </p>
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
+          <CampaignMetric label="Page visits" value={campaignRecent('view')} />
+          <CampaignMetric label="Demo clicks" value={campaignRecent('demo_click')} />
+          <CampaignMetric label="Browse clicks" value={campaignRecent('browse_click')} />
+          <CampaignMetric label="Opinion clicks" value={campaignRecent('feedback_click')} />
+          <CampaignMetric label="Signup clicks" value={campaignRecent('signup_click')} />
+        </div>
+        <p className="mt-3 text-xs text-brand-ink/50">
+          Counts begin when this tracker was enabled. Reloads can count as another visit; no personal visitor data is stored.
+        </p>
+      </section>
 
       <div className="mt-3 rounded-xl border border-[#2563EB]/15 bg-[#2563EB]/5 px-4 py-3 text-xs text-brand-ink/65">
         Estimates use standard domestic card pricing of 2.9% + 30¢ plus 0.7% Billing.
@@ -763,6 +787,15 @@ function SuggestionRow({ suggestion, onUpdate }) {
           {savingNote ? 'Saving…' : 'Save reply'}
         </button>
       </div>
+    </div>
+  );
+}
+
+function CampaignMetric({ label, value }) {
+  return (
+    <div className="rounded-xl bg-[#0F766E]/5 px-3 py-3 text-center">
+      <p className="text-2xl font-semibold tabular-nums text-[#172033]">{value.toLocaleString()}</p>
+      <p className="mt-1 text-xs text-brand-ink/60">{label}</p>
     </div>
   );
 }
