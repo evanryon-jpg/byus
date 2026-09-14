@@ -374,7 +374,7 @@ function Sidebar({ subscribedPrice, onJoin }) {
         onClick={onJoin}
         disabled={joined}
         className={`mt-5 w-full rounded-full px-4 py-3 text-sm font-bold shadow-sm transition ${
-          joined ? 'cursor-default bg-brand-teal/10 text-brand-teal' : 'bg-brand-teal text-brand-paper hover:bg-[#1D4ED8]'
+          joined ? 'cursor-default bg-brand-teal/10 text-brand-teal' : 'bg-brand-teal text-brand-paper hover:bg-[#115E59]'
         }`}
       >
         {joined ? '✓ You\'re a member' : `Join ${UNLOCK_TIER.name} →`}
@@ -442,7 +442,7 @@ function CreatorDashboardPanel() {
         <div
           className="h-1.5 w-[52px] rounded-full"
           style={{
-            background: 'repeating-linear-gradient(115deg, #0F766E 0 8px, #0F766E 8px 16px, #2563EB 16px 24px)',
+            background: 'repeating-linear-gradient(115deg, #0F766E 0 8px, #0F766E 8px 16px, #0F766E 16px 24px)',
           }}
           aria-hidden="true"
         />
@@ -541,7 +541,7 @@ function CheckoutModal({ tier, onClose, onSimulate }) {
         <button
           type="button"
           onClick={onSimulate}
-          className="mt-4 w-full rounded-full bg-brand-teal px-5 py-3 text-sm font-semibold text-brand-paper shadow-sm transition hover:bg-[#1D4ED8]"
+          className="mt-4 w-full rounded-full bg-brand-teal px-5 py-3 text-sm font-semibold text-brand-paper shadow-sm transition hover:bg-[#115E59]"
         >
           Simulate Fan Payment
         </button>
@@ -621,7 +621,7 @@ function Toast({ message }) {
   );
 }
 
-const CONFETTI_COLORS = ['#2563EB', '#0F766E', '#0F766E', '#F8FAFC', '#1D4ED8'];
+const CONFETTI_COLORS = ['#0F766E', '#0F766E', '#0F766E', '#F8FAFC', '#115E59'];
 
 // Hand-rolled instead of pulling in a confetti package -- this only needs one
 // one-shot burst, so a tiny canvas particle sim keeps the demo dependency-free.
