@@ -12,7 +12,6 @@ export default function ByUsLogo({ className = 'h-10 w-auto' }) {
         <circle cx="11" cy="9" r="4.5" fill="#2563EB" />
         <path fill="#2563EB" d="M10 15c-4.8 0-7.5 3.8-7.5 9v2.5C2.5 33 7.7 38 14 38h6v-7c-4.5 0-7-2.7-7-7.5V15h-3Z" />
         <circle cx="29" cy="9" r="4.5" fill="#0F766E" />
-        <circle cx="34" cy="10" r="2.6" fill="#0F766E" />
         <path fill="#0F766E" d="M30 15c4.8 0 7.5 3.8 7.5 9v2.5C37.5 33 32.3 38 26 38h-6v-7c4.5 0 7-2.7 7-7.5V15h3Z" />
         <rect x="12" y="16" width="16" height="9" rx="3.5" fill="#fff" stroke="#172554" strokeWidth="1.2" />
         <path d="M23.5 24.5l3 3-.5-3.5" fill="#fff" stroke="#172554" strokeWidth="1.2" strokeLinejoin="round" />
