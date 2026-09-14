@@ -157,7 +157,7 @@ export default function BrowsePage({ searchParams }) {
                   <h3 className="font-semibold">{c.display_name || 'Unnamed creator'}</h3>
                   {c.is_founding && (
                     <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-clay px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-[#F8FAFC]">
-                      🚀 Founding
+                      Founding
                     </span>
                   )}
                   {c.active_subscriber_count > 0 && (
