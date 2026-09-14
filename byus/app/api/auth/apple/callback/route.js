@@ -91,6 +91,7 @@ export async function POST(request) {
       ? saved.next
       : '';
   const referralCode = typeof saved.referralCode === 'string' ? saved.referralCode : '';
+  const acquisitionSource = saved.acquisitionSource === 'instagram' ? 'instagram' : null;
 
   // --- Exchange the authorization code for tokens ---
   let tokenData;
@@ -197,7 +198,7 @@ export async function POST(request) {
           const created = await client.query(
             `INSERT INTO users (
                email, role, display_name,
-               apple_sub, email_verified, terms_accepted_at, platform_fee_percent
+               apple_sub, email_verified, terms_accepted_at, platform_fee_percent, acquisition_source
              )
              VALUES (
                $1, $2, $3, $4, true, now(),
@@ -210,12 +211,14 @@ export async function POST(request) {
                (CASE
                  WHEN $2 = 'creator' AND (SELECT COUNT(*) FROM users WHERE role = 'creator') < $5 THEN $6
                  ELSE $7
-               END)::integer
+               END)::integer,
+               $8
              )
              RETURNING id, email, role, display_name, session_version`,
             [
               email, role, displayName, payload.sub,
               FOUNDING_CREATOR_LIMIT, DISCOUNTED_FEE_PERCENT, STANDARD_FEE_PERCENT,
+              acquisitionSource,
             ]
           );
           return created.rows[0];
@@ -246,7 +249,11 @@ export async function POST(request) {
   response.cookies.set(SESSION_COOKIE_NAME, token, getSessionCookieOptions());
   response.cookies.set(STATE_COOKIE_NAME, '', { path: '/', maxAge: 0 });
   if (accountCreated) {
-    await trackServerEvent('funnel_account_created', { role: user.role, provider: 'apple' }, request);
+    await trackServerEvent(
+      'funnel_account_created',
+      { role: user.role, provider: 'apple', source: acquisitionSource || 'unattributed' },
+      request
+    );
   }
   return response;
 }
