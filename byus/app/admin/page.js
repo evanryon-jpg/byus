@@ -5,7 +5,7 @@
 
 import { getCurrentUser } from '@/lib/session';
 import { isAdmin } from '@/lib/admin';
-import { loadAdminOverview, loadAdminReports, loadAdminSuggestions } from '@/lib/admin-data';
+import { loadAdminOverview, loadAdminReports, loadAdminSuggestions, loadOutreachContacts } from '@/lib/admin-data';
 import AdminClient from './AdminClient';
 
 export const dynamic = 'force-dynamic';
@@ -41,7 +41,7 @@ export default async function AdminPage() {
     );
   }
 
-  const [reportsResult, suggestionsResult] = await Promise.all([
+  const [reportsResult, suggestionsResult, outreachResult] = await Promise.all([
     loadAdminReports()
       .then((reports) => ({ reports, error: '' }))
       .catch((err) => {
@@ -54,6 +54,12 @@ export default async function AdminPage() {
         console.error('admin: suggestions load failed:', err);
         return { suggestions: null, error: 'Could not load suggestions.' };
       }),
+    loadOutreachContacts()
+      .then((contacts) => ({ contacts, error: '' }))
+      .catch((err) => {
+        console.error('admin: creator opinion invitations load failed:', err);
+        return { contacts: null, error: 'Could not load creator opinion invitations.' };
+      }),
   ]);
 
   return (
@@ -63,6 +69,8 @@ export default async function AdminPage() {
       initialReportsError={reportsResult.error}
       initialSuggestions={suggestionsResult.suggestions}
       initialSuggestionsError={suggestionsResult.error}
+      initialOutreachContacts={outreachResult.contacts}
+      initialOutreachError={outreachResult.error}
     />
   );
 }
