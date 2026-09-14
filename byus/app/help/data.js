@@ -185,7 +185,7 @@ export const HELP_CATEGORIES = [
     articles: [
       {
         q: 'How do one-time tips work?',
-        a: "A fan picks a preset amount or enters a custom one (from $1 up to $500) and pays through Stripe Checkout — no subscription created, no recurring charge, just a single payment straight to the creator's connected account.",
+        a: "A fan picks a preset amount or enters a custom one (from $5 up to $500) and pays through Stripe Checkout — no subscription created, no recurring charge, just a single payment straight to the creator's connected account.",
       },
       {
         q: 'Can a fan leave a message with a tip?',
