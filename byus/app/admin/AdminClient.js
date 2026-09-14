@@ -174,13 +174,15 @@ export default function AdminClient({
           first payment yet — see the Review column.
         </p>
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[760px] border-collapse text-sm">
+          <table className="w-full min-w-[980px] border-collapse text-sm">
             <thead>
               <tr className="border-b border-brand-ink/10 text-left text-xs font-medium uppercase tracking-wide text-brand-ink/60">
                 <th className="py-2 pr-4">Creator</th>
                 <th className="py-2 pr-4">Joined</th>
                 <th className="py-2 pr-4">Stripe</th>
                 <th className="py-2 pr-4">Fee</th>
+                <th className="py-2 pr-4 text-right">Free followers</th>
+                <th className="py-2 pr-4 text-right">Follow → paid</th>
                 <th className="py-2 pr-4 text-right">Lifetime gross</th>
                 <th className="py-2 pr-4 text-right">Est. contribution</th>
                 <th className="py-2 pr-4">Review</th>
@@ -216,6 +218,21 @@ export default function AdminClient({
                   </td>
                   <td className="py-2.5 pr-4 text-brand-ink/70">{c.platformFeePercent}%</td>
                   <td className="py-2.5 pr-4 text-right font-medium text-[#172033]" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                    {c.followerCount.toLocaleString()}
+                  </td>
+                  <td className="py-2.5 pr-4 text-right" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                    <div className="font-medium text-[#172033]">
+                      {c.convertedFollowerCount.toLocaleString()} of {c.followerCount.toLocaleString()}
+                    </div>
+                    <div className="text-[11px] text-brand-ink/55">
+                      {c.followerCount >= 10
+                        ? `${c.followerConversionPercent.toLocaleString()}%`
+                        : c.followerCount > 0
+                          ? 'Early data'
+                          : 'No followers yet'}
+                    </div>
+                  </td>
+                  <td className="py-2.5 pr-4 text-right font-medium text-[#172033]" style={{ fontVariantNumeric: 'tabular-nums' }}>
                     {formatUSD(c.lifetimeGrossCents)}
                   </td>
                   <td className={`py-2.5 pr-4 text-right font-medium ${c.estimatedContributionCents < 0 ? 'text-red-700' : 'text-[#0F766E]'}`} style={{ fontVariantNumeric: 'tabular-nums' }}>
@@ -236,7 +253,7 @@ export default function AdminClient({
               ))}
               {creators.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="py-6 text-center text-brand-ink/60">
+                  <td colSpan={10} className="py-6 text-center text-brand-ink/60">
                     No creators have signed up yet.
                   </td>
                 </tr>
