@@ -26,6 +26,8 @@ export default function AdminClient({
     recentInstagramSignupCount,
     instagramCreatorCount,
     instagramFanCount,
+    instagramWaitlistCount,
+    recentInstagramWaitlistCount,
     activeSubscriberCount,
     followerCount,
     recentFollowerCount,
@@ -69,6 +71,11 @@ export default function AdminClient({
           label="Instagram-attributed signups"
           value={instagramSignupCount.toLocaleString()}
           detail={`+${recentInstagramSignupCount.toLocaleString()} in 7 days · ${instagramCreatorCount.toLocaleString()} creators · ${instagramFanCount.toLocaleString()} fans`}
+        />
+        <StatTile
+          label="Instagram waitlist applications"
+          value={instagramWaitlistCount.toLocaleString()}
+          detail={`+${recentInstagramWaitlistCount.toLocaleString()} in the last 7 days`}
         />
         <StatTile
           label="Free creator follows"
