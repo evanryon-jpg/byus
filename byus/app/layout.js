@@ -11,7 +11,7 @@ const fraunces = Fraunces({ subsets: ['latin'], weight: ['500', '600', '700', '8
 const karla = Karla({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-body', display: 'swap' });
 const SITE_URL = process.env.APP_URL || 'https://byus-ten.vercel.app';
 
-export const viewport = { themeColor: '#2563EB' };
+export const viewport = { themeColor: '#0F766E' };
 export const metadata = {
   metadataBase: new URL(SITE_URL),
   title: 'ByUs — Creator subscriptions, simplified',

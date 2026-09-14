@@ -1,6 +1,6 @@
 // Next.js serves this at /manifest.webmanifest and links it in <head> automatically.
 // Lets creators/fans on Android "Add to Home Screen" with the real name, the
-// ampersand icon, and the brand teal -- instead of the browser guessing.
+// app icon, and the brand teal -- instead of the browser guessing.
 export default function manifest() {
   return {
     name: 'ByUs — Creator subscriptions, simplified',
@@ -9,7 +9,7 @@ export default function manifest() {
     start_url: '/',
     display: 'standalone',
     background_color: '#F8FAFC',
-    theme_color: '#2563EB',
+    theme_color: '#0F766E',
     icons: [
       {
         src: '/icon.png',

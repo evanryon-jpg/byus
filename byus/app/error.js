@@ -19,7 +19,7 @@ export default function ErrorPage({ error, reset }) {
       <div className="mt-8 flex flex-wrap justify-center gap-4">
         <button
           onClick={reset}
-          className="rounded-full bg-brand-teal px-6 py-2.5 font-semibold text-white hover:bg-[#1D4ED8]"
+          className="rounded-full bg-brand-teal px-6 py-2.5 font-semibold text-white hover:bg-[#115E59]"
         >
           Try again
         </button>

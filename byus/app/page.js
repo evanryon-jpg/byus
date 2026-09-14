@@ -118,7 +118,7 @@ function FoundingCreatorProgram({ stats }) {
             <>
               <a
                 href="/signup?role=creator"
-                className="inline-block rounded-full bg-brand-gold px-8 py-3.5 text-base font-bold text-[#172554] shadow-[0_16px_30px_-14px_rgba(249,115,96,0.5)] transition hover:-translate-y-0.5"
+                className="inline-block rounded-full bg-brand-gold px-8 py-3.5 text-base font-bold text-[#172554] shadow-[0_16px_30px_-14px_rgba(15,118,110,0.5)] transition hover:-translate-y-0.5"
               >
                 Claim a Founding Spot →
               </a>
@@ -143,7 +143,7 @@ function Hero({ user }) {
     // right, so the hero shows what a ByUs page actually looks like instead of telling
     // you. Stacks to a single column on mobile, art below the copy, so the CTAs and
     // fine print still come first for outreach traffic.
-    <section className="relative overflow-hidden bg-gradient-to-b from-[#172554] via-[#1E3A8A] to-brand-cream">
+    <section className="relative overflow-hidden bg-gradient-to-b from-[#172554] via-[#134B61] to-brand-cream">
       {/* Two subtle ambient color glows add depth to the dark band without
           competing with the message or creator previews. Purely
           decorative background motion, kept separate from the live-pulse dot on the

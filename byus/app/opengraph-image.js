@@ -6,12 +6,9 @@ export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
 export default async function Image() {
-  // Reuse the actual app icon PNG as the badge image, rather than re-rendering the
-  // ampersand as live text. Satori (the renderer behind ImageResponse) does full
-  // OpenType shaping and picks up Fraunces' contextual swash-ampersand alternate --
-  // a fancier glyph than the plain one baked into icon.png -- so the two renderers
-  // disagreed on which glyph "&" means. Using the icon file directly guarantees this
-  // card always matches the real favicon/app icon pixel-for-pixel.
+  // Reuse the actual app icon PNG directly, rather than re-drawing the mark as
+  // separate shapes here -- guarantees this card always matches the real
+  // favicon/app icon pixel-for-pixel instead of drifting out of sync with it.
   const iconData = await fetch(
     new URL('./icon.png', import.meta.url)
   ).then((res) => res.arrayBuffer());
@@ -30,11 +27,11 @@ export default async function Image() {
           justifyContent: 'center',
           backgroundColor: '#F8FAFC',
           backgroundImage:
-            'radial-gradient(circle at 15% 20%, rgba(249,115,96,0.25) 0%, rgba(249,115,96,0) 45%), radial-gradient(circle at 85% 15%, rgba(20,99,89,0.12) 0%, rgba(20,99,89,0) 45%)',
+            'radial-gradient(circle at 15% 20%, rgba(15,118,110,0.16) 0%, rgba(15,118,110,0) 45%), radial-gradient(circle at 85% 15%, rgba(20,99,89,0.12) 0%, rgba(20,99,89,0) 45%)',
         }}
       >
-        {/* The same ampersand mark used for the app icon -- "by us", not tied to any
-            one creative medium, so it reads for any kind of creator. */}
+        {/* The same mark used for the app icon -- "by us," not tied to any one
+            creative medium, so it reads for any kind of creator. */}
         <img
           src={iconDataUri}
           width={120}
