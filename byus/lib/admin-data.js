@@ -22,7 +22,7 @@ const CLOSED_DISPUTE_STATUSES = ['won', 'lost'];
 // a 12-month trailing series for the dashboard's charts, and a recent-creators list for
 // spotting problem accounts (never onboarded Stripe, zero earnings after weeks, etc).
 export async function loadAdminOverview() {
-  const [counts, activeSubs, lifetime, monthlyResult, recentCreators, openDisputes, recentDisputes, needsReview] =
+  const [counts, activeSubs, follows, lifetime, monthlyResult, recentCreators, openDisputes, recentDisputes, needsReview] =
     await Promise.all([
       query(
         `SELECT
@@ -31,6 +31,7 @@ export async function loadAdminOverview() {
          FROM users`
       ),
       query(`SELECT COUNT(*)::int AS count FROM subscriptions WHERE status = 'active'`),
+      query(`SELECT COUNT(*)::int AS count FROM creator_follows`),
       query(
         `SELECT
            COALESCE(SUM(amount_cents), 0)::bigint AS gross_cents,
@@ -204,6 +205,7 @@ export async function loadAdminOverview() {
     creatorCount: counts.rows[0].creator_count,
     fanCount: counts.rows[0].fan_count,
     activeSubscriberCount: activeSubs.rows[0].count,
+    followerCount: follows.rows[0].count,
     lifetimeGrossCents,
     lifetimePlatformFeeCents,
     lifetimePaymentCount,
