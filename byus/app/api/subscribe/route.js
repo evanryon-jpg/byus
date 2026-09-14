@@ -12,6 +12,7 @@ import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { getReferralDiscount } from '@/lib/referrals';
 import { getPlatformMilestoneReductionPoints, applyPlatformMilestoneReduction } from '@/lib/fees';
 import { trackServerEvent } from '@/lib/analytics';
+import { MIN_MEMBERSHIP_PRICE_CENTS } from '@/lib/pricing';
 import {
   TERMS_VERSION,
   MEMBERSHIP_REFUND_POLICY_VERSION,
@@ -79,8 +80,11 @@ export async function POST(request) {
     const stripePriceId = billingInterval === 'year' ? tier.stripe_annual_price_id : tier.stripe_price_id;
     const purchasePriceCents = billingInterval === 'year' ? tier.annual_price_cents : tier.price_cents;
 
-    if (!Number.isInteger(purchasePriceCents) || purchasePriceCents <= 0) {
-      return NextResponse.json({ error: 'This tier has an invalid price.' }, { status: 400 });
+    if (!Number.isInteger(purchasePriceCents) || purchasePriceCents < MIN_MEMBERSHIP_PRICE_CENTS) {
+      return NextResponse.json(
+        { error: 'This tier is below ByUs’s $5 minimum for new subscriptions. Please choose another tier.' },
+        { status: 400 }
+      );
     }
 
     if (session.userId === tier.creator_id) {
