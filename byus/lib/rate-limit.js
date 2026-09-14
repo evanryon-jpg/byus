@@ -134,6 +134,13 @@ const limiters = {
     limiter: Ratelimit.slidingWindow(5, '1 h'),
     prefix: 'rl:report',
   }),
+  // Following is free and intentionally easy, but the public count must not be writable
+  // at bot speed. This still allows a real person to follow many creators in one visit.
+  follow: new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(60, '10 m'),
+    prefix: 'rl:follow',
+  }),
   // Guards the Founding Creator waitlist form (see app/api/waitlist/route.js) — no
   // session to key off of, since it's meant to work for a first-time visitor, so this is
   // the only thing standing between it and a script hammering the table with rows.
