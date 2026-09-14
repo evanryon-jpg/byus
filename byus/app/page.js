@@ -2,7 +2,6 @@ import Image from 'next/image';
 import { getCurrentUser } from '@/lib/session';
 import { query } from '@/lib/db';
 import { getFoundingPromoStats } from '@/lib/fees';
-import { getWaitlistCount } from '@/lib/waitlist';
 import FAQSection from './components/FAQSection';
 import CreatorSearch from './components/CreatorSearch';
 import FeaturedCreators from './components/FeaturedCreators';
@@ -15,14 +14,13 @@ import CreatorShowcase from './components/CreatorShowcase';
 export default async function HomePage() {
   const session = await getCurrentUser();
   const foundingStats = await getFoundingPromoStats(query);
-  const waitlistCount = await getWaitlistCount(query);
 
   return (
     <div>
       <Hero user={session} />
       <CreatorShowcase />
       <EarningsCalculator />
-      <FoundingCreatorProgram stats={foundingStats} waitlistCount={waitlistCount} />
+      <FoundingCreatorProgram stats={foundingStats} />
       <Features />
       <HowItWorks />
       <LookingForSomeoneSection />
@@ -59,17 +57,10 @@ export default async function HomePage() {
 // than another feature bullet -- the treatment the brief asked for when it said this
 // needed to be "more visible."
 //
-// While Stripe Connect onboarding is paused for platform review (see
-// app/api/creator/connect-stripe/route.js), the CTA below points to /waitlist instead of
-// straight into signup+Stripe -- nobody should hit a dead end at the one step that's
-// currently broken. `waitlistCount` (real rows in founding_waitlist, see lib/waitlist.js)
-// stands in for `stats.remaining`'s "spots left" framing here on purpose: with signup
-// itself funneled to the waitlist, the real founding-creator count barely moves, so
-// showing it here would make the program look stalled instead of in-demand. The
-// underlying fee math (stats.limit/remaining) is untouched -- once Stripe clears review
-// and real signups resume, applying here is what determines who actually gets one of the
-// first stats.limit spots.
-function FoundingCreatorProgram({ stats, waitlistCount }) {
+// Creator signup and Stripe Connect onboarding are open. ByUs's own platform payout
+// remains under Stripe review, but connected creator onboarding and payments are not
+// presented as paused. The real creator count determines remaining founding spots.
+function FoundingCreatorProgram({ stats }) {
   const soldOut = stats.remaining <= 0;
   const perks = [
     {
@@ -133,22 +124,16 @@ function FoundingCreatorProgram({ stats, waitlistCount }) {
           ) : (
             <>
               <a
-                href="/waitlist?source=founding_section"
+                href="/signup?role=creator"
                 className="inline-block rounded-full bg-brand-gold px-8 py-3.5 text-base font-bold text-[#172554] shadow-[0_16px_30px_-14px_rgba(15,118,110,0.5)] transition hover:-translate-y-0.5"
               >
-                Apply for a Founding Spot →
+                Create your founding page →
               </a>
               <p className="mt-3 text-sm font-medium tabular-nums text-brand-paper/55">
-                {waitlistCount > 0 ? (
-                  <>
-                    <strong className="font-display text-base text-brand-paper">
-                      {waitlistCount.toLocaleString()}
-                    </strong>{' '}
-                    {waitlistCount === 1 ? 'creator has' : 'creators have'} already applied
-                  </>
-                ) : (
-                  'Be the first to apply'
-                )}
+                <strong className="font-display text-base text-brand-paper">
+                  {stats.remaining.toLocaleString()}
+                </strong>{' '}
+                founding {stats.remaining === 1 ? 'spot remains' : 'spots remain'}
               </p>
             </>
           )}
@@ -227,10 +212,10 @@ function Hero({ user }) {
                 </a>
               ) : (
                 <a
-                  href="/waitlist?source=hero"
+                  href="/signup?role=creator"
                   className="rounded-full bg-[#0F766E] px-7 py-3.5 text-base font-semibold text-brand-paper shadow-[0_16px_30px_-14px_rgba(15,118,110,0.38)] transition hover:-translate-y-0.5 hover:bg-[#115E59]"
                 >
-                  Apply for a Founding Spot →
+                  Start your creator page →
                 </a>
               )}
 
