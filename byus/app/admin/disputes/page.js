@@ -44,13 +44,13 @@ export default function AdminDisputesPage() {
     <div className="mx-auto max-w-5xl px-6 py-12">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-sm font-medium text-[#2563EB]">Payments & risk</p>
+          <p className="text-sm font-medium text-[#0F766E]">Payments & risk</p>
           <h1 className="mt-1 text-2xl font-bold text-[#172033]">Dispute response queue</h1>
           <p className="mt-1 text-sm text-brand-ink/65">
             Open disputes are ordered by Stripe's response deadline so the most urgent case stays on top.
           </p>
         </div>
-        <a href="/admin" className="text-sm font-semibold text-[#2563EB] hover:underline">
+        <a href="/admin" className="text-sm font-semibold text-[#0F766E] hover:underline">
           ← Platform overview
         </a>
       </div>
@@ -133,7 +133,7 @@ function DisputeCard({ dispute, compact = false }) {
             href={`/api/admin/payments/disputes/${encodeURIComponent(dispute.stripeDisputeId || dispute.id)}/evidence`}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-semibold text-[#2563EB] hover:underline"
+            className="font-semibold text-[#0F766E] hover:underline"
           >
             View evidence package ↗
           </a>
@@ -195,7 +195,7 @@ function getDeadlineState(dispute) {
     badge: dispute.responseUrgent ? 'Urgent' : 'Open',
     badgeClass: dispute.responseUrgent
       ? 'rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700'
-      : 'rounded-full bg-[#2563EB]/10 px-2 py-0.5 text-xs font-semibold text-[#2563EB]',
+      : 'rounded-full bg-[#0F766E]/10 px-2 py-0.5 text-xs font-semibold text-[#0F766E]',
   };
 }
 
