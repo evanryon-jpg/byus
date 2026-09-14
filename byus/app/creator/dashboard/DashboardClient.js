@@ -26,7 +26,9 @@ export default function DashboardClient({
   initialPosts,
   initialLinks,
   initialFollowerCount = 0,
+  initialRecentFollowerCount = 0,
   initialConvertedFollowerCount = 0,
+  initialRecentConvertedFollowerCount = 0,
 }) {
   const [user, setUser] = useState(initialUser);
   const [tiers, setTiers] = useState(initialTiers);
@@ -112,7 +114,9 @@ export default function DashboardClient({
   const hasTier = tiers.length > 0;
   const hasPost = posts.length > 0;
   const followerCount = Number(initialFollowerCount);
+  const recentFollowerCount = Number(initialRecentFollowerCount);
   const convertedFollowerCount = Number(initialConvertedFollowerCount);
+  const recentConvertedFollowerCount = Number(initialRecentConvertedFollowerCount);
   const followerConversionPercent =
     followerCount > 0 ? Math.round((convertedFollowerCount / followerCount) * 1000) / 10 : 0;
 
@@ -139,11 +143,17 @@ export default function DashboardClient({
             <p className="mt-1 text-sm text-brand-ink/65">
               Free {followerCount === 1 ? 'follower' : 'followers'}
             </p>
+            <p className="mt-1 text-xs font-medium text-[#0F766E]">
+              +{recentFollowerCount.toLocaleString()} in the last 30 days
+            </p>
           </div>
           <div className="rounded-xl bg-white/70 p-4">
             <strong className="text-3xl text-brand-ink">{convertedFollowerCount.toLocaleString()}</strong>
             <p className="mt-1 text-sm text-brand-ink/65">
               Became active paid members after following
+            </p>
+            <p className="mt-1 text-xs font-medium text-[#0F766E]">
+              +{recentConvertedFollowerCount.toLocaleString()} in the last 30 days
             </p>
             <p className="mt-1 text-xs text-brand-ink/55">
               {followerCount >= 10
