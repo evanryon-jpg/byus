@@ -9,6 +9,7 @@ import EarningsSection from '../../components/EarningsSection';
 import PayoutsSection from '../../components/PayoutsSection';
 import DigitalProductManager from '../../components/DigitalProductManager';
 import PageCoach from '../../components/PageCoach';
+import MonthlyBarChart from '../../components/charts/MonthlyBarChart';
 import { TRIAL_DAY_OPTIONS } from '@/lib/trials';
 import { MIN_DISCOUNT_PERCENT, MAX_DISCOUNT_PERCENT } from '@/lib/discounts';
 import { STANDARD_FEE_PERCENT } from '@/lib/pricing';
@@ -29,6 +30,7 @@ export default function DashboardClient({
   initialRecentFollowerCount = 0,
   initialConvertedFollowerCount = 0,
   initialRecentConvertedFollowerCount = 0,
+  initialAudienceMonthly = [],
 }) {
   const [user, setUser] = useState(initialUser);
   const [tiers, setTiers] = useState(initialTiers);
@@ -168,6 +170,38 @@ export default function DashboardClient({
           Free followers can find your page again from their dashboard. Following does not add anyone to an email
           list or unlock paid content.
         </p>
+        {followerCount > 0 && initialAudienceMonthly.length > 0 && (
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <div className="rounded-xl bg-white/70 p-4">
+              <p className="text-sm font-semibold text-brand-ink">New followers</p>
+              <p className="text-xs text-brand-ink/55">Last six months</p>
+              <div className="mt-2 overflow-x-auto">
+                <MonthlyBarChart
+                  data={initialAudienceMonthly}
+                  valueKey="newFollows"
+                  formatValue={(n) => `${n.toLocaleString()} new`}
+                  formatAxisTick={(n) => n.toLocaleString()}
+                  color="#0F766E"
+                  hoverColor="#115E59"
+                />
+              </div>
+            </div>
+            <div className="rounded-xl bg-white/70 p-4">
+              <p className="text-sm font-semibold text-brand-ink">New paid conversions</p>
+              <p className="text-xs text-brand-ink/55">Last six months</p>
+              <div className="mt-2 overflow-x-auto">
+                <MonthlyBarChart
+                  data={initialAudienceMonthly}
+                  valueKey="newConversions"
+                  formatValue={(n) => `${n.toLocaleString()} new`}
+                  formatAxisTick={(n) => n.toLocaleString()}
+                  color="#B45309"
+                  hoverColor="#92400E"
+                />
+              </div>
+            </div>
+          </div>
+        )}
         <a href={`/creator/${user?.slug || user?.id}`} className="mt-3 inline-block text-sm font-semibold text-[#0F766E] hover:underline">
           View your public page
         </a>
