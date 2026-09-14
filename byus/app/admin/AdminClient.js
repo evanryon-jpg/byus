@@ -16,6 +16,8 @@ export default function AdminClient({
   initialReportsError,
   initialSuggestions,
   initialSuggestionsError,
+  initialOutreachContacts,
+  initialOutreachError,
 }) {
   const {
     creatorCount,
@@ -320,9 +322,271 @@ export default function AdminClient({
         </div>
       </div>
 
-      <ReportsSection initialReports={initialReports} initialError={initialReportsError} />
+      <CreatorOpinionInvitations
+        initialContacts={initialOutreachContacts}
+        initialError={initialOutreachError}
+      />
+            <ReportsSection initialReports={initialReports} initialError={initialReportsError} />
       <SuggestionsSection initialSuggestions={initialSuggestions} initialError={initialSuggestionsError} />
     </div>
+  );
+}
+
+const OPINION_REQUEST_SCRIPT = `Hi [Name] — I just watched your recent post about [specific detail]. I appreciated [genuine observation].
+
+We’re building ByUs, a creator membership platform, and I’d value your honest opinion on what we’ve made and how we could improve it. You do not need to leave the platform you already use or sign up for anything.
+
+If you’re open to taking a quick look, the link is in our bio. No pressure whatsoever — honest feedback is exactly what we need.`;
+
+const OPINION_FOLLOW_UP_SCRIPT = `Hi [Name] — just following up on my note from last week. There’s absolutely no pressure to respond or switch platforms. If you happen to look at ByUs, even one honest thought about what works or what needs improvement would help us. Thank you either way.`;
+
+function CreatorOpinionInvitations({ initialContacts, initialError }) {
+  const [contacts, setContacts] = useState(initialContacts);
+  const [error, setError] = useState(initialError || '');
+  const [saving, setSaving] = useState(false);
+  const [copied, setCopied] = useState('');
+  const [form, setForm] = useState({
+    instagramHandle: '',
+    followerCount: '',
+    latestContentNote: '',
+    notes: '',
+  });
+
+  async function addContact(event) {
+    event.preventDefault();
+    setSaving(true);
+    setError('');
+    try {
+      const response = await fetch('/api/admin/outreach', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Could not save that creator.');
+      setContacts((current) => [result.contact, ...(current || [])]);
+      setForm({ instagramHandle: '', followerCount: '', latestContentNote: '', notes: '' });
+    } catch (err) {
+      setError(err.message || 'Could not save that creator.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function updateContact(id, patch) {
+    setError('');
+    try {
+      const response = await fetch(`/api/admin/outreach/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Could not update that creator.');
+      setContacts((current) => current.map((contact) => (contact.id === id ? result.contact : contact)));
+    } catch (err) {
+      setError(err.message || 'Could not update that creator.');
+    }
+  }
+
+  async function copyScript(kind, value) {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(kind);
+      setTimeout(() => setCopied(''), 2000);
+    } catch {
+      setError('Could not copy automatically. Select the message and copy it manually.');
+    }
+  }
+
+  return (
+    <section className="mt-8 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
+      <h2 className="font-semibold text-[#172033]">Creator opinion invitations</h2>
+      <p className="mt-1 text-sm text-brand-ink/65">
+        Keep track of creators you ask for honest feedback. This is not a sales-pitch list.
+      </p>
+
+      <div className="mt-5 grid gap-4 lg:grid-cols-2">
+        <ScriptCard
+          title="Initial opinion request"
+          script={OPINION_REQUEST_SCRIPT}
+          copied={copied === 'initial'}
+          onCopy={() => copyScript('initial', OPINION_REQUEST_SCRIPT)}
+        />
+        <ScriptCard
+          title="Seven-day follow-up"
+          script={OPINION_FOLLOW_UP_SCRIPT}
+          copied={copied === 'followup'}
+          onCopy={() => copyScript('followup', OPINION_FOLLOW_UP_SCRIPT)}
+        />
+      </div>
+
+      <form onSubmit={addContact} className="mt-6 grid gap-3 rounded-xl bg-brand-ink/[0.025] p-4 md:grid-cols-2">
+        <label className="text-xs font-medium text-brand-ink/70">
+          Instagram handle
+          <input
+            required
+            value={form.instagramHandle}
+            onChange={(event) => setForm((current) => ({ ...current, instagramHandle: event.target.value }))}
+            placeholder="@creator"
+            className="mt-1 w-full rounded-lg border border-brand-ink/15 bg-white px-3 py-2 text-sm"
+          />
+        </label>
+        <label className="text-xs font-medium text-brand-ink/70">
+          Followers
+          <input
+            type="number"
+            min="0"
+            value={form.followerCount}
+            onChange={(event) => setForm((current) => ({ ...current, followerCount: event.target.value }))}
+            placeholder="100000"
+            className="mt-1 w-full rounded-lg border border-brand-ink/15 bg-white px-3 py-2 text-sm"
+          />
+        </label>
+        <label className="text-xs font-medium text-brand-ink/70 md:col-span-2">
+          Latest-post detail to mention
+          <input
+            value={form.latestContentNote}
+            onChange={(event) => setForm((current) => ({ ...current, latestContentNote: event.target.value }))}
+            placeholder="What they posted and the genuine detail you noticed"
+            className="mt-1 w-full rounded-lg border border-brand-ink/15 bg-white px-3 py-2 text-sm"
+          />
+        </label>
+        <label className="text-xs font-medium text-brand-ink/70 md:col-span-2">
+          Private notes
+          <input
+            value={form.notes}
+            onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
+            placeholder="Patreon, Ko-fi, course link, niche, or anything useful"
+            className="mt-1 w-full rounded-lg border border-brand-ink/15 bg-white px-3 py-2 text-sm"
+          />
+        </label>
+        <button
+          type="submit"
+          disabled={saving}
+          className="rounded-full bg-[#0F766E] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#115E59] disabled:opacity-50 md:col-span-2 md:justify-self-start"
+        >
+          {saving ? 'Saving…' : 'Add creator to tracker'}
+        </button>
+      </form>
+
+      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+
+      {contacts === null ? (
+        <p className="mt-5 text-sm text-brand-ink/60">Could not load the invitation tracker.</p>
+      ) : contacts.length === 0 ? (
+        <p className="mt-5 text-sm text-brand-ink/60">No creators added yet.</p>
+      ) : (
+        <div className="mt-5 overflow-x-auto">
+          <table className="w-full min-w-[900px] border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-brand-ink/10 text-left text-xs font-medium uppercase tracking-wide text-brand-ink/60">
+                <th className="py-2 pr-4">Creator</th>
+                <th className="py-2 pr-4">Personal detail</th>
+                <th className="py-2 pr-4">Status</th>
+                <th className="py-2 pr-4">Follow-up</th>
+                <th className="py-2 pr-4">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {contacts.map((contact) => (
+                <OpinionInvitationRow key={contact.id} contact={contact} onUpdate={updateContact} />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ScriptCard({ title, script, copied, onCopy }) {
+  return (
+    <div className="rounded-xl border border-brand-ink/10 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-sm font-semibold text-[#172033]">{title}</h3>
+        <button type="button" onClick={onCopy} className="text-xs font-semibold text-[#0F766E] hover:underline">
+          {copied ? 'Copied!' : 'Copy message'}
+        </button>
+      </div>
+      <p className="mt-3 whitespace-pre-line text-xs leading-relaxed text-brand-ink/65">{script}</p>
+    </div>
+  );
+}
+
+function OpinionInvitationRow({ contact, onUpdate }) {
+  const due = contact.followUpDueAt ? new Date(contact.followUpDueAt) : null;
+  const overdue = due && !contact.followedUpAt && due.getTime() <= Date.now();
+  const statusLabels = {
+    planned: 'Not contacted',
+    messaged: 'Opinion requested',
+    replied: 'Replied',
+    interested: 'Interested',
+    not_interested: 'Not interested',
+  };
+
+  return (
+    <tr className="border-b border-brand-ink/5 align-top">
+      <td className="py-3 pr-4">
+        <a
+          href={`https://www.instagram.com/${contact.instagramHandle}/`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-semibold text-[#0F766E] hover:underline"
+        >
+          @{contact.instagramHandle}
+        </a>
+        <p className="text-xs text-brand-ink/55">
+          {contact.followerCount === null ? 'Followers not entered' : `${contact.followerCount.toLocaleString()} followers`}
+        </p>
+      </td>
+      <td className="max-w-xs py-3 pr-4 text-xs leading-relaxed text-brand-ink/65">
+        {contact.latestContentNote || 'Add a genuine detail before messaging.'}
+      </td>
+      <td className="py-3 pr-4">
+        <select
+          value={contact.status}
+          onChange={(event) => onUpdate(contact.id, { status: event.target.value })}
+          className="rounded-full border border-brand-ink/10 bg-white px-2.5 py-1 text-xs"
+        >
+          {Object.entries(statusLabels).map(([value, label]) => (
+            <option key={value} value={value}>{label}</option>
+          ))}
+        </select>
+      </td>
+      <td className="py-3 pr-4 text-xs">
+        {contact.followedUpAt ? (
+          <span className="text-[#0F766E]">Follow-up sent</span>
+        ) : due ? (
+          <span className={overdue ? 'font-semibold text-amber-700' : 'text-brand-ink/60'}>
+            {overdue ? 'Due now' : due.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+          </span>
+        ) : (
+          <span className="text-brand-ink/40">Starts after sending</span>
+        )}
+      </td>
+      <td className="py-3 pr-4">
+        {contact.status === 'planned' ? (
+          <button
+            type="button"
+            onClick={() => onUpdate(contact.id, { action: 'mark_messaged' })}
+            className="text-xs font-semibold text-[#0F766E] hover:underline"
+          >
+            Mark opinion request sent
+          </button>
+        ) : contact.status === 'messaged' && !contact.followedUpAt ? (
+          <button
+            type="button"
+            onClick={() => onUpdate(contact.id, { action: 'mark_followed_up' })}
+            className="text-xs font-semibold text-[#0F766E] hover:underline"
+          >
+            Mark follow-up sent
+          </button>
+        ) : (
+          <span className="text-xs text-brand-ink/40">—</span>
+        )}
+      </td>
+    </tr>
   );
 }
 
