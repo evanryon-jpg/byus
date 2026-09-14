@@ -7,6 +7,7 @@ import CreatorSearch from './components/CreatorSearch';
 import FeaturedCreators from './components/FeaturedCreators';
 import EarningsCalculator from './components/EarningsCalculator';
 import CreatorShowcase from './components/CreatorShowcase';
+import FeedbackWidget from './components/FeedbackWidget';
 
 // Server component so the hero and closing CTAs can tell whether someone is already
 // logged in -- an existing creator or fan should never be invited to sign up again,
@@ -17,6 +18,7 @@ export default async function HomePage() {
 
   return (
     <div>
+      <FeedbackWidget />
       <Hero user={session} />
       <CreatorShowcase />
       <EarningsCalculator />
