@@ -346,6 +346,11 @@ function CreatorOpinionInvitations({ initialContacts, initialError }) {
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState('');
   const [filter, setFilter] = useState('all');
+  // Which contact ids currently have a request in flight — used to disable that row's
+  // buttons so a fast double-click (or a slow connection) can't fire the same action
+  // twice before the UI has a chance to re-render with the new state. Keyed by contact
+  // id, not a single boolean, so editing one row never blocks another.
+  const [pendingIds, setPendingIds] = useState(() => new Set());
   const [form, setForm] = useState({
     instagramHandle: '',
     followerCount: '',
@@ -375,6 +380,8 @@ function CreatorOpinionInvitations({ initialContacts, initialError }) {
   }
 
   async function updateContact(id, patch) {
+    if (pendingIds.has(id)) return; // already mid-request for this row — ignore the repeat click
+    setPendingIds((current) => new Set(current).add(id));
     setError('');
     try {
       const response = await fetch(`/api/admin/outreach/${id}`, {
@@ -385,8 +392,35 @@ function CreatorOpinionInvitations({ initialContacts, initialError }) {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Could not update that creator.');
       setContacts((current) => current.map((contact) => (contact.id === id ? result.contact : contact)));
+      return result.contact;
     } catch (err) {
       setError(err.message || 'Could not update that creator.');
+      throw err;
+    } finally {
+      setPendingIds((current) => {
+        const next = new Set(current);
+        next.delete(id);
+        return next;
+      });
+    }
+  }
+
+  async function deleteContact(id) {
+    if (pendingIds.has(id)) return;
+    setPendingIds((current) => new Set(current).add(id));
+    setError('');
+    try {
+      const response = await fetch(`/api/admin/outreach/${id}`, { method: 'DELETE' });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || 'Could not remove that creator.');
+      setContacts((current) => (current || []).filter((contact) => contact.id !== id));
+    } catch (err) {
+      setError(err.message || 'Could not remove that creator.');
+      setPendingIds((current) => {
+        const next = new Set(current);
+        next.delete(id);
+        return next;
+      });
     }
   }
 
@@ -529,7 +563,7 @@ function CreatorOpinionInvitations({ initialContacts, initialError }) {
             ))}
           </div>
           <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] border-collapse text-sm">
+          <table className="w-full min-w-[1040px] border-collapse text-sm">
             <thead>
               <tr className="border-b border-brand-ink/10 text-left text-xs font-medium uppercase tracking-wide text-brand-ink/60">
                 <th className="py-2 pr-4">Creator</th>
@@ -537,15 +571,22 @@ function CreatorOpinionInvitations({ initialContacts, initialError }) {
                 <th className="py-2 pr-4">Status</th>
                 <th className="py-2 pr-4">Follow-up</th>
                 <th className="py-2 pr-4">Action</th>
+                <th className="py-2 pr-4">Edit</th>
               </tr>
             </thead>
             <tbody>
               {visibleContacts.map((contact) => (
-                <OpinionInvitationRow key={contact.id} contact={contact} onUpdate={updateContact} />
+                <OpinionInvitationRow
+                  key={contact.id}
+                  contact={contact}
+                  onUpdate={updateContact}
+                  onDelete={deleteContact}
+                  pending={pendingIds.has(contact.id)}
+                />
               ))}
               {visibleContacts.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-6 text-center text-brand-ink/55">
+                  <td colSpan={6} className="py-6 text-center text-brand-ink/55">
                     Nothing in this group right now.
                   </td>
                 </tr>
@@ -584,7 +625,12 @@ function ScriptCard({ title, script, copied, onCopy }) {
   );
 }
 
-function OpinionInvitationRow({ contact, onUpdate }) {
+function OpinionInvitationRow({ contact, onUpdate, onDelete, pending }) {
+  const [editing, setEditing] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [editForm, setEditForm] = useState(null); // set on entering edit mode
+  const [editError, setEditError] = useState('');
+
   const due = contact.followUpDueAt ? new Date(contact.followUpDueAt) : null;
   const overdue = due && !contact.followedUpAt && due.getTime() <= Date.now();
   const statusLabels = {
@@ -594,6 +640,92 @@ function OpinionInvitationRow({ contact, onUpdate }) {
     interested: 'Interested',
     not_interested: 'Not interested',
   };
+
+  function startEditing() {
+    setEditForm({
+      instagramHandle: contact.instagramHandle,
+      followerCount: contact.followerCount === null ? '' : String(contact.followerCount),
+      latestContentNote: contact.latestContentNote,
+      notes: contact.notes,
+    });
+    setEditError('');
+    setEditing(true);
+  }
+
+  async function saveEdit(event) {
+    event.preventDefault();
+    setEditError('');
+    try {
+      await onUpdate(contact.id, { action: 'edit_details', ...editForm });
+      setEditing(false);
+      setEditForm(null);
+    } catch (err) {
+      setEditError(err.message || 'Could not save those changes.');
+    }
+  }
+
+  if (editing) {
+    return (
+      <tr className="border-b border-brand-ink/5 align-top bg-brand-ink/[0.02]">
+        <td colSpan={6} className="py-3 pr-4">
+          <form onSubmit={saveEdit} className="grid gap-2 md:grid-cols-2">
+            <label className="text-xs font-medium text-brand-ink/70">
+              Instagram handle
+              <input
+                required
+                value={editForm.instagramHandle}
+                onChange={(event) => setEditForm((current) => ({ ...current, instagramHandle: event.target.value }))}
+                className="mt-1 w-full rounded-lg border border-brand-ink/15 bg-white px-3 py-2 text-sm"
+              />
+            </label>
+            <label className="text-xs font-medium text-brand-ink/70">
+              Followers
+              <input
+                type="number"
+                min="0"
+                value={editForm.followerCount}
+                onChange={(event) => setEditForm((current) => ({ ...current, followerCount: event.target.value }))}
+                className="mt-1 w-full rounded-lg border border-brand-ink/15 bg-white px-3 py-2 text-sm"
+              />
+            </label>
+            <label className="text-xs font-medium text-brand-ink/70 md:col-span-2">
+              Latest-post detail to mention
+              <input
+                value={editForm.latestContentNote}
+                onChange={(event) => setEditForm((current) => ({ ...current, latestContentNote: event.target.value }))}
+                className="mt-1 w-full rounded-lg border border-brand-ink/15 bg-white px-3 py-2 text-sm"
+              />
+            </label>
+            <label className="text-xs font-medium text-brand-ink/70 md:col-span-2">
+              Private notes
+              <input
+                value={editForm.notes}
+                onChange={(event) => setEditForm((current) => ({ ...current, notes: event.target.value }))}
+                className="mt-1 w-full rounded-lg border border-brand-ink/15 bg-white px-3 py-2 text-sm"
+              />
+            </label>
+            {editError && <p className="text-xs text-red-600 md:col-span-2">{editError}</p>}
+            <div className="flex gap-3 md:col-span-2">
+              <button
+                type="submit"
+                disabled={pending}
+                className="rounded-full bg-[#0F766E] px-4 py-1.5 text-xs font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
+              >
+                {pending ? 'Saving…' : 'Save changes'}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setEditing(false); setEditForm(null); }}
+                className="rounded-full border border-brand-ink/15 px-4 py-1.5 text-xs font-semibold text-brand-ink/70 hover:bg-brand-ink/5"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </td>
+      </tr>
+    );
+  }
 
   return (
     <tr className="border-b border-brand-ink/5 align-top">
@@ -616,8 +748,9 @@ function OpinionInvitationRow({ contact, onUpdate }) {
       <td className="py-3 pr-4">
         <select
           value={contact.status}
-          onChange={(event) => onUpdate(contact.id, { status: event.target.value })}
-          className="rounded-full border border-brand-ink/10 bg-white px-2.5 py-1 text-xs"
+          disabled={pending}
+          onChange={(event) => onUpdate(contact.id, { status: event.target.value }).catch(() => {})}
+          className="rounded-full border border-brand-ink/10 bg-white px-2.5 py-1 text-xs disabled:opacity-50"
         >
           {Object.entries(statusLabels).map(([value, label]) => (
             <option key={value} value={value}>{label}</option>
@@ -639,21 +772,66 @@ function OpinionInvitationRow({ contact, onUpdate }) {
         {contact.status === 'planned' ? (
           <button
             type="button"
-            onClick={() => onUpdate(contact.id, { action: 'mark_messaged' })}
-            className="text-xs font-semibold text-[#0F766E] hover:underline"
+            disabled={pending}
+            onClick={() => onUpdate(contact.id, { action: 'mark_messaged' }).catch(() => {})}
+            className="text-xs font-semibold text-[#0F766E] hover:underline disabled:opacity-50 disabled:no-underline"
           >
-            Mark opinion request sent
+            {pending ? 'Sending…' : 'Mark opinion request sent'}
           </button>
         ) : contact.status === 'messaged' && !contact.followedUpAt ? (
           <button
             type="button"
-            onClick={() => onUpdate(contact.id, { action: 'mark_followed_up' })}
-            className="text-xs font-semibold text-[#0F766E] hover:underline"
+            disabled={pending}
+            onClick={() => onUpdate(contact.id, { action: 'mark_followed_up' }).catch(() => {})}
+            className="text-xs font-semibold text-[#0F766E] hover:underline disabled:opacity-50 disabled:no-underline"
           >
-            Mark follow-up sent
+            {pending ? 'Sending…' : 'Mark follow-up sent'}
           </button>
         ) : (
           <span className="text-xs text-brand-ink/40">—</span>
+        )}
+      </td>
+      <td className="py-3 pr-4">
+        {confirmingDelete ? (
+          <div className="flex flex-col items-start gap-1">
+            <span className="text-xs font-medium text-amber-700">Remove @{contact.instagramHandle}?</span>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => onDelete(contact.id)}
+                className="text-xs font-semibold text-red-600 hover:underline disabled:opacity-50"
+              >
+                {pending ? 'Removing…' : 'Yes, remove'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmingDelete(false)}
+                className="text-xs font-semibold text-brand-ink/60 hover:underline"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex gap-3">
+            <button
+              type="button"
+              disabled={pending}
+              onClick={startEditing}
+              className="text-xs font-semibold text-brand-ink/70 hover:underline disabled:opacity-50"
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => setConfirmingDelete(true)}
+              className="text-xs font-semibold text-red-600/80 hover:underline disabled:opacity-50"
+            >
+              Remove
+            </button>
+          </div>
         )}
       </td>
     </tr>
