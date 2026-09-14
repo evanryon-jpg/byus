@@ -24,7 +24,7 @@ export default function HelpPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-16">
-      <p className="text-center text-xs font-semibold uppercase tracking-wide text-[#2563EB]">
+      <p className="text-center text-xs font-semibold uppercase tracking-wide text-[#0F766E]">
         Help Center
       </p>
       <h1 className="mt-2 text-center font-display text-3xl font-semibold leading-tight text-[#172033] sm:text-4xl">
@@ -47,7 +47,7 @@ export default function HelpPage() {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search for an answer — try “cancel” or “fees”"
           aria-label="Search the Help Center"
-          className="w-full rounded-full border border-brand-ink/10 bg-brand-paper py-3.5 pl-11 pr-5 text-sm shadow-sm placeholder:text-brand-ink/55 focus:border-[#2563EB]/40 focus:outline-none"
+          className="w-full rounded-full border border-brand-ink/10 bg-brand-paper py-3.5 pl-11 pr-5 text-sm shadow-sm placeholder:text-brand-ink/55 focus:border-[#0F766E]/40 focus:outline-none"
         />
       </div>
 
@@ -72,15 +72,15 @@ export default function HelpPage() {
               <Link
                 key={category.slug}
                 href={`/help/${category.slug}`}
-                className="group rounded-2xl border border-brand-ink/5 bg-brand-paper p-5 transition-colors hover:border-[#2563EB]/25"
+                className="group rounded-2xl border border-brand-ink/5 bg-brand-paper p-5 transition-colors hover:border-[#0F766E]/25"
               >
                 <span
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2563EB]/10 text-lg"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0F766E]/10 text-lg"
                   aria-hidden="true"
                 >
                   {category.icon}
                 </span>
-                <h2 className="mt-3 font-semibold text-[#172033] group-hover:text-[#2563EB]">
+                <h2 className="mt-3 font-semibold text-[#172033] group-hover:text-[#0F766E]">
                   {category.title}
                 </h2>
                 <p className="mt-1 text-sm text-brand-ink/65">{category.description}</p>
@@ -112,7 +112,7 @@ function SearchResult({ article }) {
           <Link
             href={`/help/${article.categorySlug}`}
             onClick={(e) => e.stopPropagation()}
-            className="mt-1 inline-block text-xs font-medium text-[#2563EB] hover:underline"
+            className="mt-1 inline-block text-xs font-medium text-[#0F766E] hover:underline"
           >
             {article.categoryTitle}
           </Link>
@@ -134,9 +134,9 @@ function SearchResult({ article }) {
 
 function ContactFallback() {
   return (
-    <p className="mt-10 rounded-2xl bg-[#2563EB]/5 px-5 py-4 text-center text-sm text-brand-ink/70">
+    <p className="mt-10 rounded-2xl bg-[#0F766E]/5 px-5 py-4 text-center text-sm text-brand-ink/70">
       Still stuck?{' '}
-      <a href="mailto:support@byusapp.com" className="font-semibold text-[#2563EB] hover:underline">
+      <a href="mailto:support@byusapp.com" className="font-semibold text-[#0F766E] hover:underline">
         Email support@byusapp.com
       </a>{' '}
       and we'll help directly.
