@@ -122,7 +122,7 @@ function TipPageContent() {
             className="mx-auto h-[72px] w-[72px] rounded-full object-cover"
           />
         ) : (
-          <div className="mx-auto flex h-[72px] w-[72px] items-center justify-center rounded-full bg-[#2563EB]/10 text-2xl font-semibold text-[#2563EB]">
+          <div className="mx-auto flex h-[72px] w-[72px] items-center justify-center rounded-full bg-[#0F766E]/10 text-2xl font-semibold text-[#0F766E]">
             {(creator.display_name || '?').trim().charAt(0).toUpperCase()}
           </div>
         )}
@@ -135,7 +135,7 @@ function TipPageContent() {
         </p>
 
         {justTipped ? (
-          <div className="mt-6 rounded-xl bg-[#2563EB]/10 p-4 text-sm font-medium text-[#2563EB]">
+          <div className="mt-6 rounded-xl bg-[#0F766E]/10 p-4 text-sm font-medium text-[#0F766E]">
             Thank you! Your tip is on its way to {creator.display_name}.
           </div>
         ) : !creator.stripe_connect_onboarded ? (
@@ -172,7 +172,7 @@ function TipPageContent() {
               <button
                 type="submit"
                 disabled={sending}
-                className="rounded-full bg-[#2563EB] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-50"
+                className="rounded-full bg-[#0F766E] px-4 py-2 text-sm font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
               >
                 {sending ? 'Sending…' : 'Send'}
               </button>
