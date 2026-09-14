@@ -983,7 +983,7 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent, ze
               <input placeholder="Description (optional)" value={description} onChange={(e) => setDescription(e.target.value)}
                 className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm" />
               <div>
-                <input placeholder="Price per month (e.g. 10.00)" type="number" step="0.01" min="1" value={price}
+                <input placeholder="Price per month (minimum 5.00)" type="number" step="0.01" min="5" value={price}
                   onChange={(e) => setPrice(e.target.value)} required
                   className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm" />
                 {previewPriceCents > 0 && (
@@ -994,10 +994,10 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent, ze
               </div>
               <div>
                 <input
-                  placeholder="Annual price (optional, e.g. 100.00)"
+                  placeholder="Annual price (optional, minimum 5.00)"
                   type="number"
                   step="0.01"
-                  min="1"
+                  min="5"
                   value={annualPrice}
                   onChange={(e) => setAnnualPrice(e.target.value)}
                   className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
