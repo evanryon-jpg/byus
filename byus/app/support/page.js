@@ -118,7 +118,7 @@ function SupportPageContent() {
         </p>
 
         {justSupported ? (
-          <div className="mt-6 rounded-xl bg-[#2563EB]/10 p-4 text-sm font-medium text-[#2563EB]">
+          <div className="mt-6 rounded-xl bg-[#0F766E]/10 p-4 text-sm font-medium text-[#0F766E]">
             Thank you! It genuinely helps keep ByUs running.
           </div>
         ) : loadError ? (
@@ -161,7 +161,7 @@ function SupportPageContent() {
               <button
                 type="submit"
                 disabled={sending}
-                className="rounded-full bg-[#2563EB] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-50"
+                className="rounded-full bg-[#0F766E] px-4 py-2 text-sm font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
               >
                 {sending ? 'Sending…' : 'Send'}
               </button>
