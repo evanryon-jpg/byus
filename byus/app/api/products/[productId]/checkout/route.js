@@ -53,7 +53,10 @@ export async function POST(request, { params }) {
       [product.id, session.userId]
     );
     if (existing.rows.length) {
-      return NextResponse.json({ downloadUrl: `/api/products/${product.id}/download` });
+      // A product can now bundle several files, so there's no single "the" download
+      // URL to hand back anymore -- tell the client it's already owned and let it
+      // re-fetch the product list, where DigitalProductShop renders the file bundle.
+      return NextResponse.json({ alreadyOwned: true });
     }
 
     let customerId = product.stripe_customer_id;
