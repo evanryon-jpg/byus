@@ -22,6 +22,10 @@ export default function AdminClient({
     recentCreatorCount,
     fanCount,
     recentFanCount,
+    instagramSignupCount,
+    recentInstagramSignupCount,
+    instagramCreatorCount,
+    instagramFanCount,
     activeSubscriberCount,
     followerCount,
     recentFollowerCount,
@@ -60,6 +64,11 @@ export default function AdminClient({
           label="Fans"
           value={fanCount.toLocaleString()}
           detail={`+${recentFanCount.toLocaleString()} in the last 7 days`}
+        />
+        <StatTile
+          label="Instagram-attributed signups"
+          value={instagramSignupCount.toLocaleString()}
+          detail={`+${recentInstagramSignupCount.toLocaleString()} in 7 days · ${instagramCreatorCount.toLocaleString()} creators · ${instagramFanCount.toLocaleString()} fans`}
         />
         <StatTile
           label="Free creator follows"
