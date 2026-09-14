@@ -135,7 +135,7 @@ export default function NavBar() {
           className="flex items-center"
           onClick={() => setMenuOpen(false)}
         >
-          <ByUsLogo className="h-9 w-auto" />
+          <ByUsLogo className="h-10 w-auto" />
         </a>
 
         {/* Full inline nav from the small-tablet breakpoint up. */}
