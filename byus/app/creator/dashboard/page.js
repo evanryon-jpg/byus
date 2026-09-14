@@ -56,7 +56,7 @@ export default async function CreatorDashboardPage() {
   // any one of them shouldn't take down the whole dashboard, so each degrades to an
   // empty list instead of throwing, same as the old client-side load() silently kept
   // whatever array was already there on a non-ok response.
-  const [tiers, posts, links, followerCount] = await Promise.all([
+  const [tiers, posts, links, audienceStats] = await Promise.all([
     loadCreatorTiers(session.userId).catch((err) => {
       console.error('creator/dashboard: tiers load failed:', err);
       return [];
@@ -69,11 +69,30 @@ export default async function CreatorDashboardPage() {
       console.error('creator/dashboard: links load failed:', err);
       return [];
     }),
-    query('SELECT COUNT(*)::int AS count FROM creator_follows WHERE creator_id = $1', [session.userId])
-      .then((result) => result.rows[0].count)
+    query(
+      `SELECT
+         COUNT(*)::int AS follower_count,
+         COUNT(*) FILTER (
+           WHERE EXISTS (
+             SELECT 1 FROM subscriptions s
+             WHERE s.fan_id = f.fan_id
+               AND s.creator_id = f.creator_id
+               AND s.created_at >= f.created_at
+               AND s.status = 'active'
+               AND (s.current_period_end IS NULL OR s.current_period_end > now())
+           )
+         )::int AS converted_follower_count
+       FROM creator_follows f
+       WHERE f.creator_id = $1`,
+      [session.userId]
+    )
+      .then((result) => ({
+        followerCount: result.rows[0].follower_count,
+        convertedFollowerCount: result.rows[0].converted_follower_count,
+      }))
       .catch((err) => {
-        console.error('creator/dashboard: follower count load failed:', err);
-        return 0;
+        console.error('creator/dashboard: audience stats load failed:', err);
+        return { followerCount: 0, convertedFollowerCount: 0 };
       }),
   ]);
 
@@ -83,7 +102,8 @@ export default async function CreatorDashboardPage() {
       initialTiers={tiers}
       initialPosts={posts}
       initialLinks={links}
-      initialFollowerCount={followerCount}
+      initialFollowerCount={audienceStats.followerCount}
+      initialConvertedFollowerCount={audienceStats.convertedFollowerCount}
     />
   );
 }
