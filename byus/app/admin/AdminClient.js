@@ -18,6 +18,8 @@ export default function AdminClient({
   initialSuggestionsError,
   initialOutreachContacts,
   initialOutreachError,
+  initialSiteFeedback,
+  initialSiteFeedbackError,
 }) {
   const {
     creatorCount,
@@ -326,6 +328,7 @@ export default function AdminClient({
         initialContacts={initialOutreachContacts}
         initialError={initialOutreachError}
       />
+      <SiteFeedbackSection initialFeedback={initialSiteFeedback} initialError={initialSiteFeedbackError} />
             <ReportsSection initialReports={initialReports} initialError={initialReportsError} />
       <SuggestionsSection initialSuggestions={initialSuggestions} initialError={initialSuggestionsError} />
     </div>
@@ -835,6 +838,98 @@ function OpinionInvitationRow({ contact, onUpdate, onDelete, pending }) {
         )}
       </td>
     </tr>
+  );
+}
+
+// Anonymous "what do you think of this page?" widget results — see
+// app/components/FeedbackWidget.jsx (the floating tab near the top of the homepage)
+// and app/api/feedback/route.js. Unlike ReportsSection/SuggestionsSection below, there's
+// no admin_note reply here: it's anonymous, so there's no one to reply to — just a
+// new/reviewed toggle for triage.
+const FEEDBACK_REACTION_LABELS = { up: '👍 Liked it', down: '👎 Didn’t like it' };
+
+function SiteFeedbackSection({ initialFeedback, initialError }) {
+  const [feedback, setFeedback] = useState(initialFeedback); // null = failed to load
+  const [error, setError] = useState(initialError || '');
+
+  async function toggleReviewed(id, nextStatus) {
+    const previous = feedback;
+    setFeedback((current) => current.map((f) => (f.id === id ? { ...f, status: nextStatus } : f)));
+    try {
+      const res = await fetch(`/api/admin/site-feedback/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setFeedback(previous);
+      setError('Could not save that change — try again.');
+    }
+  }
+
+  const newCount = feedback?.filter((f) => f.status === 'new').length ?? 0;
+  const upCount = feedback?.filter((f) => f.reaction === 'up').length ?? 0;
+  const downCount = feedback?.filter((f) => f.reaction === 'down').length ?? 0;
+
+  return (
+    <section className="mt-8 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
+      <div className="flex items-center justify-between">
+        <h2 className="font-semibold text-[#172033]">Visitor feedback</h2>
+        {newCount > 0 && (
+          <span className="rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700">
+            {newCount} new
+          </span>
+        )}
+      </div>
+      <p className="mt-1 text-sm text-brand-ink/65">
+        What visitors said via the feedback tab on the homepage — anonymous, no account required.
+        {feedback && feedback.length > 0 && (
+          <> {upCount} 👍 · {downCount} 👎 · {feedback.length} total.</>
+        )}
+      </p>
+
+      {error && <p className="mt-3 text-xs text-red-600">{error}</p>}
+
+      {feedback === null ? (
+        <p className="mt-4 text-sm text-brand-ink/60">Could not load visitor feedback.</p>
+      ) : feedback.length === 0 ? (
+        <p className="mt-4 text-sm text-brand-ink/60">Nothing submitted yet.</p>
+      ) : (
+        <div className="mt-4 space-y-3">
+          {feedback.map((f) => (
+            <div
+              key={f.id}
+              className={`rounded-lg border p-4 ${
+                f.status === 'new' ? 'border-brand-ink/10' : 'border-brand-ink/5 bg-brand-ink/[0.015]'
+              }`}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-sm">
+                  {f.reaction && (
+                    <span className="font-medium text-[#172033]">{FEEDBACK_REACTION_LABELS[f.reaction]}</span>
+                  )}
+                  {f.pagePath && <span className="text-xs text-brand-ink/45">{f.pagePath}</span>}
+                  <span className="text-xs text-brand-ink/45">
+                    {new Date(f.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => toggleReviewed(f.id, f.status === 'new' ? 'reviewed' : 'new')}
+                  className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                    f.status === 'new' ? 'bg-red-50 text-red-700' : 'bg-brand-ink/5 text-brand-ink/60'
+                  }`}
+                >
+                  {f.status === 'new' ? 'Mark reviewed' : 'Reviewed'}
+                </button>
+              </div>
+              {f.message && <p className="mt-2 text-sm leading-relaxed text-brand-ink/75">{f.message}</p>}
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 

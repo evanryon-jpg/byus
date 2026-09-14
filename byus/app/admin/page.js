@@ -5,7 +5,13 @@
 
 import { getCurrentUser } from '@/lib/session';
 import { isAdmin } from '@/lib/admin';
-import { loadAdminOverview, loadAdminReports, loadAdminSuggestions, loadOutreachContacts } from '@/lib/admin-data';
+import {
+  loadAdminOverview,
+  loadAdminReports,
+  loadAdminSuggestions,
+  loadOutreachContacts,
+  loadSiteFeedback,
+} from '@/lib/admin-data';
 import AdminClient from './AdminClient';
 
 export const dynamic = 'force-dynamic';
@@ -41,7 +47,7 @@ export default async function AdminPage() {
     );
   }
 
-  const [reportsResult, suggestionsResult, outreachResult] = await Promise.all([
+  const [reportsResult, suggestionsResult, outreachResult, siteFeedbackResult] = await Promise.all([
     loadAdminReports()
       .then((reports) => ({ reports, error: '' }))
       .catch((err) => {
@@ -60,6 +66,12 @@ export default async function AdminPage() {
         console.error('admin: creator opinion invitations load failed:', err);
         return { contacts: null, error: 'Could not load creator opinion invitations.' };
       }),
+    loadSiteFeedback()
+      .then((feedback) => ({ feedback, error: '' }))
+      .catch((err) => {
+        console.error('admin: site feedback load failed:', err);
+        return { feedback: null, error: 'Could not load visitor feedback.' };
+      }),
   ]);
 
   return (
@@ -71,6 +83,8 @@ export default async function AdminPage() {
       initialSuggestionsError={suggestionsResult.error}
       initialOutreachContacts={outreachResult.contacts}
       initialOutreachError={outreachResult.error}
+      initialSiteFeedback={siteFeedbackResult.feedback}
+      initialSiteFeedbackError={siteFeedbackResult.error}
     />
   );
 }
