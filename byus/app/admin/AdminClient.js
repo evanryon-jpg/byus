@@ -21,6 +21,7 @@ export default function AdminClient({
     creatorCount,
     fanCount,
     activeSubscriberCount,
+    followerCount,
     lifetimeGrossCents,
     lifetimePlatformFeeCents,
     lifetimePaymentCount,
@@ -46,6 +47,7 @@ export default function AdminClient({
         <StatTile label="Gross processed, lifetime" value={formatCompactUSD(lifetimeGrossCents)} />
         <StatTile label="Creators" value={creatorCount.toLocaleString()} />
         <StatTile label="Fans" value={fanCount.toLocaleString()} />
+        <StatTile label="Free creator follows" value={followerCount.toLocaleString()} />
         <StatTile label="Active subscriptions" value={activeSubscriberCount.toLocaleString()} />
         <StatTile
           label="Open disputes"
