@@ -43,13 +43,25 @@ export async function GET(request, { params }) {
   }
 
   const result = await query(
-    `SELECT id, title, description, price_cents, access_type, file_name, file_size_bytes
-     FROM digital_products
-     WHERE creator_id = $1 AND active = true
-     ORDER BY created_at DESC`,
+    `SELECT p.id, p.title, p.description, p.price_cents, p.access_type,
+            COALESCE(
+              json_agg(
+                json_build_object('id', f.id, 'file_name', f.file_name, 'file_size_bytes', f.file_size_bytes, 'kind', f.kind)
+                ORDER BY f.position, f.created_at
+              ) FILTER (WHERE f.id IS NOT NULL), '[]'
+            ) AS files
+     FROM digital_products p
+     LEFT JOIN digital_product_files f ON f.product_id = p.id
+     WHERE p.creator_id = $1 AND p.active = true
+     GROUP BY p.id
+     ORDER BY p.created_at DESC`,
     [creator.id]
   );
 
+  // File metadata (name/size/kind) is harmless to show pre-purchase -- it's the blob
+  // URLs (never selected here) that stay gated behind /api/products/:id/files/:fileId's
+  // own ownership/purchase/subscription check, so there's no need to strip the list
+  // down to just a count for products someone hasn't unlocked yet.
   const products = result.rows.map((product) => ({
     ...product,
     owned: owned.has(product.id),
