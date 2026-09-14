@@ -12,7 +12,7 @@ import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { getReferralDiscount } from '@/lib/referrals';
 import { getPlatformMilestoneReductionPoints, applyPlatformMilestoneReduction } from '@/lib/fees';
 import { trackServerEvent } from '@/lib/analytics';
-import { MIN_MEMBERSHIP_PRICE_CENTS } from '@/lib/pricing';
+import { MIN_ANNUAL_BILLING_MONTHS, MIN_MEMBERSHIP_PRICE_CENTS } from '@/lib/pricing';
 import {
   TERMS_VERSION,
   MEMBERSHIP_REFUND_POLICY_VERSION,
@@ -83,6 +83,13 @@ export async function POST(request) {
     if (!Number.isInteger(purchasePriceCents) || purchasePriceCents < MIN_MEMBERSHIP_PRICE_CENTS) {
       return NextResponse.json(
         { error: 'This tier is below ByUs’s $5 minimum for new subscriptions. Please choose another tier.' },
+        { status: 400 }
+      );
+    }
+
+    if (billingInterval === 'year' && purchasePriceCents < tier.price_cents * MIN_ANNUAL_BILLING_MONTHS) {
+      return NextResponse.json(
+        { error: 'This annual option is below ByUs’s sustainable minimum. Please choose monthly billing.' },
         { status: 400 }
       );
     }
