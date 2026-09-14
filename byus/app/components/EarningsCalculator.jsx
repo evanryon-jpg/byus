@@ -233,7 +233,7 @@ export default function EarningsCalculator() {
 
             <div className="mt-3 flex items-center gap-2.5 rounded-2xl border border-brand-gold/50 bg-gradient-to-r from-brand-gold/15 to-brand-gold/5 px-4 py-3.5">
               <span
-                className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-brand-gold text-sm font-bold text-brand-paper"
+                className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-brand-gold text-sm font-bold text-[#172033]"
                 aria-hidden="true"
               >
                 ↑
