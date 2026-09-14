@@ -7,7 +7,7 @@ module.exports = {
     extend: {
       colors: {
         brand: {
-          teal: '#2563EB',
+          teal: '#0F766E',
           gold: '#0F766E',
           clay: '#0F766E',
           // Warm neutrals -- replace the old pure-white/black-opacity scale everywhere
