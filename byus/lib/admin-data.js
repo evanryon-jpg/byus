@@ -27,11 +27,22 @@ export async function loadAdminOverview() {
       query(
         `SELECT
            COUNT(*) FILTER (WHERE role = 'creator')::int AS creator_count,
-           COUNT(*) FILTER (WHERE role = 'fan')::int AS fan_count
+           COUNT(*) FILTER (WHERE role = 'fan')::int AS fan_count,
+           COUNT(*) FILTER (
+             WHERE role = 'creator' AND created_at >= now() - interval '7 days'
+           )::int AS recent_creator_count,
+           COUNT(*) FILTER (
+             WHERE role = 'fan' AND created_at >= now() - interval '7 days'
+           )::int AS recent_fan_count
          FROM users`
       ),
       query(`SELECT COUNT(*)::int AS count FROM subscriptions WHERE status = 'active'`),
-      query(`SELECT COUNT(*)::int AS count FROM creator_follows`),
+      query(
+        `SELECT
+           COUNT(*)::int AS count,
+           COUNT(*) FILTER (WHERE created_at >= now() - interval '7 days')::int AS recent_count
+         FROM creator_follows`
+      ),
       query(
         `SELECT COUNT(*) FILTER (
            WHERE EXISTS (
@@ -42,7 +53,18 @@ export async function loadAdminOverview() {
                AND s.status = 'active'
                AND (s.current_period_end IS NULL OR s.current_period_end > now())
            )
-         )::int AS converted_count
+         )::int AS converted_count,
+         COUNT(*) FILTER (
+           WHERE EXISTS (
+             SELECT 1 FROM subscriptions s
+             WHERE s.fan_id = f.fan_id
+               AND s.creator_id = f.creator_id
+               AND s.created_at >= f.created_at
+               AND s.created_at >= now() - interval '7 days'
+               AND s.status = 'active'
+               AND (s.current_period_end IS NULL OR s.current_period_end > now())
+           )
+         )::int AS recent_converted_count
          FROM creator_follows f`
       ),
       query(
@@ -253,10 +275,14 @@ export async function loadAdminOverview() {
 
   return {
     creatorCount: counts.rows[0].creator_count,
+    recentCreatorCount: counts.rows[0].recent_creator_count,
     fanCount: counts.rows[0].fan_count,
+    recentFanCount: counts.rows[0].recent_fan_count,
     activeSubscriberCount: activeSubs.rows[0].count,
     followerCount,
+    recentFollowerCount: follows.rows[0].recent_count,
     convertedFollowerCount,
+    recentConvertedFollowerCount: followConversions.rows[0].recent_converted_count,
     followerConversionPercent,
     lifetimeGrossCents,
     lifetimePlatformFeeCents,
