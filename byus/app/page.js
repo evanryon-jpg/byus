@@ -81,7 +81,7 @@ function FoundingCreatorProgram({ stats }) {
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -left-24 -top-24 h-96 w-96 rounded-full blur-3xl"
-        style={{ background: 'radial-gradient(circle, rgba(249,115,96,0.18), transparent 65%)' }}
+        style={{ background: 'radial-gradient(circle, rgba(15,118,110,0.10), transparent 65%)' }}
       />
 
       <div className="relative mx-auto max-w-5xl px-6 py-14 text-center">
@@ -144,20 +144,20 @@ function Hero({ user }) {
     // you. Stacks to a single column on mobile, art below the copy, so the CTAs and
     // fine print still come first for outreach traffic.
     <section className="relative overflow-hidden bg-gradient-to-b from-[#172554] via-[#1E3A8A] to-brand-cream">
-      {/* Two blurred, ambiently drifting color blobs -- clay top-right, gold
-          bottom-left -- give the dark band some depth instead of a flat fill. Purely
+      {/* Two subtle ambient color glows add depth to the dark band without
+          competing with the message or creator previews. Purely
           decorative background motion, kept separate from the live-pulse dot on the
           demo link below (which is tied to something real); `motion-safe:` means
           prefers-reduced-motion is handled without any JS. */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -right-40 -top-28 h-[560px] w-[560px] rounded-full blur-md motion-safe:animate-byus-drift"
-        style={{ background: 'radial-gradient(circle, rgba(249,115,96,0.28), transparent 65%)' }}
+        style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.12), transparent 65%)' }}
       />
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -left-36 bottom-[10%] h-[420px] w-[420px] rounded-full"
-        style={{ background: 'radial-gradient(circle, rgba(249,115,96,0.16), transparent 65%)' }}
+        style={{ background: 'radial-gradient(circle, rgba(15,118,110,0.08), transparent 65%)' }}
       />
 
       <div className="relative mx-auto max-w-6xl px-6 pt-14 pb-16">
@@ -197,14 +197,14 @@ function Hero({ user }) {
               {user ? (
                 <a
                   href={dashboardHref}
-                  className="rounded-full bg-gradient-to-br from-brand-clay to-[#EA580C] px-7 py-3.5 text-base font-semibold text-brand-paper shadow-[0_16px_30px_-14px_rgba(249,115,96,0.65)] transition hover:-translate-y-0.5"
+                  className="rounded-full bg-[#0F766E] px-7 py-3.5 text-base font-semibold text-brand-paper shadow-[0_16px_30px_-14px_rgba(15,118,110,0.38)] transition hover:-translate-y-0.5 hover:bg-[#115E59]"
                 >
                   {user.role === 'creator' ? 'Go to your dashboard' : 'Your subscriptions'} →
                 </a>
               ) : (
                 <a
                   href="/signup?role=creator"
-                  className="rounded-full bg-gradient-to-br from-brand-clay to-[#EA580C] px-7 py-3.5 text-base font-semibold text-brand-paper shadow-[0_16px_30px_-14px_rgba(249,115,96,0.65)] transition hover:-translate-y-0.5"
+                  className="rounded-full bg-[#0F766E] px-7 py-3.5 text-base font-semibold text-brand-paper shadow-[0_16px_30px_-14px_rgba(15,118,110,0.38)] transition hover:-translate-y-0.5 hover:bg-[#115E59]"
                 >
                   Start Creating →
                 </a>
