@@ -12,6 +12,7 @@ import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { containsBlockedContent } from '@/lib/content-policy';
+import { loadCreatorLinks } from '@/lib/creator-dashboard-data';
 
 const MAX_LINKS = 8;
 const MAX_LABEL_LENGTH = 40;
@@ -50,8 +51,8 @@ export async function GET() {
           return NextResponse.json({ error: 'Only creators can view their links.' }, { status: 403 });
     }
     try {
-          const result = await query('SELECT social_links FROM users WHERE id = $1', [session.userId]);
-          return NextResponse.json({ links: result.rows[0]?.social_links || [] });
+          const links = await loadCreatorLinks(session.userId);
+          return NextResponse.json({ links });
     } catch (err) {
           console.error('creator/links GET failed:', err);
           return NextResponse.json({ error: 'Could not load your links. Try again.' }, { status: 500 });
