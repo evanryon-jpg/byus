@@ -12,11 +12,11 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/session';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { MIN_MEMBERSHIP_PRICE_CENTS } from '@/lib/pricing';
 
 const DESCRIPTION_MAX = 500;
 const BIO_MAX = 280;
 const TAG_MAX = 30;
-const MIN_PRICE_CENTS = 500;
 const MAX_PRICE_CENTS = 200000; // keep in sync with app/api/creator/tiers/route.js
 
 // Configurable so a model rename/retirement doesn't require a code change --
@@ -30,7 +30,7 @@ function cleanTag(raw) {
 
 function cleanPriceCents(raw) {
   const n = Math.round(Number(raw));
-  if (!Number.isFinite(n) || n < MIN_PRICE_CENTS) return MIN_PRICE_CENTS;
+  if (!Number.isFinite(n) || n < MIN_MEMBERSHIP_PRICE_CENTS) return MIN_MEMBERSHIP_PRICE_CENTS;
   return Math.min(n, MAX_PRICE_CENTS);
 }
 
