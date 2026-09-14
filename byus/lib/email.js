@@ -102,6 +102,32 @@ export async function sendWelcomeSubscriptionEmail(to, { creatorName, creatorUrl
   }
 }
 
+// Sent once, right when someone joins the Founding Creator waitlist (see
+// app/api/waitlist/route.js) — a confirmation that their application landed, not a
+// pitch they need to act on again, so no button pointing back into the (currently
+// paused) signup flow.
+export async function sendWaitlistConfirmationEmail(to, { displayName }) {
+  const resend = getClient();
+  const greeting = displayName ? escapeHtml(displayName) : 'there';
+  const { error } = await resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: "You're on the ByUs Founding Creator list",
+    html: `
+      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; color: #1A1A1A;">
+        <h2 style="color:#146359;">You're on the list, ${greeting}.</h2>
+        <p>Thanks for applying to the ByUs Founding Creator Program. We're a new platform and payouts are temporarily paused while our payment processor finishes reviewing our account — completely normal for a platform this new, and we expect it to clear soon.</p>
+        <p>The moment it does, we'll email this address first so you can claim your founding spot and lock in our lowest fee (10%, forever) before it opens up to everyone else.</p>
+        <p style="color:#666;font-size:13px;">No action needed from you right now. Questions? Just reply to this email or reach us at support@byusapp.com.</p>
+      </div>
+    `,
+  });
+  if (error) {
+    console.error('Resend send failed:', error);
+    throw new Error(error.message || 'Could not send the waitlist confirmation email.');
+  }
+}
+
 // Urgent owner alert for a newly-opened card dispute. Kept separate from customer-facing
 // mail so a failed alert can be retried safely by the Stripe webhook without affecting the
 // payment itself. The webhook marks stripe_disputes.alert_sent_at only after this succeeds.

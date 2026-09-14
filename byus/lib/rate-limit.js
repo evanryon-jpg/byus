@@ -134,6 +134,14 @@ const limiters = {
     limiter: Ratelimit.slidingWindow(5, '1 h'),
     prefix: 'rl:report',
   }),
+  // Guards the Founding Creator waitlist form (see app/api/waitlist/route.js) — no
+  // session to key off of, since it's meant to work for a first-time visitor, so this is
+  // the only thing standing between it and a script hammering the table with rows.
+  waitlist: new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(5, '1 h'),
+    prefix: 'rl:waitlist',
+  }),
 };
 
 // Best-effort client IP. Vercel always sets x-forwarded-for in production; the
