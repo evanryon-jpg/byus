@@ -20,6 +20,10 @@ export default function ProfileClient({ data, justSubscribed, subscribedTierId, 
   const router = useRouter();
   const [subscribing, setSubscribing] = useState(null);
   const [subscribeError, setSubscribeError] = useState('');
+  const [following, setFollowing] = useState(Boolean(data.isFollowing));
+  const [followerCount, setFollowerCount] = useState(Number(data.followerCount || 0));
+  const [followBusy, setFollowBusy] = useState(false);
+  const [followError, setFollowError] = useState('');
   const [billingInterval, setBillingInterval] = useState('month'); // 'month' | 'year'
   // Ko-fi's "Posts" tab is really just this feed with a type filter, an access filter,
   // and a search box layered on top — see PostFilters below. All three are client-side
@@ -52,6 +56,29 @@ export default function ProfileClient({ data, justSubscribed, subscribedTierId, 
     }
     setSubscribeError(result.error || 'Could not start checkout. Try again.');
     setSubscribing(null);
+  }
+
+  async function handleFollow() {
+    setFollowBusy(true);
+    setFollowError('');
+    const res = await fetch('/api/follows', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ creatorId: data.creator.id, following: !following }),
+    });
+    const result = await res.json();
+    if (res.status === 401) {
+      router.push(`/login?next=${encodeURIComponent(`/creator/${creatorId}`)}`);
+      return;
+    }
+    if (!res.ok) {
+      setFollowError(result.error || 'Could not update your follow. Try again.');
+      setFollowBusy(false);
+      return;
+    }
+    setFollowing(result.following);
+    setFollowerCount(result.followerCount);
+    setFollowBusy(false);
   }
 
   const { creator, tiers, posts, hasActiveSubscription, live, topSupporters, goal } = data;
@@ -104,9 +131,25 @@ export default function ProfileClient({ data, justSubscribed, subscribedTierId, 
               Founding creator
             </span>
           )}
-          <div className="mt-1">
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {!data.isOwnPage && (
+              <button
+                type="button"
+                onClick={handleFollow}
+                disabled={followBusy}
+                className={following
+                  ? 'rounded-full border border-[#0F766E]/30 px-3 py-1.5 text-xs font-semibold text-[#0F766E] hover:bg-[#0F766E]/5 disabled:opacity-50'
+                  : 'rounded-full bg-[#0F766E] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#115E59] disabled:opacity-50'}
+              >
+                {followBusy ? 'Saving…' : following ? 'Following' : 'Follow for free'}
+              </button>
+            )}
+            <span className="text-xs text-brand-ink/55">
+              {followerCount.toLocaleString()} {followerCount === 1 ? 'follower' : 'followers'}
+            </span>
             <ReportButton creatorId={creator.id} />
           </div>
+          {followError && <p className="mt-2 text-xs text-red-700">{followError}</p>}
         </div>
       </div>
       {creator.bio && <p className="mt-2 text-brand-ink/70">{creator.bio}</p>}
