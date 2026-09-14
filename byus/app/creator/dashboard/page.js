@@ -72,6 +72,7 @@ export default async function CreatorDashboardPage() {
     query(
       `SELECT
          COUNT(*)::int AS follower_count,
+         COUNT(*) FILTER (WHERE f.created_at >= now() - interval '30 days')::int AS recent_follower_count,
          COUNT(*) FILTER (
            WHERE EXISTS (
              SELECT 1 FROM subscriptions s
@@ -81,18 +82,31 @@ export default async function CreatorDashboardPage() {
                AND s.status = 'active'
                AND (s.current_period_end IS NULL OR s.current_period_end > now())
            )
-         )::int AS converted_follower_count
+         )::int AS converted_follower_count,
+         COUNT(*) FILTER (
+           WHERE EXISTS (
+             SELECT 1 FROM subscriptions s
+             WHERE s.fan_id = f.fan_id
+               AND s.creator_id = f.creator_id
+               AND s.created_at >= f.created_at
+               AND s.created_at >= now() - interval '30 days'
+               AND s.status = 'active'
+               AND (s.current_period_end IS NULL OR s.current_period_end > now())
+           )
+         )::int AS recent_converted_follower_count
        FROM creator_follows f
        WHERE f.creator_id = $1`,
       [session.userId]
     )
       .then((result) => ({
         followerCount: result.rows[0].follower_count,
+        recentFollowerCount: result.rows[0].recent_follower_count,
         convertedFollowerCount: result.rows[0].converted_follower_count,
+        recentConvertedFollowerCount: result.rows[0].recent_converted_follower_count,
       }))
       .catch((err) => {
         console.error('creator/dashboard: audience stats load failed:', err);
-        return { followerCount: 0, convertedFollowerCount: 0 };
+        return { followerCount: 0, recentFollowerCount: 0, convertedFollowerCount: 0, recentConvertedFollowerCount: 0 };
       }),
   ]);
 
@@ -103,7 +117,9 @@ export default async function CreatorDashboardPage() {
       initialPosts={posts}
       initialLinks={links}
       initialFollowerCount={audienceStats.followerCount}
+      initialRecentFollowerCount={audienceStats.recentFollowerCount}
       initialConvertedFollowerCount={audienceStats.convertedFollowerCount}
+      initialRecentConvertedFollowerCount={audienceStats.recentConvertedFollowerCount}
     />
   );
 }
