@@ -46,7 +46,7 @@ export default function ForgotPasswordPage() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-xl border border-brand-ink/10 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+            className="w-full rounded-xl border border-brand-ink/10 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#0F766E]"
           />
         </label>
 
@@ -56,13 +56,13 @@ export default function ForgotPasswordPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-full bg-[#2563EB] py-3 font-semibold text-white hover:bg-[#1D4ED8] disabled:opacity-50"
+          className="w-full rounded-full bg-[#0F766E] py-3 font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
         >
           {loading ? 'Sending…' : 'Send reset link'}
         </button>
       </form>
       <p className="mt-6 text-center text-sm text-brand-ink/65">
-        Remembered it? <a href="/login" className="text-[#2563EB] underline">Log in</a>
+        Remembered it? <a href="/login" className="text-[#0F766E] underline">Log in</a>
       </p>
     </div>
   );
