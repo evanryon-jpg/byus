@@ -71,7 +71,7 @@ export default function BrowsePage({ searchParams }) {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Search by name or bio…"
-              className="w-full rounded-full border border-brand-ink/10 bg-brand-paper px-4 py-2 text-sm focus:border-[#2563EB]/40 focus:outline-none sm:flex-1"
+              className="w-full rounded-full border border-brand-ink/10 bg-brand-paper px-4 py-2 text-sm focus:border-[#0F766E]/40 focus:outline-none sm:flex-1"
             />
 
             <div className="flex shrink-0 items-center gap-1 self-start rounded-full bg-brand-paper p-1 text-xs font-medium shadow-sm sm:self-auto">
@@ -82,7 +82,7 @@ export default function BrowsePage({ searchParams }) {
                   onClick={() => setSort(opt.value)}
                   aria-pressed={sort === opt.value}
                   className={`rounded-full px-3 py-1.5 ${
-                    sort === opt.value ? 'bg-[#2563EB]/10 text-[#2563EB]' : 'text-brand-ink/65 hover:text-brand-ink/80'
+                    sort === opt.value ? 'bg-[#0F766E]/10 text-[#0F766E]' : 'text-brand-ink/65 hover:text-brand-ink/80'
                   }`}
                 >
                   {opt.label}
@@ -103,8 +103,8 @@ export default function BrowsePage({ searchParams }) {
               onClick={() => setTag(tag === t ? '' : t)}
               className={`rounded-full px-3 py-1 text-xs font-medium ${
                 tag === t
-                  ? 'bg-[#2563EB] text-white'
-                  : 'bg-[#2563EB]/10 text-[#2563EB] hover:bg-[#2563EB]/20'
+                  ? 'bg-[#0F766E] text-white'
+                  : 'bg-[#0F766E]/10 text-[#0F766E] hover:bg-[#0F766E]/20'
               }`}
             >
               {t}
@@ -137,7 +137,7 @@ export default function BrowsePage({ searchParams }) {
           <li key={c.id}>
             <a
               href={`/creator/${c.slug || c.id}`}
-              className="flex items-center gap-4 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6 hover:border-[#2563EB]/30"
+              className="flex items-center gap-4 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6 hover:border-[#0F766E]/30"
             >
               {c.profile_image_url ? (
                 <Image
@@ -148,7 +148,7 @@ export default function BrowsePage({ searchParams }) {
                   className="h-12 w-12 shrink-0 rounded-full object-cover"
                 />
               ) : (
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#2563EB]/10 text-lg font-semibold text-[#2563EB]">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#0F766E]/10 text-lg font-semibold text-[#0F766E]">
                   {(c.display_name || '?').trim().charAt(0).toUpperCase()}
                 </div>
               )}
