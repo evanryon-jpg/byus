@@ -23,6 +23,9 @@ export default function AdminClient({
     activeSubscriberCount,
     lifetimeGrossCents,
     lifetimePlatformFeeCents,
+    lifetimePaymentCount,
+    estimatedProcessorCents,
+    estimatedContributionCents,
     openDisputeCount,
     needsReviewCount,
     monthly,
@@ -36,7 +39,10 @@ export default function AdminClient({
       <p className="text-brand-ink/65">What ByUs itself has earned, and how the platform is growing.</p>
 
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatTile label="ByUs revenue, lifetime" value={formatCompactUSD(lifetimePlatformFeeCents)} hero />
+        <StatTile label="ByUs fees collected" value={formatCompactUSD(lifetimePlatformFeeCents)} hero />
+        <StatTile label="Estimated contribution" value={formatCompactUSD(estimatedContributionCents)} flag={estimatedContributionCents < 0} />
+        <StatTile label="Estimated processor costs" value={formatCompactUSD(estimatedProcessorCents)} />
+        <StatTile label="Recorded payments" value={lifetimePaymentCount.toLocaleString()} />
         <StatTile label="Gross processed, lifetime" value={formatCompactUSD(lifetimeGrossCents)} />
         <StatTile label="Creators" value={creatorCount.toLocaleString()} />
         <StatTile label="Fans" value={fanCount.toLocaleString()} />
@@ -53,9 +59,18 @@ export default function AdminClient({
         />
       </div>
 
+      <div className="mt-3 rounded-xl border border-[#2563EB]/15 bg-[#2563EB]/5 px-4 py-3 text-xs text-brand-ink/65">
+        Estimates use standard domestic card pricing of 2.9% + 30¢ plus 0.7% Billing.
+        They exclude Connect account/payout fees, refunds, dispute fees, international costs,
+        taxes, and negotiated Stripe pricing. Stripe statements remain the source of truth.
+      </div>
+
       <div className="mt-6 space-y-4">
         <ChartCard title="ByUs revenue" subtitle="Platform fee income, by month">
           <MonthlyBarChart data={monthly} valueKey="platformFeeCents" formatValue={formatUSD} formatAxisTick={formatUSD} />
+        </ChartCard>
+        <ChartCard title="Estimated contribution" subtitle="ByUs fees minus estimated Payments + Billing costs">
+          <MonthlyBarChart data={monthly} valueKey="estimatedContributionCents" formatValue={formatUSD} formatAxisTick={formatUSD} color="#0F766E" hoverColor="#115E59" />
         </ChartCard>
         <div className="grid gap-4 sm:grid-cols-2">
           <ChartCard title="New creators" subtitle="Signups, by month">
@@ -148,6 +163,7 @@ export default function AdminClient({
                 <th className="py-2 pr-4">Stripe</th>
                 <th className="py-2 pr-4">Fee</th>
                 <th className="py-2 pr-4 text-right">Lifetime gross</th>
+                <th className="py-2 pr-4 text-right">Est. contribution</th>
                 <th className="py-2 pr-4">Review</th>
                 <th className="py-2 pr-4">Account</th>
               </tr>
@@ -183,6 +199,9 @@ export default function AdminClient({
                   <td className="py-2.5 pr-4 text-right font-medium text-[#172033]" style={{ fontVariantNumeric: 'tabular-nums' }}>
                     {formatUSD(c.lifetimeGrossCents)}
                   </td>
+                  <td className={`py-2.5 pr-4 text-right font-medium ${c.estimatedContributionCents < 0 ? 'text-red-700' : 'text-[#0F766E]'}`} style={{ fontVariantNumeric: 'tabular-nums' }}>
+                    {formatUSD(c.estimatedContributionCents)}
+                  </td>
                   <td className="py-2.5 pr-4">
                     <ReviewControl userId={c.id} initialNeedsReview={c.needsReview} />
                   </td>
@@ -198,7 +217,7 @@ export default function AdminClient({
               ))}
               {creators.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-6 text-center text-brand-ink/60">
+                  <td colSpan={8} className="py-6 text-center text-brand-ink/60">
                     No creators have signed up yet.
                   </td>
                 </tr>
