@@ -906,6 +906,7 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent, ze
 
   const previewPriceCents = Math.round((parseFloat(price) || 0) * 100);
   const previewKeptCents = Math.round(previewPriceCents * (1 - platformFeePercent / 100));
+  const annualMinimumDollars = Math.max(5, (parseFloat(price) || 0) * 10);
 
   return (
     <div className="mt-8 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
@@ -994,17 +995,17 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent, ze
               </div>
               <div>
                 <input
-                  placeholder="Annual price (optional, minimum 5.00)"
+                  placeholder={`Annual price (minimum ${annualMinimumDollars.toFixed(2)})`}
                   type="number"
                   step="0.01"
-                  min="5"
+                  min={annualMinimumDollars}
                   value={annualPrice}
                   onChange={(e) => setAnnualPrice(e.target.value)}
                   className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
                 />
                 <p className="mt-1 text-xs text-brand-ink/60">
-                  Lets fans pay yearly instead of monthly — a discount off 12× the monthly price is
-                  the usual way to make it worth choosing. Leave blank to only offer monthly.
+                  Lets fans pay yearly with up to two months free. The annual price must equal at least
+                  10 monthly payments. Leave blank to offer monthly billing only.
                 </p>
               </div>
               <div>
