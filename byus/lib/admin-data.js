@@ -77,6 +77,10 @@ export async function loadAdminOverview() {
          )::int AS recent_converted_count
          FROM creator_follows f`
       ),
+      // Historical only: the /waitlist page these rows came from now redirects straight
+      // to signup instead of writing to founding_waitlist (see app/waitlist/page.js), so
+      // source = 'instagram_campaign' is a frozen count from before that change, not a
+      // live funnel. recent_count is kept for shape-compatibility but will always be 0.
       query(
         `SELECT
            COUNT(*)::int AS count,

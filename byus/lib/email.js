@@ -103,9 +103,9 @@ export async function sendWelcomeSubscriptionEmail(to, { creatorName, creatorUrl
 }
 
 // Sent once, right when someone joins the Founding Creator waitlist (see
-// app/api/waitlist/route.js) — a confirmation that their application landed, not a
-// pitch they need to act on again, so no button pointing back into the (currently
-// paused) signup flow.
+// app/api/waitlist/route.js). Creator signup and Stripe Connect onboarding are open
+// now, so this confirms the application landed and points them straight at signup
+// instead of promising a follow-up email once payouts "go live."
 export async function sendWaitlistConfirmationEmail(to, { displayName }) {
   const resend = getClient();
   const greeting = displayName ? escapeHtml(displayName) : 'there';
@@ -116,9 +116,11 @@ export async function sendWaitlistConfirmationEmail(to, { displayName }) {
     html: `
       <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; color: #1A1A1A;">
         <h2 style="color:#146359;">You're on the list, ${greeting}.</h2>
-        <p>Thanks for applying to the ByUs Founding Creator Program. We're a new platform and payouts are temporarily paused while our payment processor finishes reviewing our account — completely normal for a platform this new, and we expect it to clear soon.</p>
-        <p>The moment it does, we'll email this address first so you can claim your founding spot and lock in our lowest fee (10%, forever) before it opens up to everyone else.</p>
-        <p style="color:#666;font-size:13px;">No action needed from you right now. Questions? Just reply to this email or reach us at support@byusapp.com.</p>
+        <p>Thanks for applying to the ByUs Founding Creator Program. Creator signup is open now — head to byusapp.com to create your page and lock in our lowest fee (10%, forever) as one of the first 100 founding creators, while spots remain.</p>
+        <p style="margin: 24px 0;">
+          <a href="https://byusapp.com/signup?role=creator" style="background:#146359;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;">Create your founding page</a>
+        </p>
+        <p style="color:#666;font-size:13px;">Questions? Just reply to this email or reach us at support@byusapp.com.</p>
       </div>
     `,
   });
