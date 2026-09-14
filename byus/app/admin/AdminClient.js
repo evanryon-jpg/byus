@@ -22,6 +22,8 @@ export default function AdminClient({
     fanCount,
     activeSubscriberCount,
     followerCount,
+    convertedFollowerCount,
+    followerConversionPercent,
     lifetimeGrossCents,
     lifetimePlatformFeeCents,
     lifetimePaymentCount,
@@ -48,6 +50,11 @@ export default function AdminClient({
         <StatTile label="Creators" value={creatorCount.toLocaleString()} />
         <StatTile label="Fans" value={fanCount.toLocaleString()} />
         <StatTile label="Free creator follows" value={followerCount.toLocaleString()} />
+        <StatTile
+          label="Follower-to-paid conversion"
+          value={`${followerConversionPercent.toLocaleString()}%`}
+          detail={`${convertedFollowerCount.toLocaleString()} active paid relationship${convertedFollowerCount === 1 ? '' : 's'}`}
+        />
         <StatTile label="Active subscriptions" value={activeSubscriberCount.toLocaleString()} />
         <StatTile
           label="Open disputes"
