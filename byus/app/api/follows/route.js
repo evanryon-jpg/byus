@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +14,8 @@ export async function GET() {
      FROM creator_follows f
      JOIN users u ON u.id = f.creator_id
      WHERE f.fan_id = $1 AND u.role = 'creator' AND u.is_suspended = false
-     ORDER BY f.created_at DESC`,
+     ORDER BY f.created_at DESC
+     LIMIT 200`,
     [session.userId]
   );
 
@@ -33,6 +35,9 @@ export async function POST(request) {
   const session = await getCurrentUser();
   if (!session) return NextResponse.json({ error: 'Log in to follow creators.' }, { status: 401 });
 
+  const rate = await checkRateLimit('follow', `user:${session.userId}`);
+  if (!rate.success) return rateLimitResponse(rate);
+
   let body;
   try {
     body = await request.json();
@@ -42,7 +47,7 @@ export async function POST(request) {
 
   const creatorId = String(body.creatorId || '');
   const shouldFollow = body.following !== false;
-  if (!/^[0-9a-f-]{36}$/i.test(creatorId)) {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(creatorId)) {
     return NextResponse.json({ error: 'Invalid creator.' }, { status: 400 });
   }
   if (creatorId === session.userId) {
