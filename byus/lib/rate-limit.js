@@ -156,6 +156,11 @@ const limiters = {
     limiter: Ratelimit.slidingWindow(20, '10 m'),
     prefix: 'rl:campaign-metric',
   }),
+  outreach: new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(60, '10 m'),
+    prefix: 'rl:outreach',
+  }),
 };
 
 // Best-effort client IP. Vercel always sets x-forwarded-for in production; the
