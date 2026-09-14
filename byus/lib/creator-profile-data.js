@@ -221,6 +221,7 @@ export async function loadCreatorProfile(creatorId, session) {
     followerCount: followerResult.rows[0].count,
     isFollowing,
     canFollow: Boolean(session && session.userId !== id),
+    isOwnPage: Boolean(session && session.userId === id),
     posts,
     live,
     topSupporters,
