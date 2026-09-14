@@ -122,7 +122,7 @@ function OnboardingStatus() {
           </p>
           <a
             href="/creator/dashboard"
-            className="mt-8 inline-block rounded-full bg-[#2563EB] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#1D4ED8]"
+            className="mt-8 inline-block rounded-full bg-[#0F766E] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#115E59]"
           >
             Go to your dashboard
           </a>
@@ -138,7 +138,7 @@ function OnboardingStatus() {
           </p>
           <a
             href="/creator/dashboard"
-            className="mt-8 inline-block rounded-full bg-[#2563EB] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#1D4ED8]"
+            className="mt-8 inline-block rounded-full bg-[#0F766E] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#115E59]"
           >
             Go to your dashboard
           </a>
@@ -152,7 +152,7 @@ function OnboardingStatus() {
           <div className="mt-8 flex justify-center gap-3">
             <button
               onClick={handleRetryConnect}
-              className="rounded-full bg-[#2563EB] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#1D4ED8]"
+              className="rounded-full bg-[#0F766E] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#115E59]"
             >
               Try again
             </button>
@@ -172,7 +172,7 @@ function OnboardingStatus() {
 function Spinner() {
   return (
     <div
-      className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-brand-ink/10 border-t-[#2563EB]"
+      className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-brand-ink/10 border-t-[#0F766E]"
       aria-hidden="true"
     />
   );
