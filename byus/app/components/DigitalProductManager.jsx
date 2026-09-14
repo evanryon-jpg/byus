@@ -73,7 +73,7 @@ export default function DigitalProductManager() {
           {accessType === 'purchase' && (
             <label className="flex items-center rounded-xl border border-brand-ink/15 bg-white px-4">
               <span className="mr-1 text-sm">$</span>
-              <input name="price" type="number" min="1" max="5000" step="0.01" required
+              <input name="price" type="number" min="5" max="5000" step="0.01" required
                 placeholder="10.00" className="w-full py-3 text-sm outline-none" />
             </label>
           )}
