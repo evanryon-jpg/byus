@@ -9,6 +9,7 @@ import { getCurrentUser } from '@/lib/session';
 import { paymentProvider } from '@/lib/payments';
 import { TRIAL_DAY_OPTIONS } from '@/lib/trials';
 import { containsBlockedContent } from '@/lib/content-policy';
+import { loadCreatorTiers } from '@/lib/creator-dashboard-data';
 
 // Stripe itself caps unit_amount well above this, but there's no legitimate reason for
 // a creator subscription tier to cost more than $2,000/month — bounding it here catches
@@ -23,13 +24,8 @@ export async function GET() {
   }
 
   try {
-    const result = await query(
-      `SELECT id, name, description, price_cents, annual_price_cents, welcome_message, trial_days,
-              stripe_product_id, active, created_at
-       FROM subscription_tiers WHERE creator_id = $1 ORDER BY price_cents ASC`,
-      [session.userId]
-    );
-    return NextResponse.json({ tiers: result.rows });
+    const tiers = await loadCreatorTiers(session.userId);
+    return NextResponse.json({ tiers });
   } catch (err) {
     console.error('creator/tiers GET failed:', err);
     return NextResponse.json(
