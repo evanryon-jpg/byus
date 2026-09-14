@@ -85,6 +85,11 @@ export async function GET(request) {
            WHERE status = 'active' AND created_at >= now() - interval '30 days'
            GROUP BY creator_id
          ) r ON r.creator_id = u.id
+         LEFT JOIN (
+           SELECT creator_id, COUNT(*) AS follower_count
+           FROM creator_follows
+           GROUP BY creator_id
+         ) f ON f.creator_id = u.id
          WHERE ${conditions.join(' AND ')}
          ORDER BY ${SORTS[sort]}
          LIMIT 25 OFFSET ${i}`,
