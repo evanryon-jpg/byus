@@ -37,6 +37,9 @@ export async function GET(request) {
   const q = (searchParams.get('q') || '').trim();
   const tag = (searchParams.get('tag') || '').trim();
   const sort = SORTS[searchParams.get('sort')] ? searchParams.get('sort') : 'newest';
+  const requestedOffset = Number.parseInt(searchParams.get('offset') || '0', 10);
+  const offset = Number.isFinite(requestedOffset) && requestedOffset > 0 ? requestedOffset : 0;
+  const pageSize = 24;
 
   try {
     // A suspended creator simply doesn't exist as far as Browse/homepage/search are
@@ -81,8 +84,9 @@ export async function GET(request) {
            GROUP BY creator_id
          ) r ON r.creator_id = u.id
          WHERE ${conditions.join(' AND ')}
-         ORDER BY ${SORTS[sort]}`,
-        values
+         ORDER BY ${SORTS[sort]}
+         LIMIT 25 OFFSET ${i}`,
+        [...values, offset]
       ),
       query(
         `SELECT DISTINCT unnest(tags) AS tag FROM users
@@ -92,13 +96,19 @@ export async function GET(request) {
 
     // profile_image_url in the DB is a private Blob pathname — point the
     // client at our own public proxy route instead of exposing it directly.
-    const creators = creatorsResult.rows.map((c) => ({
+    const hasMore = creatorsResult.rows.length > pageSize;
+    const creators = creatorsResult.rows.slice(0, pageSize).map((c) => ({
       ...c,
       profile_image_url: publicAvatarUrl(c.id, c.profile_image_url),
     }));
     const availableTags = tagsResult.rows.map((r) => r.tag);
 
-    return NextResponse.json({ creators, availableTags });
+    return NextResponse.json({
+      creators,
+      availableTags,
+      hasMore,
+      nextOffset: hasMore ? offset + pageSize : null,
+    });
   } catch (err) {
     console.error('creators GET failed:', err);
     return NextResponse.json(
