@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import VerifyEmailBanner from '../../components/VerifyEmailBanner';
 import FanDownloads from '../../components/FanDownloads';
 
 export default function FanDashboard() {
   const [user, setUser] = useState(null);
   const [subs, setSubs] = useState([]);
+  const [followedCreators, setFollowedCreators] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [billingLoading, setBillingLoading] = useState(false);
@@ -36,8 +38,12 @@ export default function FanDashboard() {
         return;
       }
       setUser((await meRes.json()).user);
-      const subsRes = await fetch('/api/fan/subscriptions');
+      const [subsRes, followsRes] = await Promise.all([
+        fetch('/api/fan/subscriptions'),
+        fetch('/api/follows'),
+      ]);
       if (subsRes.ok) setSubs((await subsRes.json()).subscriptions);
+      if (followsRes.ok) setFollowedCreators((await followsRes.json()).creators);
     } catch {
       // fetch() itself can throw (offline, DNS failure, dropped connection) — without this
       // catch, setLoading(false) below would never run and the page would be stuck on
@@ -191,6 +197,50 @@ export default function FanDashboard() {
           </div>
         </div>
       )}
+
+      <section className="mt-8">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-bold">Creators you follow</h2>
+            <p className="text-sm text-brand-ink/60">Free follows — no membership or payment required.</p>
+          </div>
+          <a href="/browse" className="text-sm font-semibold text-[#0F766E] hover:underline">Browse creators</a>
+        </div>
+        {followedCreators.length > 0 ? (
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+            {followedCreators.map((creator) => (
+              <li key={creator.id}>
+                <a
+                  href={`/creator/${creator.slug || creator.id}`}
+                  className="flex h-full items-center gap-3 rounded-2xl border border-brand-ink/5 bg-brand-paper p-4 hover:border-[#0F766E]/30"
+                >
+                  {creator.profile_image_url ? (
+                    <Image
+                      src={creator.profile_image_url}
+                      alt=""
+                      width={48}
+                      height={48}
+                      className="h-12 w-12 shrink-0 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#0F766E]/10 font-semibold text-[#0F766E]">
+                      {(creator.display_name || '?').trim().charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                  <span className="min-w-0">
+                    <span className="block font-semibold">{creator.display_name || 'Creator'}</span>
+                    {creator.bio && <span className="block truncate text-sm text-brand-ink/60">{creator.bio}</span>}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-4 rounded-2xl bg-brand-ink/5 px-4 py-3 text-sm text-brand-ink/65">
+            You aren’t following anyone yet. Follow creators for free so their pages are easy to find again.
+          </p>
+        )}
+      </section>
 
       <FanDownloads />
 
