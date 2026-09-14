@@ -43,7 +43,7 @@ export default function AdminPage() {
       <div className="mx-auto max-w-md px-6 py-24 text-center">
         <h1 className="text-xl font-semibold text-[#172033]">Not authorized</h1>
         <p className="mt-2 text-sm text-brand-ink/65">This page is only visible to the ByUs team.</p>
-        <a href="/" className="mt-6 inline-block text-sm font-semibold text-[#2563EB] hover:underline">
+        <a href="/" className="mt-6 inline-block text-sm font-semibold text-[#0F766E] hover:underline">
           Back to ByUs →
         </a>
       </div>
@@ -210,7 +210,7 @@ export default function AdminPage() {
                   </td>
                   <td className="py-2.5 pr-4">
                     {c.stripeConnectOnboarded ? (
-                      <span className="rounded-full bg-[#2563EB]/10 px-2 py-0.5 text-xs font-medium text-[#2563EB]">Connected</span>
+                      <span className="rounded-full bg-[#0F766E]/10 px-2 py-0.5 text-xs font-medium text-[#0F766E]">Connected</span>
                     ) : (
                       <span className="rounded-full bg-brand-ink/5 px-2 py-0.5 text-xs font-medium text-brand-ink/60">Not connected</span>
                     )}
@@ -407,7 +407,7 @@ function ReportRow({ report, onUpdate }) {
           type="button"
           onClick={handleSaveNote}
           disabled={savingNote || note === (report.admin_note || '')}
-          className="shrink-0 rounded-full border border-[#2563EB] px-3 py-1.5 text-xs font-medium text-[#2563EB] hover:bg-[#2563EB]/5 disabled:opacity-50"
+          className="shrink-0 rounded-full border border-[#0F766E] px-3 py-1.5 text-xs font-medium text-[#0F766E] hover:bg-[#0F766E]/5 disabled:opacity-50"
         >
           {savingNote ? 'Saving…' : 'Save note'}
         </button>
@@ -434,7 +434,7 @@ function SuspendControl({ userId, initialSuspended, initialReason, protectedAcco
   if (protectedAccount) {
     return (
       <span
-        className="rounded-full bg-[#2563EB]/10 px-2 py-0.5 text-xs font-medium text-[#2563EB]"
+        className="rounded-full bg-[#0F766E]/10 px-2 py-0.5 text-xs font-medium text-[#0F766E]"
         title="Admin/owner accounts can't be suspended from the admin dashboard."
       >
         Protected
@@ -477,7 +477,7 @@ function SuspendControl({ userId, initialSuspended, initialReason, protectedAcco
           type="button"
           onClick={() => submit(false, '')}
           disabled={saving}
-          className="text-xs font-medium text-[#2563EB] hover:underline disabled:opacity-50"
+          className="text-xs font-medium text-[#0F766E] hover:underline disabled:opacity-50"
         >
           {saving ? 'Reinstating…' : 'Reinstate'}
         </button>
@@ -572,7 +572,7 @@ function ReviewControl({ userId, initialNeedsReview }) {
           type="button"
           onClick={clearReview}
           disabled={saving}
-          className="text-xs font-medium text-[#2563EB] hover:underline disabled:opacity-50"
+          className="text-xs font-medium text-[#0F766E] hover:underline disabled:opacity-50"
         >
           {saving ? 'Clearing…' : 'Clear for review'}
         </button>
@@ -713,7 +713,7 @@ function SuggestionRow({ suggestion, onUpdate }) {
           type="button"
           onClick={handleSaveNote}
           disabled={savingNote || note === (suggestion.admin_note || '')}
-          className="shrink-0 rounded-full border border-[#2563EB] px-3 py-1.5 text-xs font-medium text-[#2563EB] hover:bg-[#2563EB]/5 disabled:opacity-50"
+          className="shrink-0 rounded-full border border-[#0F766E] px-3 py-1.5 text-xs font-medium text-[#0F766E] hover:bg-[#0F766E]/5 disabled:opacity-50"
         >
           {savingNote ? 'Saving…' : 'Save reply'}
         </button>
