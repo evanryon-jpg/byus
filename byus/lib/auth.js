@@ -54,6 +54,25 @@ export function verifySessionToken(token) {
   }
 }
 
+// Short-lived signed tokens for one-off flows that aren't a login session -- currently
+// just the Discord OAuth `state` param (see app/api/auth/discord/start/route.js),
+// which needs to prove which ByUs fan initiated the OAuth redirect without a
+// server-side session table (the browser round-trips through Discord's own domain in
+// between, so a cookie alone can't carry this).
+export function createConnectStateToken(userId, purpose) {
+  return jwt.sign({ userId, purpose }, JWT_SECRET, { expiresIn: '10m' });
+}
+
+export function verifyConnectStateToken(token, purpose) {
+  try {
+    const claims = jwt.verify(token, JWT_SECRET);
+    if (claims.purpose !== purpose) return null;
+    return claims;
+  } catch (err) {
+    return null; // invalid or expired token
+  }
+}
+
 export function getSessionCookieOptions() {
   return {
     httpOnly: true, // JS on the page can't read this cookie — protects against XSS token theft

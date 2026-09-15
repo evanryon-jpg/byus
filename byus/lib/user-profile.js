@@ -16,7 +16,8 @@ import { publicAvatarUrl } from '@/lib/avatar-url';
 export const USER_SELECT_FIELDS = `id, email, role, display_name, bio, profile_image_url,
        stripe_connect_onboarded, content_policy_accepted_at, review_cleared_at, tags,
        email_verified, platform_fee_percent, notify_new_posts,
-       show_support_publicly, support_goal_cents, zero_fee_promo_expires_at`;
+       show_support_publicly, support_goal_cents, zero_fee_promo_expires_at,
+       discord_guild_id, discord_subscriber_role_id, telegram_chat_id`;
 
 // profile_image_url in the DB is a private Blob pathname (or a `preset:<id>`
 // marker), never exposed directly — point the client at our own public proxy
