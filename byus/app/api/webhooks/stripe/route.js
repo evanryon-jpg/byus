@@ -53,6 +53,7 @@ import {
   syncActiveSubscriptionsToFeePercent,
   syncAllActiveSubscriptionsToCurrentEffectiveFee,
 } from '@/lib/fees';
+import { syncPlatformAccess } from '@/lib/platform-sync';
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -140,6 +141,12 @@ export async function POST(request) {
     let newSubscriptionWelcome = null;
     let subscriptionActivated = null;
     let subscriptionPayment = null;
+    // Discord role / Telegram group membership follows the same active/not-active
+    // status this file already tracks for content gating (see lib/platform-sync.js) --
+    // collected here and applied after commit for the same reason as everything else
+    // in this block: it's a network call (to Discord/Telegram, not Stripe) and doesn't
+    // belong inside an open DB transaction/lock.
+    const platformSyncEvents = [];
 
     await withTransaction(async (client) => {
       // Idempotency: claim this event ID first, in the same transaction as the state change
@@ -308,6 +315,7 @@ export async function POST(request) {
               console.error('Referral reward failed (subscription still activated):', err);
             }
             newSubscriptionWelcome = { fanId: fan_id, creatorId: creator_id };
+            platformSyncEvents.push({ fanId: fan_id, creatorId: creator_id, grant: true });
             subscriptionActivated = {
               billing_interval: stripeSubscription.metadata?.billing_interval || 'unknown',
               price_cents: stripeSubscription.items?.data?.[0]?.price?.unit_amount || 0,
@@ -332,25 +340,43 @@ export async function POST(request) {
             : KNOWN_STATUSES.includes(sub.status)
             ? sub.status
             : 'incomplete';
-          await client.query(
+          const updateResult = await client.query(
             `UPDATE subscriptions
              SET status = $1, current_period_end = to_timestamp($2), stripe_event_created_at = to_timestamp($3)
              WHERE stripe_subscription_id = $4
                AND (stripe_event_created_at IS NULL OR stripe_event_created_at <= to_timestamp($3))`,
             [status, sub.current_period_end, event.created, sub.id]
           );
+          // Only sync Discord/Telegram if this write actually applied (the ordering
+          // guard above can no-op a stale/out-of-order event) and the subscription
+          // metadata carries fan/creator ids -- older subscriptions predating that
+          // metadata being set just don't get bot sync, same as they never did.
+          if (updateResult.rowCount > 0 && sub.metadata?.fan_id && sub.metadata?.creator_id) {
+            platformSyncEvents.push({
+              fanId: sub.metadata.fan_id,
+              creatorId: sub.metadata.creator_id,
+              grant: status === 'active',
+            });
+          }
           break;
         }
 
         case 'customer.subscription.deleted': {
           const sub = event.data.object;
-          await client.query(
+          const deleteResult = await client.query(
             `UPDATE subscriptions
              SET status = 'canceled', stripe_event_created_at = to_timestamp($1)
              WHERE stripe_subscription_id = $2
                AND (stripe_event_created_at IS NULL OR stripe_event_created_at <= to_timestamp($1))`,
             [event.created, sub.id]
           );
+          if (deleteResult.rowCount > 0 && sub.metadata?.fan_id && sub.metadata?.creator_id) {
+            platformSyncEvents.push({
+              fanId: sub.metadata.fan_id,
+              creatorId: sub.metadata.creator_id,
+              grant: false,
+            });
+          }
           break;
         }
 
@@ -644,6 +670,14 @@ export async function POST(request) {
         ...subscriptionActivated,
         provider: 'stripe',
       }, request);
+    }
+
+    // Discord role grant/revoke and Telegram group invite/removal -- see
+    // lib/platform-sync.js. Each call already catches its own errors (a Discord/
+    // Telegram hiccup should never turn into a 500 that makes Stripe retry a payment
+    // event it already applied successfully), so no try/catch needed here.
+    for (const syncEvent of platformSyncEvents) {
+      await syncPlatformAccess(syncEvent);
     }
 
     if (subscriptionPayment) {
