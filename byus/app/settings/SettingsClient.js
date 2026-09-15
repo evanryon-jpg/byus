@@ -6,7 +6,7 @@
 // etc.), which are inherently user-triggered and have nothing to do with first
 // paint.
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { CREATOR_CATEGORIES } from '@/lib/categories';
 import { PRESET_AVATAR_IDS } from '@/lib/preset-avatars';
@@ -23,6 +23,10 @@ export default function SettingsClient({ initialUser, initialReferral, initialSu
       <ProfileCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
       <NotificationsCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
       <SupportVisibilityCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
+      {user.role === 'fan' && <FanConnectionsCard />}
+      {user.role === 'creator' && (
+        <CreatorIntegrationsCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
+      )}
       <ReferralCard role={user.role} initialData={initialReferral} />
       <SuggestionBoxCard initialSuggestions={initialSuggestions} />
       <PasswordCard />
@@ -419,6 +423,228 @@ function SupportVisibilityCard({ user, onChanged }) {
         />
       </label>
       {status && <p className="mt-2 text-xs text-red-600">{status.text}</p>}
+    </section>
+  );
+}
+
+
+function FanConnectionsCard() {
+  const [connections, setConnections] = useState({ discord: null, telegram: null });
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState('');
+  const [status, setStatus] = useState(null);
+
+  useEffect(() => {
+    fetch('/api/fan/connections')
+      .then(async (res) => {
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Could not load connected accounts.');
+        setConnections(result);
+      })
+      .catch((err) => setStatus({ type: 'error', text: err.message }))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function connectTelegram() {
+    setBusy('telegram');
+    setStatus(null);
+    try {
+      const res = await fetch('/api/fan/connections/telegram/link', { method: 'POST' });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Could not connect Telegram.');
+      window.location.assign(result.url);
+    } catch (err) {
+      setStatus({ type: 'error', text: err.message || 'Could not connect Telegram.' });
+      setBusy('');
+    }
+  }
+
+  async function disconnect(provider) {
+    setBusy(provider);
+    setStatus(null);
+    try {
+      const res = await fetch(`/api/fan/connections/${provider}`, { method: 'DELETE' });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || `Could not disconnect ${provider}.`);
+      setConnections((current) => ({ ...current, [provider]: null }));
+      setStatus({ type: 'ok', text: `${provider === 'discord' ? 'Discord' : 'Telegram'} disconnected.` });
+    } catch (err) {
+      setStatus({ type: 'error', text: err.message || 'Could not disconnect this account.' });
+    } finally {
+      setBusy('');
+    }
+  }
+
+  const accountRow = (provider, label) => {
+    const connected = connections[provider];
+    return (
+      <div className="flex flex-col gap-3 rounded-xl border border-brand-ink/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="font-medium">{label}</p>
+          <p className="mt-0.5 text-xs text-brand-ink/60">
+            {connected
+              ? `Connected as ${connected.provider_username || connected.provider_user_id}`
+              : `Connect your ${label} account to receive subscriber access automatically.`}
+          </p>
+        </div>
+        {connected ? (
+          <button
+            type="button"
+            onClick={() => disconnect(provider)}
+            disabled={busy === provider}
+            className="rounded-full border border-brand-ink/15 px-4 py-2 text-sm font-medium hover:border-brand-ink/30 disabled:opacity-50"
+          >
+            {busy === provider ? 'Disconnecting…' : 'Disconnect'}
+          </button>
+        ) : provider === 'discord' ? (
+          <a
+            href="/api/auth/discord/start"
+            className="rounded-full bg-[#0F766E] px-4 py-2 text-center text-sm font-semibold text-white hover:bg-[#115E59]"
+          >
+            Connect Discord
+          </a>
+        ) : (
+          <button
+            type="button"
+            onClick={connectTelegram}
+            disabled={busy === 'telegram'}
+            className="rounded-full bg-[#0F766E] px-4 py-2 text-sm font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
+          >
+            {busy === 'telegram' ? 'Opening…' : 'Connect Telegram'}
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <section className="mt-6 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
+      <h2 className="font-semibold">Connected accounts</h2>
+      <p className="mt-1 text-sm text-brand-ink/65">
+        Connect once and ByUs can manage access to creators' private communities when your subscription changes.
+      </p>
+      {loading ? (
+        <p className="mt-4 text-sm text-brand-ink/60">Loading connections…</p>
+      ) : (
+        <div className="mt-4 space-y-3">
+          {accountRow('discord', 'Discord')}
+          {accountRow('telegram', 'Telegram')}
+        </div>
+      )}
+      {status && (
+        <p className={`mt-3 text-sm ${status.type === 'ok' ? 'text-green-700' : 'text-red-600'}`}>
+          {status.text}
+        </p>
+      )}
+    </section>
+  );
+}
+
+function CreatorIntegrationsCard({ user, onChanged }) {
+  const [discordGuildId, setDiscordGuildId] = useState(user.discord_guild_id || '');
+  const [discordRoleId, setDiscordRoleId] = useState(user.discord_subscriber_role_id || '');
+  const [telegramChatId, setTelegramChatId] = useState(user.telegram_chat_id || '');
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState(null);
+
+  async function handleSave(e) {
+    e.preventDefault();
+    setSaving(true);
+    setStatus(null);
+    try {
+      const res = await fetch('/api/creator/integrations', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          discordGuildId: discordGuildId.trim() || null,
+          discordSubscriberRoleId: discordRoleId.trim() || null,
+          telegramChatId: telegramChatId.trim() || null,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Could not save integrations.');
+      onChanged({
+        discord_guild_id: discordGuildId.trim() || null,
+        discord_subscriber_role_id: discordRoleId.trim() || null,
+        telegram_chat_id: telegramChatId.trim() || null,
+      });
+      setStatus({ type: 'ok', text: 'Community connections saved.' });
+    } catch (err) {
+      setStatus({ type: 'error', text: err.message || 'Could not save integrations.' });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <section className="mt-6 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
+      <h2 className="font-semibold">Subscriber communities</h2>
+      <p className="mt-1 text-sm text-brand-ink/65">
+        Let ByUs add active supporters to your private Discord server or Telegram group and remove access if a subscription ends.
+      </p>
+      <form onSubmit={handleSave} className="mt-4 space-y-5">
+        <div className="rounded-xl border border-brand-ink/10 p-4">
+          <h3 className="text-sm font-semibold">Discord</h3>
+          <p className="mt-1 text-xs text-brand-ink/60">
+            Add the ByUs bot to your server, then paste the server ID and subscriber-role ID.
+          </p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <label className="text-xs font-medium">
+              Server ID
+              <input
+                type="text"
+                inputMode="numeric"
+                value={discordGuildId}
+                onChange={(e) => setDiscordGuildId(e.target.value)}
+                placeholder="Example: 123456789012345678"
+                className="mt-1 w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm font-normal"
+              />
+            </label>
+            <label className="text-xs font-medium">
+              Subscriber role ID
+              <input
+                type="text"
+                inputMode="numeric"
+                value={discordRoleId}
+                onChange={(e) => setDiscordRoleId(e.target.value)}
+                placeholder="Example: 123456789012345678"
+                className="mt-1 w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm font-normal"
+              />
+            </label>
+          </div>
+        </div>
+        <div className="rounded-xl border border-brand-ink/10 p-4">
+          <h3 className="text-sm font-semibold">Telegram</h3>
+          <p className="mt-1 text-xs text-brand-ink/60">
+            Add @ByUsSubscribersBot as an admin with permission to ban users, send /id in the group, then paste the number below.
+          </p>
+          <label className="mt-3 block text-xs font-medium">
+            Group chat ID
+            <input
+              type="text"
+              inputMode="numeric"
+              value={telegramChatId}
+              onChange={(e) => setTelegramChatId(e.target.value)}
+              placeholder="Example: -1001234567890"
+              className="mt-1 w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm font-normal"
+            />
+          </label>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            type="submit"
+            disabled={saving}
+            className="rounded-full bg-[#0F766E] px-5 py-2 text-sm font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
+          >
+            {saving ? 'Saving…' : 'Save community settings'}
+          </button>
+          {status && (
+            <span className={`text-sm ${status.type === 'ok' ? 'text-green-700' : 'text-red-600'}`}>
+              {status.text}
+            </span>
+          )}
+        </div>
+      </form>
     </section>
   );
 }
