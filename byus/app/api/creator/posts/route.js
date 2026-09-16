@@ -10,6 +10,7 @@ import { buildPollPayload } from '@/lib/polls';
 import { sendNewPostEmail } from '@/lib/email';
 import { containsBlockedContent } from '@/lib/content-policy';
 import { loadCreatorPosts } from '@/lib/creator-dashboard-data';
+import { getUpload, getAsset } from '@/lib/mux';
 
 const TITLE_MAX = 200;
 const BODY_MAX = 20000;
@@ -59,7 +60,7 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Only creators can post.' }, { status: 403 });
   }
 
-  const { title, body, mediaUrl, visibility, pollOptions } = await request.json();
+  const { title, body, mediaUrl, visibility, pollOptions, videoUploadId } = await request.json();
 
   if (!body) {
     return NextResponse.json({ error: 'Post body is required.' }, { status: 400 });
@@ -102,6 +103,43 @@ export async function POST(request) {
   }
   const finalVisibility = visibility === 'subscribers_only' ? 'subscribers_only' : 'public';
 
+  // videoUploadId is the only video-related thing this endpoint ever trusts from the
+  // client -- it's an id we ourselves handed to THIS creator in
+  // POST /api/creator/posts/video-upload and recorded in video_uploads. Everything else
+  // (the actual asset id, playback id, whether it's really done transcoding) gets
+  // re-resolved from Mux directly right here, so a request can't attach an arbitrary
+  // Mux asset -- someone else's, or one still processing -- to a post just by sending
+  // a made-up assetId/playbackId.
+  let muxAssetId = null;
+  let muxPlaybackId = null;
+  if (videoUploadId) {
+    const owned = await query(
+      `SELECT 1 FROM video_uploads WHERE upload_id = $1 AND creator_id = $2`,
+      [videoUploadId, session.userId]
+    );
+    if (!owned.rows[0]) {
+      return NextResponse.json({ error: 'Invalid video reference.' }, { status: 400 });
+    }
+    try {
+      const upload = await getUpload(videoUploadId);
+      if (!upload.asset_id) {
+        return NextResponse.json({ error: 'Video upload is not finished yet.' }, { status: 400 });
+      }
+      const asset = await getAsset(upload.asset_id);
+      if (asset.status !== 'ready') {
+        return NextResponse.json({ error: 'Video is still processing — try again in a moment.' }, { status: 400 });
+      }
+      muxAssetId = asset.id;
+      muxPlaybackId = asset.playback_ids?.[0]?.id || null;
+      if (!muxPlaybackId) {
+        return NextResponse.json({ error: 'Video has no playable output yet. Try again.' }, { status: 400 });
+      }
+    } catch (err) {
+      console.error('video resolution failed for post creation:', err);
+      return NextResponse.json({ error: 'Could not verify the uploaded video. Try again.' }, { status: 400 });
+    }
+  }
+
   try {
     // A creator ByUs hasn't reviewed yet (review_cleared_at is null -- true for every
     // NEW signup; existing creators were backfilled when this shipped, see the
@@ -118,9 +156,9 @@ export async function POST(request) {
     // /api/creator/upload, stored as-is — it's only ever resolved back into
     // real file bytes through the gated /api/posts/:id/media route.
     const result = await query(
-      `INSERT INTO posts (creator_id, title, body, media_url, visibility, poll_options, pending_review)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING id, title, body, media_url, visibility, poll_options, pending_review, created_at`,
+      `INSERT INTO posts (creator_id, title, body, media_url, visibility, poll_options, pending_review, mux_asset_id, mux_playback_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       RETURNING id, title, body, media_url, visibility, poll_options, pending_review, created_at, mux_playback_id`,
       [
         session.userId,
         title || null,
@@ -129,10 +167,14 @@ export async function POST(request) {
         finalVisibility,
         cleanedPollOptions ? JSON.stringify(cleanedPollOptions) : null,
         pendingReview,
+        muxAssetId,
+        muxPlaybackId,
       ]
     );
 
-    const post = result.rows[0];
+    // eslint-disable-next-line no-unused-vars -- mux_playback_id pulled out so it never
+    // gets echoed back raw in the response below (see has_video instead).
+    const { mux_playback_id: _muxPlaybackId, ...post } = result.rows[0];
 
     // Best-effort — a notification failure should never mean the post itself didn't get
     // created. Goes out to every active subscriber who hasn't turned this off, regardless
@@ -152,6 +194,11 @@ export async function POST(request) {
       post: {
         ...post,
         media_url: post.media_url ? `/api/posts/${post.id}/media` : null,
+        // The creator always gets to see/preview their own video immediately, same as
+        // they always could with a subscriber-only image -- signing here (rather than
+        // routing this through the general viewer-gating logic) keeps this response
+        // simple; the public/gated version renders through loadCreatorProfile instead.
+        has_video: Boolean(muxPlaybackId),
         poll: buildPollPayload(post, {}),
       },
     });
