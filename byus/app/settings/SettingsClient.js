@@ -6,12 +6,25 @@
 // etc.), which are inherently user-triggered and have nothing to do with first
 // paint.
 
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
 import { CREATOR_CATEGORIES } from '@/lib/categories';
 import { PRESET_AVATAR_IDS } from '@/lib/preset-avatars';
 
-export default function SettingsClient({ initialUser, initialReferral, initialSuggestions }) {
+// Wrapped in Suspense because ConnectPlatformsCard reads useSearchParams (the
+// discordConnected/discordError flags the OAuth callback redirects back with) — Next
+// requires a Suspense boundary around any client component that does, same as this
+// app's signup/reset-password pages.
+export default function SettingsClient(props) {
+  return (
+    <Suspense fallback={<div className="mx-auto max-w-2xl px-6 py-12 text-center text-brand-ink/60">Loading…</div>}>
+      <SettingsClientInner {...props} />
+    </Suspense>
+  );
+}
+
+function SettingsClientInner({ initialUser, initialReferral, initialSuggestions }) {
   const [user, setUser] = useState(initialUser);
 
   return (
@@ -23,10 +36,8 @@ export default function SettingsClient({ initialUser, initialReferral, initialSu
       <ProfileCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
       <NotificationsCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
       <SupportVisibilityCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
-      {user.role === 'fan' && <FanConnectionsCard />}
-      {user.role === 'creator' && (
-        <CreatorIntegrationsCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
-      )}
+      <ConnectPlatformsCard user={user} />
+      <CreatorIntegrationsCard user={user} />
       <ReferralCard role={user.role} initialData={initialReferral} />
       <SuggestionBoxCard initialSuggestions={initialSuggestions} />
       <PasswordCard />
@@ -427,125 +438,176 @@ function SupportVisibilityCard({ user, onChanged }) {
   );
 }
 
+// Lets a fan link their Discord/Telegram account so ByUs can automatically grant them
+// the subscriber role / private-group access on creators they support (and remove it
+// if they cancel). Discord connects can't fetch their initial status server-side the
+// way most of this page does (there's no useSearchParams equivalent on the server
+// component, and the OAuth round-trip only ever happens client-side anyway), so this
+// one card does its own client fetch on mount -- the only card on this page that does.
+function ConnectPlatformsCard({ user }) {
+  const searchParams = useSearchParams();
+  const [status, setStatus] = useState(null); // { discord: {...}, telegram: {...} } | null while loading
+  const [busy, setBusy] = useState(null); // 'discord' | 'telegram' | null
+  const [error, setError] = useState('');
 
-function FanConnectionsCard() {
-  const [connections, setConnections] = useState({ discord: null, telegram: null });
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState('');
-  const [status, setStatus] = useState(null);
+  const discordFlag = searchParams.get('discordConnected') ? 'connected' : searchParams.get('discordError');
 
   useEffect(() => {
+    if (user.role !== 'fan') return;
+    let cancelled = false;
     fetch('/api/fan/connections')
-      .then(async (res) => {
-        const result = await res.json();
-        if (!res.ok) throw new Error(result.error || 'Could not load connected accounts.');
-        setConnections(result);
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled) setStatus(data || { discord: null, telegram: null });
       })
-      .catch((err) => setStatus({ type: 'error', text: err.message }))
-      .finally(() => setLoading(false));
-  }, []);
+      .catch(() => {
+        if (!cancelled) setStatus({ discord: null, telegram: null });
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user.role]);
 
-  async function connectTelegram() {
-    setBusy('telegram');
-    setStatus(null);
-    try {
-      const res = await fetch('/api/fan/connections/telegram/link', { method: 'POST' });
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.error || 'Could not connect Telegram.');
-      window.location.assign(result.url);
-    } catch (err) {
-      setStatus({ type: 'error', text: err.message || 'Could not connect Telegram.' });
-      setBusy('');
-    }
+  if (user.role !== 'fan') return null;
+
+  if (status === null) {
+    return (
+      <section className="mt-6 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
+        <h2 className="font-semibold">Connected accounts</h2>
+        <p className="mt-2 text-sm text-brand-ink/50">Loading…</p>
+      </section>
+    );
   }
 
-  async function disconnect(provider) {
+  async function handleDisconnect(provider) {
     setBusy(provider);
-    setStatus(null);
+    setError('');
     try {
       const res = await fetch(`/api/fan/connections/${provider}`, { method: 'DELETE' });
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.error || `Could not disconnect ${provider}.`);
-      setConnections((current) => ({ ...current, [provider]: null }));
-      setStatus({ type: 'ok', text: `${provider === 'discord' ? 'Discord' : 'Telegram'} disconnected.` });
+      if (!res.ok) throw new Error((await res.json()).error || 'Could not disconnect.');
+      setStatus({ ...status, [provider]: null });
     } catch (err) {
-      setStatus({ type: 'error', text: err.message || 'Could not disconnect this account.' });
+      setError(err.message || 'Could not disconnect. Try again.');
     } finally {
-      setBusy('');
+      setBusy(null);
     }
   }
 
-  const accountRow = (provider, label) => {
-    const connected = connections[provider];
-    return (
-      <div className="flex flex-col gap-3 rounded-xl border border-brand-ink/10 p-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="font-medium">{label}</p>
-          <p className="mt-0.5 text-xs text-brand-ink/60">
-            {connected
-              ? `Connected as ${connected.provider_username || connected.provider_user_id}`
-              : `Connect your ${label} account to receive subscriber access automatically.`}
-          </p>
-        </div>
-        {connected ? (
-          <button
-            type="button"
-            onClick={() => disconnect(provider)}
-            disabled={busy === provider}
-            className="rounded-full border border-brand-ink/15 px-4 py-2 text-sm font-medium hover:border-brand-ink/30 disabled:opacity-50"
-          >
-            {busy === provider ? 'Disconnecting…' : 'Disconnect'}
-          </button>
-        ) : provider === 'discord' ? (
-          <a
-            href="/api/auth/discord/start"
-            className="rounded-full bg-[#0F766E] px-4 py-2 text-center text-sm font-semibold text-white hover:bg-[#115E59]"
-          >
-            Connect Discord
-          </a>
-        ) : (
-          <button
-            type="button"
-            onClick={connectTelegram}
-            disabled={busy === 'telegram'}
-            className="rounded-full bg-[#0F766E] px-4 py-2 text-sm font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
-          >
-            {busy === 'telegram' ? 'Opening…' : 'Connect Telegram'}
-          </button>
-        )}
-      </div>
-    );
-  };
+  async function handleConnectTelegram() {
+    setBusy('telegram');
+    setError('');
+    try {
+      const res = await fetch('/api/fan/connections/telegram/link', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not start Telegram connect.');
+      window.location.href = data.url;
+    } catch (err) {
+      setError(err.message || 'Could not start Telegram connect.');
+      setBusy(null);
+    }
+  }
 
   return (
     <section className="mt-6 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
       <h2 className="font-semibold">Connected accounts</h2>
       <p className="mt-1 text-sm text-brand-ink/65">
-        Connect once and ByUs can manage access to creators' private communities when your subscription changes.
+        Connect Discord and/or Telegram so creators you subscribe to can automatically add
+        you to their private community space — no manual invites to track down.
       </p>
-      {loading ? (
-        <p className="mt-4 text-sm text-brand-ink/60">Loading connections…</p>
-      ) : (
-        <div className="mt-4 space-y-3">
-          {accountRow('discord', 'Discord')}
-          {accountRow('telegram', 'Telegram')}
-        </div>
+
+      {discordFlag === 'connected' && (
+        <p className="mt-3 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">Discord connected.</p>
       )}
-      {status && (
-        <p className={`mt-3 text-sm ${status.type === 'ok' ? 'text-green-700' : 'text-red-600'}`}>
-          {status.text}
+      {discordFlag === 'denied' && (
+        <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+          Discord connect was canceled.
         </p>
       )}
+      {discordFlag === 'taken' && (
+        <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+          That Discord account is already connected to a different ByUs account.
+        </p>
+      )}
+      {(discordFlag === 'expired' || discordFlag === 'failed' || discordFlag === 'unavailable') && (
+        <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+          Couldn't connect Discord — please try again.
+        </p>
+      )}
+
+      <div className="mt-4 grid gap-3">
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-brand-ink/10 p-4">
+          <div>
+            <p className="font-medium">Discord</p>
+            <p className="text-xs text-brand-ink/60">
+              {status.discord ? `Connected as ${status.discord.provider_username || 'your account'}` : 'Not connected'}
+            </p>
+          </div>
+          {status.discord ? (
+            <button
+              type="button"
+              onClick={() => handleDisconnect('discord')}
+              disabled={busy === 'discord'}
+              className="rounded-full border border-brand-ink/15 px-4 py-2 text-sm font-semibold disabled:opacity-50"
+            >
+              {busy === 'discord' ? 'Disconnecting…' : 'Disconnect'}
+            </button>
+          ) : (
+            <a
+              href="/api/auth/discord/start"
+              className="rounded-full bg-[#5865F2] px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+            >
+              Connect Discord
+            </a>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-brand-ink/10 p-4">
+          <div>
+            <p className="font-medium">Telegram</p>
+            <p className="text-xs text-brand-ink/60">
+              {status.telegram ? `Connected as ${status.telegram.provider_username || 'your account'}` : 'Not connected'}
+            </p>
+          </div>
+          {status.telegram ? (
+            <button
+              type="button"
+              onClick={() => handleDisconnect('telegram')}
+              disabled={busy === 'telegram'}
+              className="rounded-full border border-brand-ink/15 px-4 py-2 text-sm font-semibold disabled:opacity-50"
+            >
+              {busy === 'telegram' ? 'Disconnecting…' : 'Disconnect'}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleConnectTelegram}
+              disabled={busy === 'telegram'}
+              className="rounded-full bg-[#26A5E4] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
+            >
+              {busy === 'telegram' ? 'Opening…' : 'Connect Telegram'}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
     </section>
   );
 }
 
-function CreatorIntegrationsCard({ user, onChanged }) {
-  const [discordGuildId, setDiscordGuildId] = useState(user.discord_guild_id || '');
-  const [discordRoleId, setDiscordRoleId] = useState(user.discord_subscriber_role_id || '');
-  const [telegramChatId, setTelegramChatId] = useState(user.telegram_chat_id || '');
+// Creator-side config for the same Discord/Telegram sync: which server/role and which
+// group the bots should manage for this creator's subscribers. Plain fields, not an
+// OAuth flow — the creator sets these up once after adding the bots themselves (see
+// the ByUs setup guide), then ByUs takes it from there for every fan going forward.
+function CreatorIntegrationsCard({ user }) {
+  const [guildId, setGuildId] = useState(user.discord_guild_id || '');
+  const [roleId, setRoleId] = useState(user.discord_subscriber_role_id || '');
+  const [chatId, setChatId] = useState(user.telegram_chat_id || '');
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState(null);
+
+  if (user.role !== 'creator') return null;
 
   async function handleSave(e) {
     e.preventDefault();
@@ -556,21 +618,16 @@ function CreatorIntegrationsCard({ user, onChanged }) {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          discordGuildId: discordGuildId.trim() || null,
-          discordSubscriberRoleId: discordRoleId.trim() || null,
-          telegramChatId: telegramChatId.trim() || null,
+          discordGuildId: guildId.trim() || null,
+          discordSubscriberRoleId: roleId.trim() || null,
+          telegramChatId: chatId.trim() || null,
         }),
       });
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.error || 'Could not save integrations.');
-      onChanged({
-        discord_guild_id: discordGuildId.trim() || null,
-        discord_subscriber_role_id: discordRoleId.trim() || null,
-        telegram_chat_id: telegramChatId.trim() || null,
-      });
-      setStatus({ type: 'ok', text: 'Community connections saved.' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not save.');
+      setStatus({ type: 'ok', text: 'Saved.' });
     } catch (err) {
-      setStatus({ type: 'error', text: err.message || 'Could not save integrations.' });
+      setStatus({ type: 'error', text: err.message || 'Could not save. Try again.' });
     } finally {
       setSaving(false);
     }
@@ -578,72 +635,53 @@ function CreatorIntegrationsCard({ user, onChanged }) {
 
   return (
     <section className="mt-6 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
-      <h2 className="font-semibold">Subscriber communities</h2>
+      <h2 className="font-semibold">Discord &amp; Telegram</h2>
       <p className="mt-1 text-sm text-brand-ink/65">
-        Let ByUs add active supporters to your private Discord server or Telegram group and remove access if a subscription ends.
+        Automatically give subscribers a role in your Discord server and access to your
+        private Telegram group, and remove it when they cancel. Add the ByUs bot to each
+        first, then fill in the IDs below.
       </p>
-      <form onSubmit={handleSave} className="mt-4 space-y-5">
-        <div className="rounded-xl border border-brand-ink/10 p-4">
-          <h3 className="text-sm font-semibold">Discord</h3>
-          <p className="mt-1 text-xs text-brand-ink/60">
-            Add the ByUs bot to your server, then paste the server ID and subscriber-role ID.
-          </p>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <label className="text-xs font-medium">
-              Server ID
-              <input
-                type="text"
-                inputMode="numeric"
-                value={discordGuildId}
-                onChange={(e) => setDiscordGuildId(e.target.value)}
-                placeholder="Example: 123456789012345678"
-                className="mt-1 w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm font-normal"
-              />
-            </label>
-            <label className="text-xs font-medium">
-              Subscriber role ID
-              <input
-                type="text"
-                inputMode="numeric"
-                value={discordRoleId}
-                onChange={(e) => setDiscordRoleId(e.target.value)}
-                placeholder="Example: 123456789012345678"
-                className="mt-1 w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm font-normal"
-              />
-            </label>
-          </div>
-        </div>
-        <div className="rounded-xl border border-brand-ink/10 p-4">
-          <h3 className="text-sm font-semibold">Telegram</h3>
-          <p className="mt-1 text-xs text-brand-ink/60">
-            Add @ByUsSubscribersBot as an admin with permission to ban users, send /id in the group, then paste the number below.
-          </p>
-          <label className="mt-3 block text-xs font-medium">
-            Group chat ID
-            <input
-              type="text"
-              inputMode="numeric"
-              value={telegramChatId}
-              onChange={(e) => setTelegramChatId(e.target.value)}
-              placeholder="Example: -1001234567890"
-              className="mt-1 w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm font-normal"
-            />
-          </label>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            type="submit"
-            disabled={saving}
-            className="rounded-full bg-[#0F766E] px-5 py-2 text-sm font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
-          >
-            {saving ? 'Saving…' : 'Save community settings'}
-          </button>
-          {status && (
-            <span className={`text-sm ${status.type === 'ok' ? 'text-green-700' : 'text-red-600'}`}>
-              {status.text}
-            </span>
-          )}
-        </div>
+
+      <form onSubmit={handleSave} className="mt-4 grid gap-3">
+        <label className="grid gap-1">
+          <span className="text-sm font-medium text-[#172033]">Discord server ID</span>
+          <input
+            type="text"
+            value={guildId}
+            onChange={(e) => setGuildId(e.target.value)}
+            placeholder="e.g. 1234567890123456789"
+            className="rounded-xl border border-brand-ink/15 bg-white px-4 py-2.5 text-sm"
+          />
+        </label>
+        <label className="grid gap-1">
+          <span className="text-sm font-medium text-[#172033]">Discord subscriber role ID</span>
+          <input
+            type="text"
+            value={roleId}
+            onChange={(e) => setRoleId(e.target.value)}
+            placeholder="e.g. 1234567890123456789"
+            className="rounded-xl border border-brand-ink/15 bg-white px-4 py-2.5 text-sm"
+          />
+        </label>
+        <label className="grid gap-1">
+          <span className="text-sm font-medium text-[#172033]">Telegram group chat ID</span>
+          <input
+            type="text"
+            value={chatId}
+            onChange={(e) => setChatId(e.target.value)}
+            placeholder="e.g. -1001234567890"
+            className="rounded-xl border border-brand-ink/15 bg-white px-4 py-2.5 text-sm"
+          />
+        </label>
+        <button
+          disabled={saving}
+          className="mt-1 rounded-full bg-[#0F766E] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50 sm:justify-self-start"
+        >
+          {saving ? 'Saving…' : 'Save'}
+        </button>
+        {status && (
+          <p className={`text-sm ${status.type === 'ok' ? 'text-green-700' : 'text-red-600'}`}>{status.text}</p>
+        )}
       </form>
     </section>
   );
