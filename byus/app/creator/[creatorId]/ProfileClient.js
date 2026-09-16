@@ -14,6 +14,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import LivePlayer from '../../components/LivePlayer';
+import PostVideoPlayer from '../../components/PostVideoPlayer';
 import DigitalProductShop from '../../components/DigitalProductShop';
 
 export default function ProfileClient({ data, justSubscribed, subscribedTierId, justTipped, creatorId }) {
@@ -317,9 +318,14 @@ export default function ProfileClient({ data, justSubscribed, subscribedTierId, 
               <span className="shrink-0 text-xs text-brand-ink/60">{new Date(p.created_at).toLocaleDateString()}</span>
             </div>
             {p.locked ? (
-              <LockedPostPreview hasTiers={tiers.length > 0} />
+              <LockedPostPreview hasTiers={tiers.length > 0} isVideo={p.hasVideo} />
             ) : (
               <>
+                {p.video && (
+                  <div className="mt-3">
+                    <PostVideoPlayer playbackId={p.video.playbackId} playbackToken={p.video.playbackToken} />
+                  </div>
+                )}
                 {p.media_url && (
                   // Post photos have no stored width/height (uploads of arbitrary size), and
                   // this route (`/api/posts/:id/media`) checks the *viewer's own* session to
@@ -469,6 +475,10 @@ function ReportButton({ creatorId, postId }) {
 // visitor actually sees.
 function getPostType(post) {
   if (post.poll) return 'poll';
+  // hasVideo (not video) on purpose — a locked subscribers-only video post is still a
+  // "video" for filtering, even though its actual player/token only exists once the
+  // viewer is authorized to see it.
+  if (post.hasVideo) return 'video';
   if (post.media_url) return 'image';
   return 'text';
 }
@@ -477,6 +487,7 @@ const POST_TYPE_FILTERS = [
   { value: 'all', label: 'All' },
   { value: 'text', label: '📝 Updates' },
   { value: 'image', label: '🖼️ Photos' },
+  { value: 'video', label: '🎥 Videos' },
   { value: 'poll', label: '📊 Polls' },
 ];
 
@@ -835,11 +846,11 @@ function PollBlock({ postId, poll: initialPoll }) {
 // blur/texture below is decorative only, never a blurred version of the real body or
 // photo: the API never sends locked posts' body/media_url to a non-subscriber, so there's
 // nothing real here to show a preview of.
-function LockedPostPreview({ hasTiers }) {
+function LockedPostPreview({ hasTiers, isVideo }) {
   return (
-    <div className="relative mt-3 overflow-hidden rounded-xl">
+    <div className={`relative mt-3 overflow-hidden rounded-xl ${isVideo ? 'aspect-video' : ''}`}>
       <div
-        className="pointer-events-none h-28 w-full bg-gradient-to-br from-[#0F766E]/10 via-brand-ink/5 to-[#0F766E]/10 blur-[2px]"
+        className={`pointer-events-none w-full bg-gradient-to-br from-[#0F766E]/10 via-brand-ink/5 to-[#0F766E]/10 blur-[2px] ${isVideo ? 'h-full' : 'h-28'}`}
         aria-hidden="true"
       />
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-white/40 text-center backdrop-blur-sm">
@@ -847,12 +858,12 @@ function LockedPostPreview({ hasTiers }) {
           className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-paper text-sm shadow-sm"
           aria-hidden="true"
         >
-          🔒
+          {isVideo ? '🎥' : '🔒'}
         </span>
         <p className="text-xs font-medium text-brand-ink/70">
           {hasTiers ? (
             <a href="#tiers" className="text-[#0F766E] underline">
-              Subscribe to view this post
+              Subscribe to {isVideo ? 'watch this video' : 'view this post'}
             </a>
           ) : (
             'Subscribers only'
