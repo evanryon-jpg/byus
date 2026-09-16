@@ -48,3 +48,41 @@ export async function createLiveStream() {
 }
 
 export const MUX_RTMP_URL = 'rtmps://global-live.mux.com:443/app';
+
+// On-demand (VOD) video, for a creator posting a pre-recorded video instead of going
+// live. A "direct upload" is a short-lived signed URL the browser PUTs the raw video
+// file straight to -- same reasoning as the Vercel Blob client-upload tokens used for
+// post images and digital products: it skips this Next.js server entirely, so a
+// multi-hundred-MB video never has to fit inside a Vercel Function's request-body/time
+// limits. playback_policy: ['signed'] mirrors the live-stream setup above -- nobody
+// gets a playable URL without a short-lived token we mint server-side after checking
+// they're an active subscriber (see lib/mux-jwt.js and lib/creator-profile-data.js).
+export async function createDirectUpload(corsOrigin) {
+  return muxFetch('/video/v1/uploads', {
+    method: 'POST',
+    body: JSON.stringify({
+      cors_origin: corsOrigin,
+      new_asset_settings: { playback_policy: ['signed'] },
+    }),
+  });
+}
+
+// Polled by the creator's browser after it finishes PUTting the file, and re-checked
+// server-side (never trusted from the client) when the post is actually created --
+// see app/api/creator/posts/video-upload/[uploadId]/route.js and the POST handler in
+// app/api/creator/posts/route.js.
+export async function getUpload(uploadId) {
+  return muxFetch(`/video/v1/uploads/${uploadId}`);
+}
+
+export async function getAsset(assetId) {
+  return muxFetch(`/video/v1/assets/${assetId}`);
+}
+
+// Best-effort cleanup when a video post is deleted -- an orphaned Mux asset costs
+// storage/minutes, not correctness, so callers swallow this rather than let a Mux
+// hiccup block the deletion the creator actually asked for (same pattern as the Blob
+// cleanup in app/api/creator/posts/[postId]/route.js).
+export async function deleteAsset(assetId) {
+  return muxFetch(`/video/v1/assets/${assetId}`, { method: 'DELETE' });
+}

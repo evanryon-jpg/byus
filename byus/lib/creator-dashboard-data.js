@@ -9,6 +9,7 @@
 
 import { query } from '@/lib/db';
 import { getPollVoteCounts, buildPollPayload } from '@/lib/polls';
+import { signPlaybackToken } from '@/lib/mux-jwt';
 
 export async function loadCreatorTiers(creatorId) {
   const result = await query(
@@ -22,7 +23,7 @@ export async function loadCreatorTiers(creatorId) {
 
 export async function loadCreatorPosts(creatorId) {
   const result = await query(
-    `SELECT id, title, body, media_url, visibility, poll_options, pending_review, created_at
+    `SELECT id, title, body, media_url, visibility, poll_options, pending_review, created_at, mux_playback_id
      FROM posts WHERE creator_id = $1 ORDER BY created_at DESC`,
     [creatorId]
   );
@@ -31,11 +32,27 @@ export async function loadCreatorPosts(creatorId) {
 
   // media_url in the DB is a private Blob pathname, never expose it directly —
   // point the client at our own gated route instead.
-  return result.rows.map((post) => ({
-    ...post,
-    media_url: post.media_url ? `/api/posts/${post.id}/media` : null,
-    poll: buildPollPayload(post, voteCounts[post.id]),
-  }));
+  return result.rows.map((post) => {
+    // eslint-disable-next-line no-unused-vars -- pulled out so it's never echoed raw
+    const { mux_playback_id, ...rest } = post;
+    // A creator previewing their own dashboard is always allowed to see their own
+    // video, subscribers-only or not — no subscription check needed, just sign it.
+    let video = null;
+    if (mux_playback_id) {
+      try {
+        video = { playbackId: mux_playback_id, playbackToken: signPlaybackToken(mux_playback_id) };
+      } catch (err) {
+        console.error('failed to sign video playback token (dashboard preview):', err);
+      }
+    }
+    return {
+      ...rest,
+      media_url: post.media_url ? `/api/posts/${post.id}/media` : null,
+      hasVideo: Boolean(mux_playback_id),
+      video,
+      poll: buildPollPayload(post, voteCounts[post.id]),
+    };
+  });
 }
 
 export async function loadCreatorLinks(creatorId) {

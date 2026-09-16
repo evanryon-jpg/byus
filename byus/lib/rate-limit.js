@@ -88,6 +88,16 @@ const limiters = {
     limiter: Ratelimit.slidingWindow(20, '10 m'),
     prefix: 'rl:upload',
   }),
+  // Guards creating a Mux direct-upload URL for a video post. Unlike the Blob-backed
+  // `upload` limiter above, each call here provisions a real resource on Mux's side
+  // (and eventually stored/delivered video minutes), so this is sized to a creator's
+  // realistic "post a handful of videos in a sitting" usage, not automation-proofed at
+  // the same generous rate as a cheap image upload.
+  'video-upload': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(15, '1 h'),
+    prefix: 'rl:video-upload',
+  }),
   // Guards saving a creator's social/external links — cheap to run, but still an
   // authenticated write with no other cost to automating against.
   'creator-links': new Ratelimit({

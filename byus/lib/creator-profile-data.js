@@ -111,7 +111,7 @@ export async function loadCreatorProfile(creatorId, session) {
   // hidden from every visitor here regardless of visibility, including the creator's
   // own logged-out view of their public page.
   const postsResult = await query(
-    `SELECT id, title, body, media_url, visibility, poll_options, created_at
+    `SELECT id, title, body, media_url, visibility, poll_options, created_at, mux_playback_id
      FROM posts WHERE creator_id = $1 AND pending_review = false ORDER BY created_at DESC`,
     [id]
   );
@@ -171,6 +171,19 @@ export async function loadCreatorProfile(creatorId, session) {
   // our own gated route instead of the raw pathname.
   const posts = postsResult.rows.map((post) => {
     const isLocked = post.visibility === 'subscribers_only' && !hasActiveSubscription;
+    // Same gating rule as the live stream above, just per-post: the playback id alone
+    // is useless without a signed token, and that token is only ever minted for a
+    // viewer this function has already confirmed can see this post.
+    let video = null;
+    if (!isLocked && post.mux_playback_id) {
+      try {
+        video = { playbackId: post.mux_playback_id, playbackToken: signPlaybackToken(post.mux_playback_id) };
+      } catch (err) {
+        // Mux signing keys not configured yet — post still exists, just can't hand out
+        // a working player until that's set up.
+        console.error('failed to sign video playback token:', err);
+      }
+    }
     return {
       id: post.id,
       title: post.title,
@@ -179,6 +192,8 @@ export async function loadCreatorProfile(creatorId, session) {
       locked: isLocked,
       body: isLocked ? null : post.body,
       media_url: isLocked || !post.media_url ? null : `/api/posts/${post.id}/media`,
+      hasVideo: Boolean(post.mux_playback_id),
+      video,
       poll: isLocked ? null : buildPollPayload(post, voteCounts[post.id], myVotes[post.id]),
     };
   });
