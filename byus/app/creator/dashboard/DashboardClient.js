@@ -10,6 +10,7 @@ import PayoutsSection from '../../components/PayoutsSection';
 import DigitalProductManager from '../../components/DigitalProductManager';
 import PageCoach from '../../components/PageCoach';
 import MonthlyBarChart from '../../components/charts/MonthlyBarChart';
+import PostVideoPlayer from '../../components/PostVideoPlayer';
 import { TRIAL_DAY_OPTIONS } from '@/lib/trials';
 import { MIN_DISCOUNT_PERCENT, MAX_DISCOUNT_PERCENT } from '@/lib/discounts';
 import { STANDARD_FEE_PERCENT } from '@/lib/pricing';
@@ -1755,10 +1756,99 @@ function PostSection({ posts, onCreated }) {
   const [body, setBody] = useState('');
   const [visibility, setVisibility] = useState('public');
   const [file, setFile] = useState(null);
+  // A post carries one attachment today (mirrors the single media_url column an image
+  // post has always used) — video gets its own state rather than overloading `file`
+  // because its upload is a different shape entirely: a direct PUT to Mux followed by
+  // a processing wait, started as soon as a file is picked rather than on submit, so a
+  // creator isn't staring at "Posting…" for however long a multi-minute video takes to
+  // transcode.
+  const [videoFile, setVideoFile] = useState(null);
+  const [videoUploadId, setVideoUploadId] = useState(null);
+  const [videoStatus, setVideoStatus] = useState('idle'); // 'idle' | 'uploading' | 'processing' | 'ready' | 'error'
+  const [videoError, setVideoError] = useState('');
+  // Bumped only when a video pick programmatically clears the (uncontrolled) image
+  // file input, so its native "no file chosen" display actually catches up to the
+  // `file` state it no longer matches — remounting on every render would instead fight
+  // the browser's own display when a person picks an image normally.
+  const [imageInputKey, setImageInputKey] = useState(0);
   const [isPoll, setIsPoll] = useState(false);
   const [pollOptions, setPollOptions] = useState(['', '']);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+
+  function removeVideo() {
+    setVideoFile(null);
+    setVideoUploadId(null);
+    setVideoStatus('idle');
+    setVideoError('');
+  }
+
+  // Polls Mux (via our own status route, which itself checks upload -> asset -> ready)
+  // every few seconds until the video has finished transcoding. Bounded so a stuck or
+  // unusually long transcode doesn't spin the composer forever — the creator can just
+  // try attaching it again after the timeout.
+  async function pollVideoReady(uploadId) {
+    const start = Date.now();
+    const TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes — generous for a long video
+    while (Date.now() - start < TIMEOUT_MS) {
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      try {
+        const res = await fetch(`/api/creator/posts/video-upload/${uploadId}`);
+        const data = await res.json();
+        if (data.errored) {
+          setVideoError('Mux could not process this video. Try a different file.');
+          setVideoStatus('error');
+          return;
+        }
+        if (data.ready) {
+          setVideoStatus('ready');
+          return;
+        }
+      } catch {
+        // Transient network hiccup — keep polling until the timeout above.
+      }
+    }
+    setVideoError('This is taking longer than expected to process. Try attaching it again in a bit.');
+    setVideoStatus('error');
+  }
+
+  async function handleVideoSelect(e) {
+    const selected = e.target.files?.[0];
+    if (!selected) return;
+    setFile(null); // one attachment per post — picking a video clears any chosen image
+    setImageInputKey((k) => k + 1);
+    setVideoFile(selected);
+    setVideoUploadId(null);
+    setVideoError('');
+    setVideoStatus('uploading');
+
+    try {
+      const startRes = await fetch('/api/creator/posts/video-upload', { method: 'POST' });
+      const startData = await startRes.json();
+      if (!startRes.ok) {
+        setVideoError(startData.error || 'Could not start the video upload.');
+        setVideoStatus('error');
+        return;
+      }
+
+      // Direct PUT straight to Mux — this Next.js server never sees the video bytes,
+      // same "browser talks to storage directly" pattern as the image upload above and
+      // the digital-product uploads.
+      const putRes = await fetch(startData.uploadUrl, { method: 'PUT', body: selected });
+      if (!putRes.ok) {
+        setVideoError('The video upload failed partway through. Try again.');
+        setVideoStatus('error');
+        return;
+      }
+
+      setVideoUploadId(startData.uploadId);
+      setVideoStatus('processing');
+      await pollVideoReady(startData.uploadId);
+    } catch (err) {
+      setVideoError('Network error during video upload. Try again.');
+      setVideoStatus('error');
+    }
+  }
 
   function updatePollOption(i, value) {
     setPollOptions((prev) => prev.map((o, idx) => (idx === i ? value : o)));
@@ -1775,6 +1865,12 @@ function PostSection({ posts, onCreated }) {
   async function handleCreate(e) {
     e.preventDefault();
     setError('');
+
+    if (videoStatus === 'uploading' || videoStatus === 'processing') {
+      setError('Wait for the video to finish processing before posting.');
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -1801,6 +1897,7 @@ function PostSection({ posts, onCreated }) {
           mediaUrl,
           visibility,
           pollOptions: isPoll ? pollOptions : undefined,
+          videoUploadId: videoStatus === 'ready' ? videoUploadId : undefined,
         }),
       });
       const data = await res.json();
@@ -1811,6 +1908,7 @@ function PostSection({ posts, onCreated }) {
       }
       setTitle(''); setBody(''); setVisibility('public'); setFile(null);
       setIsPoll(false); setPollOptions(['', '']); setOpen(false);
+      removeVideo();
       onCreated();
     } catch (err) {
       setError('Something went wrong. Try again.');
@@ -1857,11 +1955,46 @@ function PostSection({ posts, onCreated }) {
           <div>
             <label className="mb-1 block text-sm text-brand-ink/70">Image (optional)</label>
             <input
+              key={imageInputKey}
               type="file"
               accept="image/png,image/jpeg,image/webp,image/gif"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              className="w-full text-sm"
+              disabled={videoStatus === 'uploading' || videoStatus === 'processing'}
+              onChange={(e) => {
+                const picked = e.target.files?.[0] || null;
+                setFile(picked);
+                if (picked) removeVideo(); // one attachment per post
+              }}
+              className="w-full text-sm disabled:opacity-50"
             />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm text-brand-ink/70">Video (optional)</label>
+            {videoFile && videoStatus !== 'idle' ? (
+              <div className="flex items-center gap-2 rounded-lg border border-brand-ink/10 bg-brand-ink/[0.02] px-3 py-2 text-sm">
+                <span className="min-w-0 flex-1 truncate text-brand-ink/70">{videoFile.name}</span>
+                {videoStatus === 'uploading' && <span className="shrink-0 text-xs font-medium text-brand-ink/60">Uploading…</span>}
+                {videoStatus === 'processing' && <span className="shrink-0 text-xs font-medium text-brand-ink/60">Processing…</span>}
+                {videoStatus === 'ready' && <span className="shrink-0 text-xs font-medium text-green-700">✓ Ready</span>}
+                {videoStatus === 'error' && <span className="shrink-0 text-xs font-medium text-red-600">Failed</span>}
+                <button type="button" onClick={removeVideo} className="shrink-0 text-xs font-medium text-brand-ink/60 hover:text-red-600">
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <input
+                type="file"
+                accept="video/mp4,video/quicktime,video/webm,video/x-m4v"
+                disabled={Boolean(file)}
+                onChange={handleVideoSelect}
+                className="w-full text-sm disabled:opacity-50"
+              />
+            )}
+            {videoError && <p className="mt-1 text-xs text-red-600">{videoError}</p>}
+            {(videoStatus === 'uploading' || videoStatus === 'processing') && (
+              <p className="mt-1 text-xs text-brand-ink/60">
+                Transcoding can take a minute or two for a longer video — feel free to keep filling out the rest of the post.
+              </p>
+            )}
           </div>
           <select value={visibility} onChange={(e) => setVisibility(e.target.value)}
             className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm">
@@ -1910,8 +2043,15 @@ function PostSection({ posts, onCreated }) {
           )}
 
           {error && <p className="text-sm text-red-600">{error}</p>}
-          <button disabled={saving} className="rounded-full bg-[#0F766E] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
-            {saving ? (file ? 'Uploading…' : 'Posting…') : 'Post'}
+          <button
+            disabled={saving || videoStatus === 'uploading' || videoStatus === 'processing'}
+            className="rounded-full bg-[#0F766E] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          >
+            {videoStatus === 'uploading' || videoStatus === 'processing'
+              ? 'Waiting on video…'
+              : saving
+              ? (file ? 'Uploading…' : 'Posting…')
+              : 'Post'}
           </button>
         </form>
       )}
@@ -2016,6 +2156,14 @@ function PostRow({ post, onChanged }) {
             className="object-cover"
           />
         </div>
+      )}
+      {post.video && (
+        <div className="mt-2 max-w-sm">
+          <PostVideoPlayer playbackId={post.video.playbackId} playbackToken={post.video.playbackToken} />
+        </div>
+      )}
+      {post.hasVideo && !post.video && (
+        <p className="mt-2 text-xs text-brand-ink/60">🎥 Video attached — couldn't load a preview right now.</p>
       )}
       <p className="mt-1 text-sm text-brand-ink/70">{post.body}</p>
       {post.poll && <PollTally poll={post.poll} />}
