@@ -7,7 +7,10 @@ import { useState } from 'react';
 // those directly instead of making them dig through Terms of Service to find
 // out. Client component only for the expand/collapse interaction; the actual
 // answers are plain text so search engines and no-JS visitors still get them.
-const FAQS = [
+// Exported so app/page.js can build FAQPage JSON-LD structured data from this exact
+// same list -- one source of truth, so the schema Google sees can never drift out of
+// sync with the accordion text a visitor actually reads.
+export const FAQS = [
   {
     q: 'Can creators sign up and connect Stripe now?',
     a: "Yes. Creator signup and Stripe Connect onboarding are open. Creating a ByUs account is free, and creators can build their page before accepting payments. Stripe separately reviews each connected account and may request verification information before enabling its payments or payouts.",
