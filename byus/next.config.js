@@ -10,13 +10,36 @@
 // Analytics/Speed Insights are served and collected through same-origin paths Vercel
 // proxies at the edge (/_vercel/insights/*, /_vercel/speed-insights/*), so they need
 // no extra CSP allowances either.
+//
+// Three client-to-third-party-storage patterns need their own explicit allowances,
+// found missing (live-verified, not just read from code) while testing the new video
+// post feature -- without these, every one of them fails silently with a bare
+// "TypeError: Failed to fetch" and no CSP violation ever printed to the console,
+// which is why this had gone unnoticed:
+//   - Mux Player (LivePlayer.jsx, PostVideoPlayer.jsx) is loaded from a CDN
+//     (script-src) and both live streams and on-demand video posts play back over
+//     fetch/XHR + a blob: web worker straight from Mux's edge (connect-src,
+//     media-src, worker-src) -- this blocked ALL video playback, not just the new
+//     on-demand posts.
+//   - The video-post upload flow PUTs the raw file straight from the browser to a
+//     per-upload Mux storage subdomain (connect-src https://*.mux.com covers this;
+//     the subdomain varies by region per upload, hence the wildcard).
+//   - The digital-products file upload (already shipped) PUTs straight to Vercel
+//     Blob's own storage domain the same way (connect-src https://*.blob.vercel-
+//     storage.com) -- same bug, different feature, caught as a side effect of this
+//     same investigation.
+// https://www.mux.com/docs/core/content-security-policy is Mux's own reference for
+// the mux.com/litix.io values; cdn.jsdelivr.net and blob.vercel-storage.com are this
+// app's own choices, not covered by that doc.
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'",
+  "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://src.litix.io",
   "style-src 'self' 'unsafe-inline'", // Next.js/Tailwind can inject small inline styles
-  "img-src 'self' data:",
+  "img-src 'self' data: https://image.mux.com https://*.litix.io",
   "font-src 'self' data:",
-  "connect-src 'self'",
+  "connect-src 'self' https://*.mux.com https://*.litix.io https://storage.googleapis.com https://*.blob.vercel-storage.com",
+  "media-src 'self' blob: https://*.mux.com",
+  "worker-src 'self' blob:",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
