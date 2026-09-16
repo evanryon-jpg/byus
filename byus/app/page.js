@@ -2,7 +2,7 @@ import Image from 'next/image';
 import { getCurrentUser } from '@/lib/session';
 import { query } from '@/lib/db';
 import { getFoundingPromoStats } from '@/lib/fees';
-import FAQSection from './components/FAQSection';
+import FAQSection, { FAQS } from './components/FAQSection';
 import CreatorSearch from './components/CreatorSearch';
 import FeaturedCreators from './components/FeaturedCreators';
 import EarningsCalculator from './components/EarningsCalculator';
@@ -12,12 +12,31 @@ import FeedbackWidget from './components/FeedbackWidget';
 // Server component so the hero and closing CTAs can tell whether someone is already
 // logged in -- an existing creator or fan should never be invited to sign up again,
 // they should be pointed straight back to the page they actually want.
+// FAQPage structured data for search engines -- built from the exact same FAQS array
+// FAQSection.jsx renders, so this can never say something the visible accordion
+// doesn't. The accordion only puts one answer's text in the DOM at a time (whichever
+// item is expanded); this script tag is what guarantees every Q&A is machine-readable
+// regardless of which one a visitor has open.
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: FAQS.map((item) => ({
+    '@type': 'Question',
+    name: item.q,
+    acceptedAnswer: { '@type': 'Answer', text: item.a },
+  })),
+};
+
 export default async function HomePage() {
   const session = await getCurrentUser();
   const foundingStats = await getFoundingPromoStats(query);
 
   return (
     <div>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
       <FeedbackWidget />
       <Hero user={session} />
       <CreatorShowcase />
