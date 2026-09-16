@@ -11,12 +11,16 @@ import { del } from '@vercel/blob';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { containsBlockedContent } from '@/lib/content-policy';
+import { deleteAsset } from '@/lib/mux';
 
 const TITLE_MAX = 200;
 const BODY_MAX = 20000;
 
 async function loadOwnedPost(postId, userId) {
-  const result = await query(`SELECT id, creator_id, media_url FROM posts WHERE id = $1`, [postId]);
+  const result = await query(
+    `SELECT id, creator_id, media_url, mux_asset_id FROM posts WHERE id = $1`,
+    [postId]
+  );
   const post = result.rows[0];
   if (!post || post.creator_id !== userId) return null;
   return post;
@@ -117,13 +121,21 @@ export async function DELETE(request, { params }) {
 
     await query(`DELETE FROM posts WHERE id = $1`, [postId]);
 
-    // Best-effort cleanup — an orphaned blob costs storage, not correctness, so a failure
-    // here should never block the post deletion the creator actually asked for.
+    // Best-effort cleanup — an orphaned blob or Mux asset costs storage (and, for Mux,
+    // ongoing minutes-stored billing), not correctness, so a failure here should never
+    // block the post deletion the creator actually asked for.
     if (post.media_url) {
       try {
         await del(post.media_url);
       } catch (err) {
         console.error(`Blob cleanup failed for post ${postId} (non-fatal):`, err);
+      }
+    }
+    if (post.mux_asset_id) {
+      try {
+        await deleteAsset(post.mux_asset_id);
+      } catch (err) {
+        console.error(`Mux asset cleanup failed for post ${postId} (non-fatal):`, err);
       }
     }
 
