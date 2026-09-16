@@ -4,6 +4,7 @@ import { Fraunces, Karla } from 'next/font/google';
 import NavBar from './components/NavBar';
 import Footer from './components/Footer';
 import ConversionAnalytics from './components/ConversionAnalytics';
+import ServiceWorkerRegister from './components/ServiceWorkerRegister';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
@@ -39,6 +40,7 @@ export default function RootLayout({ children }) {
         <main className="flex-1">{children}</main>
         <Footer />
         <Suspense fallback={null}><ConversionAnalytics /></Suspense>
+        <ServiceWorkerRegister />
         <Analytics />
         <SpeedInsights />
       </body>
