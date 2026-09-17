@@ -16,7 +16,17 @@ function decodeEntities(str) {
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
-    .replace(/&#0?39;|&apos;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    // Numeric character references -- &#39; (decimal) and &#x27; (hex) both show up
+    // constantly in real feeds (WordPress in particular favors the hex form for
+    // apostrophes), and the earlier decimal-only pattern here left &#x27; untouched,
+    // so imported posts showed literal "Cloudflare&#x27;s" instead of "Cloudflare's".
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)))
+    // &amp; last -- decoding it earlier would turn a literal "&amp;#39;" in the feed
+    // into "&#39;" and get re-decoded by the numeric-entity rules above, corrupting
+    // any post whose text actually contains that literal sequence.
     .replace(/&amp;/g, '&')
     .trim();
 }
