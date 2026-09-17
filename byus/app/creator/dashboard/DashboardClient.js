@@ -639,6 +639,7 @@ function BroadcastSection() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const [sent, setSent] = useState(null);
+  const [failed, setFailed] = useState(0);
 
   useEffect(() => {
     load();
@@ -666,6 +667,7 @@ function BroadcastSection() {
         return;
       }
       setSent(data.sent);
+      setFailed(data.failed || 0);
       setSubject('');
       setMessage('');
     } catch {
@@ -705,7 +707,10 @@ function BroadcastSection() {
         />
         {error && <p className="text-sm text-red-600">{error}</p>}
         {sent !== null && !error && (
-          <p className="text-sm text-green-700">Sent to {sent} subscriber{sent === 1 ? '' : 's'}.</p>
+          <p className={`text-sm ${failed > 0 ? 'text-amber-700' : 'text-green-700'}`}>
+            Sent to {sent} subscriber{sent === 1 ? '' : 's'}.
+            {failed > 0 && ` ${failed} could not be reached — try sending again later to catch them.`}
+          </p>
         )}
         <button
           disabled={sending || subscriberCount === 0}
