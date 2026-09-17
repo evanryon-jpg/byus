@@ -8,6 +8,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { checkRateLimit, rateLimitResponse, getClientIp } from '@/lib/rate-limit';
+import { CREATOR_SIGNUP_PAUSED } from '@/lib/creator-signup';
 
 const STATE_COOKIE_NAME = 'byus_oauth_state';
 const STATE_MAX_AGE_SECONDS = 60 * 10; // 10 minutes — plenty of time to pick a Google account
@@ -34,8 +35,12 @@ export async function GET(request) {
   const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '';
 
   // Only matters if this turns into a brand-new signup in the callback — an existing
-  // account always logs in under whatever role it already has.
-  const role = searchParams.get('role') === 'creator' ? 'creator' : 'fan';
+  // account always logs in under whatever role it already has. While creator signup is
+  // paused (see lib/creator-signup.js), a first-time Google signup can only ever create
+  // a fan account, whatever role was requested — app/signup/page.js no longer offers a
+  // "Continue with Google" button on the creator tab, but this is the server-side
+  // backstop for anyone who reaches this URL directly.
+  const role = searchParams.get('role') === 'creator' && !CREATOR_SIGNUP_PAUSED ? 'creator' : 'fan';
 
   // Same deal — only matters for a brand-new signup in the callback, so a referral
   // link (/signup?ref=CODE) that routes through "Continue with Google" still gets
