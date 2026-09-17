@@ -14,6 +14,7 @@ import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { sendCreatorUpdateEmail } from '@/lib/email';
 import { containsBlockedContent } from '@/lib/content-policy';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 const SUBJECT_MAX = 150;
 const MESSAGE_MAX = 5000;
@@ -49,6 +50,9 @@ export async function POST(request) {
   if (!session || session.role !== 'creator') {
     return NextResponse.json({ error: 'Only creators can send updates.' }, { status: 403 });
   }
+
+  const rateCheck = await checkRateLimit('broadcast', `user:${session.userId}`);
+  if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
   const { subject, message } = await request.json();
 
@@ -91,13 +95,16 @@ export async function POST(request) {
     }
 
     const finalSubject = subject?.trim() || `Update from ${creatorName}`;
-    const sent = await sendCreatorUpdateEmail(recipients, {
+    // sendCreatorUpdateEmail now sends every chunk it can rather than aborting after the
+    // first failure -- `failed` tells the creator when some (but not all) subscribers
+    // didn't get this update, instead of a blanket "sent" that could quietly be wrong.
+    const { sent, failed } = await sendCreatorUpdateEmail(recipients, {
       creatorName,
       subject: finalSubject,
       message: message.trim(),
     });
 
-    return NextResponse.json({ sent });
+    return NextResponse.json({ sent, failed });
   } catch (err) {
     console.error('creator/broadcast POST failed:', err);
     return NextResponse.json(
