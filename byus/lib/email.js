@@ -103,9 +103,9 @@ export async function sendWelcomeSubscriptionEmail(to, { creatorName, creatorUrl
 }
 
 // Sent once, right when someone joins the Founding Creator waitlist (see
-// app/api/waitlist/route.js). Creator signup and Stripe Connect onboarding are open
-// now, so this confirms the application landed and points them straight at signup
-// instead of promising a follow-up email once payouts "go live."
+// app/api/waitlist/route.js). Creator signup is paused as of Sep 2026, so this confirms
+// the waitlist join and sets expectations for a follow-up once signup reopens — it must
+// NOT point people straight at /signup?role=creator as if they can finish onboarding today.
 export async function sendWaitlistConfirmationEmail(to, { displayName }) {
   const resend = getClient();
   const greeting = displayName ? escapeHtml(displayName) : 'there';
@@ -116,9 +116,9 @@ export async function sendWaitlistConfirmationEmail(to, { displayName }) {
     html: `
       <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; color: #1A1A1A;">
         <h2 style="color:#146359;">You're on the list, ${greeting}.</h2>
-        <p>Thanks for applying to the ByUs Founding Creator Program. Creator signup is open now — head to byusapp.com to create your page and lock in our lowest fee (10%, forever) as one of the first 100 founding creators, while spots remain.</p>
+        <p>Thanks for joining the ByUs Founding Creator waitlist. We're temporarily pausing new creator signups while we finish up some account setup on our end — we'll email you the moment it's your turn, including whether a founding spot (10% platform fee, forever) is still available.</p>
         <p style="margin: 24px 0;">
-          <a href="https://byusapp.com/signup?role=creator" style="background:#146359;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;">Create your founding page</a>
+          <a href="https://byusapp.com" style="background:#146359;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;">Visit ByUs</a>
         </p>
         <p style="color:#666;font-size:13px;">Questions? Just reply to this email or reach us at support@byusapp.com.</p>
       </div>
