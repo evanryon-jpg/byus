@@ -411,15 +411,18 @@ function Features() {
         </p>
       </div>
 
-      {/* Asymmetric rhythm instead of four uniform boxes -- Direct payouts gets the
+      {/* Asymmetric rhythm instead of five uniform boxes -- Direct payouts gets the
           big slot since Stripe Express payouts are the actual differentiator, the
-          other three stack beside it rather than competing for equal weight. */}
+          other four sit in a 2x2 grid beside it rather than one tall single-file
+          stack (which got visibly taller than the payout card once RSS import joined
+          tiers/gated/community as a fourth compact card). */}
       <div className="mt-10 grid gap-6 lg:grid-cols-[1.3fr_1fr]">
         <PayoutDemo />
-        <div className="flex flex-col gap-6">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <TiersDemo />
           <GatedContentDemo />
           <CommunitySyncDemo />
+          <RssImportDemo />
         </div>
       </div>
     </section>
@@ -530,6 +533,24 @@ function CommunitySyncDemo() {
       <p className="mt-2 text-sm leading-relaxed text-brand-ink/70">
         Connect a Discord server or Telegram group and subscribers get a role or an invite the
         moment they join — removed automatically if they ever cancel.
+      </p>
+    </div>
+  );
+}
+
+// Describes the real RSS feature (see lib/rss.js / app/api/creator/rss/route.js and the
+// RssImportCard in Settings) accurately: it's an IMPORT, from the creator's existing blog
+// into ByUs -- not a private feed ByUs hands back out to fans. Orange as this card's accent
+// is the closest thing RSS has to a brand color, same "borrow a color that's actually its
+// own" reasoning as GatedContentDemo (brand-clay) and CommunitySyncDemo (Discord blurple).
+function RssImportDemo() {
+  return (
+    <div className="rounded-2xl border border-brand-ink/15 bg-brand-paper p-6 shadow-sm">
+      <span className="text-xs font-extrabold uppercase tracking-wide text-[#EA580C]">RSS import</span>
+      <h3 className="mt-2 font-display text-lg font-bold text-[#172033]">Already blogging? Bring it with you</h3>
+      <p className="mt-2 text-sm leading-relaxed text-brand-ink/70">
+        Point ByUs at your WordPress, Ghost, or Substack feed and every post you publish there
+        shows up on your page automatically — no copy-pasting, no second place to write.
       </p>
     </div>
   );
