@@ -71,7 +71,7 @@ export async function GET(request) {
          FROM users u
          LEFT JOIN (
            SELECT id FROM users
-           WHERE role = 'creator'
+           WHERE role = 'creator' AND is_suspended = false
            ORDER BY created_at, id
            LIMIT ${FOUNDING_CREATOR_LIMIT}
          ) founding ON founding.id = u.id
