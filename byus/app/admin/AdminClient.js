@@ -869,6 +869,7 @@ const FEEDBACK_REACTION_LABELS = { up: '👍 Liked it', down: '👎 Didn’t lik
 const WAITLIST_SOURCE_LABELS = {
   instagram: 'Instagram',
   instagram_campaign: 'Instagram (legacy)',
+  blogger: 'Bloggers page',
 };
 
 function CreatorWaitlistSection({ initialWaitlist, initialError }) {
