@@ -92,133 +92,132 @@ function SignupForm() {
 
   return (
     <div className="mx-auto max-w-md px-6 py-16">
-      <h1 className="text-2xl font-bold">Create your account</h1>
+      <h1 className="text-2xl font-bold">{role === 'creator' ? 'Join the creator waitlist' : 'Create your account'}</h1>
 
       <div className="mt-6 flex gap-2 rounded-full bg-brand-ink/5 p-1">
         <RoleTab label="I'm a fan" active={role === 'fan'} onClick={() => setRole('fan')} />
         <RoleTab label="I'm a creator" active={role === 'creator'} onClick={() => setRole('creator')} />
       </div>
-      {role === 'creator' && (
-        <p className="mt-3 text-xs text-brand-ink/65">
-          Next you'll connect Stripe and set up a subscription tier — takes a couple of minutes, right after you sign up.
-          You can also connect Discord and/or Telegram later in Settings, so subscribers get automatic access to your
-          server or group.
-        </p>
-      )}
 
-      <a
-        href={googleHref}
-        className="mt-6 flex w-full items-center justify-center gap-3 rounded-full border border-brand-ink/10 bg-brand-paper py-3 font-semibold text-[#172033] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-      >
-        <GoogleIcon />
-        Continue with Google
-      </a>
-      <a
-        href={appleHref}
-        className="mt-3 flex w-full items-center justify-center gap-3 rounded-full bg-black py-3 font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-      >
-        <AppleIcon />
-        Continue with Apple
-      </a>
-      <p className="mt-3 text-center text-xs text-brand-ink/60">
-        By continuing, you agree to our{' '}
-        <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline">
-          Terms of Service
-        </a>{' '}
-        and{' '}
-        <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline">
-          Privacy Policy
-        </a>
-        .
-      </p>
-
-      <Divider label="or sign up with email" />
-
-      {/* noValidate: without it, a malformed address in the type="email" field trips the
-          browser's own validation bubble on submit and silently short-circuits
-          handleSubmit before our custom fieldErrors (and the terms-checkbox banner)
-          ever run — so none of the polished inline messaging below would actually show. */}
-      <form onSubmit={handleSubmit} noValidate className="space-y-4">
-        <Field label="Display name">
-          <input
-            className="input"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="Your name or handle"
-          />
-        </Field>
-        <Field label="Email" error={fieldErrors.email}>
-          <input
-            className={`input ${fieldErrors.email ? 'input-error' : ''}`}
-            type="email"
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              if (fieldErrors.email) setFieldErrors((f) => ({ ...f, email: undefined }));
-            }}
-            aria-invalid={Boolean(fieldErrors.email)}
-          />
-        </Field>
-        <Field label="Password" error={fieldErrors.password}>
-          <input
-            className={`input ${fieldErrors.password ? 'input-error' : ''}`}
-            type="password"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              if (fieldErrors.password) setFieldErrors((f) => ({ ...f, password: undefined }));
-            }}
-            aria-invalid={Boolean(fieldErrors.password)}
-          />
-          {!fieldErrors.password && <p className="mt-1 text-xs text-brand-ink/60">At least 8 characters.</p>}
-        </Field>
-
-        {/* Honeypot — hidden from real users via CSS, but present in the DOM for bots
-            that fill every field they can find. Kept off the tab order and out of
-            screen readers so it never confuses an actual person. */}
-        <div className="absolute left-[-9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
-          <label htmlFor="website">Leave this field blank</label>
-          <input
-            id="website"
-            name="website"
-            type="text"
-            tabIndex={-1}
-            autoComplete="off"
-            value={website}
-            onChange={(e) => setWebsite(e.target.value)}
-          />
-        </div>
-
-        <label className="flex items-start gap-2.5 text-sm text-brand-ink/80">
-          <input
-            type="checkbox"
-            checked={termsAccepted}
-            onChange={(e) => setTermsAccepted(e.target.checked)}
-            className="mt-0.5 h-4 w-4 shrink-0 rounded border-brand-ink/20 text-[#0F766E] focus:ring-[#0F766E]"
-          />
-          <span>
-            I agree to the{' '}
-            <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-[#0F766E] underline">
+      {role === 'creator' ? (
+        <CreatorWaitlistPanel acquisitionSource={acquisitionSource} referralCode={referralCode} />
+      ) : (
+        <>
+          <a
+            href={googleHref}
+            className="mt-6 flex w-full items-center justify-center gap-3 rounded-full border border-brand-ink/10 bg-brand-paper py-3 font-semibold text-[#172033] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <GoogleIcon />
+            Continue with Google
+          </a>
+          <a
+            href={appleHref}
+            className="mt-3 flex w-full items-center justify-center gap-3 rounded-full bg-black py-3 font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <AppleIcon />
+            Continue with Apple
+          </a>
+          <p className="mt-3 text-center text-xs text-brand-ink/60">
+            By continuing, you agree to our{' '}
+            <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline">
               Terms of Service
             </a>{' '}
             and{' '}
-            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-[#0F766E] underline">
+            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline">
               Privacy Policy
             </a>
             .
-          </span>
-        </label>
+          </p>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+          <Divider label="or sign up with email" />
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-full bg-[#0F766E] py-3 font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
-        >
-          {loading ? 'Creating account…' : 'Sign up'}
-        </button>
-      </form>
+          {/* noValidate: without it, a malformed address in the type="email" field trips the
+              browser's own validation bubble on submit and silently short-circuits
+              handleSubmit before our custom fieldErrors (and the terms-checkbox banner)
+              ever run — so none of the polished inline messaging below would actually show. */}
+          <form onSubmit={handleSubmit} noValidate className="space-y-4">
+            <Field label="Display name">
+              <input
+                className="input"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="Your name or handle"
+              />
+            </Field>
+            <Field label="Email" error={fieldErrors.email}>
+              <input
+                className={`input ${fieldErrors.email ? 'input-error' : ''}`}
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (fieldErrors.email) setFieldErrors((f) => ({ ...f, email: undefined }));
+                }}
+                aria-invalid={Boolean(fieldErrors.email)}
+              />
+            </Field>
+            <Field label="Password" error={fieldErrors.password}>
+              <input
+                className={`input ${fieldErrors.password ? 'input-error' : ''}`}
+                type="password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (fieldErrors.password) setFieldErrors((f) => ({ ...f, password: undefined }));
+                }}
+                aria-invalid={Boolean(fieldErrors.password)}
+              />
+              {!fieldErrors.password && <p className="mt-1 text-xs text-brand-ink/60">At least 8 characters.</p>}
+            </Field>
+
+            {/* Honeypot — hidden from real users via CSS, but present in the DOM for bots
+                that fill every field they can find. Kept off the tab order and out of
+                screen readers so it never confuses an actual person. */}
+            <div className="absolute left-[-9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
+              <label htmlFor="website">Leave this field blank</label>
+              <input
+                id="website"
+                name="website"
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+              />
+            </div>
+
+            <label className="flex items-start gap-2.5 text-sm text-brand-ink/80">
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0 rounded border-brand-ink/20 text-[#0F766E] focus:ring-[#0F766E]"
+              />
+              <span>
+                I agree to the{' '}
+                <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-[#0F766E] underline">
+                  Terms of Service
+                </a>{' '}
+                and{' '}
+                <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-[#0F766E] underline">
+                  Privacy Policy
+                </a>
+                .
+              </span>
+            </label>
+
+            {error && <p className="text-sm text-red-600">{error}</p>}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-full bg-[#0F766E] py-3 font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
+            >
+              {loading ? 'Creating account…' : 'Sign up'}
+            </button>
+          </form>
+        </>
+      )}
 
       <p className="mt-6 text-center text-sm text-brand-ink/65">
         Already have an account?{' '}
@@ -239,6 +238,129 @@ function SignupForm() {
         .input-error { border-color: #f87171; }
         .input-error:focus { outline: 2px solid #f87171; }
       `}</style>
+    </div>
+  );
+}
+
+// Creator signup is temporarily paused (see app/api/waitlist/route.js) while we sort out
+// some account setup on our end. Rather than let someone start Stripe Connect onboarding
+// only to hit a wall, we ask for an email up front and let them know once it reopens. Fans
+// are completely unaffected — this branch only renders when role === 'creator' above.
+function CreatorWaitlistPanel({ acquisitionSource, referralCode }) {
+  const [waitlistEmail, setWaitlistEmail] = useState('');
+  const [waitlistName, setWaitlistName] = useState('');
+  const [waitlistWebsite, setWaitlistWebsite] = useState(''); // honeypot, same pattern as below
+  const [waitlistError, setWaitlistError] = useState('');
+  const [waitlistLoading, setWaitlistLoading] = useState(false);
+  const [waitlistResult, setWaitlistResult] = useState(null); // { alreadyApplied } once submitted
+
+  async function handleWaitlistSubmit(e) {
+    e.preventDefault();
+    setWaitlistError('');
+    const trimmed = waitlistEmail.trim();
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!trimmed || !emailRe.test(trimmed)) {
+      setWaitlistError('Enter a valid email address.');
+      return;
+    }
+
+    setWaitlistLoading(true);
+    try {
+      const res = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: trimmed,
+          displayName: waitlistName.trim() || undefined,
+          source: acquisitionSource || undefined,
+          referralCode: referralCode || undefined,
+          website: waitlistWebsite,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setWaitlistError(data.error || 'Something went wrong. Please try again.');
+        return;
+      }
+      setWaitlistResult({ alreadyApplied: Boolean(data.alreadyApplied), email: trimmed });
+    } catch {
+      setWaitlistError('Network error — please try again.');
+    } finally {
+      setWaitlistLoading(false);
+    }
+  }
+
+  if (waitlistResult) {
+    return (
+      <div className="mt-6 rounded-xl border border-[#0F766E]/20 bg-[#0F766E]/5 p-5 text-center">
+        <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-[#0F766E]/15 text-xl text-[#0F766E]">
+          ✓
+        </div>
+        <h2 className="mt-3 font-semibold text-[#172033]">
+          {waitlistResult.alreadyApplied ? "You're already on the list" : "You're on the list"}
+        </h2>
+        <p className="mt-1.5 text-sm text-brand-ink/65">
+          We'll email {waitlistResult.email} as soon as creator signups reopen — including whether a founding
+          spot is still available.
+        </p>
+        <a href="/" className="mt-4 inline-block text-sm font-semibold text-[#0F766E] underline">
+          Back to ByUs
+        </a>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-6">
+      <p className="text-sm text-brand-ink/70">
+        We've temporarily paused new creator signups while we finish up some account setup on our end. Pop your
+        email below and we'll let you know the moment we reopen.
+      </p>
+
+      <form onSubmit={handleWaitlistSubmit} noValidate className="mt-5 space-y-4">
+        <Field label="Display name (optional)">
+          <input
+            className="input"
+            value={waitlistName}
+            onChange={(e) => setWaitlistName(e.target.value)}
+            placeholder="Your name or handle"
+          />
+        </Field>
+        <Field label="Email" error={waitlistError}>
+          <input
+            className={`input ${waitlistError ? 'input-error' : ''}`}
+            type="email"
+            value={waitlistEmail}
+            onChange={(e) => {
+              setWaitlistEmail(e.target.value);
+              if (waitlistError) setWaitlistError('');
+            }}
+            aria-invalid={Boolean(waitlistError)}
+          />
+        </Field>
+
+        {/* Honeypot — same pattern as the fan signup form above. */}
+        <div className="absolute left-[-9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
+          <label htmlFor="creator-waitlist-website">Leave this field blank</label>
+          <input
+            id="creator-waitlist-website"
+            name="website"
+            type="text"
+            tabIndex={-1}
+            autoComplete="off"
+            value={waitlistWebsite}
+            onChange={(e) => setWaitlistWebsite(e.target.value)}
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={waitlistLoading}
+          className="w-full rounded-full bg-[#0F766E] py-3 font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
+        >
+          {waitlistLoading ? 'Joining…' : 'Join the waitlist'}
+        </button>
+      </form>
     </div>
   );
 }
