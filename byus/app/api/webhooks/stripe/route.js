@@ -48,11 +48,7 @@ import { rewardReferrer } from '@/lib/referrals';
 import { sendWelcomeSubscriptionEmail, sendDisputeAlertEmail } from '@/lib/email';
 import { getAdminEmails } from '@/lib/admin';
 import { trackServerEvent } from '@/lib/analytics';
-import {
-  recordEarningAndCheckFeeTier,
-  syncActiveSubscriptionsToFeePercent,
-  syncAllActiveSubscriptionsToCurrentEffectiveFee,
-} from '@/lib/fees';
+import { recordEarningAndCheckFeeTier, syncActiveSubscriptionsToFeePercent } from '@/lib/fees';
 import { syncPlatformAccess } from '@/lib/platform-sync';
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -126,11 +122,14 @@ export async function POST(request) {
     }
 
     // Set inside the transaction below (only when this invoice just crossed a creator over
-    // their personal fee-discount threshold, and/or crossed the platform over one of its
-    // own milestones), read after it commits — talking to the Stripe API to sync live
-    // subscriptions doesn't belong inside an open DB transaction/lock.
+    // their personal fee-discount threshold), read after it commits — talking to the Stripe
+    // API to sync live subscriptions doesn't belong inside an open DB transaction/lock. A
+    // platform-wide milestone crossing (recordEarningAndCheckFeeTier's crossedMilestones) is
+    // deliberately NOT tracked here anymore — see lib/fees.js: the platform-wide fee
+    // reduction it used to trigger a Stripe resync for was retired, so that resync had become
+    // a full-platform loop of no-op Stripe calls on every crossing. checkPlatformMilestones
+    // still runs and still stamps platform_milestones.crossed_at for the homepage gauge.
     let feeTierCrossing = null;
-    let platformMilestoneCrossed = false;
     // Set inside the transaction when this invoice was a referred creator's first-ever
     // earning and that "launch" just granted their referrer a free 0%-fee month (see
     // lib/referrals.js) — read after commit for the same reason as feeTierCrossing above.
@@ -229,7 +228,6 @@ export async function POST(request) {
               if (result?.personalTierChange) {
                 feeTierCrossing = { creatorId: creator_id, feePercent: result.personalTierChange };
               }
-              if (result?.crossedMilestones?.length > 0) platformMilestoneCrossed = true;
               if (result?.referrerFeeGranted) referrerFeeGrant = result.referrerFeeGranted;
               break;
             }
@@ -253,9 +251,6 @@ export async function POST(request) {
             });
             if (result?.personalTierChange) {
               feeTierCrossing = { creatorId: creator_id, feePercent: result.personalTierChange };
-            }
-            if (result?.crossedMilestones?.length > 0) {
-              platformMilestoneCrossed = true;
             }
             if (result?.referrerFeeGranted) {
               referrerFeeGrant = result.referrerFeeGranted;
@@ -422,9 +417,6 @@ export async function POST(request) {
             });
             if (result?.personalTierChange) {
               feeTierCrossing = { creatorId: invoiceCreatorId, feePercent: result.personalTierChange };
-            }
-            if (result?.crossedMilestones?.length > 0) {
-              platformMilestoneCrossed = true;
             }
             if (result?.referrerFeeGranted) {
               referrerFeeGrant = result.referrerFeeGranted;
@@ -630,17 +622,6 @@ export async function POST(request) {
         await syncActiveSubscriptionsToFeePercent(referrerFeeGrant, 0);
       } catch (err) {
         console.error('Failed to sync referral 0%-fee month to Stripe subscriptions:', err);
-      }
-    }
-
-    // A platform milestone lowers EVERY creator's effective rate at once, so this resync
-    // covers every active subscription across the whole platform, not just one creator's —
-    // see lib/fees.js. Same best-effort reasoning as the sync above.
-    if (platformMilestoneCrossed) {
-      try {
-        await syncAllActiveSubscriptionsToCurrentEffectiveFee();
-      } catch (err) {
-        console.error('Failed to sync platform milestone fee to Stripe subscriptions:', err);
       }
     }
 
