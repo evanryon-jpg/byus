@@ -28,16 +28,30 @@
 //     Blob's own storage domain the same way (connect-src https://*.blob.vercel-
 //     storage.com) -- same bug, different feature, caught as a side effect of this
 //     same investigation.
+//   - That https://*.blob.vercel-storage.com allowance turned out to be necessary
+//     but not sufficient: live-verifying the digital-products upload end to end on
+//     Sep 17, 2026 (after separately fixing a missing BLOB_READ_WRITE_TOKEN and a
+//     client-side path bug) still hung forever at "Uploading... 0%". Root cause --
+//     confirmed by inspecting the actual @vercel/blob browser bundle -- is that the
+//     client SDK's non-multipart upload() doesn't PUT to the storeId.*.blob.vercel-
+//     storage.com host at all; it PUTs to https://vercel.com/api/blob, a Vercel API
+//     gateway that proxies the write. A CSP wildcard like *.blob.vercel-storage.com
+//     never matches the bare apex domain vercel.com, so every such PUT was silently
+//     blocked by the browser (same "TypeError: Failed to fetch", no console line)
+//     before it ever left the page -- hence no request ever showing up in network
+//     logs and the progress bar never leaving 0%. Confirmed by reproducing the exact
+//     PUT from the browser console: it failed identically, and adding vercel.com
+//     here is what a passing request required.
 // https://www.mux.com/docs/core/content-security-policy is Mux's own reference for
-// the mux.com/litix.io values; cdn.jsdelivr.net and blob.vercel-storage.com are this
-// app's own choices, not covered by that doc.
+// the mux.com/litix.io values; cdn.jsdelivr.net, blob.vercel-storage.com and
+// vercel.com are this app's own choices, not covered by that doc.
 const csp = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://src.litix.io",
   "style-src 'self' 'unsafe-inline'", // Next.js/Tailwind can inject small inline styles
   "img-src 'self' data: https://image.mux.com https://*.litix.io",
   "font-src 'self' data:",
-  "connect-src 'self' https://*.mux.com https://*.litix.io https://storage.googleapis.com https://*.blob.vercel-storage.com",
+  "connect-src 'self' https://*.mux.com https://*.litix.io https://storage.googleapis.com https://*.blob.vercel-storage.com https://vercel.com",
   "media-src 'self' blob: https://*.mux.com",
   "worker-src 'self' blob:",
   "frame-ancestors 'none'",
