@@ -23,7 +23,8 @@ function SignupForm() {
   // body (for email signup) and appended to the OAuth hrefs below (for Google/Apple
   // signup), so however someone completes the form, the referral still gets recorded.
   const referralCode = searchParams.get('ref') || '';
-  const acquisitionSource = searchParams.get('source') === 'instagram' ? 'instagram' : '';
+  const rawSource = searchParams.get('source');
+  const acquisitionSource = rawSource === 'instagram' || rawSource === 'blogger' ? rawSource : '';
 
   const [role, setRole] = useState(defaultRole);
   const [email, setEmail] = useState('');
