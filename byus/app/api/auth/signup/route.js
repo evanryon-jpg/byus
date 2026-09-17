@@ -16,6 +16,7 @@ import {
   DISCOUNTED_FEE_PERCENT,
   FOUNDING_CREATOR_LIMIT,
 } from '@/lib/pricing';
+import { CREATOR_SIGNUP_PAUSED, CREATOR_SIGNUP_PAUSED_MESSAGE } from '@/lib/creator-signup';
 
 const VERIFY_TOKEN_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -48,6 +49,12 @@ export async function POST(request) {
   }
   if (!['creator', 'fan'].includes(role)) {
     return NextResponse.json({ error: 'Role must be either "creator" or "fan".' }, { status: 400 });
+  }
+  // Server-side backstop for the waitlist gating in app/signup/page.js — that page no
+  // longer renders a creator signup form, but this blocks anyone who reaches this route
+  // directly (e.g. by replaying an old request) while creator signup is paused.
+  if (role === 'creator' && CREATOR_SIGNUP_PAUSED) {
+    return NextResponse.json({ error: CREATOR_SIGNUP_PAUSED_MESSAGE }, { status: 403 });
   }
   if (!termsAccepted) {
     return NextResponse.json(
