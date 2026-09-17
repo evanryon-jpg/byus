@@ -418,6 +418,31 @@ export async function loadOutreachContacts() {
   }));
 }
 
+// Everyone currently on the creator waitlist (see app/api/waitlist/route.js and the
+// CreatorWaitlistPanel in app/signup/page.js, which posts here whenever role ===
+// 'creator' while creator signup is paused — see lib/creator-signup.js). This is
+// distinct from instagramWaitlistCount above in loadAdminOverview, which is a frozen
+// historical count scoped to source = 'instagram_campaign' from an earlier, now-removed
+// waitlist page — this loader returns the live, still-growing list from every source
+// (the homepage, the Founding Creator Program CTA, Instagram, or a direct
+// /signup?role=creator visit), newest first, capped at 500 like the other admin lists.
+export async function loadCreatorWaitlist() {
+  const result = await query(
+    `SELECT id, email, display_name, source, referral_code, created_at
+     FROM founding_waitlist
+     ORDER BY created_at DESC
+     LIMIT 500`
+  );
+  return result.rows.map((row) => ({
+    id: row.id,
+    email: row.email,
+    displayName: row.display_name,
+    source: row.source,
+    referralCode: row.referral_code,
+    createdAt: row.created_at,
+  }));
+}
+
 // Every anonymous homepage-widget feedback row (see app/api/feedback/route.js and
 // app/components/FeedbackWidget.jsx), newest-first, unreviewed-first within that.
 export async function loadSiteFeedback() {
