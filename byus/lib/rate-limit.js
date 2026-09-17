@@ -88,6 +88,22 @@ const limiters = {
     limiter: Ratelimit.slidingWindow(20, '10 m'),
     prefix: 'rl:upload',
   }),
+  // Guards POST /api/creator/products (publishing a digital product). Same cost shape
+  // as `upload` above -- each call writes a product row plus one row per attached file
+  // -- but was missing here entirely, which meant `checkRateLimit('product-upload', ...)`
+  // threw `Unknown rate limiter` on every single publish attempt. That throw happened
+  // before that route's own try/catch (the rate-limit check runs first), so it crashed
+  // out to Next's generic HTML error page instead of a JSON error response, which the
+  // client then failed to parse -- surfacing as a plain "Network error — please try
+  // again." with no server-side message. Caught live-verifying the digital-products
+  // upload flow end to end on Sep 17, 2026, after separately fixing the missing
+  // BLOB_READ_WRITE_TOKEN, a client-side upload-path bug, and a CSP connect-src gap --
+  // publishing a product still failed even once a file could finally reach Blob storage.
+  'product-upload': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(10, '10 m'),
+    prefix: 'rl:product-upload',
+  }),
   // Guards creating a Mux direct-upload URL for a video post. Unlike the Blob-backed
   // `upload` limiter above, each call here provisions a real resource on Mux's side
   // (and eventually stored/delivered video minutes), so this is sized to a creator's
