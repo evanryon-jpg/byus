@@ -20,6 +20,7 @@ import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { paymentProvider } from '@/lib/payments';
 import { MIN_DISCOUNT_PERCENT, MAX_DISCOUNT_PERCENT, COUPON_DURATION } from '@/lib/discounts';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 const CODE_PATTERN = /^[A-Z0-9_-]{3,40}$/;
 
@@ -62,6 +63,9 @@ export async function POST(request) {
   if (!session || session.role !== 'creator') {
     return NextResponse.json({ error: 'Only creators can create discount codes.' }, { status: 403 });
   }
+
+  const rateCheck = await checkRateLimit('discount-create', `user:${session.userId}`);
+  if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
   const { tierId, percentOff, code, maxRedemptions } = await request.json();
 
