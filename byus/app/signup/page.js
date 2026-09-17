@@ -101,6 +101,8 @@ function SignupForm() {
       {role === 'creator' && (
         <p className="mt-3 text-xs text-brand-ink/65">
           Next you'll connect Stripe and set up a subscription tier — takes a couple of minutes, right after you sign up.
+          You can also connect Discord and/or Telegram later in Settings, so subscribers get automatic access to your
+          server or group.
         </p>
       )}
 
