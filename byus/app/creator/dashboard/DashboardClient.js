@@ -232,7 +232,7 @@ export default function DashboardClient({
       <PostSection posts={posts} onCreated={load} />
 
       {/* Secure paid and member-only PDF downloads */}
-      <DigitalProductManager />
+      <DigitalProductManager userId={user?.id} />
 
       {/* Message subscribers directly by email */}
       <BroadcastSection />
