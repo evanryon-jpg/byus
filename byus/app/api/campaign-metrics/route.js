@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
-const ALLOWED_CAMPAIGNS = new Set(['instagram']);
+const ALLOWED_CAMPAIGNS = new Set(['instagram', 'blogger']);
 const ALLOWED_EVENTS = new Set(['view', 'demo_click', 'browse_click', 'feedback_click', 'signup_click']);
 
 export async function POST(request) {
