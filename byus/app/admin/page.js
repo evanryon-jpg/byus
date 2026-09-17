@@ -12,6 +12,7 @@ import {
   loadOutreachContacts,
   loadSiteFeedback,
   loadCreatorWaitlist,
+  loadCreatorReviewQueue,
 } from '@/lib/admin-data';
 import AdminClient from './AdminClient';
 
@@ -48,38 +49,45 @@ export default async function AdminPage() {
     );
   }
 
-  const [reportsResult, suggestionsResult, outreachResult, siteFeedbackResult, waitlistResult] = await Promise.all([
-    loadAdminReports()
-      .then((reports) => ({ reports, error: '' }))
-      .catch((err) => {
-        console.error('admin: reports load failed:', err);
-        return { reports: null, error: 'Could not load reports.' };
-      }),
-    loadAdminSuggestions()
-      .then((suggestions) => ({ suggestions, error: '' }))
-      .catch((err) => {
-        console.error('admin: suggestions load failed:', err);
-        return { suggestions: null, error: 'Could not load suggestions.' };
-      }),
-    loadOutreachContacts()
-      .then((contacts) => ({ contacts, error: '' }))
-      .catch((err) => {
-        console.error('admin: creator opinion invitations load failed:', err);
-        return { contacts: null, error: 'Could not load creator opinion invitations.' };
-      }),
-    loadSiteFeedback()
-      .then((feedback) => ({ feedback, error: '' }))
-      .catch((err) => {
-        console.error('admin: site feedback load failed:', err);
-        return { feedback: null, error: 'Could not load visitor feedback.' };
-      }),
-    loadCreatorWaitlist()
-      .then((waitlist) => ({ waitlist, error: '' }))
-      .catch((err) => {
-        console.error('admin: creator waitlist load failed:', err);
-        return { waitlist: null, error: 'Could not load the creator waitlist.' };
-      }),
-  ]);
+  const [reportsResult, suggestionsResult, outreachResult, siteFeedbackResult, waitlistResult, reviewQueueResult] =
+    await Promise.all([
+      loadAdminReports()
+        .then((reports) => ({ reports, error: '' }))
+        .catch((err) => {
+          console.error('admin: reports load failed:', err);
+          return { reports: null, error: 'Could not load reports.' };
+        }),
+      loadAdminSuggestions()
+        .then((suggestions) => ({ suggestions, error: '' }))
+        .catch((err) => {
+          console.error('admin: suggestions load failed:', err);
+          return { suggestions: null, error: 'Could not load suggestions.' };
+        }),
+      loadOutreachContacts()
+        .then((contacts) => ({ contacts, error: '' }))
+        .catch((err) => {
+          console.error('admin: creator opinion invitations load failed:', err);
+          return { contacts: null, error: 'Could not load creator opinion invitations.' };
+        }),
+      loadSiteFeedback()
+        .then((feedback) => ({ feedback, error: '' }))
+        .catch((err) => {
+          console.error('admin: site feedback load failed:', err);
+          return { feedback: null, error: 'Could not load visitor feedback.' };
+        }),
+      loadCreatorWaitlist()
+        .then((waitlist) => ({ waitlist, error: '' }))
+        .catch((err) => {
+          console.error('admin: creator waitlist load failed:', err);
+          return { waitlist: null, error: 'Could not load the creator waitlist.' };
+        }),
+      loadCreatorReviewQueue()
+        .then((reviewQueue) => ({ reviewQueue, error: '' }))
+        .catch((err) => {
+          console.error('admin: creator review queue load failed:', err);
+          return { reviewQueue: null, error: 'Could not load the creator review queue.' };
+        }),
+    ]);
 
   return (
     <AdminClient
@@ -94,6 +102,8 @@ export default async function AdminPage() {
       initialSiteFeedbackError={siteFeedbackResult.error}
       initialWaitlist={waitlistResult.waitlist}
       initialWaitlistError={waitlistResult.error}
+      initialReviewQueue={reviewQueueResult.reviewQueue}
+      initialReviewQueueError={reviewQueueResult.error}
     />
   );
 }

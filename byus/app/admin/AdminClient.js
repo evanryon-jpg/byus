@@ -22,6 +22,8 @@ export default function AdminClient({
   initialSiteFeedbackError,
   initialWaitlist,
   initialWaitlistError,
+  initialReviewQueue,
+  initialReviewQueueError,
 }) {
   const {
     creatorCount,
@@ -237,6 +239,8 @@ export default function AdminClient({
           </table>
         </div>
       </div>
+
+      <ReviewQueueSection initialQueue={initialReviewQueue} initialError={initialReviewQueueError} />
 
       <div className="mt-8 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
         <h2 className="font-semibold">Recent creators</h2>
@@ -1305,7 +1309,7 @@ function SuspendControl({ userId, initialSuspended, initialReason, protectedAcco
 // Until an admin clears a creator, their posts stay unpublished and /api/subscribe + the
 // tip route refuse to let any fan pay them. Clearing is one-way, same as SuspendControl's
 // reinstate-only-in-that-direction pattern -- there's no "un-clear."
-function ReviewControl({ userId, initialNeedsReview }) {
+function ReviewControl({ userId, initialNeedsReview, onCleared }) {
   const [needsReview, setNeedsReview] = useState(Boolean(initialNeedsReview));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -1318,6 +1322,7 @@ function ReviewControl({ userId, initialNeedsReview }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Could not clear this creator for review.');
       setNeedsReview(false);
+      onCleared?.();
     } catch (err) {
       setError(err.message || 'Could not clear this creator for review.');
     } finally {
@@ -1345,6 +1350,96 @@ function ReviewControl({ userId, initialNeedsReview }) {
         </button>
       </div>
       {error && <p className="text-xs text-red-600">{error}</p>}
+    </div>
+  );
+}
+
+// Every creator still waiting on ByUs's one-time initial review, oldest-pending-first --
+// see lib/admin-data.js's loadCreatorReviewQueue for why this is a separate list from
+// "Recent creators" below rather than reusing it: that one is capped and sorted by signup
+// recency, so once more than its cap had ever signed up, an old pending creator had no
+// row anywhere on this page to actually clear them from, even though needsReviewCount
+// (in the stats above) still counted them. A row disappears from this list the moment
+// it's cleared -- unlike the "Recent creators" table, this one exists purely to work
+// through the queue, so there's no reason to keep showing a row once it's done.
+function ReviewQueueSection({ initialQueue, initialError }) {
+  const [queue, setQueue] = useState(initialQueue); // null = failed to load
+  const error = initialError || '';
+
+  if (error) {
+    return (
+      <div className="mt-8 rounded-2xl border border-red-100 bg-red-50 p-6">
+        <h2 className="font-semibold text-[#172033]">Creators awaiting review</h2>
+        <p className="mt-1 text-sm text-red-700">{error}</p>
+      </div>
+    );
+  }
+
+  if (!queue || queue.length === 0) {
+    return null; // nothing pending -- no need to take up space on an otherwise-busy page
+  }
+
+  return (
+    <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50/40 p-6">
+      <div className="flex items-center justify-between">
+        <h2 className="font-semibold text-[#172033]">Creators awaiting review</h2>
+        <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800">
+          {queue.length} pending
+        </span>
+      </div>
+      <p className="mt-1 text-sm text-brand-ink/65">
+        Oldest first — every creator whose posts stay unpublished and can&rsquo;t yet accept a fan&rsquo;s
+        first payment until cleared here, not just the most recent signups.
+      </p>
+      <div className="mt-4 overflow-x-auto">
+        <table className="w-full min-w-[640px] border-collapse text-sm">
+          <thead>
+            <tr className="border-b border-brand-ink/10 text-left text-xs font-medium uppercase tracking-wide text-brand-ink/60">
+              <th className="py-2 pr-4">Creator</th>
+              <th className="py-2 pr-4">Joined</th>
+              <th className="py-2 pr-4">Stripe</th>
+              <th className="py-2 pr-4">Review</th>
+            </tr>
+          </thead>
+          <tbody>
+            {queue.map((c) => (
+              <tr key={c.id} className="border-b border-brand-ink/5">
+                <td className="py-2.5 pr-4">
+                  <div className="font-medium text-[#172033]">
+                    {c.displayName || 'Unnamed creator'}
+                    {c.bioFlagged && (
+                      <span
+                        className="ml-1.5 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700"
+                        title="This creator's bio contains something that looks like a link — worth a look."
+                      >
+                        Bio has a link
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-xs text-brand-ink/60">{c.email}</div>
+                </td>
+                <td className="py-2.5 pr-4 text-brand-ink/70">
+                  {new Date(c.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                </td>
+                <td className="py-2.5 pr-4">
+                  {c.stripeConnectOnboarded ? (
+                    <span className="rounded-full bg-[#0F766E]/10 px-2 py-0.5 text-xs font-medium text-[#0F766E]">Connected</span>
+                  ) : (
+                    <span className="rounded-full bg-brand-ink/5 px-2 py-0.5 text-xs font-medium text-brand-ink/60">Not connected</span>
+                  )}
+                </td>
+                <td className="py-2.5 pr-4">
+                  <ReviewControl
+                    userId={c.id}
+                    initialNeedsReview
+                    onCleared={() => setQueue((current) => current.filter((row) => row.id !== c.id))}
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
