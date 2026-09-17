@@ -11,6 +11,7 @@ import {
   loadAdminSuggestions,
   loadOutreachContacts,
   loadSiteFeedback,
+  loadCreatorWaitlist,
 } from '@/lib/admin-data';
 import AdminClient from './AdminClient';
 
@@ -47,7 +48,7 @@ export default async function AdminPage() {
     );
   }
 
-  const [reportsResult, suggestionsResult, outreachResult, siteFeedbackResult] = await Promise.all([
+  const [reportsResult, suggestionsResult, outreachResult, siteFeedbackResult, waitlistResult] = await Promise.all([
     loadAdminReports()
       .then((reports) => ({ reports, error: '' }))
       .catch((err) => {
@@ -72,6 +73,12 @@ export default async function AdminPage() {
         console.error('admin: site feedback load failed:', err);
         return { feedback: null, error: 'Could not load visitor feedback.' };
       }),
+    loadCreatorWaitlist()
+      .then((waitlist) => ({ waitlist, error: '' }))
+      .catch((err) => {
+        console.error('admin: creator waitlist load failed:', err);
+        return { waitlist: null, error: 'Could not load the creator waitlist.' };
+      }),
   ]);
 
   return (
@@ -85,6 +92,8 @@ export default async function AdminPage() {
       initialOutreachError={outreachResult.error}
       initialSiteFeedback={siteFeedbackResult.feedback}
       initialSiteFeedbackError={siteFeedbackResult.error}
+      initialWaitlist={waitlistResult.waitlist}
+      initialWaitlistError={waitlistResult.error}
     />
   );
 }
