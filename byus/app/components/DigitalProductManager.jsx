@@ -13,7 +13,7 @@ function fileSize(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
 }
 
-export default function DigitalProductManager() {
+export default function DigitalProductManager({ userId }) {
   const [products, setProducts] = useState([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -60,8 +60,20 @@ export default function DigitalProductManager() {
 
       const pendingId = `${file.name}-${file.size}-${Date.now()}`;
       setPending((prev) => [...prev, { id: pendingId, name: file.name, progress: 0 }]);
+      if (!userId) {
+        setMessage('Could not identify your account. Refresh the page and try again.');
+        setPending((prev) => prev.filter((p) => p.id !== pendingId));
+        continue;
+      }
       try {
-        const pathname = `products/${crypto.randomUUID()}/${file.name}`;
+        // Must start with `products/${userId}/` -- the upload-token route (server-side)
+        // rejects anything else as an "Invalid upload path," since that prefix is the
+        // only thing standing between one creator's files and another's in this shared
+        // bucket. A previous version of this line used a fresh crypto.randomUUID() here
+        // instead of the real userId, which meant every digital-product upload was
+        // silently guaranteed to fail that check -- caught while live-verifying the
+        // separate BLOB_READ_WRITE_TOKEN fix on Sep 17, 2026.
+        const pathname = `products/${userId}/${crypto.randomUUID()}-${file.name}`;
         const blob = await upload(pathname, file, {
           access: 'private',
           handleUploadUrl: '/api/creator/products/upload-token',
