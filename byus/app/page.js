@@ -145,7 +145,7 @@ function FoundingCreatorProgram({ stats }) {
                 href="/signup?role=creator"
                 className="inline-block rounded-full bg-brand-gold px-8 py-3.5 text-base font-bold text-[#172554] shadow-[0_16px_30px_-14px_rgba(15,118,110,0.5)] transition hover:-translate-y-0.5"
               >
-                Create your founding page →
+                Join the founding waitlist →
               </a>
               <p className="mt-3 text-sm font-medium tabular-nums text-brand-paper/55">
                 <strong className="font-display text-base text-brand-paper">
@@ -233,7 +233,7 @@ function Hero({ user }) {
                   href="/signup?role=creator"
                   className="rounded-full bg-[#0F766E] px-7 py-3.5 text-base font-semibold text-brand-paper shadow-[0_16px_30px_-14px_rgba(15,118,110,0.38)] transition hover:-translate-y-0.5 hover:bg-[#115E59]"
                 >
-                  Start your creator page →
+                  Join the creator waitlist →
                 </a>
               )}
 
