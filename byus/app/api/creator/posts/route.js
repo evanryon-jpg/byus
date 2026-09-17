@@ -11,6 +11,7 @@ import { sendNewPostEmail } from '@/lib/email';
 import { containsBlockedContent } from '@/lib/content-policy';
 import { loadCreatorPosts } from '@/lib/creator-dashboard-data';
 import { getUpload, getAsset } from '@/lib/mux';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 const TITLE_MAX = 200;
 const BODY_MAX = 20000;
@@ -59,6 +60,9 @@ export async function POST(request) {
   if (!session || session.role !== 'creator') {
     return NextResponse.json({ error: 'Only creators can post.' }, { status: 403 });
   }
+
+  const rateCheck = await checkRateLimit('post-create', `user:${session.userId}`);
+  if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
   const { title, body, mediaUrl, visibility, pollOptions, videoUploadId } = await request.json();
 
