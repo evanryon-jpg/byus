@@ -38,4 +38,8 @@ export const FAQS = [
     q: 'Is my payment information safe?',
     a: "All payments and payouts run through Stripe. ByUs never sees or stores card numbers — that's true for what a fan pays and for what a creator gets paid out.",
   },
+  {
+    q: 'Can creators connect Discord or Telegram?',
+    a: "Yes. A creator can link a Discord server and/or a private Telegram group in Settings, and ByUs automatically grants a subscriber the matching Discord role or Telegram access the moment they join — then removes it automatically if they ever cancel. It's optional and separate from a creator's ByUs page, which stays the source of truth either way.",
+  },
 ];
