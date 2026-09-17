@@ -11,6 +11,7 @@ import { TRIAL_DAY_OPTIONS } from '@/lib/trials';
 import { containsBlockedContent } from '@/lib/content-policy';
 import { loadCreatorTiers } from '@/lib/creator-dashboard-data';
 import { MIN_ANNUAL_BILLING_MONTHS, MIN_MEMBERSHIP_PRICE_CENTS } from '@/lib/pricing';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 // Stripe itself caps unit_amount well above this, but there's no legitimate reason for
 // a creator subscription tier to cost more than $2,000/month — bounding it here catches
@@ -41,6 +42,9 @@ export async function POST(request) {
   if (!session || session.role !== 'creator') {
     return NextResponse.json({ error: 'Only creators can create tiers.' }, { status: 403 });
   }
+
+  const rateCheck = await checkRateLimit('tier-create', `user:${session.userId}`);
+  if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
   const { name, description, priceCents, annualPriceCents, welcomeMessage, trialDays } = await request.json();
 
