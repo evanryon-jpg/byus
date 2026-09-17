@@ -411,14 +411,15 @@ function Features() {
         </p>
       </div>
 
-      {/* Asymmetric rhythm instead of three uniform boxes -- Direct payouts gets the
+      {/* Asymmetric rhythm instead of four uniform boxes -- Direct payouts gets the
           big slot since Stripe Express payouts are the actual differentiator, the
-          other two stack beside it rather than competing for equal weight. */}
+          other three stack beside it rather than competing for equal weight. */}
       <div className="mt-10 grid gap-6 lg:grid-cols-[1.3fr_1fr]">
         <PayoutDemo />
         <div className="flex flex-col gap-6">
           <TiersDemo />
           <GatedContentDemo />
+          <CommunitySyncDemo />
         </div>
       </div>
     </section>
@@ -512,6 +513,24 @@ function GatedContentDemo() {
           or is canceled.
         </p>
       </div>
+    </div>
+  );
+}
+
+// Discord's own brand blurple (#5865F2) as this card's accent, the same way GatedContentDemo
+// borrows brand-clay -- each feature card gets a color that's actually its own rather than
+// all four sharing the platform's teal. Kept as a compact perk card, not a full demo like
+// PayoutDemo/TiersDemo, since there's no single UI moment (a role grant, a Telegram invite)
+// that reads at a glance the way a receipt or a tier list does.
+function CommunitySyncDemo() {
+  return (
+    <div className="rounded-2xl border border-brand-ink/15 bg-brand-paper p-6 shadow-sm">
+      <span className="text-xs font-extrabold uppercase tracking-wide text-[#5865F2]">Discord &amp; Telegram</span>
+      <h3 className="mt-2 font-display text-lg font-bold text-[#172033]">Community, synced automatically</h3>
+      <p className="mt-2 text-sm leading-relaxed text-brand-ink/70">
+        Connect a Discord server or Telegram group and subscribers get a role or an invite the
+        moment they join — removed automatically if they ever cancel.
+      </p>
     </div>
   );
 }
