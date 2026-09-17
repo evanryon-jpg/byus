@@ -12,6 +12,7 @@ import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { parseFeed } from '@/lib/rss';
 import { containsBlockedContent } from '@/lib/content-policy';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 const FETCH_TIMEOUT_MS = 10000;
 const URL_MAX = 2000;
@@ -59,6 +60,9 @@ export async function POST() {
   if (!session || session.role !== 'creator') {
     return NextResponse.json({ error: 'Only creators can sync a feed.' }, { status: 403 });
   }
+
+  const rateCheck = await checkRateLimit('rss-sync', `user:${session.userId}`);
+  if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
   const userResult = await query('SELECT rss_feed_url, review_cleared_at FROM users WHERE id = $1', [
     session.userId,
