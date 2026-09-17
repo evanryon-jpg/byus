@@ -561,13 +561,13 @@ function ClosingCtaBar() {
         <h2 className="font-display text-2xl font-bold text-brand-paper sm:text-3xl">
           Like how clean this looks?
         </h2>
-        <p className="mt-2 text-brand-paper/80">Launch your own identical page in less than 5 minutes.</p>
+        <p className="mt-2 text-brand-paper/80">Join the waitlist and we'll email you when you can launch your own.</p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           <a
             href="/signup?role=creator"
             className="rounded-full bg-brand-paper px-7 py-3 font-semibold text-brand-teal shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
           >
-            Claim Your Username Now →
+            Join the Waitlist →
           </a>
           <a
             href="/"
