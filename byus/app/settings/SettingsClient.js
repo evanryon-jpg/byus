@@ -38,6 +38,7 @@ function SettingsClientInner({ initialUser, initialReferral, initialSuggestions 
       <SupportVisibilityCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
       <ConnectPlatformsCard user={user} />
       <CreatorIntegrationsCard user={user} />
+      <RssImportCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
       <ReferralCard role={user.role} initialData={initialReferral} />
       <SuggestionBoxCard initialSuggestions={initialSuggestions} />
       <PasswordCard />
@@ -683,6 +684,121 @@ function CreatorIntegrationsCard({ user }) {
           <p className={`text-sm ${status.type === 'ok' ? 'text-green-700' : 'text-red-600'}`}>{status.text}</p>
         )}
       </form>
+    </section>
+  );
+}
+
+// Lets a blogger (or any creator) connect their blog's RSS/Atom feed so their posts
+// show up on their ByUs page automatically instead of copy-pasting each one in by
+// hand. Saving the URL and syncing are two separate actions on purpose — saving just
+// records the feed, syncing is the one that actually reads it and creates posts, so a
+// creator can see the URL took before kicking off an import. No scheduled sync yet
+// (see app/api/creator/rss/route.js) — "Sync now" is the only way new entries import
+// today.
+function RssImportCard({ user, onChanged }) {
+  const [feedUrl, setFeedUrl] = useState(user.rss_feed_url || '');
+  const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [status, setStatus] = useState(null); // { type: 'ok' | 'error', text }
+
+  if (user.role !== 'creator') return null;
+
+  async function handleSave(e) {
+    e.preventDefault();
+    setSaving(true);
+    setStatus(null);
+    try {
+      const res = await fetch('/api/creator/rss', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ feedUrl: feedUrl.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not save.');
+      onChanged({ rss_feed_url: feedUrl.trim() || null, rss_last_sync_error: null });
+      setStatus({ type: 'ok', text: 'Saved.' });
+    } catch (err) {
+      setStatus({ type: 'error', text: err.message || 'Could not save. Try again.' });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleSync() {
+    setSyncing(true);
+    setStatus(null);
+    try {
+      const res = await fetch('/api/creator/rss', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not sync.');
+      onChanged({ rss_last_synced_at: new Date().toISOString(), rss_last_sync_error: null });
+      setStatus({
+        type: 'ok',
+        text:
+          data.imported > 0
+            ? `Imported ${data.imported} new post${data.imported === 1 ? '' : 's'}.`
+            : `Checked ${data.checked} ${data.checked === 1 ? 'entry' : 'entries'} — nothing new to import.`,
+      });
+    } catch (err) {
+      setStatus({ type: 'error', text: err.message || 'Could not sync. Try again.' });
+    } finally {
+      setSyncing(false);
+    }
+  }
+
+  const lastSyncedLabel = user.rss_last_synced_at
+    ? new Date(user.rss_last_synced_at).toLocaleString(undefined, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      })
+    : null;
+
+  return (
+    <section className="mt-6 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
+      <h2 className="font-semibold">Blog RSS import</h2>
+      <p className="mt-1 text-sm text-brand-ink/65">
+        Connect your blog's RSS or Atom feed and pull your posts onto your ByUs page — no
+        copy-pasting. Each entry becomes a post here the first time you sync; re-syncing only
+        adds what's new.
+      </p>
+
+      <form onSubmit={handleSave} className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+        <label className="grid gap-1">
+          <span className="text-sm font-medium text-[#172033]">Feed URL</span>
+          <input
+            type="url"
+            value={feedUrl}
+            onChange={(e) => setFeedUrl(e.target.value)}
+            placeholder="https://yourblog.com/feed"
+            className="rounded-xl border border-brand-ink/15 bg-white px-4 py-2.5 text-sm"
+          />
+        </label>
+        <button
+          disabled={saving}
+          className="rounded-full border border-[#0F766E] px-5 py-2.5 text-sm font-semibold text-[#0F766E] disabled:opacity-50"
+        >
+          {saving ? 'Saving…' : 'Save'}
+        </button>
+      </form>
+
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          onClick={handleSync}
+          disabled={syncing || !user.rss_feed_url}
+          className="rounded-full bg-[#0F766E] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+        >
+          {syncing ? 'Syncing…' : 'Sync now'}
+        </button>
+        {lastSyncedLabel && <span className="text-xs text-brand-ink/55">Last synced {lastSyncedLabel}</span>}
+      </div>
+
+      {user.rss_last_sync_error && !status && (
+        <p className="mt-3 text-sm text-red-600">{user.rss_last_sync_error}</p>
+      )}
+      {status && (
+        <p className={`mt-3 text-sm ${status.type === 'ok' ? 'text-green-700' : 'text-red-600'}`}>{status.text}</p>
+      )}
     </section>
   );
 }
