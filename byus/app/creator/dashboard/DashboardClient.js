@@ -214,6 +214,11 @@ export default function DashboardClient({
         <GettingStartedChecklist hasProfile={hasProfile} stripeConnected={stripeConnected} hasTier={hasTier} hasPost={hasPost} />
       )}
 
+      {/* One-time nudge, not part of the required launch checklist above -- Discord/Telegram
+          sync is a genuine perk but entirely optional, so it disappears for good the moment
+          either is configured rather than sticking around as one more thing to dismiss. */}
+      {!user?.discord_guild_id && !user?.telegram_chat_id && <CommunitySyncNudge />}
+
       {/* Tiers — build these first; Stripe is the last step, once the page is worth publishing */}
       <TierSection
         tiers={tiers}
@@ -868,6 +873,31 @@ function AiSetupSection({ stripeConnected, onProfileSaved, onTierAdded }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// Surfaces the Discord/Telegram sync (configured in Settings -> CreatorIntegrationsCard,
+// app/settings/SettingsClient.js) somewhere a creator will actually see it -- it's easy to
+// miss entirely since it lives a level down in Settings rather than on this page. Deliberately
+// kept out of GettingStartedChecklist below: that checklist is the four required steps to a
+// working page, and this is an optional perk that doesn't block anything.
+function CommunitySyncNudge() {
+  return (
+    <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#5865F2]/20 bg-[#5865F2]/5 p-5">
+      <div>
+        <h2 className="text-sm font-semibold text-[#172033]">Sync Discord or Telegram</h2>
+        <p className="mt-0.5 text-sm text-brand-ink/65">
+          Give subscribers a role in your Discord server or access to your private Telegram group automatically
+          — and remove it if they ever cancel.
+        </p>
+      </div>
+      <a
+        href="/settings"
+        className="shrink-0 rounded-full bg-[#5865F2] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4752C4]"
+      >
+        Set it up
+      </a>
     </div>
   );
 }
