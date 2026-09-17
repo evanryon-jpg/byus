@@ -27,6 +27,42 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
+// Sends `emails` (one { from, to, subject, html } object per recipient) through
+// Resend's batch endpoint in chunks of BATCH_CHUNK_SIZE. Used by sendNewPostEmail and
+// sendCreatorUpdateEmail below, both of which fan out to every one of a creator's
+// subscribers -- a list large enough to need more than one batch call.
+//
+// A failed chunk no longer aborts every chunk after it: earlier versions threw on the
+// first Resend error, which for a 250-recipient send meant chunk 1 (100 people) could
+// already be delivered while the thrown error made the caller (and the creator) believe
+// nothing went out, and recipients 101-250 never got a delivery attempt at all. Each
+// chunk is now tried independently and its outcome recorded, so one bad chunk (a
+// transient Resend error, a malformed address in that particular batch) can't silently
+// swallow every recipient queued after it. Only throws when NOTHING got through --
+// every existing caller already only cares about "did this actually send" at that
+// all-or-nothing level, and callers can inspect the returned `failed` count for a
+// partial-failure summary instead of assuming an all-or-nothing result.
+async function sendBatchInChunks(resend, emails) {
+  let sent = 0;
+  let failed = 0;
+  for (let i = 0; i < emails.length; i += BATCH_CHUNK_SIZE) {
+    const chunk = emails.slice(i, i + BATCH_CHUNK_SIZE);
+    try {
+      const { error } = await resend.batch.send(chunk);
+      if (error) {
+        console.error('Resend batch send failed for one chunk (continuing with remaining chunks):', error);
+        failed += chunk.length;
+      } else {
+        sent += chunk.length;
+      }
+    } catch (err) {
+      console.error('Resend batch send threw for one chunk (continuing with remaining chunks):', err);
+      failed += chunk.length;
+    }
+  }
+  return { sent, failed };
+}
+
 export async function sendVerificationEmail(to, verifyUrl) {
   const resend = getClient();
   const { error } = await resend.emails.send({
@@ -188,9 +224,10 @@ export async function sendDisputeAlertEmail(to, {
 // Emails a creator's active subscribers when they publish a new post — one individual
 // email per recipient (never one email with everyone in "to"), sent via the batch
 // endpoint like the creator-update broadcast below. Only sent to subscribers who haven't
-// turned this off (users.notify_new_posts).
+// turned this off (users.notify_new_posts). Returns { sent, failed } recipient counts
+// rather than throwing on a partial failure — see sendBatchInChunks above.
 export async function sendNewPostEmail(recipients, { creatorName, creatorUrl, postTitle, postExcerpt }) {
-  if (recipients.length === 0) return 0;
+  if (recipients.length === 0) return { sent: 0, failed: 0 };
   const resend = getClient();
 
   const safeCreatorName = escapeHtml(creatorName);
@@ -215,27 +252,28 @@ export async function sendNewPostEmail(recipients, { creatorName, creatorUrl, po
 
   const subject = safeTitle ? `${creatorName}: ${postTitle}` : `New post from ${creatorName}`;
 
-  for (let i = 0; i < recipients.length; i += BATCH_CHUNK_SIZE) {
-    const chunk = recipients.slice(i, i + BATCH_CHUNK_SIZE);
-    const { error } = await resend.batch.send(
-      chunk.map((to) => ({ from: FROM_ADDRESS, to, subject, html }))
-    );
-    if (error) {
-      console.error('Resend batch send failed:', error);
-      throw new Error(error.message || 'Could not send the new-post email.');
-    }
+  const { sent, failed } = await sendBatchInChunks(
+    resend,
+    recipients.map((to) => ({ from: FROM_ADDRESS, to, subject, html }))
+  );
+  if (failed > 0) {
+    console.error(`New-post email: ${failed} of ${recipients.length} recipients failed to send.`);
+  }
+  if (sent === 0 && recipients.length > 0) {
+    throw new Error('Could not send the new-post email.');
   }
 
-  return recipients.length;
+  return { sent, failed };
 }
 
 // Emails a creator's own free-text update to a list of subscriber addresses, one
 // individual email per recipient (never one email with everyone in "to" -- that would
 // leak every subscriber's address to every other one). Sent via the batch endpoint so
 // a list of any size still costs one request per 100 recipients instead of one per
-// person. Returns the number of recipients actually queued for delivery.
+// person. Returns { sent, failed } recipient counts rather than throwing on a partial
+// failure — see sendBatchInChunks above.
 export async function sendCreatorUpdateEmail(recipients, { creatorName, subject, message }) {
-  if (recipients.length === 0) return 0;
+  if (recipients.length === 0) return { sent: 0, failed: 0 };
   const resend = getClient();
 
   const safeCreatorName = escapeHtml(creatorName);
@@ -251,16 +289,16 @@ export async function sendCreatorUpdateEmail(recipients, { creatorName, subject,
     </div>
   `;
 
-  for (let i = 0; i < recipients.length; i += BATCH_CHUNK_SIZE) {
-    const chunk = recipients.slice(i, i + BATCH_CHUNK_SIZE);
-    const { error } = await resend.batch.send(
-      chunk.map((to) => ({ from: FROM_ADDRESS, to, subject, html }))
-    );
-    if (error) {
-      console.error('Resend batch send failed:', error);
-      throw new Error(error.message || 'Could not send the update email.');
-    }
+  const { sent, failed } = await sendBatchInChunks(
+    resend,
+    recipients.map((to) => ({ from: FROM_ADDRESS, to, subject, html }))
+  );
+  if (failed > 0) {
+    console.error(`Creator update email: ${failed} of ${recipients.length} recipients failed to send.`);
+  }
+  if (sent === 0 && recipients.length > 0) {
+    throw new Error('Could not send the update email.');
   }
 
-  return recipients.length;
+  return { sent, failed };
 }

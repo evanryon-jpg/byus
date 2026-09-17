@@ -195,6 +195,50 @@ const limiters = {
     limiter: Ratelimit.slidingWindow(8, '1 h'),
     prefix: 'rl:feedback',
   }),
+  // Guards POST /api/creator/rss (sync a blog feed now). Each call is an outbound fetch
+  // to a URL the creator controls plus up to MAX_ITEMS (see lib/rss.js) post inserts --
+  // cheap individually, but with no limit a "Sync now" click loop (or a compromised
+  // session) could hammer a third-party host through ByUs's own server with no friction
+  // at all. Generous enough for a creator legitimately re-syncing while testing a feed.
+  'rss-sync': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(10, '10 m'),
+    prefix: 'rl:rss-sync',
+  }),
+  // Guards POST /api/creator/broadcast -- a free-text email to every one of a creator's
+  // active subscribers at once. Tighter than any other limiter here on purpose: this is
+  // the one authenticated write whose abuse cost lands directly in other people's
+  // inboxes (and Resend's send volume/reputation), not just this account's own data.
+  broadcast: new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(5, '24 h'),
+    prefix: 'rl:broadcast',
+  }),
+  // Guards POST /api/creator/posts (publishing a new post). Generous enough that a
+  // creator posting several updates in one sitting is never blocked -- this exists to
+  // stop a script from flooding a creator's own page (and, for a public/non-pending
+  // post, every subscriber's new-post-notification inbox) rather than to limit normal use.
+  'post-create': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(30, '10 m'),
+    prefix: 'rl:post-create',
+  }),
+  // Guards POST /api/creator/tiers -- each call makes 1-2 real Stripe API calls
+  // (Product + one or two recurring Prices). Same cost shape as connect-stripe /
+  // product-upload above; a creator setting up or adjusting tiers rarely needs more
+  // than a handful of creates in an hour.
+  'tier-create': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(15, '1 h'),
+    prefix: 'rl:tier-create',
+  }),
+  // Guards POST /api/creator/discounts -- each call makes two real Stripe API calls
+  // (a Coupon, then a Promotion Code). Same allowance as tier-create for the same reason.
+  'discount-create': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(15, '1 h'),
+    prefix: 'rl:discount-create',
+  }),
 };
 
 // Best-effort client IP. Vercel always sets x-forwarded-for in production; the

@@ -19,11 +19,15 @@
 // its crossings live on purely as a celebratory "best month so far" stat on the homepage
 // gauge -- see app/components/PlatformGoalGauge.jsx -- with no effect on billing.
 //
-// Both crossings are detected inside the Stripe webhook (see
+// The personal-tier crossing is detected inside the Stripe webhook (see
 // app/api/webhooks/stripe/route.js, case 'invoice.payment_succeeded'), the only place a
-// payment is confirmed to have actually happened. Stripe API calls that follow a crossing
-// (re-pointing live subscriptions at the new rate) run AFTER the DB transaction commits --
-// same split, and same reasoning, the webhook already uses for referral rewards.
+// payment is confirmed to have actually happened. The Stripe API call that follows a
+// crossing (re-pointing that one creator's live subscriptions at the new rate) runs AFTER
+// the DB transaction commits -- same split, and same reasoning, the webhook already uses
+// for referral rewards. There is no platform-wide equivalent anymore: since the milestone
+// reduction above is retired (always 0), a platform milestone crossing has nothing left to
+// resync -- see syncActiveSubscriptionsToFeePercent below for the one Stripe sync that's
+// still live.
 
 import { query } from './db';
 import { paymentProvider } from './payments';
@@ -255,33 +259,6 @@ export async function syncActiveSubscriptionsToFeePercent(creatorId, personalTie
       });
     } catch (err) {
       console.error(`Failed to sync application_fee_percent for subscription ${stripe_subscription_id}:`, err);
-    }
-  }
-}
-
-// Best-effort, run AFTER a transaction that just crossed one or more PLATFORM milestones
-// has committed: re-points every currently active (or past_due) Stripe subscription
-// across EVERY creator at once, since a platform milestone lowers everyone's effective
-// rate simultaneously -- not just the creator whose invoice happened to trigger it. Same
-// "best-effort, no retry queue" tradeoff as the per-creator sync above, just platform-wide.
-export async function syncAllActiveSubscriptionsToCurrentEffectiveFee() {
-  const reductionPoints = await getPlatformMilestoneReductionPoints(query);
-
-  const subsResult = await query(
-    `SELECT s.stripe_subscription_id, u.platform_fee_percent
-     FROM subscriptions s
-     JOIN users u ON u.id = s.creator_id
-     WHERE s.status IN ('active', 'past_due') AND s.stripe_subscription_id IS NOT NULL`
-  );
-  for (const { stripe_subscription_id, platform_fee_percent } of subsResult.rows) {
-    const effectiveFeePercent = applyPlatformMilestoneReduction(platform_fee_percent, reductionPoints);
-    try {
-      await paymentProvider.updateSubscriptionFeePercent({
-        subscriptionId: stripe_subscription_id,
-        feePercent: effectiveFeePercent,
-      });
-    } catch (err) {
-      console.error(`Failed to sync platform milestone fee for subscription ${stripe_subscription_id}:`, err);
     }
   }
 }

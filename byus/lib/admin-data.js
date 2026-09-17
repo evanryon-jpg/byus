@@ -16,6 +16,13 @@ const RECENT_DISPUTES_LIMIT = 25;
 // Stripe's terminal dispute statuses -- everything else ('needs_response',
 // 'under_review', 'warning_needs_response', etc.) still needs a human to look at it.
 const CLOSED_DISPUTE_STATUSES = ['won', 'lost'];
+// Same cap as the other "every row of this kind" admin lists below (waitlist, site
+// feedback, outreach contacts) -- high enough to never truncate in practice today, low
+// enough that the query can't grow unbounded as the platform scales. Real pagination UI
+// can replace this if any of these lists ever gets close to it.
+const REVIEW_QUEUE_LIMIT = 500;
+const ADMIN_REPORTS_LIMIT = 500;
+const ADMIN_SUGGESTIONS_LIMIT = 500;
 
 // Platform-wide numbers for the owner: what ByUs itself has earned (not just what
 // creators have earned), how many creators/fans have signed up, active subscriptions,
@@ -340,6 +347,35 @@ export async function loadAdminOverview() {
   };
 }
 
+// Every creator still waiting on ByUs's one-time initial review (users.review_cleared_at
+// IS NULL), oldest-pending-first -- unlike the "Recent creators" list above (capped at
+// RECENT_CREATORS_LIMIT, newest-signup-first), this is a dedicated queue so a creator who
+// signed up before the most recent RECENT_CREATORS_LIMIT accounts can't fall off the
+// admin's screen entirely. Before this existed, `needsReviewCount` (below) could show a
+// number with no way to actually reach and clear every row it counted once more than
+// RECENT_CREATORS_LIMIT creators had ever signed up. Same row shape as the "Recent
+// creators" list where it overlaps, so <ReviewControl>/bio-flag rendering can be reused
+// as-is.
+export async function loadCreatorReviewQueue() {
+  const result = await query(
+    `SELECT id, display_name, email, bio, created_at, stripe_connect_onboarded
+     FROM users
+     WHERE role = 'creator' AND review_cleared_at IS NULL
+     ORDER BY created_at ASC
+     LIMIT $1`,
+    [REVIEW_QUEUE_LIMIT]
+  );
+  return result.rows.map((row) => ({
+    id: row.id,
+    displayName: row.display_name,
+    email: row.email,
+    createdAt: row.created_at,
+    stripeConnectOnboarded: row.stripe_connect_onboarded,
+    bioFlagged: containsUrl(row.bio),
+    needsReview: true,
+  }));
+}
+
 const REPORT_STATUS_ORDER = `CASE r.status
   WHEN 'new' THEN 0
   WHEN 'reviewed' THEN 1
@@ -360,7 +396,9 @@ export async function loadAdminReports() {
      JOIN users reporter ON reporter.id = r.reporter_id
      JOIN users creator ON creator.id = r.creator_id
      LEFT JOIN posts p ON p.id = r.post_id
-     ORDER BY ${REPORT_STATUS_ORDER}, r.created_at DESC`
+     ORDER BY ${REPORT_STATUS_ORDER}, r.created_at DESC
+     LIMIT $1`,
+    [ADMIN_REPORTS_LIMIT]
   );
   return result.rows;
 }
@@ -380,7 +418,9 @@ export async function loadAdminSuggestions() {
             u.id AS user_id, u.display_name, u.email, u.role
      FROM suggestions s
      JOIN users u ON u.id = s.user_id
-     ORDER BY ${SUGGESTION_STATUS_ORDER}, s.created_at DESC`
+     ORDER BY ${SUGGESTION_STATUS_ORDER}, s.created_at DESC
+     LIMIT $1`,
+    [ADMIN_SUGGESTIONS_LIMIT]
   );
   return result.rows;
 }
