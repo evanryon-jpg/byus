@@ -120,6 +120,9 @@ function OnboardingStatus() {
           <p className="mt-2 text-sm text-brand-ink/65">
             Stripe has confirmed your account. You can now create paid tiers and start earning.
           </p>
+          <p className="mt-2 text-sm text-brand-ink/65">
+            Want subscribers auto-added to a Discord server or Telegram group? Connect them anytime in Settings.
+          </p>
           <a
             href="/creator/dashboard"
             className="mt-8 inline-block rounded-full bg-[#0F766E] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#115E59]"
