@@ -17,7 +17,8 @@ export const USER_SELECT_FIELDS = `id, email, role, display_name, bio, profile_i
        stripe_connect_onboarded, content_policy_accepted_at, review_cleared_at, tags,
        email_verified, platform_fee_percent, notify_new_posts,
        show_support_publicly, support_goal_cents, zero_fee_promo_expires_at,
-       discord_guild_id, discord_subscriber_role_id, telegram_chat_id`;
+       discord_guild_id, discord_subscriber_role_id, telegram_chat_id,
+       rss_feed_url, rss_last_synced_at, rss_last_sync_error`;
 
 // profile_image_url in the DB is a private Blob pathname (or a `preset:<id>`
 // marker), never exposed directly — point the client at our own public proxy
