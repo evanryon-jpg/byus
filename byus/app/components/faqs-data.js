@@ -8,7 +8,7 @@
 export const FAQS = [
   {
     q: 'Can creators sign up and connect Stripe now?',
-    a: "Yes. Creator signup and Stripe Connect onboarding are open. Creating a ByUs account is free, and creators can build their page before accepting payments. Stripe separately reviews each connected account and may request verification information before enabling its payments or payouts.",
+    a: "New creator signups are temporarily paused while we finish up some account setup on our end — join the waitlist and we'll email you as soon as it reopens. Fans can sign up and subscribe as normal in the meantime. Creating a ByUs account is free either way; Stripe separately reviews each connected account and may request verification information before enabling its payments or payouts.",
   },
   {
     q: 'How does the platform fee work?',
