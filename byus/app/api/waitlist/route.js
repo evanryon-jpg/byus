@@ -3,9 +3,9 @@ export const dynamic = 'force-dynamic';
 // POST /api/waitlist
 // Joins the Founding Creator waitlist: { email, displayName?, source?, referralCode?, website }
 //
-// Legacy founding-interest endpoint retained for previously submitted forms and historical
-// attribution. The public /waitlist page now redirects to normal creator signup because
-// Stripe Connect onboarding is open. No account, password, or role is created here.
+// Creator signup is paused again as of Sep 2026 (unrelated Stripe account review), so
+// app/signup/page.js posts here directly when role === 'creator' instead of creating an
+// account. No account, password, or role is created by this endpoint either way.
 
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
