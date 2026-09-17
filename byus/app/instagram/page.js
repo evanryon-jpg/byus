@@ -83,7 +83,7 @@ export default function InstagramWelcomePage() {
               event="signup_click"
               className="rounded-full border border-[#0F766E] px-6 py-3 font-semibold text-[#0F766E] hover:bg-[#0F766E]/5"
             >
-              Create a free creator account
+              Join the creator waitlist
             </InstagramCampaignLink>
           </div>
           <p className="mt-4 text-xs text-brand-ink/55">
