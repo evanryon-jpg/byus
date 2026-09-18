@@ -423,6 +423,7 @@ function Features() {
           <GatedContentDemo />
           <CommunitySyncDemo />
           <RssImportDemo />
+          <EngagementDemo />
         </div>
       </div>
     </section>
@@ -552,6 +553,40 @@ function RssImportDemo() {
         Point ByUs at your WordPress, Ghost, or Substack feed and every post you publish there
         shows up on your page automatically — no copy-pasting, no second place to write.
       </p>
+    </div>
+  );
+}
+
+// The newest addition to the feed (see the post_likes table and view_count column added
+// Sep 18, 2026) — spans both columns of the small-card grid so it reads as a highlighted
+// recent shipment rather than competing for the same width as the four cards above it,
+// and gets a "New" pill for the same reason. Gold as its accent since every other card
+// here already claims its own color (teal/payouts, clay/gated, Discord blurple, RSS
+// orange) and gold is the one brand color still unclaimed.
+function EngagementDemo() {
+  return (
+    <div className="flex flex-col justify-between gap-4 rounded-2xl border border-brand-ink/15 bg-brand-paper p-6 shadow-sm sm:col-span-2 sm:flex-row sm:items-center">
+      <div>
+        <span className="inline-flex items-center gap-2">
+          <span className="text-xs font-extrabold uppercase tracking-wide text-[#B45309]">Engagement</span>
+          <span className="rounded-full bg-brand-gold/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#B45309]">
+            New
+          </span>
+        </span>
+        <h3 className="mt-2 font-display text-lg font-bold text-[#172033]">See what&rsquo;s actually landing</h3>
+        <p className="mt-2 max-w-md text-sm leading-relaxed text-brand-ink/70">
+          Fans can like any post, and every post tracks its own view count — both show up on your
+          dashboard so you know what&rsquo;s connecting, not just what you posted.
+        </p>
+      </div>
+      <div className="flex shrink-0 gap-3 rounded-xl border border-brand-ink/10 bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-brand-ink/70 sm:flex-col sm:gap-2">
+        <span className="flex items-center gap-1.5">
+          <span aria-hidden="true">👁</span> 1.2K views
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span aria-hidden="true" className="text-[#A6432E]">♥</span> 340 likes
+        </span>
+      </div>
     </div>
   );
 }
