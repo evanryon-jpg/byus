@@ -56,6 +56,13 @@ export default function NavBar() {
   const links = (
     <>
       <a
+        href="/discover"
+        className="block rounded-lg px-3 py-2 hover:bg-[#0F766E]/5 hover:text-[#0F766E]"
+        onClick={() => setMenuOpen(false)}
+      >
+        Discover
+      </a>
+      <a
         href="/browse"
         className="block rounded-lg px-3 py-2 hover:bg-[#0F766E]/5 hover:text-[#0F766E]"
         onClick={() => setMenuOpen(false)}
