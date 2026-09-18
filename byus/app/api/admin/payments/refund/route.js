@@ -12,6 +12,7 @@ import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { isAdmin } from '@/lib/admin';
 import { paymentProvider } from '@/lib/payments';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 const ALLOWED_REASONS = new Set(['duplicate', 'fraudulent', 'requested_by_customer']);
 
@@ -20,6 +21,9 @@ export async function POST(request) {
   if (!session || !isAdmin(session)) {
     return NextResponse.json({ error: 'Not authorized.' }, { status: 403 });
   }
+
+  const rateCheck = await checkRateLimit('admin-payment-action', `user:${session.userId}`);
+  if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
   let payload;
   try {
