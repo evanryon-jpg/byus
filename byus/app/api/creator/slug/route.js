@@ -7,6 +7,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { RESERVED_SLUGS } from '@/lib/reserved-slugs';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/;
 
@@ -33,6 +34,9 @@ export async function PATCH(request) {
   if (session.role !== 'creator') {
     return NextResponse.json({ error: 'Only creators can set a page URL.' }, { status: 403 });
   }
+
+  const rateCheck = await checkRateLimit('slug-change', `user:${session.userId}`);
+  if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
   const { slug } = await request.json();
   const normalized = (slug || '').trim().toLowerCase();
