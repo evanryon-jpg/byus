@@ -13,12 +13,16 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/session';
 import { isAdmin } from '@/lib/admin';
 import { loadAdminSuggestions } from '@/lib/admin-data';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function GET() {
   const session = await getCurrentUser();
   if (!session || !isAdmin(session)) {
     return NextResponse.json({ error: 'Not authorized.' }, { status: 403 });
   }
+
+  const rateCheck = await checkRateLimit('admin-read', `user:${session.userId}`);
+  if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
   try {
     const suggestions = await loadAdminSuggestions();
