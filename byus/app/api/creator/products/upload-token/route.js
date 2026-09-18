@@ -18,8 +18,21 @@ import { handleUpload } from '@vercel/blob/client';
 import { getCurrentUser } from '@/lib/session';
 import { query } from '@/lib/db';
 import { ALLOWED_CONTENT_TYPES, classifyFile } from '@/lib/product-files';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function POST(request) {
+  // Checked up front, before handing off to handleUpload's own callback -- this route's
+  // whole job is deciding whether to issue a token at all (see the file header comment),
+  // and issuing one is the same real cost (a Blob storage grant) as the `upload` and
+  // `product-upload` limiters already guard elsewhere. This had no limit at all before
+  // Sep 18, 2026's infra hardening pass, unlike every sibling upload route.
+  const session = await getCurrentUser();
+  if (!session || session.role !== 'creator') {
+    return NextResponse.json({ error: 'Only creators can upload product files.' }, { status: 403 });
+  }
+  const rateCheck = await checkRateLimit('product-upload', `user:${session.userId}`);
+  if (!rateCheck.success) return rateLimitResponse(rateCheck);
+
   const body = await request.json();
 
   try {
@@ -27,11 +40,6 @@ export async function POST(request) {
       body,
       request,
       onBeforeGenerateToken: async (pathname, clientPayload) => {
-        const session = await getCurrentUser();
-        if (!session || session.role !== 'creator') {
-          throw new Error('Only creators can upload product files.');
-        }
-
         const creatorResult = await query(
           'SELECT review_cleared_at FROM users WHERE id = $1',
           [session.userId]
