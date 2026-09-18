@@ -225,3 +225,37 @@ export async function listProcessingJobIds(limit = 25) {
   );
   return result.rows.map((r) => r.id);
 }
+
+// broadcast_job_recipients is the one table in this system whose size scales with
+// subscriber count x broadcast count x new-post frequency, rather than a small, roughly
+// fixed row count -- a creator with thousands of active subscribers sending regular
+// updates (or just publishing posts regularly, since new-post notifications go through
+// this same table) can accumulate rows fast. broadcast_jobs itself is left alone forever
+// -- it's one small aggregated row per broadcast (sent/failed/total counts), cheap at any
+// volume, and is the creator-facing history. Only the per-recipient rows, which exist
+// solely so a job can be claimed and resumed while it's in flight, are pruned once a job
+// has been done long enough that resuming it is no longer a possibility.
+const RECIPIENT_RETENTION_DAYS = 30;
+const RECIPIENT_CLEANUP_BATCH_SIZE = 5_000;
+
+// Deletes old completed jobs' recipient rows in bounded batches (never one unbounded
+// DELETE) so this never becomes a long-held lock on a busy table. Safe to call as often
+// as desired -- returns 0 quickly once there's nothing left in the retention window.
+export async function cleanupOldBroadcastRecipients() {
+  let totalDeleted = 0;
+  for (;;) {
+    const result = await query(
+      `DELETE FROM broadcast_job_recipients
+       WHERE id IN (
+         SELECT r.id FROM broadcast_job_recipients r
+         JOIN broadcast_jobs j ON j.id = r.job_id
+         WHERE j.status = 'completed' AND j.completed_at < now() - interval '${RECIPIENT_RETENTION_DAYS} days'
+         LIMIT $1
+       )`,
+      [RECIPIENT_CLEANUP_BATCH_SIZE]
+    );
+    totalDeleted += result.rowCount;
+    if (result.rowCount < RECIPIENT_CLEANUP_BATCH_SIZE) break;
+  }
+  return totalDeleted;
+}

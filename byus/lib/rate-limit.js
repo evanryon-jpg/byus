@@ -247,6 +247,23 @@ const limiters = {
     limiter: Ratelimit.slidingWindow(15, '1 h'),
     prefix: 'rl:discount-create',
   }),
+  // Guards PATCH/DELETE on an existing tier (app/api/creator/tiers/[tierId]) -- a rename
+  // makes a real Stripe API call (Product name sync) the same way tier-create's initial
+  // Product/Price creation does. Same allowance as tier-create; this was the one gap in
+  // that route's own cost class before Sep 18, 2026's infra hardening pass.
+  'tier-modify': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(15, '1 h'),
+    prefix: 'rl:tier-modify',
+  }),
+  // Guards DELETE on an existing discount code (app/api/creator/discounts/[promoId]) --
+  // two real Stripe API calls per call (a lookup, then deactivating the Promotion Code),
+  // same cost shape as discount-create. Same gap/fix as tier-modify above.
+  'discount-modify': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(15, '1 h'),
+    prefix: 'rl:discount-modify',
+  }),
 };
 
 // Best-effort client IP. Vercel always sets x-forwarded-for in production; the

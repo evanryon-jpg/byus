@@ -234,6 +234,37 @@ export async function sendDisputeAlertEmail(to, {
   }
 }
 
+// General-purpose ops alert for a production error worth someone's immediate attention --
+// see lib/alerts.js, which is what actually decides *when* to call this (throttled, so a
+// repeating failure sends one email rather than one per occurrence). Kept separate from
+// sendDisputeAlertEmail above even though the shape is identical, since a dispute alert's
+// send is tracked per-dispute in the database (stripe_disputes.alert_sent_at) while this
+// one is throttled in Redis by lib/alerts.js instead -- different callers, different retry
+// semantics, not worth forcing through one shared function.
+export async function sendOpsAlertEmail(to, { context, message, stack }) {
+  const resend = getClient();
+  const { error } = await resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: `ByUs alert: ${context}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; color: #1A1A1A;">
+        <h2 style="color:#b42318;">Something needs attention</h2>
+        <table style="border-collapse:collapse;width:100%;margin:20px 0;font-size:14px;">
+          <tr><td style="padding:6px 0;color:#666;vertical-align:top;">Where</td><td style="padding:6px 0;font-weight:600;">${escapeHtml(context)}</td></tr>
+          <tr><td style="padding:6px 0;color:#666;vertical-align:top;">Error</td><td style="padding:6px 0;">${escapeHtml(message || 'No message')}</td></tr>
+        </table>
+        ${stack ? `<pre style="background:#F8FAFC;border:1px solid #E5E7EB;border-radius:8px;padding:12px;font-size:11px;overflow-x:auto;white-space:pre-wrap;">${escapeHtml(stack).slice(0, 4000)}</pre>` : ''}
+        <p style="color:#999;font-size:12px;margin-top:24px;">This is an automated alert, throttled to one email per 30 minutes per source — repeat failures in between won't send another until that window passes.</p>
+      </div>
+    `,
+  });
+  if (error) {
+    console.error('Resend ops alert failed:', error);
+    throw new Error(error.message || 'Could not send the ops alert email.');
+  }
+}
+
 // Emails a creator's active subscribers when they publish a new post — one individual
 // email per recipient (never one email with everyone in "to"), sent via the batch
 // endpoint like the creator-update broadcast below. Only sent to subscribers who haven't

@@ -23,6 +23,15 @@ function normalizedConnectionString(value) {
 // like Vercel, where creating a new pool per request would exhaust Neon's connection limit)
 function getPool() {
   if (!pool) {
+    // Every warm Vercel function instance gets its own Pool -- under real concurrent
+    // traffic that can mean dozens of these alive at once, each opening connections
+    // independently. Left at pg's default (max: 10), that's dozens x 10 = easily past
+    // a small Neon compute's connection ceiling well before the app itself is under
+    // meaningful load. Bounding each instance's own pool to a handful, combined with
+    // pointing DATABASE_URL at Neon's pooled endpoint (the "-pooler" host, PgBouncer in
+    // transaction mode -- see the Neon dashboard's connection string toggle), is what
+    // actually removes this ceiling: PgBouncer multiplexes many small per-instance pools
+    // onto a much smaller number of real Postgres backend connections.
     pool = new Pool({
       connectionString: normalizedConnectionString(process.env.DATABASE_URL),
       // Neon's endpoint presents a certificate signed by a public CA, so there's no
@@ -30,7 +39,32 @@ function getPool() {
       // certificate from anyone, making it impossible to tell a MITM'd connection
       // from the real database.
       ssl: { rejectUnauthorized: true },
+      max: 5,
+      idleTimeoutMillis: 10_000,
+      // Fail fast on a stuck connection attempt instead of hanging until the
+      // surrounding request's own maxDuration kills the whole function -- a clear
+      // "could not connect" error is far easier to diagnose under load than a generic
+      // function timeout with no indication where the time went.
+      connectionTimeoutMillis: 5_000,
     });
+
+    // One-time, non-blocking sanity check -- not a hard requirement (a direct
+    // connection string still works, just with a much lower real ceiling under
+    // concurrent load), so this only logs rather than throwing.
+    const host = (() => {
+      try {
+        return new URL(process.env.DATABASE_URL || '').hostname;
+      } catch {
+        return '';
+      }
+    })();
+    if (host && !host.includes('-pooler')) {
+      console.warn(
+        'DATABASE_URL does not look like a pooled Neon connection string (no "-pooler" in the host). ' +
+          'Under concurrent serverless traffic this bounds the real connection ceiling much lower than ' +
+          "necessary -- copy the pooled connection string from the Neon dashboard's Connect modal instead."
+      );
+    }
   }
   return pool;
 }
