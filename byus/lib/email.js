@@ -15,6 +15,19 @@ function getClient() {
   return new Resend(process.env.RESEND_API_KEY);
 }
 
+// Exposed for lib/broadcast-jobs.js, which sends its own chunks directly (a resumable
+// job claims and sends one chunk of recipients at a time across possibly many worker
+// invocations, rather than looping over the whole list in a single call the way
+// sendBatchInChunks below does) but still wants the same configured Resend client.
+export function getResendClient() {
+  return getClient();
+}
+
+// Resend's batch endpoint caps a single call at 100 emails. Exported so
+// lib/broadcast-jobs.js claims recipients in the same size chunks this file sends
+// them in — one source of truth for the number instead of a second magic 100.
+export const BATCH_CHUNK_SIZE_EXPORTED = BATCH_CHUNK_SIZE;
+
 // The subject/message here come straight from a creator's own form input and get
 // dropped into an HTML email -- escape it so a stray "<" or "&" can't break the
 // layout (or worse, inject markup) in every recipient's inbox.
@@ -272,10 +285,13 @@ export async function sendNewPostEmail(recipients, { creatorName, creatorUrl, po
 // a list of any size still costs one request per 100 recipients instead of one per
 // person. Returns { sent, failed } recipient counts rather than throwing on a partial
 // failure — see sendBatchInChunks above.
-export async function sendCreatorUpdateEmail(recipients, { creatorName, subject, message }) {
-  if (recipients.length === 0) return { sent: 0, failed: 0 };
-  const resend = getClient();
-
+// Factored out of sendCreatorUpdateEmail below so lib/broadcast-jobs.js can build the
+// exact same subject/html for a job's recipients without duplicating this template --
+// the job worker sends its own chunks directly (see getResendClient above) rather than
+// calling sendCreatorUpdateEmail itself, since that function loops over an entire
+// recipient list in one call and the whole point of the job system is to never do that
+// for a very large list in a single request/invocation again.
+export function buildCreatorUpdateEmailContent({ creatorName, subject, message }) {
   const safeCreatorName = escapeHtml(creatorName);
   const html = `
     <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; color: #1A1A1A;">
@@ -288,10 +304,18 @@ export async function sendCreatorUpdateEmail(recipients, { creatorName, subject,
       </p>
     </div>
   `;
+  return { from: FROM_ADDRESS, subject, html };
+}
+
+export async function sendCreatorUpdateEmail(recipients, { creatorName, subject, message }) {
+  if (recipients.length === 0) return { sent: 0, failed: 0 };
+  const resend = getClient();
+
+  const { from, html } = buildCreatorUpdateEmailContent({ creatorName, subject, message });
 
   const { sent, failed } = await sendBatchInChunks(
     resend,
-    recipients.map((to) => ({ from: FROM_ADDRESS, to, subject, html }))
+    recipients.map((to) => ({ from, to, subject, html }))
   );
   if (failed > 0) {
     console.error(`Creator update email: ${failed} of ${recipients.length} recipients failed to send.`);
