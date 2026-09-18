@@ -10,12 +10,16 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { revokeProviderAccessForFan } from '@/lib/platform-sync';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function DELETE(request, { params }) {
   const session = await getCurrentUser();
   if (!session || session.role !== 'fan') {
     return NextResponse.json({ error: 'Only fans have connected accounts.' }, { status: 403 });
   }
+
+  const rateCheck = await checkRateLimit('connection-disconnect', `user:${session.userId}`);
+  if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
   const provider = params.provider;
   if (provider !== 'discord' && provider !== 'telegram') {
