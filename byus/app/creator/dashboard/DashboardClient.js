@@ -122,6 +122,11 @@ export default function DashboardClient({
   const recentConvertedFollowerCount = Number(initialRecentConvertedFollowerCount);
   const followerConversionPercent =
     followerCount > 0 ? Math.round((convertedFollowerCount / followerCount) * 1000) / 10 : 0;
+  // Lifetime totals across every post, not "this month" — view_count is a plain running
+  // counter with no per-event timestamp (see lib/creator-profile-data.js), so there's no
+  // dated log to slice by month the way the follower charts below do.
+  const totalPostViews = posts.reduce((sum, p) => sum + Number(p.view_count || 0), 0);
+  const totalPostLikes = posts.reduce((sum, p) => sum + Number(p.like_count || 0), 0);
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-12">
@@ -171,6 +176,12 @@ export default function DashboardClient({
           Free followers can find your page again from their dashboard. Following does not add anyone to an email
           list or unlock paid content.
         </p>
+        {hasPost && (
+          <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-brand-ink/65">
+            <span>👁 {totalPostViews.toLocaleString()} total post views</span>
+            <span>♥ {totalPostLikes.toLocaleString()} total likes</span>
+          </p>
+        )}
         {followerCount > 0 && initialAudienceMonthly.length > 0 && (
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             <div className="rounded-xl bg-white/70 p-4">
