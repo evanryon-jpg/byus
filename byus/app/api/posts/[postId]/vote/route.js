@@ -10,6 +10,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { getPollVoteCounts, buildPollPayload } from '@/lib/polls';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function POST(request, { params }) {
   const { postId } = params;
@@ -17,6 +18,9 @@ export async function POST(request, { params }) {
   if (!session) {
     return NextResponse.json({ error: 'Log in to vote.' }, { status: 401 });
   }
+
+  const rateCheck = await checkRateLimit('poll-vote', `user:${session.userId}`);
+  if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
   const { optionIndex } = await request.json();
 
