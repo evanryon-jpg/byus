@@ -25,6 +25,7 @@ import { NextResponse } from 'next/server';
 import { withTransaction } from '@/lib/db';
 import { paymentProvider } from '@/lib/payments';
 import { trackServerEvent } from '@/lib/analytics';
+import { alertOps } from '@/lib/alerts';
 
 const webhookSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET;
 
@@ -95,6 +96,7 @@ export async function POST(request) {
     }
   } catch (err) {
     console.error(`Error handling Connect webhook event ${event.type}:`, err);
+    await alertOps(`stripe-connect-webhook:${event.type}`, err);
     // Return 500 so Stripe retries — better to reprocess than silently drop an onboarding update.
     return NextResponse.json({ error: 'Webhook handler failed.' }, { status: 500 });
   }
