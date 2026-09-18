@@ -207,8 +207,8 @@ function Hero({ user }) {
                 >
                   <path d="M2 6 Q 50 1, 100 5 T 198 6" stroke="#0F766E" strokeWidth="4" fill="none" strokeLinecap="round" />
                 </svg>
-              </span>
-              . Period.
+              </span>{' '}
+              on ByUs. Period.
             </h1>
 
             <p className="mt-3 font-display text-xl italic text-brand-paper/60">
@@ -403,7 +403,7 @@ function Features() {
     <section className="mx-auto max-w-5xl px-6 py-16">
       <div className="text-center">
         <h2 className="font-display text-3xl font-semibold text-[#172033]">
-          Everything a membership needs, nothing it doesn&rsquo;t
+          Everything a ByUs membership needs, nothing it doesn&rsquo;t
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-brand-ink/70">
           No churn dashboards to configure — just the parts that make a subscription work, shown as
@@ -617,7 +617,7 @@ function HowItWorks() {
     <section id="how-it-works" className="bg-brand-paper">
       <div className="mx-auto max-w-5xl px-6 py-16">
         <h2 className="text-center font-display text-3xl font-semibold text-[#172033]">
-          Up and running in four steps
+          Up and running on ByUs in four steps
         </h2>
 
         <div className="mt-10 grid grid-cols-2 gap-x-8 gap-y-8 sm:grid-cols-4 sm:gap-y-10">

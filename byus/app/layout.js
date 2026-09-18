@@ -13,12 +13,24 @@ const karla = Karla({ subsets: ['latin'], weight: ['400', '500', '600', '700'], 
 const SITE_URL = process.env.APP_URL || 'https://byus-ten.vercel.app';
 
 export const viewport = { themeColor: '#0F766E' };
+// Title and description both lead with "ByUs" / "ByUs App" by name -- ByUs is close
+// enough in spelling to "BYU" and "by us" that search engines can misread it as a typo
+// of one or the other. Naming the app explicitly here, in the on-page headers below,
+// and in the "What is ByUs?" FAQ entry (app/components/faqs-data.js) is how the site
+// establishes itself as its own distinct, correctly-spelled entity rather than relying
+// on backlinks or age alone.
+const SITE_TITLE = 'ByUs App | Creator Subscriptions, Simplified';
+const SITE_DESCRIPTION =
+  'ByUs (byusapp.com) is a creator membership platform. Join ByUs to support creators directly, or start your own ByUs page — creators keep 87–90% of every subscription payment.';
+
 export const metadata = {
   metadataBase: new URL(SITE_URL),
-  title: 'ByUs — Creator subscriptions, simplified',
-  description: 'Join creator memberships on ByUs. Creators keep 87–90% of every subscription payment.',
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
   keywords: [
     'ByUs',
+    'ByUs app',
+    'byusapp.com',
     'creator subscription platform',
     'creator membership platform',
     'Patreon alternative',
@@ -28,8 +40,8 @@ export const metadata = {
     'independent creator monetization',
   ],
   alternates: { canonical: '/' },
-  openGraph: { title: 'ByUs — Creator subscriptions, simplified', description: 'Join creator memberships on ByUs. Creators keep 87–90% of every subscription payment.', url: SITE_URL, siteName: 'ByUs', type: 'website' },
-  twitter: { card: 'summary_large_image', title: 'ByUs — Creator subscriptions, simplified', description: 'Join creator memberships on ByUs. Creators keep 87–90% of every subscription payment.' },
+  openGraph: { title: SITE_TITLE, description: SITE_DESCRIPTION, url: SITE_URL, siteName: 'ByUs', type: 'website' },
+  twitter: { card: 'summary_large_image', title: SITE_TITLE, description: SITE_DESCRIPTION },
 };
 
 export default function RootLayout({ children }) {
