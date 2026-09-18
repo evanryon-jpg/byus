@@ -22,12 +22,16 @@ import { withTransaction } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { isAdmin } from '@/lib/admin';
 import { paymentProvider } from '@/lib/payments';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function POST(_request, { params }) {
   const session = await getCurrentUser();
   if (!session || !isAdmin(session)) {
     return NextResponse.json({ error: 'Not authorized.' }, { status: 403 });
   }
+
+  const rateCheck = await checkRateLimit('admin-payment-action', `user:${session.userId}`);
+  if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
   const disputeId = typeof params?.disputeId === 'string' ? params.disputeId.trim() : '';
   if (!disputeId.startsWith('du_')) {
