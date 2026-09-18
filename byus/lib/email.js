@@ -239,10 +239,13 @@ export async function sendDisputeAlertEmail(to, {
 // endpoint like the creator-update broadcast below. Only sent to subscribers who haven't
 // turned this off (users.notify_new_posts). Returns { sent, failed } recipient counts
 // rather than throwing on a partial failure — see sendBatchInChunks above.
-export async function sendNewPostEmail(recipients, { creatorName, creatorUrl, postTitle, postExcerpt }) {
-  if (recipients.length === 0) return { sent: 0, failed: 0 };
-  const resend = getClient();
-
+// Factored out for the same reason as buildCreatorUpdateEmailContent above: this is a
+// second fan-out with the identical single-request-timeout risk (see
+// database/migrations/20260918_broadcast_jobs.sql), and lib/broadcast-jobs.js needs to
+// build the exact same subject/html a job's recipients get without duplicating this
+// template. sendNewPostEmail below is left in place, unused by app/api/creator/posts/
+// route.js now that it queues a job instead, in case anything else ever calls it directly.
+export function buildNewPostEmailContent({ creatorName, creatorUrl, postTitle, postExcerpt }) {
   const safeCreatorName = escapeHtml(creatorName);
   const safeTitle = postTitle ? escapeHtml(postTitle) : null;
   const excerpt = postExcerpt.length > 240 ? `${postExcerpt.slice(0, 240)}…` : postExcerpt;
@@ -262,12 +265,19 @@ export async function sendNewPostEmail(recipients, { creatorName, creatorUrl, po
       </p>
     </div>
   `;
-
   const subject = safeTitle ? `${creatorName}: ${postTitle}` : `New post from ${creatorName}`;
+  return { from: FROM_ADDRESS, subject, html };
+}
+
+export async function sendNewPostEmail(recipients, { creatorName, creatorUrl, postTitle, postExcerpt }) {
+  if (recipients.length === 0) return { sent: 0, failed: 0 };
+  const resend = getClient();
+
+  const { from, subject, html } = buildNewPostEmailContent({ creatorName, creatorUrl, postTitle, postExcerpt });
 
   const { sent, failed } = await sendBatchInChunks(
     resend,
-    recipients.map((to) => ({ from: FROM_ADDRESS, to, subject, html }))
+    recipients.map((to) => ({ from, to, subject, html }))
   );
   if (failed > 0) {
     console.error(`New-post email: ${failed} of ${recipients.length} recipients failed to send.`);

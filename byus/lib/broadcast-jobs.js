@@ -3,7 +3,12 @@
 // writes, and that file's header comment for why this exists.
 
 import { query, withTransaction } from '@/lib/db';
-import { getResendClient, buildCreatorUpdateEmailContent, BATCH_CHUNK_SIZE_EXPORTED as BATCH_CHUNK_SIZE } from '@/lib/email';
+import {
+  getResendClient,
+  buildCreatorUpdateEmailContent,
+  buildNewPostEmailContent,
+  BATCH_CHUNK_SIZE_EXPORTED as BATCH_CHUNK_SIZE,
+} from '@/lib/email';
 
 // A claim a worker picked up but never reported back on (crashed invocation, killed
 // function) is abandoned after this long and made eligible to be claimed again.
@@ -18,13 +23,27 @@ const RECIPIENT_INSERT_CHUNK = 20_000;
 // Creates a broadcast job and snapshots its full recipient list, then returns the new
 // job's id. Call processBroadcastJobChunk right after this so a normal-sized send still
 // completes inline in the same request, exactly like the old synchronous version did.
-export async function createBroadcastJob({ creatorId, creatorName, subject, message, recipients }) {
+//
+// kind picks which email template processOneChunk builds (see buildEmailContentForJob
+// below): 'creator_update' uses subject/message (the free-text broadcast a creator
+// writes), 'new_post' uses metadata (postTitle/postExcerpt/creatorUrl, snapshotted from
+// the post at publish time) and ignores subject/message -- pass '' for those in that case,
+// since the columns are NOT NULL.
+export async function createBroadcastJob({
+  creatorId,
+  creatorName,
+  kind = 'creator_update',
+  subject = '',
+  message = '',
+  metadata = null,
+  recipients,
+}) {
   const jobId = await withTransaction(async (client) => {
     const jobResult = await client.query(
-      `INSERT INTO broadcast_jobs (creator_id, kind, creator_name, subject, message, total_recipients)
-       VALUES ($1, 'creator_update', $2, $3, $4, $5)
+      `INSERT INTO broadcast_jobs (creator_id, kind, creator_name, subject, message, metadata, total_recipients)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id`,
-      [creatorId, creatorName, subject, message, recipients.length]
+      [creatorId, kind, creatorName, subject, message, metadata ? JSON.stringify(metadata) : null, recipients.length]
     );
     const newJobId = jobResult.rows[0].id;
 
@@ -111,6 +130,25 @@ async function processOneChunk(jobId, resend, emailContent) {
   return claimed.length;
 }
 
+// Builds the { from, subject, html } a job's recipients get, dispatching on kind --
+// the one place that has to know both templates exist.
+function buildEmailContentForJob(job) {
+  if (job.kind === 'new_post') {
+    const meta = job.metadata || {};
+    return buildNewPostEmailContent({
+      creatorName: job.creator_name,
+      creatorUrl: meta.creatorUrl,
+      postTitle: meta.postTitle,
+      postExcerpt: meta.postExcerpt,
+    });
+  }
+  return buildCreatorUpdateEmailContent({
+    creatorName: job.creator_name,
+    subject: job.subject,
+    message: job.message,
+  });
+}
+
 // Processes chunks of a job for up to `budgetMs`, then returns however far it got.
 // Called both inline right after createBroadcastJob (short budget, so a typical-sized
 // send finishes in the same request as before) and from the cron worker (a larger
@@ -119,7 +157,7 @@ export async function processBroadcastJobChunk(jobId, { budgetMs = 8000 } = {}) 
   const startedAt = Date.now();
 
   const jobResult = await query(
-    `SELECT id, creator_name, subject, message, status FROM broadcast_jobs WHERE id = $1`,
+    `SELECT id, kind, creator_name, subject, message, metadata, status FROM broadcast_jobs WHERE id = $1`,
     [jobId]
   );
   const job = jobResult.rows[0];
@@ -129,11 +167,7 @@ export async function processBroadcastJobChunk(jobId, { budgetMs = 8000 } = {}) 
   await releaseStaleClaims(jobId);
 
   const resend = getResendClient();
-  const emailContent = buildCreatorUpdateEmailContent({
-    creatorName: job.creator_name,
-    subject: job.subject,
-    message: job.message,
-  });
+  const emailContent = buildEmailContentForJob(job);
 
   let processedThisRun = 0;
   // Always attempt at least one chunk even if budgetMs is tiny or already elapsed --
