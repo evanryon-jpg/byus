@@ -9,12 +9,16 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { isAdmin } from '@/lib/admin';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function GET(request, { params }) {
   const session = await getCurrentUser();
   if (!session || !isAdmin(session)) {
     return NextResponse.json({ error: 'Not authorized.' }, { status: 403 });
   }
+
+  const rateCheck = await checkRateLimit('admin-read', `user:${session.userId}`);
+  if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
   const { disputeId } = params;
 
