@@ -264,6 +264,27 @@ const limiters = {
     limiter: Ratelimit.slidingWindow(15, '1 h'),
     prefix: 'rl:discount-modify',
   }),
+  // Guards POST /api/fan/feed-token (issuing or regenerating a fan's private podcast
+  // feed link). Cheap on its own (one upsert), but generating a fresh token also
+  // immediately invalidates whatever URL leaked -- without a limit, a script could
+  // otherwise spam a fan's own feed link, silently breaking it in their podcast app
+  // over and over. Generous enough for a real "I think this link leaked, reset it"
+  // click, or trying it against a handful of different creators in one sitting.
+  'feed-token': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(20, '1 h'),
+    prefix: 'rl:feed-token',
+  }),
+  // Guards the public, unauthenticated feed route itself (app/api/feed/[token]) and
+  // its media-proxy sibling -- keyed by IP rather than by token, since the whole
+  // point is that no session/cookie exists here to key off of instead. Sized well
+  // above any real podcast app's normal poll cadence (most check every 15-60 min)
+  // so it only bites a script hammering the route, not someone's actual app.
+  'feed-fetch': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(60, '10 m'),
+    prefix: 'rl:feed-fetch',
+  }),
 };
 
 // Best-effort client IP. Vercel always sets x-forwarded-for in production; the
