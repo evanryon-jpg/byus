@@ -12,6 +12,7 @@ import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { containsBlockedContent } from '@/lib/content-policy';
 import { deleteAsset } from '@/lib/mux';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 const TITLE_MAX = 200;
 const BODY_MAX = 20000;
@@ -31,6 +32,9 @@ export async function PATCH(request, { params }) {
   if (!session || session.role !== 'creator') {
     return NextResponse.json({ error: 'Only creators can edit posts.' }, { status: 403 });
   }
+
+  const rateCheck = await checkRateLimit('post-modify', `user:${session.userId}`);
+  if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
   const { postId } = params;
   const { title, body, visibility } = await request.json();
@@ -110,6 +114,9 @@ export async function DELETE(request, { params }) {
   if (!session || session.role !== 'creator') {
     return NextResponse.json({ error: 'Only creators can delete posts.' }, { status: 403 });
   }
+
+  const rateCheck = await checkRateLimit('post-modify', `user:${session.userId}`);
+  if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
   const { postId } = params;
 
