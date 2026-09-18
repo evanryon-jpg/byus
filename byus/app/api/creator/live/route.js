@@ -10,6 +10,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { createLiveStream, MUX_RTMP_URL } from '@/lib/mux';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function GET() {
   const session = await getCurrentUser();
@@ -39,6 +40,9 @@ export async function POST() {
   if (session.role !== 'creator') {
     return NextResponse.json({ error: 'Only creators can go live.' }, { status: 403 });
   }
+
+  const rateCheck = await checkRateLimit('live-setup', `user:${session.userId}`);
+  if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
   const existing = await query(
     'SELECT mux_live_stream_id, mux_stream_key FROM users WHERE id = $1',
