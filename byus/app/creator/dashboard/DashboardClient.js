@@ -643,6 +643,13 @@ function Field({ label, value, onCopy, copied }) {
 // Self-fetching, same pattern as PageUrlCard/LiveStreamSection. Emails every active
 // subscriber a free-text update -- no scheduling, no drafts, just "write something,
 // send it" for creators who want to reach people who might not check the page daily.
+//
+// A send now queues a resumable job (see lib/broadcast-jobs.js) instead of blocking on
+// every recipient in one request -- a typical-sized subscriber list still finishes and
+// shows "Sent to N subscribers" immediately, same as before, but a subscriber base too
+// large for that comes back with status: 'processing' and a jobId, and this component
+// polls /api/creator/broadcast/[jobId] every few seconds until the cron worker finishes
+// draining it, updating the sent/failed counts live in the meantime.
 function BroadcastSection() {
   const [subscriberCount, setSubscriberCount] = useState(null);
   const [subject, setSubject] = useState('');
@@ -651,9 +658,15 @@ function BroadcastSection() {
   const [error, setError] = useState('');
   const [sent, setSent] = useState(null);
   const [failed, setFailed] = useState(0);
+  const [total, setTotal] = useState(null);
+  const [jobStatus, setJobStatus] = useState(null); // null | 'processing' | 'completed'
+  const pollRef = useRef(null);
 
   useEffect(() => {
     load();
+    // Stop polling if the creator navigates away mid-send -- otherwise this would keep
+    // firing fetches against an unmounted component.
+    return () => clearTimeout(pollRef.current);
   }, []);
 
   async function load() {
@@ -661,10 +674,39 @@ function BroadcastSection() {
     if (res.ok) setSubscriberCount((await res.json()).subscriberCount);
   }
 
+  function pollJob(jobId) {
+    pollRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/creator/broadcast/${jobId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSent(data.sent);
+          setFailed(data.failed);
+          setJobStatus(data.status);
+          if (data.status !== 'completed') {
+            pollJob(jobId);
+            return;
+          }
+        } else {
+          // A transient failure here shouldn't stop the send that's already in
+          // progress server-side -- just try again on the next tick.
+          pollJob(jobId);
+          return;
+        }
+      } catch {
+        pollJob(jobId);
+        return;
+      }
+      load(); // subscriber count may have shifted while the send was in progress
+    }, 4000);
+  }
+
   async function handleSend(e) {
     e.preventDefault();
     setError('');
     setSent(null);
+    setJobStatus(null);
+    clearTimeout(pollRef.current);
     setSending(true);
     try {
       const res = await fetch('/api/creator/broadcast', {
@@ -679,8 +721,11 @@ function BroadcastSection() {
       }
       setSent(data.sent);
       setFailed(data.failed || 0);
+      setTotal(data.total);
+      setJobStatus(data.status);
       setSubject('');
       setMessage('');
+      if (data.status !== 'completed') pollJob(data.jobId);
     } catch {
       setError('Network error — please try again.');
     } finally {
@@ -717,7 +762,13 @@ function BroadcastSection() {
           className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
         />
         {error && <p className="text-sm text-red-600">{error}</p>}
-        {sent !== null && !error && (
+        {sent !== null && !error && jobStatus === 'processing' && (
+          <p className="text-sm text-brand-ink/65">
+            Still sending — {sent + failed} of {total} delivered so far. This can take a
+            few minutes for a large list; feel free to leave this page, it'll keep going.
+          </p>
+        )}
+        {sent !== null && !error && jobStatus === 'completed' && (
           <p className={`text-sm ${failed > 0 ? 'text-amber-700' : 'text-green-700'}`}>
             Sent to {sent} subscriber{sent === 1 ? '' : 's'}.
             {failed > 0 && ` ${failed} could not be reached — try sending again later to catch them.`}
