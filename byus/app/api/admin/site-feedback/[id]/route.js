@@ -7,6 +7,7 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/session';
 import { isAdmin } from '@/lib/admin';
 import { query } from '@/lib/db';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const STATUSES = new Set(['new', 'reviewed']);
@@ -16,6 +17,10 @@ export async function PATCH(request, { params }) {
   if (!session || !isAdmin(session)) {
     return NextResponse.json({ error: 'Not authorized.' }, { status: 403 });
   }
+
+  const rateCheck = await checkRateLimit('admin-write', `user:${session.userId}`);
+  if (!rateCheck.success) return rateLimitResponse(rateCheck);
+
   if (!UUID_RE.test(params.id)) {
     return NextResponse.json({ error: 'Invalid feedback entry.' }, { status: 400 });
   }
