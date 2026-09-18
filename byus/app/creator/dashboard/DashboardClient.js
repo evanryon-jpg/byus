@@ -2202,6 +2202,13 @@ function PostRow({ post, onChanged }) {
       )}
       <p className="mt-1 text-sm text-brand-ink/70">{post.body}</p>
       {post.poll && <PollTally poll={post.poll} />}
+      {/* Views/likes: creator-only for now, per the plan's own scoping -- the fan-facing
+          side is just the heart button on the public profile (see LikeButton in
+          app/creator/[creatorId]/ProfileClient.js). */}
+      <div className="mt-2 flex gap-3 text-xs text-brand-ink/50">
+        <span>👁 {Number(post.view_count || 0).toLocaleString()} views</span>
+        <span>♥ {Number(post.like_count || 0).toLocaleString()} likes</span>
+      </div>
       <div className="mt-2 flex gap-4 text-xs font-medium">
         <button onClick={() => setEditing(true)} className="text-[#0F766E] hover:text-[#115E59]">
           Edit
