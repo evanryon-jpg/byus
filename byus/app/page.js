@@ -411,20 +411,21 @@ function Features() {
         </p>
       </div>
 
-      {/* Asymmetric rhythm instead of five uniform boxes -- Direct payouts gets the
-          big slot since Stripe Express payouts are the actual differentiator, the
-          other four sit in a 2x2 grid beside it rather than one tall single-file
-          stack (which got visibly taller than the payout card once RSS import joined
-          tiers/gated/community as a fourth compact card). */}
-      <div className="mt-10 grid gap-6 lg:grid-cols-[1.3fr_1fr]">
+      {/* Six even cards in one grid -- previously Direct payouts sat in an oversized
+          slot beside a stacked 2x2 of the rest, sized with h-full so it stretched to
+          match whatever height the stack beside it happened to reach. That worked at
+          four compact cards; once Engagement became a fifth, the stack grew taller
+          than the payout card needed and the stretch left a large empty gap inside
+          it. All six now share one card treatment and one grid, so each card is
+          exactly as tall as its own content instead of being stretched to match a
+          sibling column. */}
+      <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <PayoutDemo />
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          <TiersDemo />
-          <GatedContentDemo />
-          <CommunitySyncDemo />
-          <RssImportDemo />
-          <EngagementDemo />
-        </div>
+        <TiersDemo />
+        <GatedContentDemo />
+        <CommunitySyncDemo />
+        <RssImportDemo />
+        <EngagementDemo />
       </div>
     </section>
   );
@@ -432,19 +433,17 @@ function Features() {
 
 function PayoutDemo() {
   return (
-    <div className="flex h-full flex-col justify-between rounded-2xl border border-brand-teal/30 bg-brand-paper p-8 shadow-sm">
-      <div>
-        <span className="text-xs font-extrabold uppercase tracking-wide text-brand-teal">Direct payouts</span>
-        <h3 className="mt-2 font-display text-xl font-bold text-[#172033]">Every charge, split automatically</h3>
-        <p className="mt-2 max-w-md text-brand-ink/70">
-          Each creator connects their own Stripe Express account. Payouts land there directly — no
-          manual transfers, no waiting on ByUs to release funds.
-        </p>
-      </div>
+    <div className="rounded-2xl border border-brand-teal/30 bg-brand-paper p-6 shadow-sm">
+      <span className="text-xs font-extrabold uppercase tracking-wide text-brand-teal">Direct payouts</span>
+      <h3 className="mt-2 font-display text-lg font-bold text-[#172033]">Every charge, split automatically</h3>
+      <p className="mt-2 text-sm leading-relaxed text-brand-ink/70">
+        Each creator connects their own Stripe Express account. Payouts land there directly — no
+        manual transfers, no waiting on ByUs to release funds.
+      </p>
 
       {/* A real receipt, not a made-up one -- $10/mo at the 10% founding-creator rate,
           the same math the EarningsCalculator above uses. */}
-      <div className="mt-6 rounded-xl border border-brand-ink/10 bg-[#F8FAFC] p-4">
+      <div className="mt-4 rounded-xl border border-brand-ink/10 bg-[#F8FAFC] p-4">
         <div className="flex items-center justify-between text-sm">
           <span className="font-medium text-brand-ink/70">Membership charge</span>
           <span className="font-display font-bold tabular-nums text-[#172033]">$10.00</span>
