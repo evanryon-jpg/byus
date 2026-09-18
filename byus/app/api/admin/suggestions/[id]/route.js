@@ -10,6 +10,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { isAdmin } from '@/lib/admin';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 const VALID_STATUSES = new Set(['new', 'reviewed', 'planned', 'shipped']);
 const ADMIN_NOTE_MAX = 1000;
@@ -19,6 +20,9 @@ export async function PATCH(request, { params }) {
   if (!session || !isAdmin(session)) {
     return NextResponse.json({ error: 'Not authorized.' }, { status: 403 });
   }
+
+  const rateCheck = await checkRateLimit('admin-write', `user:${session.userId}`);
+  if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
   const { status, admin_note } = await request.json();
 
