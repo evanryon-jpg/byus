@@ -14,6 +14,7 @@ import {
   DISCOUNTED_FEE_PERCENT,
   FOUNDING_CREATOR_LIMIT,
 } from '@/lib/pricing';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 // Upgrades a fan-only account to a creator account. Because the current schema stores one
 // role per account, protect fans with subscription history from losing billing access.
@@ -22,6 +23,9 @@ export async function POST(request) {
   if (!session) {
     return NextResponse.json({ error: 'Please log in first.' }, { status: 401 });
   }
+
+  const rateCheck = await checkRateLimit('become-creator', `user:${session.userId}`);
+  if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
   try {
     let upgraded = false;
