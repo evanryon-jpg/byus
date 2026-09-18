@@ -47,14 +47,44 @@ const TIERS = [
 // card, the lock overlay, and the unlock check can never quietly drift apart.
 const UNLOCK_TIER = TIERS.find((t) => t.id === 'bts');
 
+// Illustrative view/like numbers for each post below, in the same spirit as the
+// "1.2K views · 340 likes" mock stat block on the homepage's Engagement card --
+// plausible, not real activity. Seeded once here (rather than randomized) so a
+// creator clicking "like" during the demo sees the count move by exactly one, the
+// same way it would on their real dashboard. Replaces the old "X comments" meta
+// text, which described a comments feature ByUs doesn't actually have.
+const POST_STATS = {
+  hero: { views: 1840, likes: 132 },
+  fieldNote: { views: 610, likes: 58 },
+  tall: { views: 940, likes: 76 },
+  lockedHero: { views: 512, likes: 41 },
+  detailCastle: { views: 388, likes: 34 },
+};
+
 export default function DemoPage() {
   const [checkoutTier, setCheckoutTier] = useState(null);
   const [subscribedPrice, setSubscribedPrice] = useState(0);
   const [dashboardOpen, setDashboardOpen] = useState(false);
   const [toast, setToast] = useState(null);
+  // Real per-post like state, seeded from POST_STATS -- clicking a heart below
+  // actually toggles it (see LikeButton), the same "click through the real
+  // interaction" pattern as the checkout simulation and tier unlock elsewhere on
+  // this page. The gated piece's own like state only starts mattering once it's
+  // unlocked (see LockedHeroPiece), same as the real product: liking requires access.
+  const [likes, setLikes] = useState(() =>
+    Object.fromEntries(Object.entries(POST_STATS).map(([id, s]) => [id, { likedByMe: false, count: s.likes }]))
+  );
   const confettiRef = useRef(null);
 
   const unlocked = subscribedPrice >= UNLOCK_TIER.price;
+
+  function handleToggleLike(id) {
+    setLikes((prev) => {
+      const cur = prev[id];
+      const likedByMe = !cur.likedByMe;
+      return { ...prev, [id]: { likedByMe, count: cur.count + (likedByMe ? 1 : -1) } };
+    });
+  }
 
   function handleSimulatePayment() {
     if (!checkoutTier) return;
@@ -82,7 +112,13 @@ export default function DemoPage() {
       <ViewToggle open={dashboardOpen} onChange={setDashboardOpen} />
       {dashboardOpen && <CreatorDashboardPanel />}
 
-      <FanView unlocked={unlocked} subscribedPrice={subscribedPrice} onJoin={setCheckoutTier} />
+      <FanView
+        unlocked={unlocked}
+        subscribedPrice={subscribedPrice}
+        onJoin={setCheckoutTier}
+        likes={likes}
+        onToggleLike={handleToggleLike}
+      />
 
       <ClosingCtaBar />
 
@@ -97,7 +133,7 @@ export default function DemoPage() {
 // Fan-facing profile
 // ---------------------------------------------------------------------------
 
-function FanView({ unlocked, subscribedPrice, onJoin }) {
+function FanView({ unlocked, subscribedPrice, onJoin, likes, onToggleLike }) {
   return (
     <div className="mx-auto max-w-4xl px-6 pb-20 pt-10">
       <ProfileHeader />
@@ -106,18 +142,25 @@ function FanView({ unlocked, subscribedPrice, onJoin }) {
         <div>
           <p className="mb-5 text-[11px] font-extrabold uppercase tracking-wide text-brand-ink/40">Recent work</p>
           <div className="flex flex-col gap-11">
-            <HeroPiece />
+            <HeroPiece like={likes.hero} onToggleLike={() => onToggleLike('hero')} />
             <div className="grid grid-cols-1 gap-7 sm:grid-cols-2">
-              <FieldNote />
-              <TallPiece />
+              <FieldNote like={likes.fieldNote} onToggleLike={() => onToggleLike('fieldNote')} />
+              <TallPiece like={likes.tall} onToggleLike={() => onToggleLike('tall')} />
             </div>
-            <LockedHeroPiece unlocked={unlocked} onUnlock={() => onJoin(UNLOCK_TIER)} />
+            <LockedHeroPiece
+              unlocked={unlocked}
+              onUnlock={() => onJoin(UNLOCK_TIER)}
+              like={likes.lockedHero}
+              onToggleLike={() => onToggleLike('lockedHero')}
+            />
             <div className="grid grid-cols-2 gap-5">
               <SmallPiece
                 src="/images/demo/castle-detail.jpg"
                 alt="A close-up detail of a cliffside castle in warm afternoon light"
                 title="Detail pass — the castle"
                 meta="11 days ago"
+                like={likes.detailCastle}
+                onToggleLike={() => onToggleLike('detailCastle')}
               />
               <SmallPiece
                 src="/images/demo/sketch-detail.jpg"
@@ -133,6 +176,35 @@ function FanView({ unlocked, subscribedPrice, onJoin }) {
         <Sidebar subscribedPrice={subscribedPrice} onJoin={() => onJoin(UNLOCK_TIER)} />
       </div>
     </div>
+  );
+}
+
+// The heart control every post stat line below shares -- a real click target, not
+// static text, so liking a demo post behaves exactly like liking a real one (see
+// app/api/posts/[postId]/like/route.js): one click toggles it and the count moves
+// by exactly one. `light` is for use over a photo (paper-colored, for contrast
+// against the dark gradient scrims every image post already uses); the default is
+// for the plain-paper FieldNote card.
+function LikeButton({ liked, count, onClick, light, small }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={liked}
+      className={`inline-flex items-center gap-1 rounded-full font-bold transition ${
+        small ? 'px-2 py-0.5 text-[10.5px]' : 'px-2.5 py-1 text-xs'
+      } ${
+        light
+          ? liked
+            ? 'bg-brand-paper text-[#A6432E]'
+            : 'bg-brand-paper/15 text-brand-paper/80 hover:bg-brand-paper/25'
+          : liked
+          ? 'bg-[#A6432E]/10 text-[#A6432E]'
+          : 'bg-brand-ink/5 text-brand-ink/55 hover:bg-brand-ink/10'
+      }`}
+    >
+      <span aria-hidden="true">{liked ? '♥' : '♡'}</span> {count.toLocaleString()}
+    </button>
   );
 }
 
@@ -184,7 +256,7 @@ function ProfileHeader() {
 // The public hero -- one large, confident piece of finished work, title set right on
 // the art rather than in a caption box underneath. This one lever does more against
 // "looks like a pricing page" than anything else on this view.
-function HeroPiece() {
+function HeroPiece({ like, onToggleLike }) {
   return (
     <div>
       <div className="relative aspect-[16/8.2] overflow-hidden rounded-sm">
@@ -205,7 +277,10 @@ function HeroPiece() {
           <h2 className="mt-2 max-w-[22ch] font-display text-2xl font-bold leading-tight sm:text-3xl">
             The Long Road Ahead — sketch to final light
           </h2>
-          <div className="mt-2.5 text-xs text-brand-paper/60">2 days ago · 9 comments</div>
+          <div className="mt-2.5 flex flex-wrap items-center gap-3 text-xs text-brand-paper/60">
+            <span>2 days ago · {POST_STATS.hero.views.toLocaleString()} views</span>
+            <LikeButton liked={like.likedByMe} count={like.count} onClick={onToggleLike} light />
+          </div>
         </div>
       </div>
       <p className="mt-4 border-l-2 border-brand-gold pl-4 font-display text-[15px] italic leading-relaxed text-brand-ink/70">
@@ -220,7 +295,7 @@ function HeroPiece() {
 
 // A text-only post -- no image at all. The strongest possible contrast to a grid of
 // thumbnails, and it reads as a real update rather than filler.
-function FieldNote() {
+function FieldNote({ like, onToggleLike }) {
   return (
     <div className="flex flex-col justify-center rounded-sm bg-brand-paper p-6">
       <span className="text-[11px] font-extrabold uppercase tracking-wide text-brand-clay">A note</span>
@@ -228,12 +303,15 @@ function FieldNote() {
         Taking next week off to finish a client project — back to the regular Tuesday piece after that. Thank you for
         being patient with me.
       </p>
-      <div className="mt-4 text-xs text-brand-ink/40">5 days ago · 3 comments</div>
+      <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-brand-ink/40">
+        <span>5 days ago · {POST_STATS.fieldNote.views.toLocaleString()} views</span>
+        <LikeButton liked={like.likedByMe} count={like.count} onClick={onToggleLike} />
+      </div>
     </div>
   );
 }
 
-function TallPiece() {
+function TallPiece({ like, onToggleLike }) {
   return (
     <div className="relative aspect-[3/4] overflow-hidden rounded-sm">
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -250,7 +328,10 @@ function TallPiece() {
       <div className="absolute inset-x-0 bottom-0 p-5 text-brand-paper">
         <span className="text-[10.5px] font-extrabold uppercase tracking-wide text-brand-gold">Portrait study</span>
         <h3 className="mt-1.5 font-display text-lg font-bold leading-tight">Getting the skin tones right</h3>
-        <div className="mt-1.5 text-[11.5px] text-brand-paper/60">8 days ago · 17 comments</div>
+        <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11.5px] text-brand-paper/60">
+          <span>8 days ago · {POST_STATS.tall.views.toLocaleString()} views</span>
+          <LikeButton liked={like.likedByMe} count={like.count} onClick={onToggleLike} light small />
+        </div>
       </div>
     </div>
   );
@@ -261,7 +342,7 @@ function TallPiece() {
 // unlocking, the art is still visible underneath a partial veil (blurred, darkened at
 // center for text contrast) instead of a fully opaque block, so a fan can tell what a
 // piece actually is before joining.
-function LockedHeroPiece({ unlocked, onUnlock }) {
+function LockedHeroPiece({ unlocked, onUnlock, like, onToggleLike }) {
   return (
     <div className="relative aspect-[16/7.5] overflow-hidden rounded-sm">
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -310,6 +391,10 @@ function LockedHeroPiece({ unlocked, onUnlock }) {
             <h3 className="mt-1.5 max-w-[26ch] font-display text-lg font-bold leading-tight sm:text-xl">
               Choosing the storm-cloud palette — thanks for joining!
             </h3>
+            <div className="mt-2.5 flex flex-wrap items-center gap-3 text-xs text-brand-paper/60">
+              <span>{POST_STATS.lockedHero.views.toLocaleString()} views</span>
+              <LikeButton liked={like.likedByMe} count={like.count} onClick={onToggleLike} light />
+            </div>
           </div>
         </>
       )}
@@ -317,7 +402,7 @@ function LockedHeroPiece({ unlocked, onUnlock }) {
   );
 }
 
-function SmallPiece({ src, alt, title, meta, locked }) {
+function SmallPiece({ src, alt, title, meta, locked, like, onToggleLike }) {
   return (
     <div className="relative aspect-square overflow-hidden rounded-sm">
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -333,7 +418,15 @@ function SmallPiece({ src, alt, title, meta, locked }) {
       )}
       <div className="absolute inset-x-0 bottom-0 p-3.5 text-brand-paper">
         <h4 className="font-display text-sm font-bold leading-tight">{title}</h4>
-        <div className="mt-1 text-[10.5px] text-brand-paper/60">{meta}</div>
+        <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10.5px] text-brand-paper/60">
+          <span>
+            {meta}
+            {/* No comments feature on ByUs -- a locked piece shows no view count either,
+                since a fan can't see engagement on a post they haven't unlocked yet. */}
+            {like ? ` · ${POST_STATS.detailCastle.views.toLocaleString()} views` : ''}
+          </span>
+          {like && <LikeButton liked={like.likedByMe} count={like.count} onClick={onToggleLike} light small />}
+        </div>
       </div>
     </div>
   );
