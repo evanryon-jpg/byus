@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import VerifyEmailBanner from '../../components/VerifyEmailBanner';
 import FanDownloads from '../../components/FanDownloads';
+import FeedLinkButton from '../../components/FeedLinkButton';
 
 export default function FanDashboard() {
   const [user, setUser] = useState(null);
@@ -246,10 +247,10 @@ export default function FanDashboard() {
 
       <ul className="mt-8 space-y-3">
         {subs.map((s) => (
-          <li key={s.id}>
+          <li key={s.id} className="rounded-2xl border border-brand-ink/5 bg-brand-paper p-5">
             <a
               href={`/creator/${s.creator_slug || s.creator_id}`}
-              className="flex items-center justify-between rounded-2xl border border-brand-ink/5 bg-brand-paper p-5 hover:border-[#0F766E]/30"
+              className="flex items-center justify-between hover:opacity-90"
             >
               <div>
                 <p className="font-medium">{s.creator_name}</p>
@@ -263,6 +264,7 @@ export default function FanDashboard() {
                 {s.status}
               </span>
             </a>
+            {s.status === 'active' && <FeedLinkButton creatorId={s.creator_id} />}
           </li>
         ))}
         {subs.length === 0 && (
