@@ -160,7 +160,14 @@ function CreatorCard({ creator }) {
         </div>
 
         <p className="mt-2.5 hidden text-[11px] text-brand-paper/50 sm:block">
-          Demonstration profile — interactive page shown is a live sandbox.
+          {/* Alex Rivers is the one profile with a real checkout simulation, tier
+              joining, and confetti -- "live sandbox" oversells the other five, which
+              are lighter preview pages (a view toggle and a "try this tier" button,
+              no full purchase flow). Only the one where that's actually true gets the
+              stronger claim; the rest get accurate, softer wording instead. */}
+          {creator.live
+            ? 'Demonstration profile — interactive page shown is a live sandbox.'
+            : 'Demonstration profile — a quick preview, not the full interactive sandbox.'}
         </p>
       </div>
     </div>
