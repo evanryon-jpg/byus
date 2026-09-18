@@ -29,6 +29,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { isAdmin, getAdminEmails } from '@/lib/admin';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 const REASON_MAX = 500;
 
@@ -37,6 +38,9 @@ export async function PATCH(request, { params }) {
   if (!session || !isAdmin(session)) {
     return NextResponse.json({ error: 'Not authorized.' }, { status: 403 });
   }
+
+  const rateCheck = await checkRateLimit('admin-write', `user:${session.userId}`);
+  if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
   // The admin account is also a real creator account on ByUs (used to test the creator
   // side of the product) -- without this, a misclick here could suspend the only admin
