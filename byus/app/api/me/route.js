@@ -15,6 +15,7 @@ import { getCurrentUser } from '@/lib/session';
 import { isAdmin } from '@/lib/admin';
 import { containsBlockedContent } from '@/lib/content-policy';
 import { USER_SELECT_FIELDS, withAvatarUrl, withEffectiveFee } from '@/lib/user-profile';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 // Matches the cap used at signup — keep both in sync since they constrain the same column.
 const DISPLAY_NAME_MAX = 100;
@@ -87,6 +88,9 @@ export async function PATCH(request) {
   if (!session) {
     return NextResponse.json({ error: 'Not logged in.' }, { status: 401 });
   }
+
+  const rateCheck = await checkRateLimit('me-update', `user:${session.userId}`);
+  if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
   const { display_name, bio, tags, notify_new_posts, show_support_publicly, support_goal_cents } =
     await request.json();
