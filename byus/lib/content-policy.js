@@ -27,25 +27,109 @@
 // report queue and human review (see app/api/reports/route.js) rather than an
 // automated hard reject that would misfire constantly.
 
+// Grouped by category purely for maintainability -- containsBlockedContent() below
+// flattens and checks them as one list, so the grouping has no runtime effect.
 const ADULT_DOMAINS = [
+  // Subscription / creator platforms -- direct competitors fans could be steered to
+  // instead of paying through ByUs.
   'onlyfans.com',
   'fansly.com',
   'manyvids.com',
-  'chaturbate.com',
-  'stripchat.com',
-  'myfreecams.com',
-  'camsoda.com',
-  'bongacams.com',
   'clips4sale.com',
   'fancentro.com',
   'justfor.fans',
   'loyalfans.com',
   'unlockedcelebs.com',
   'admireme.vip',
+  'fanvue.com',
+  'iwantclips.com',
+  'fantia.jp',
+
+  // Live cam sites.
+  'chaturbate.com',
+  'stripchat.com',
+  'myfreecams.com',
+  'camsoda.com',
+  'bongacams.com',
+  'livejasmin.com',
+  'cam4.com',
+  'imlive.com',
+  'streamate.com',
+  'flirt4free.com',
+  'jerkmate.com',
+  'camwhores.tv',
+
+  // High-traffic tube / streaming sites.
   'pornhub.com',
   'xvideos.com',
   'xnxx.com',
   'xhamster.com',
+  'redtube.com',
+  'youporn.com',
+  'tube8.com',
+  'spankbang.com',
+  'motherless.com',
+  'txxx.com',
+  'eporner.com',
+  'porntrex.com',
+  'hclips.com',
+  'drtuber.com',
+  'tnaflix.com',
+  'keezmovies.com',
+  'porn.com',
+  'beeg.com',
+  '4tube.com',
+  'sunporno.com',
+  'porndig.com',
+  'vporn.com',
+  'hqporner.com',
+  'pornone.com',
+  'gotporn.com',
+  'upornia.com',
+  'xozilla.com',
+  'porn300.com',
+
+  // Studio / paysite networks.
+  'brazzers.com',
+  'realitykings.com',
+  'bangbros.com',
+  'naughtyamerica.com',
+  'digitalplayground.com',
+  'evilangel.com',
+  'teamskeet.com',
+  'vixen.com',
+  'blacked.com',
+  'tushy.com',
+  'deeper.com',
+  'mofos.com',
+  'babes.com',
+  'twistys.com',
+  'adulttime.com',
+
+  // Leak / piracy aggregators that specifically redistribute paid creator-platform
+  // content (OnlyFans/Fansly-style) without payment -- the closest thing to a direct
+  // threat to ByUs creators' own paywalled content.
+  'coomer.party',
+  'coomer.su',
+  'thothub.tv',
+  'thotsbay.com',
+  'fapello.com',
+  'simpcity.su',
+  'leakedzone.com',
+  'nudostar.com',
+
+  // Hentai / adult anime & manga.
+  'rule34.xxx',
+  'nhentai.net',
+  'e-hentai.org',
+  'hentaihaven.xxx',
+  'luscious.net',
+  'hanime.tv',
+
+  // General adult media / image hosts.
+  'redgifs.com',
+  'erome.com',
+  'imagefap.com',
 ];
 
 const EXPLICIT_KEYWORDS = [
@@ -78,6 +162,10 @@ const ILLEGAL_KEYWORDS = [
   'leaked album',
   'leaked movie',
   'unreleased leak',
+  'leaked onlyfans',
+  'onlyfans leak',
+  'leaked content',
+  'leak site',
   'pirated',
   'bootleg copy',
   'cracked software',
