@@ -50,6 +50,7 @@ import { getAdminEmails } from '@/lib/admin';
 import { trackServerEvent } from '@/lib/analytics';
 import { recordEarningAndCheckFeeTier, syncActiveSubscriptionsToFeePercent } from '@/lib/fees';
 import { syncPlatformAccess } from '@/lib/platform-sync';
+import { alertOps } from '@/lib/alerts';
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -669,6 +670,13 @@ export async function POST(request) {
     }
   } catch (err) {
     console.error(`Error handling webhook event ${event.type}:`, err);
+    // Stripe's own retry (below) is enough to survive a single transient hiccup, but a
+    // *systemic* failure here (a bad deploy, the database down) means every payment event
+    // is failing the same way, invisibly, until someone happens to check the Stripe
+    // Dashboard's webhook log. alertOps is throttled (one email per 30 minutes for this
+    // context, see lib/alerts.js), so a burst of retries for the same underlying problem
+    // sends one email, not one per event.
+    await alertOps(`stripe-webhook:${event.type}`, err);
     // Return 500 so Stripe retries — better to reprocess than silently drop a payment event.
     // The DB transaction above rolled back on this error, so the event was never marked
     // processed — a retry starts clean rather than being skipped as "already handled."
