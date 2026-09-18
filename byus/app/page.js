@@ -212,7 +212,7 @@ function Hero({ user }) {
             </h1>
 
             <p className="mt-3 font-display text-xl italic text-brand-paper/60">
-              The creator-first membership platform.
+              The home your fans keep coming back to.
             </p>
 
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-brand-paper/75">
