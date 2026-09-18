@@ -285,6 +285,139 @@ const limiters = {
     limiter: Ratelimit.slidingWindow(60, '10 m'),
     prefix: 'rl:feed-fetch',
   }),
+  // Guards PATCH /api/me (display name, bio, tags, notification/support-visibility
+  // toggles). Cheap on its own, but reachable by any authenticated account with
+  // nothing else standing between it and a script hammering profile writes.
+  'me-update': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(20, '10 m'),
+    prefix: 'rl:me-update',
+  }),
+  // Guards PATCH/DELETE /api/creator/posts/:postId (edit or permanently remove an
+  // existing post). Same allowance as post-create — a creator cleaning up or fixing
+  // typos across several posts in one sitting is normal use; this exists to stop a
+  // script from mass-editing or mass-deleting a creator's own catalog.
+  'post-modify': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(30, '10 m'),
+    prefix: 'rl:post-modify',
+  }),
+  // Guards PATCH /api/creator/slug (claim/change a vanity URL). Deliberately tight —
+  // legitimate use is "set it once, maybe change it later," not something anyone
+  // needs to do more than a handful of times an hour, and a script probing for
+  // available slugs (or griefing by repeatedly grabbing/dropping desirable ones)
+  // is exactly the shape of abuse this closes off.
+  'slug-change': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(10, '1 h'),
+    prefix: 'rl:slug-change',
+  }),
+  // Guards PATCH /api/creator/integrations (Discord/Telegram IDs). Same cost shape as
+  // creator-links — a cheap authenticated write with no cost to automating against.
+  'integrations-update': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(20, '10 m'),
+    prefix: 'rl:integrations-update',
+  }),
+  // Guards POST /api/me/become-creator. A one-time (per account) role upgrade that
+  // runs inside a transaction with an advisory lock and a COUNT(*) over every creator
+  // account (to check the Founding Creator cutoff) — cheap for a real user clicking
+  // it once, but there's no reason a session should ever need to call this more than
+  // a couple of times.
+  'become-creator': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(5, '1 h'),
+    prefix: 'rl:become-creator',
+  }),
+  // Guards POST /api/me/avatar/preset (switching to a built-in illustrated avatar).
+  // Cheap — one update plus an occasional best-effort Blob cleanup — but generous
+  // enough that clicking through several preset options while deciding never trips it.
+  'avatar-preset': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(20, '10 m'),
+    prefix: 'rl:avatar-preset',
+  }),
+  // Guards POST /api/creator/live (provision a Mux live stream + RTMP key). Only
+  // applies to the actual Mux::createLiveStream() branch — cost shape matches
+  // video-upload above, since each first-time call provisions a real resource on
+  // Mux's side. A creator only ever needs this to succeed once; this just stops a
+  // compromised or scripted session from repeatedly hammering that provisioning call.
+  'live-setup': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(10, '1 h'),
+    prefix: 'rl:live-setup',
+  }),
+  // Guards DELETE /api/fan/connections/:provider (disconnect Discord/Telegram). Calls
+  // out to revoke bot-managed access on that provider's side before dropping the
+  // local row, so — like connect-stripe — each call has a real cost on someone else's
+  // API, not just this database.
+  'connection-disconnect': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(15, '1 h'),
+    prefix: 'rl:connection-disconnect',
+  }),
+  // Guards POST /api/posts/:postId/vote. Same shape as post-like — free and
+  // deliberately generous, since a fan working through several polls in one sitting
+  // is completely normal use; this only stops a script from farming vote counts.
+  'poll-vote': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(60, '10 m'),
+    prefix: 'rl:poll-vote',
+  }),
+  // Guards the read-only /api/admin/* GET routes (overview, reports list, suggestions
+  // list, one dispute's evidence package). Already gated by lib/admin.js's allowlist,
+  // so this isn't defending against outside abuse — it's a floor against a leaked or
+  // hijacked admin session (or a buggy dashboard poll loop) hammering aggregate
+  // queries over the whole platform's data.
+  'admin-read': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(100, '10 m'),
+    prefix: 'rl:admin-read',
+  }),
+  // Guards the non-financial /api/admin/* write routes (triaging reports/suggestions/
+  // site-feedback, clearing a creator's review hold, suspending/reinstating an
+  // account, re-registering the Telegram webhook). Generous enough that working
+  // through a queue of a few dozen items in one sitting is never blocked — this is a
+  // floor against a compromised admin session, not a throttle on normal triage work.
+  'admin-write': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(60, '10 m'),
+    prefix: 'rl:admin-write',
+  }),
+  // Guards the two admin routes that move real money (issuing a refund, recovering a
+  // creator's transferred share after a lost dispute). Both already carry their own
+  // idempotency guards against a double-click, but this is tighter than admin-write
+  // on purpose — these are rare, deliberate actions, and a leaked admin session
+  // should never be able to fire off refunds or transfer reversals at scale.
+  'admin-payment-action': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(20, '1 h'),
+    prefix: 'rl:admin-payment-action',
+  }),
+  // Guards POST /api/products/:productId/checkout (starting a Stripe Checkout session
+  // for a one-time digital-product purchase) -- same cost shape as `tip` and
+  // `subscribe`, a real Stripe API call per attempt. This was already being called by
+  // that route (`checkRateLimit('product-checkout', ...)`) but had no matching entry
+  // here, which meant every single purchase attempt threw `Unknown rate limiter`
+  // before the route's own try/catch could run -- the exact same failure mode
+  // `product-upload` above hit on Sep 17, 2026, just for checkout instead of
+  // publishing. Found auditing the rate-limit gaps on Sep 18, 2026; every digital
+  // product purchase was broken until this was added.
+  'product-checkout': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(20, '1 h'),
+    prefix: 'rl:product-checkout',
+  }),
+  // Guards POST /api/fan/connections/telegram/link (minting the short-lived link
+  // token a fan uses to connect Telegram). Same allowance as feed-token -- cheap, but
+  // generous enough for someone retrying a stale/expired link. Same gap as
+  // product-checkout just above: the route called this limiter already, but nothing
+  // here defined it, so every attempt to connect Telegram threw instead of working.
+  'telegram-link': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(20, '1 h'),
+    prefix: 'rl:telegram-link',
+  }),
 };
 
 // Best-effort client IP. Vercel always sets x-forwarded-for in production; the
