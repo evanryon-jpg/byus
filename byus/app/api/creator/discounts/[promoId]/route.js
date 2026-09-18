@@ -7,12 +7,16 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/session';
 import { paymentProvider } from '@/lib/payments';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function DELETE(request, { params }) {
   const session = await getCurrentUser();
   if (!session || session.role !== 'creator') {
     return NextResponse.json({ error: 'Only creators can deactivate discount codes.' }, { status: 403 });
   }
+
+  const rateCheck = await checkRateLimit('discount-modify', `user:${session.userId}`);
+  if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
   const { promoId } = params;
 
