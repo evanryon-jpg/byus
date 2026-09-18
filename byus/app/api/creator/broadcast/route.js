@@ -1,4 +1,8 @@
 export const dynamic = 'force-dynamic';
+// Headroom above INLINE_BUDGET_MS (8s) below for the subscriber-list query, the job's
+// recipient-row insert, and the chunk sends themselves -- comfortably under Vercel's
+// configurable ceiling on the Pro plan this project runs on.
+export const maxDuration = 30;
 
 // GET  /api/creator/broadcast -> how many active subscribers an update would reach
 // POST /api/creator/broadcast -> email a free-text update to every active subscriber
@@ -12,9 +16,17 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
-import { sendCreatorUpdateEmail } from '@/lib/email';
 import { containsBlockedContent } from '@/lib/content-policy';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { createBroadcastJob, processBroadcastJobChunk, getBroadcastJobStatus } from '@/lib/broadcast-jobs';
+
+// How long the initiating request itself spends sending chunks before it hands the
+// rest to the cron worker (app/api/cron/process-broadcasts/route.js). Short enough to
+// stay well clear of Vercel's default function timeout, generous enough that a typical
+// creator's subscriber count (well under a thousand today) still finishes -- and the
+// creator sees "Sent to N subscribers" -- inline, in this same request, same as before
+// this job system existed.
+const INLINE_BUDGET_MS = 8000;
 
 const SUBJECT_MAX = 150;
 const MESSAGE_MAX = 5000;
@@ -95,16 +107,30 @@ export async function POST(request) {
     }
 
     const finalSubject = subject?.trim() || `Update from ${creatorName}`;
-    // sendCreatorUpdateEmail now sends every chunk it can rather than aborting after the
-    // first failure -- `failed` tells the creator when some (but not all) subscribers
-    // didn't get this update, instead of a blanket "sent" that could quietly be wrong.
-    const { sent, failed } = await sendCreatorUpdateEmail(recipients, {
+
+    // Queues every recipient as a row the job can resume from, then processes chunks
+    // inline for up to INLINE_BUDGET_MS -- a normal-sized subscriber list finishes
+    // right here and this looks identical to the old synchronous response. Anything
+    // left after the budget runs out (a subscriber base large enough that sending to
+    // everyone can't fit in one request) is picked up by the cron worker a chunk at a
+    // time until it's done -- see lib/broadcast-jobs.js.
+    const jobId = await createBroadcastJob({
+      creatorId: session.userId,
       creatorName,
       subject: finalSubject,
       message: message.trim(),
+      recipients,
     });
+    await processBroadcastJobChunk(jobId, { budgetMs: INLINE_BUDGET_MS });
+    const status = await getBroadcastJobStatus(jobId);
 
-    return NextResponse.json({ sent, failed });
+    return NextResponse.json({
+      sent: status.sent,
+      failed: status.failed,
+      total: status.total,
+      status: status.status,
+      jobId,
+    });
   } catch (err) {
     console.error('creator/broadcast POST failed:', err);
     return NextResponse.json(
