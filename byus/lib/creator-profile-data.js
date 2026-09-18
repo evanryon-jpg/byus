@@ -116,6 +116,20 @@ export async function loadCreatorProfile(creatorId, session) {
     [id]
   );
 
+  // View counter: increment on load, per the plan's own scoping -- shown to the
+  // creator on their own dashboard first (see loadCreatorPosts in
+  // lib/creator-dashboard-data.js), not surfaced to fans yet. Fire-and-forget so a
+  // slow or failed write never holds up the profile page itself; a missed increment
+  // just undercounts by one, which matters far less than blocking the page.
+  if (postsResult.rows.length > 0) {
+    const viewedPostIds = postsResult.rows.map((p) => p.id);
+    query(`UPDATE posts SET view_count = view_count + 1 WHERE id = ANY($1)`, [viewedPostIds]).catch(
+      (err) => {
+        console.error('failed to record post view counts:', err);
+      }
+    );
+  }
+
   // If an authenticated fan's active subscription caused subscriber-only content to be
   // delivered, record that fact as best-effort dispute evidence. We intentionally log one
   // compact page-access event instead of a row per post, and we do not store post bodies,
@@ -166,6 +180,27 @@ export async function loadCreatorProfile(creatorId, session) {
   const voteCounts = await getPollVoteCounts(pollPostIds);
   const myVotes = await getMyPollVotes(pollPostIds, session?.userId);
 
+  // Like counts/state, computed for every visible post the same way poll results are
+  // above -- cheap enough to just compute up front and let the per-post gate below
+  // decide what to hand out.
+  const allPostIds = postsResult.rows.map((p) => p.id);
+  const likeCounts = {};
+  if (allPostIds.length > 0) {
+    const likeCountsResult = await query(
+      `SELECT post_id, COUNT(*)::int AS count FROM post_likes WHERE post_id = ANY($1) GROUP BY post_id`,
+      [allPostIds]
+    );
+    for (const row of likeCountsResult.rows) likeCounts[row.post_id] = row.count;
+  }
+  let myLikedPostIds = new Set();
+  if (session?.userId && allPostIds.length > 0) {
+    const myLikesResult = await query(
+      `SELECT post_id FROM post_likes WHERE fan_id = $1 AND post_id = ANY($2)`,
+      [session.userId, allPostIds]
+    );
+    myLikedPostIds = new Set(myLikesResult.rows.map((row) => row.post_id));
+  }
+
   // Gate content here, server-side — never trust the client to hide this on its own.
   // media_url in the DB is a private Blob pathname; unlocked posts get pointed at
   // our own gated route instead of the raw pathname.
@@ -195,6 +230,8 @@ export async function loadCreatorProfile(creatorId, session) {
       hasVideo: Boolean(post.mux_playback_id),
       video,
       poll: isLocked ? null : buildPollPayload(post, voteCounts[post.id], myVotes[post.id]),
+      likeCount: likeCounts[post.id] || 0,
+      likedByMe: myLikedPostIds.has(post.id),
     };
   });
 

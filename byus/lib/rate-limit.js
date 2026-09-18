@@ -167,6 +167,14 @@ const limiters = {
     limiter: Ratelimit.slidingWindow(60, '10 m'),
     prefix: 'rl:follow',
   }),
+  // Guards toggling a like on a post. Same shape as follow above -- free, and
+  // deliberately generous since a fan scrolling a feed liking several posts in a row
+  // is completely normal use -- just enough to stop a script from farming the count.
+  'post-like': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(60, '10 m'),
+    prefix: 'rl:post-like',
+  }),
   // Guards the Founding Creator waitlist form (see app/api/waitlist/route.js) — no
   // session to key off of, since it's meant to work for a first-time visitor, so this is
   // the only thing standing between it and a script hammering the table with rows.
