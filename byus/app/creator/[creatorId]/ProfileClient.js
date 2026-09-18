@@ -349,7 +349,14 @@ export default function ProfileClient({ data, justSubscribed, subscribedTierId, 
                 {p.poll && <PollBlock postId={p.id} poll={p.poll} />}
               </>
             )}
-            <div className="mt-3">
+            <div className="mt-3 flex items-center gap-4">
+              <LikeButton
+                postId={p.id}
+                initialLikeCount={p.likeCount}
+                initialLikedByMe={p.likedByMe}
+                creatorId={creatorId}
+                router={router}
+              />
               <ReportButton creatorId={creator.id} postId={p.id} />
             </div>
           </li>
@@ -359,6 +366,58 @@ export default function ProfileClient({ data, justSubscribed, subscribedTierId, 
           <p className="text-sm text-brand-ink/60">No posts match your filters.</p>
         )}
       </ul>
+    </div>
+  );
+}
+
+// A lightweight heart/like on a post — mirrors the follow button's 401-handling
+// pattern (attempt the action, and only send a logged-out visitor to log in once the
+// server actually says so) rather than gating the button on a session prop this
+// client component doesn't otherwise receive. Count and state come from the server
+// on every toggle, not just optimistic local math, so a second tab or a page refresh
+// can never drift from what actually got recorded.
+function LikeButton({ postId, initialLikeCount, initialLikedByMe, creatorId, router }) {
+  const [likeCount, setLikeCount] = useState(Number(initialLikeCount || 0));
+  const [likedByMe, setLikedByMe] = useState(Boolean(initialLikedByMe));
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  async function handleClick() {
+    if (busy) return;
+    setBusy(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/posts/${postId}/like`, { method: 'POST' });
+      if (res.status === 401) {
+        router.push(`/login?next=${encodeURIComponent(`/creator/${creatorId}`)}`);
+        return;
+      }
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Could not update your like.');
+      setLikeCount(result.likeCount);
+      setLikedByMe(result.likedByMe);
+    } catch (err) {
+      setError(err.message || 'Could not update your like.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={busy}
+        aria-pressed={likedByMe}
+        className={`flex items-center gap-1 text-xs font-medium transition-colors disabled:opacity-50 ${
+          likedByMe ? 'text-[#A6432E]' : 'text-brand-ink/40 hover:text-brand-ink/70'
+        }`}
+      >
+        <span aria-hidden="true">{likedByMe ? '♥' : '♡'}</span>
+        {likeCount > 0 ? likeCount : 'Like'}
+      </button>
+      {error && <p className="text-xs text-red-600">{error}</p>}
     </div>
   );
 }
