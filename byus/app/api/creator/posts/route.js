@@ -1,4 +1,7 @@
 export const dynamic = 'force-dynamic';
+// Headroom for the video-upload verification (a Mux round trip) plus NEW_POST_INLINE_BUDGET_MS
+// below -- see the comment there for why this route now has an email budget in it at all.
+export const maxDuration = 30;
 
 // GET  /api/creator/posts   -> list the logged-in creator's own posts (all of them, own view)
 // POST /api/creator/posts   -> create a new post, public or subscribers-only
@@ -7,11 +10,19 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { buildPollPayload } from '@/lib/polls';
-import { sendNewPostEmail } from '@/lib/email';
+import { createBroadcastJob, processBroadcastJobChunk } from '@/lib/broadcast-jobs';
 import { containsBlockedContent } from '@/lib/content-policy';
 import { loadCreatorPosts } from '@/lib/creator-dashboard-data';
 import { getUpload, getAsset } from '@/lib/mux';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
+
+// This request already has to wait on the post INSERT and (for a video post) a Mux
+// lookup before it gets anywhere near this -- so unlike the broadcast route's deliberate
+// 8s budget, this stays short. Nothing in the UI shows new-post send progress the way
+// the dashboard's broadcast section does, so there's nothing gained by waiting longer;
+// this is purely a head start for typical-sized subscriber counts before the cron
+// worker (app/api/cron/process-broadcasts/route.js) picks up whatever's left.
+const NEW_POST_INLINE_BUDGET_MS = 3000;
 
 const TITLE_MAX = 200;
 const BODY_MAX = 20000;
@@ -235,10 +246,18 @@ async function notifySubscribersOfNewPost(creatorId, post) {
   const creatorName = creator?.display_name || 'Your creator';
   const creatorUrl = `${process.env.APP_URL}/creator/${creator?.slug || creatorId}`;
 
-  await sendNewPostEmail(recipients, {
+  // Queues every recipient the same way the "message your subscribers" broadcast does
+  // (see lib/broadcast-jobs.js) instead of sending to all of them inline here -- this
+  // route fires on every single post a creator publishes, automatically, with no
+  // creator action to gate it the way a deliberate broadcast send has. Any creator whose
+  // active subscriber count got large enough to blow a request timeout would otherwise
+  // hit this on every post, not just occasionally.
+  const jobId = await createBroadcastJob({
+    creatorId,
     creatorName,
-    creatorUrl,
-    postTitle: post.title,
-    postExcerpt: post.body,
+    kind: 'new_post',
+    metadata: { creatorUrl, postTitle: post.title, postExcerpt: post.body },
+    recipients,
   });
+  await processBroadcastJobChunk(jobId, { budgetMs: NEW_POST_INLINE_BUDGET_MS });
 }
