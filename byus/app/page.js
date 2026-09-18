@@ -42,8 +42,8 @@ export default async function HomePage() {
       <Hero user={session} />
       <CreatorShowcase />
       <EarningsCalculator />
-      <FoundingCreatorProgram stats={foundingStats} />
       <Features />
+      <FoundingCreatorProgram stats={foundingStats} />
       <HowItWorks />
       <LookingForSomeoneSection />
       <FeaturedCreators />
