@@ -14,12 +14,17 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/session';
 import { isAdmin } from '@/lib/admin';
 import { isTelegramConfigured, setTelegramWebhook } from '@/lib/telegram';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 async function handle(request) {
   const session = await getCurrentUser();
   if (!session || !isAdmin(session)) {
     return NextResponse.json({ error: 'Not authorized.' }, { status: 403 });
   }
+
+  const rateCheck = await checkRateLimit('admin-write', `user:${session.userId}`);
+  if (!rateCheck.success) return rateLimitResponse(rateCheck);
+
   if (!isTelegramConfigured()) {
     return NextResponse.json({ error: 'TELEGRAM_BOT_TOKEN is not set.' }, { status: 400 });
   }
