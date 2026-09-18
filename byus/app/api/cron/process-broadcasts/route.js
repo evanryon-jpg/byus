@@ -14,7 +14,7 @@ export const maxDuration = 60;
 // this is the one thing left to add in the Vercel dashboard for this system to be live.
 
 import { NextResponse } from 'next/server';
-import { listProcessingJobIds, processBroadcastJobChunk } from '@/lib/broadcast-jobs';
+import { listProcessingJobIds, processBroadcastJobChunk, cleanupOldBroadcastRecipients } from '@/lib/broadcast-jobs';
 
 // Leaves headroom below maxDuration for the function's own cold start, the final
 // listProcessingJobIds query, and response overhead.
@@ -54,6 +54,20 @@ export async function GET(request) {
     } catch (err) {
       console.error(`process-broadcasts: job ${jobId} failed this run (will retry next run):`, err);
       results.push({ jobId, error: true });
+    }
+  }
+
+  // This route already runs every minute (see vercel.json) to drain in-flight jobs --
+  // riding along on that same schedule for the old-recipient-row cleanup means no second
+  // cron entry is needed. Gated to once a day (rather than every run) since a DELETE that
+  // almost always has nothing to do is still a wasted round trip 1,439 times a day for no
+  // benefit; the exact minute doesn't matter, just that it's roughly once daily.
+  if (new Date().getUTCHours() === 3 && new Date().getUTCMinutes() < 5) {
+    try {
+      const deleted = await cleanupOldBroadcastRecipients();
+      if (deleted > 0) console.log(`process-broadcasts: pruned ${deleted} old broadcast_job_recipients row(s).`);
+    } catch (err) {
+      console.error('process-broadcasts: recipient cleanup failed (will retry tomorrow):', err);
     }
   }
 
