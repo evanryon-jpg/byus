@@ -14,12 +14,16 @@ import { getCurrentUser } from '@/lib/session';
 import { del } from '@vercel/blob';
 import { isValidPresetAvatarId } from '@/lib/preset-avatars';
 import { publicAvatarUrl } from '@/lib/avatar-url';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function POST(request) {
   const session = await getCurrentUser();
   if (!session) {
     return NextResponse.json({ error: 'Not logged in.' }, { status: 401 });
   }
+
+  const rateCheck = await checkRateLimit('avatar-preset', `user:${session.userId}`);
+  if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
   let body;
   try {
