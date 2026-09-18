@@ -7,6 +7,10 @@
 // in its own plain module sidesteps that boundary entirely.
 export const FAQS = [
   {
+    q: 'What is ByUs?',
+    a: 'ByUs (byusapp.com) is a creator membership platform where fans support creators directly through monthly subscriptions. ByUs is a standalone, independent company — it is not affiliated with Brigham Young University (BYU) or any other organization, and "ByUs" isn’t a typo of "by us." Creators keep 87–90% of every subscription payment, paid directly into their own Stripe account.',
+  },
+  {
     q: 'Can creators sign up and connect Stripe now?',
     a: "New creator signups are temporarily paused while we finish up some account setup on our end — join the waitlist and we'll email you as soon as it reopens. Fans can sign up and subscribe as normal in the meantime. Creating a ByUs account is free either way; Stripe separately reviews each connected account and may request verification information before enabling its payments or payouts.",
   },
