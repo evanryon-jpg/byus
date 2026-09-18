@@ -1,3 +1,4 @@
+// Retry trigger: prior Vercel build for this file stalled in "Initializing" and was canceled by hand.
 export default function Footer() {
   const year = new Date().getFullYear();
   return (
