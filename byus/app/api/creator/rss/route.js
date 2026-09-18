@@ -11,21 +11,11 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { parseFeed } from '@/lib/rss';
+import { fetchFeedXml, assertSafeFeedUrl } from '@/lib/feed-fetch';
 import { containsBlockedContent } from '@/lib/content-policy';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
-const FETCH_TIMEOUT_MS = 10000;
 const URL_MAX = 2000;
-
-function isPlausibleFeedUrl(value) {
-  if (typeof value !== 'string' || value.length > URL_MAX) return false;
-  try {
-    const url = new URL(value);
-    return url.protocol === 'http:' || url.protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
 
 export async function PATCH(request) {
   const session = await getCurrentUser();
@@ -41,8 +31,18 @@ export async function PATCH(request) {
   }
 
   const raw = typeof body.feedUrl === 'string' ? body.feedUrl.trim() : '';
-  if (raw && !isPlausibleFeedUrl(raw)) {
+  if (raw && raw.length > URL_MAX) {
     return NextResponse.json({ error: "That doesn't look like a valid feed URL." }, { status: 400 });
+  }
+  // Checked here too (not just at sync time) so a creator gets immediate feedback in
+  // Settings on an obviously bad URL, rather than only finding out on their next
+  // "Sync now" click -- see lib/feed-fetch.js for what this actually blocks and why.
+  if (raw) {
+    try {
+      await assertSafeFeedUrl(raw);
+    } catch (err) {
+      return NextResponse.json({ error: err.message || "That doesn't look like a valid feed URL." }, { status: 400 });
+    }
   }
 
   // Clearing the URL also clears any stale error from a previous feed, so Settings
@@ -75,22 +75,13 @@ export async function POST() {
 
   let entries;
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-    let res;
-    try {
-      res = await fetch(feedUrl, {
-        signal: controller.signal,
-        // A few blog hosts (WordPress.com among them) reject requests with no
-        // User-Agent outright -- a plain, identifiable one avoids that without
-        // pretending to be a browser.
-        headers: { 'User-Agent': 'ByUsBot/1.0 (+https://byusapp.com)' },
-      });
-    } finally {
-      clearTimeout(timeout);
-    }
-    if (!res.ok) throw new Error(`Feed returned ${res.status}`);
-    const xml = await res.text();
+    // fetchFeedXml re-validates the URL doesn't resolve to a private/internal
+    // address right before connecting (a saved URL's DNS can change after it was
+    // first entered in Settings), follows redirects manually with the same check on
+    // every hop, times out, and caps how much it'll read into memory -- see
+    // lib/feed-fetch.js for the full reasoning. Both this and PATCH above call the
+    // same underlying check rather than each having their own copy.
+    const xml = await fetchFeedXml(feedUrl);
     entries = parseFeed(xml);
   } catch (err) {
     console.error(`rss sync fetch failed for creator ${session.userId}:`, err);
