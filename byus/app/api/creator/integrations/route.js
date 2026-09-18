@@ -9,6 +9,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 // Discord/Telegram IDs are always numeric strings (Discord snowflakes, Telegram chat
 // ids -- the latter negative for groups/supergroups). Loosely validated so a pasted
@@ -23,6 +24,9 @@ export async function PATCH(request) {
   if (!session || session.role !== 'creator') {
     return NextResponse.json({ error: 'Only creators can manage integrations.' }, { status: 403 });
   }
+
+  const rateCheck = await checkRateLimit('integrations-update', `user:${session.userId}`);
+  if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
   let body;
   try {
