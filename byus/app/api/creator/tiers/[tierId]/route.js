@@ -13,6 +13,7 @@ import { getCurrentUser } from '@/lib/session';
 import { paymentProvider } from '@/lib/payments';
 import { TRIAL_DAY_OPTIONS } from '@/lib/trials';
 import { containsBlockedContent } from '@/lib/content-policy';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 async function loadOwnedTier(tierId, userId) {
   const result = await query(
@@ -29,6 +30,9 @@ export async function PATCH(request, { params }) {
   if (!session || session.role !== 'creator') {
     return NextResponse.json({ error: 'Only creators can edit tiers.' }, { status: 403 });
   }
+
+  const rateCheck = await checkRateLimit('tier-modify', `user:${session.userId}`);
+  if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
   const { tierId } = params;
   const { name, description, active, welcomeMessage, trialDays } = await request.json();
@@ -143,6 +147,9 @@ export async function DELETE(request, { params }) {
   if (!session || session.role !== 'creator') {
     return NextResponse.json({ error: 'Only creators can delete tiers.' }, { status: 403 });
   }
+
+  const rateCheck = await checkRateLimit('tier-modify', `user:${session.userId}`);
+  if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
   const { tierId } = params;
 
