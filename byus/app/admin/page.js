@@ -13,6 +13,7 @@ import {
   loadSiteFeedback,
   loadCreatorWaitlist,
   loadCreatorReviewQueue,
+  loadPendingVideoReviewQueue,
   loadAdminTasks,
 } from '@/lib/admin-data';
 import { listPendingSmsBroadcastHolds, SMS_HOLD_THRESHOLD } from '@/lib/sms-holds';
@@ -45,7 +46,7 @@ export default async function AdminPage() {
   // trip was pure added latency on the server's response, which pushes out TTFB
   // and therefore this page's Real Experience Score. Running all seven together
   // cuts it to one round trip's worth of wall-clock time.
-  const [overviewResult, reportsResult, suggestionsResult, outreachResult, siteFeedbackResult, waitlistResult, reviewQueueResult, tasksResult, smsHoldsResult] =
+  const [overviewResult, reportsResult, suggestionsResult, outreachResult, siteFeedbackResult, waitlistResult, reviewQueueResult, videoReviewResult, tasksResult, smsHoldsResult] =
     await Promise.all([
       loadAdminOverview().catch((err) => {
         console.error('admin: overview load failed:', err);
@@ -87,6 +88,12 @@ export default async function AdminPage() {
           console.error('admin: creator review queue load failed:', err);
           return { reviewQueue: null, error: 'Could not load the creator review queue.' };
         }),
+      loadPendingVideoReviewQueue()
+        .then((videos) => ({ videos, error: '' }))
+        .catch((err) => {
+          console.error('admin: video moderation queue load failed:', err);
+          return { videos: null, error: 'Could not load pending videos.' };
+        }),
       loadAdminTasks()
         .then((tasks) => ({ tasks, error: '' }))
         .catch((err) => {
@@ -122,6 +129,8 @@ export default async function AdminPage() {
       initialWaitlistError={waitlistResult.error}
       initialReviewQueue={reviewQueueResult.reviewQueue}
       initialReviewQueueError={reviewQueueResult.error}
+      initialVideoReviewQueue={videoReviewResult.videos}
+      initialVideoReviewError={videoReviewResult.error}
       initialTasks={tasksResult.tasks}
       initialTasksError={tasksResult.error}
       initialSmsHolds={smsHoldsResult.holds}
