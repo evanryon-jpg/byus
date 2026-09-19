@@ -35,6 +35,7 @@ function SettingsClientInner({ initialUser, initialReferral, initialSuggestions 
       <AvatarCard user={user} onChanged={(profile_image_url) => setUser({ ...user, profile_image_url })} />
       <ProfileCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
       <NotificationsCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
+      <TextNotificationsCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
       <SupportVisibilityCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
       <ConnectPlatformsCard user={user} />
       <CreatorIntegrationsCard user={user} />
@@ -375,6 +376,196 @@ function NotificationsCard({ user, onChanged }) {
         />
       </label>
       {status && <p className="mt-2 text-xs text-red-600">{status.text}</p>}
+    </section>
+  );
+}
+
+// Lets a fan verify a phone number and get a text when a creator they're subscribed to
+// publishes -- see database/migrations/20260919_sms_notifications.sql and
+// app/api/creator/posts/route.js's notifySubscribersOfNewPostSms. Three states: no
+// verified number yet (enter one, get a code), a code outstanding (enter it), and a
+// verified number (toggle on/off, or remove it and start over). user.phone_last4/
+// phone_verified/notify_new_posts_sms come from the shared USER_SELECT_FIELDS in
+// lib/user-profile.js -- the full number itself is never sent to the browser.
+function TextNotificationsCard({ user, onChanged }) {
+  const [phone, setPhone] = useState('');
+  const [codeSentFor, setCodeSentFor] = useState(null); // the phone a code was just sent to, or null
+  const [code, setCode] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [togglingSms, setTogglingSms] = useState(false);
+
+  if (user.role !== 'fan') return null;
+
+  async function handleSendCode(e) {
+    e.preventDefault();
+    setBusy(true);
+    setError('');
+    try {
+      const res = await fetch('/api/fan/phone/send-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Could not send a code.');
+      setCodeSentFor(phone);
+      setCode('');
+    } catch (err) {
+      setError(err.message || 'Could not send a code.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleVerify(e) {
+    e.preventDefault();
+    setBusy(true);
+    setError('');
+    try {
+      const res = await fetch('/api/fan/phone/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: codeSentFor, code }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Could not verify that code.');
+      onChanged(result.user);
+      setPhone('');
+      setCode('');
+      setCodeSentFor(null);
+    } catch (err) {
+      setError(err.message || 'Could not verify that code.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleToggleSms(next) {
+    setTogglingSms(true);
+    setError('');
+    try {
+      const res = await fetch('/api/fan/phone', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notify_new_posts_sms: next }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Could not save this setting.');
+      onChanged(result.user);
+    } catch (err) {
+      setError(err.message || 'Could not save this setting.');
+    } finally {
+      setTogglingSms(false);
+    }
+  }
+
+  async function handleRemove() {
+    setBusy(true);
+    setError('');
+    try {
+      const res = await fetch('/api/fan/phone', { method: 'DELETE' });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Could not remove that number.');
+      onChanged(result.user);
+      setPhone('');
+      setCode('');
+      setCodeSentFor(null);
+    } catch (err) {
+      setError(err.message || 'Could not remove that number.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="mt-6 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
+      <h2 className="font-semibold">Text notifications</h2>
+
+      {user.phone_verified ? (
+        <>
+          <label className="mt-4 flex items-center justify-between gap-4">
+            <span>
+              <span className="block text-sm font-medium text-[#172033]">New post texts</span>
+              <span className="mt-0.5 block text-xs text-brand-ink/65">
+                Get a text at the number ending in {user.phone_last4} when a creator you're subscribed to publishes.
+              </span>
+            </span>
+            <input
+              type="checkbox"
+              checked={user.notify_new_posts_sms === true}
+              disabled={togglingSms}
+              onChange={(e) => handleToggleSms(e.target.checked)}
+              className="h-5 w-5 shrink-0 accent-[#0F766E]"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={handleRemove}
+            disabled={busy}
+            className="mt-3 text-xs font-medium text-red-600/70 hover:text-red-700 disabled:opacity-50"
+          >
+            Remove this number
+          </button>
+        </>
+      ) : codeSentFor ? (
+        <form onSubmit={handleVerify} className="mt-4">
+          <p className="text-sm text-brand-ink/65">Enter the code we texted to {codeSentFor}.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <input
+              type="text"
+              inputMode="numeric"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="6-digit code"
+              maxLength={6}
+              className="w-40 rounded-lg border border-brand-ink/10 px-3 py-1.5 text-sm"
+            />
+            <button
+              type="submit"
+              disabled={busy || code.length !== 6}
+              className="shrink-0 rounded-full bg-[#0F766E] px-4 py-1.5 text-sm font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
+            >
+              {busy ? 'Verifying…' : 'Verify'}
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setCodeSentFor(null);
+              setCode('');
+              setError('');
+            }}
+            className="mt-2 text-xs font-medium text-brand-ink/45 hover:text-brand-ink/70"
+          >
+            Use a different number
+          </button>
+        </form>
+      ) : (
+        <form onSubmit={handleSendCode} className="mt-4">
+          <p className="text-sm text-brand-ink/65">
+            Add a phone number to get a text when a creator you're subscribed to publishes.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+14155551234"
+              className="w-48 rounded-lg border border-brand-ink/10 px-3 py-1.5 text-sm"
+            />
+            <button
+              type="submit"
+              disabled={busy || !phone.trim()}
+              className="shrink-0 rounded-full bg-[#0F766E] px-4 py-1.5 text-sm font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
+            >
+              {busy ? 'Sending…' : 'Send code'}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {error && <p className="mt-3 text-xs text-red-600">{error}</p>}
     </section>
   );
 }
