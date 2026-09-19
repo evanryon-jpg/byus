@@ -9,15 +9,16 @@ import FeaturedCreators from './components/FeaturedCreators';
 import EarningsCalculator from './components/EarningsCalculator';
 import CreatorShowcase from './components/CreatorShowcase';
 import FeedbackWidget from './components/FeedbackWidget';
+import LiveActivityTicker from './components/LiveActivityTicker';
 
 // Server component so the hero and closing CTAs can tell whether someone is already
 // logged in -- an existing creator or fan should never be invited to sign up again,
 // they should be pointed straight back to the page they actually want.
 // FAQPage structured data for search engines -- built from the exact same FAQS array
 // FAQSection.jsx renders, so this can never say something the visible accordion
-// doesn't. The accordion only puts one answer's text in the DOM at a time (whichever
-// item is expanded); this script tag is what guarantees every Q&A is machine-readable
-// regardless of which one a visitor has open.
+// doesn't. (The accordion itself keeps every answer mounted in the DOM at once now --
+// see FAQSection.jsx -- but this script tag remains the authoritative machine-readable
+// copy Google reads, independent of which item a visitor has open.)
 const faqJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
@@ -39,6 +40,7 @@ export default async function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
       <FeedbackWidget />
+      <LiveActivityTicker />
       <Hero user={session} />
       <CreatorShowcase />
       <EarningsCalculator />
