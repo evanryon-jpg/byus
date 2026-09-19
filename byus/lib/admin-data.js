@@ -501,3 +501,25 @@ export async function loadSiteFeedback() {
     createdAt: row.created_at,
   }));
 }
+
+// The team's own internal punch-list (see database/migrations/20260919_admin_tasks.sql)
+// -- doing first since that's what's actively in flight, then todo, then done last so
+// finished work doesn't crowd out what still needs attention; newest-first within each
+// bucket.
+export async function loadAdminTasks() {
+  const result = await query(
+    `SELECT id, title, status, category, notes, created_at, updated_at
+     FROM admin_tasks
+     ORDER BY CASE status WHEN 'doing' THEN 0 WHEN 'todo' THEN 1 ELSE 2 END, created_at DESC
+     LIMIT 500`
+  );
+  return result.rows.map((row) => ({
+    id: row.id,
+    title: row.title,
+    status: row.status,
+    category: row.category || '',
+    notes: row.notes || '',
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }));
+}
