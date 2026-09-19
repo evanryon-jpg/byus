@@ -39,6 +39,7 @@ import {
   FOUNDING_CREATOR_LIMIT,
 } from './pricing';
 import { rewardCreatorReferrerLaunch } from './referrals';
+import { getAdminEmails } from './admin';
 
 // This creator's signup rank among every creator account ever created, oldest first.
 // Rank 1 is the very first creator on ByUs. Computed live off `created_at` (tie-broken by
@@ -49,9 +50,11 @@ export async function getFoundingCreatorRank(queryFn, creatorId) {
   const result = await queryFn(
     `SELECT rank FROM (
        SELECT id, ROW_NUMBER() OVER (ORDER BY created_at, id) AS rank
-       FROM users WHERE role = 'creator'
+       FROM users
+       WHERE role = 'creator'
+         AND NOT (LOWER(email) = ANY($2::text[]))
      ) ranked WHERE id = $1`,
-    [creatorId]
+    [creatorId, getAdminEmails()]
   );
   return result.rows[0] ? Number(result.rows[0].rank) : null;
 }
@@ -68,7 +71,13 @@ export async function isFoundingCreator(queryFn, creatorId) {
 // founding spots are already claimed by a real creator account right now, so the copy
 // never overstates (or understates) what's actually left.
 export async function getFoundingPromoStats(queryFn) {
-  const result = await queryFn(`SELECT COUNT(*)::int AS count FROM users WHERE role = 'creator'`);
+  const result = await queryFn(
+    `SELECT COUNT(*)::int AS count
+     FROM users
+     WHERE role = 'creator'
+       AND NOT (LOWER(email) = ANY($1::text[]))`,
+    [getAdminEmails()]
+  );
   const claimed = Math.min(result.rows[0].count, FOUNDING_CREATOR_LIMIT);
   return { limit: FOUNDING_CREATOR_LIMIT, claimed, remaining: FOUNDING_CREATOR_LIMIT - claimed };
 }
