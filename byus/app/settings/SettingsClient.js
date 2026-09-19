@@ -758,8 +758,9 @@ function RssImportCard({ user, onChanged }) {
       <h2 className="font-semibold">Blog RSS import</h2>
       <p className="mt-1 text-sm text-brand-ink/65">
         Connect your blog's RSS or Atom feed and pull your posts onto your ByUs page — no
-        copy-pasting. Each entry becomes a post here the first time you sync; re-syncing only
-        adds what's new.
+        copy-pasting. This isn't a one-time migration: come back and hit "Sync now" any time
+        you publish something new, and only the new entries get imported. There's no automatic
+        sync yet, so nothing pulls in until you click it.
       </p>
 
       <form onSubmit={handleSave} className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
