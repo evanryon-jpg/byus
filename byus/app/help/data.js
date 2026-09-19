@@ -157,7 +157,7 @@ export const HELP_CATEGORIES = [
       },
       {
         q: 'Can I upload videos I already have?',
-        a: 'Yes. In the Posts card on your creator dashboard, use the optional Video field to choose a prerecorded video file from your device. ByUs uploads and processes it for playback, then you can publish that post publicly or for subscribers only. Videos are added one post at a time; automatic imports of an entire YouTube, TikTok, or Patreon library are not available yet.',
+        a: 'Yes. The original platform does not matter if you have the video file and the right to reuse it. From the Posts card on your creator dashboard, choose an MP4, MOV, WebM, or M4V file from your device—whether it is your original TikTok or YouTube upload, a phone recording, or an edited export. ByUs processes it for playback, and you can publish the post publicly or for subscribers only. ByUs cannot pull a video from a TikTok or YouTube link or bulk-import a channel or library; videos are added one post at a time.',
       },
       {
         q: 'How do fans search or filter my posts?',
