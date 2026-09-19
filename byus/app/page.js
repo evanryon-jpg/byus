@@ -94,8 +94,8 @@ function FoundingCreatorProgram({ stats }) {
     },
     {
       icon: <FastForwardIcon />,
-      title: 'Skip the $2,000/mo wait',
-      body: `Standard accounts reach 10% once they're earning $2,000/mo on ByUs. Founding creators start there, from day one.`,
+      title: 'Lowest rate from day one',
+      body: `Founding creators lock in a 10% all-in platform fee from the beginning — and keep it for good.`,
     },
   ];
 
@@ -115,8 +115,8 @@ function FoundingCreatorProgram({ stats }) {
           {stats.limit} spots. <span className="text-brand-gold">10% forever.</span>
         </p>
         <p className="mx-auto mt-4 max-w-lg text-brand-paper/70">
-          The first {stats.limit} creators to join lock in our lowest fee for good — everyone else
-          earns their way there at $2,000/mo.
+          The first {stats.limit} creators to join lock in our lowest fee for good. No deadline,
+          application, or earnings requirement.
         </p>
         <div className="mx-auto mt-8 grid max-w-3xl gap-4 text-left sm:grid-cols-3">
           {perks.map((p) => (

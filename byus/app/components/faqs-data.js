@@ -23,7 +23,7 @@ export const FAQS = [
   },
   {
     q: 'How does the platform fee work?',
-    a: "Here's the honest version: everyone starts each calendar month at a 13% fee. Cross $2,000 in ByUs earnings that same month and it automatically drops to 10% for the rest of it — no forms, no asking. New month, clean slate: you're back to 13% until you hit $2,000 again, so a slower month just means the standard rate, not a penalty. Bottom line, you keep 87% normally (90% once you've hit the discount) of each standard domestic payment, paid straight into your own Stripe account. Standard domestic processing is baked into that fee; things like currency conversion, instant payouts, taxes, disputes, or unusual processor costs are billed separately and we'll always spell those out when they apply.",
+    a: "ByUs's standard all-in platform fee is 13% of each payment. The first 100 founding creators lock in a 10% rate for good. Standard domestic payment processing is included, and the rest is paid straight into the creator's connected Stripe account. Currency conversion, instant payouts, taxes, disputes, or unusual processor costs may apply separately, and we'll spell those out when they do.",
   },
   {
     q: 'When and how do creators get paid?',
@@ -39,7 +39,7 @@ export const FAQS = [
   },
   {
     q: 'Does it cost anything to become a creator?',
-    a: "Nope — setting up your page costs nothing, zero listing fees, zero setup fees. We only make money when you do: the all-in fee is 13%, dropping to 10% for any month with at least $2,000 in ByUs earnings and returning to 13% the following month if it doesn't happen again. Join as one of the first 100 founding creators, though, and you lock in 10% forever — no threshold required.",
+    a: "Nope — setting up your page costs nothing, with zero listing fees and zero setup fees. We only make money when you do. The standard all-in fee is 13%, while the first 100 founding creators lock in a 10% rate forever.",
   },
   {
     q: 'Can a creator offer more than one tier?',

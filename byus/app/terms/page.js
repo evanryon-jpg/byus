@@ -42,9 +42,8 @@ export default function TermsPage() {
             or annual subscription tiers. Payments are processed through Stripe, and each creator
             connects their own Stripe account to receive payouts. ByUs&rsquo;s standard all-in fee is
             currently 13% of each payment and includes standard domestic payment processing. The
-            first 100 founding creators receive a 10% rate from day one, and other creators qualify
-            for a 10% rate during calendar months when their gross ByUs revenue reaches $2,000.
-            Separate promotional fee credits may also apply. The rate actually charged is shown in
+            first 100 founding creators receive a 10% rate from day one. Separate promotional fee
+            credits may also apply. The rate actually charged is shown in
             the creator dashboard and checkout flow, and ByUs routes the remaining proceeds to the
             creator&rsquo;s connected Stripe account. Currency conversion, instant payouts, taxes,
             disputes, nonstandard payment methods, or other exceptional processor charges may apply

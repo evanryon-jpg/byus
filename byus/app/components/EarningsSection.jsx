@@ -5,7 +5,7 @@ import MonthlyBarChart from './charts/MonthlyBarChart';
 import { formatUSD, formatCompactUSD } from '@/lib/format';
 
 // The creator's real earnings view: what they've made, where that puts them on the
-// platform fee tier, and how revenue and subscribers have moved over the last year.
+// current platform fee, and how revenue and subscribers have moved over the last year.
 // Self-fetching, same pattern as the other dashboard cards -- loads its own state on
 // mount rather than threading it through the parent.
 //
@@ -29,12 +29,7 @@ export default function EarningsSection() {
   if (!data) return null;
 
   const {
-    feePercent,
     effectiveFeePercent,
-    platformReductionPoints,
-    discountedFeePercent,
-    thresholdCents,
-    monthToDateGrossCents,
     lifetimeGrossCents,
     lifetimeNetCents,
     activeSubscriberCount,
@@ -46,51 +41,16 @@ export default function EarningsSection() {
   const thisMonth = monthly[monthly.length - 1];
   const netNewThisMonth = thisMonth?.netNewSubscribers ?? 0;
 
-  const isDiscountedThisMonth = feePercent <= discountedFeePercent;
-  const progress = Math.min(1, monthToDateGrossCents / thresholdCents);
   const hasAnyActivity =
     lifetimeGrossCents > 0 || activeSubscriberCount > 0 || monthly.some((m) => m.newSubscribers > 0);
-  const hasPlatformBonus = platformReductionPoints > 0;
 
   return (
     <div className="mt-4 space-y-4">
-      {/* Fee tier — your own personal tier (13% -> 10% for any month you cross $2k, back to
-          13% the next month if you don't), plus whatever ByUs's own growth milestones have
-          knocked off on top of that for everyone. */}
       <div className="rounded-xl bg-brand-ink/[0.03] p-4">
-        {isDiscountedThisMonth ? (
-          <p className="text-sm text-[#0F766E]">
-            🎉 You've crossed ${(thresholdCents / 100).toLocaleString()} in earnings this month —
-            {' '}{feePercent}% platform fee for the rest of the month. Starting next month you're
-            back to the standard rate unless you cross ${(thresholdCents / 100).toLocaleString()} again.
-          </p>
-        ) : (
-          <>
-            <p className="text-sm text-brand-ink/70">
-              You're on the {feePercent}% rate. Cross ${(thresholdCents / 100).toLocaleString()} in
-              earnings this month and your fee drops to {discountedFeePercent}% for the rest of the
-              month — for every subscriber, not just new ones.
-            </p>
-            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-brand-ink/10">
-              <div
-                className="h-full rounded-full bg-[#0F766E] transition-all"
-                style={{ width: `${progress * 100}%` }}
-              />
-            </div>
-            <p className="mt-1 text-xs text-brand-ink/60">
-              ${(monthToDateGrossCents / 100).toFixed(2)} of ${(thresholdCents / 100).toLocaleString()} this month
-            </p>
-          </>
-        )}
-        <p className="mt-2 text-xs text-brand-ink/60">
-          Based on what you earn each month, not lifetime — it resets on the 1st.
+        <p className="text-sm text-brand-ink/70">
+          Your current all-in platform fee is {effectiveFeePercent}%. Standard domestic payment
+          processing is included, and your earnings go directly to your connected Stripe account.
         </p>
-        {hasPlatformBonus && (
-          <p className="mt-2 text-xs text-[#0F766E]">
-            🌱 Plus an extra {platformReductionPoints}pt off from ByUs's own growth milestones — you're
-            actually paying {effectiveFeePercent}% right now. See the goal gauge on the homepage.
-          </p>
-        )}
       </div>
 
       {/* Stat tiles */}

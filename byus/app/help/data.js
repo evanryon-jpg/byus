@@ -85,7 +85,7 @@ export const HELP_CATEGORIES = [
     articles: [
       {
         q: 'How much does ByUs take from a creator’s earnings?',
-        a: "ByUs's all-in fee starts at 13% and drops to 10% for any calendar month a creator's earnings on ByUs reach $2,000 gross — moving back to 13% the next month if that threshold isn't met again. The same rate applies to tips and subscriptions, and standard domestic payment processing is included. Currency conversion, instant payouts, taxes, disputes, and exceptional processor costs may apply separately and will be disclosed where applicable.",
+        a: "ByUs's standard all-in platform fee is 13% of each payment. The first 100 founding creators lock in a 10% rate for good. The same rate applies to tips and subscriptions, and standard domestic payment processing is included. Currency conversion, instant payouts, taxes, disputes, and exceptional processor costs may apply separately and will be disclosed where applicable.",
       },
       {
         q: 'When do creators get paid?',
