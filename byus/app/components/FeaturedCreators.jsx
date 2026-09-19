@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import FoundingBadge from './FoundingBadge';
 
 // Real creators only, sorted by popularity -- the same /api/creators?sort=popular the
 // browse page already uses. Nothing here is placeholder or mock data: see the
@@ -58,9 +59,7 @@ export default function FeaturedCreators() {
               <div className="flex items-center gap-1.5">
                 <h3 className="truncate font-semibold text-[#172033]">{c.display_name || 'Unnamed creator'}</h3>
                 {c.is_founding && (
-                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-clay px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-[#F8FAFC]">
-                    Founding
-                  </span>
+                  <FoundingBadge rank={c.founding_creator_rank} limit={c.founding_creator_limit} />
                 )}
               </div>
               {c.bio && <p className="mt-0.5 truncate text-xs text-brand-ink/65">{c.bio}</p>}
