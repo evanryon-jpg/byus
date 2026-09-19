@@ -280,10 +280,10 @@ function Hero({ user }) {
                   to either CTA yet, this answers "okay, but how does it actually work"
                   without leaving the page. */}
               <a
-                href="#how-it-works"
+                href="#creator-walkthrough"
                 className="rounded-full border-2 border-brand-paper/30 bg-brand-paper/10 px-7 py-3.5 text-base font-semibold text-brand-paper backdrop-blur transition hover:border-brand-gold hover:bg-brand-paper/15"
               >
-                See How It Works
+                ▶ Watch the 37-second demo
               </a>
             </div>
 
