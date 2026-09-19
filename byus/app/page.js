@@ -4,10 +4,7 @@ import { query } from '@/lib/db';
 import { getFoundingPromoStats } from '@/lib/fees';
 import FAQSection from './components/FAQSection';
 import { FAQS } from './components/faqs-data';
-import CreatorSearch from './components/CreatorSearch';
-import FeaturedCreators from './components/FeaturedCreators';
 import EarningsCalculator from './components/EarningsCalculator';
-import CreatorShowcase from './components/CreatorShowcase';
 import FeedbackWidget from './components/FeedbackWidget';
 import LiveActivityTicker from './components/LiveActivityTicker';
 import CreatorWalkthrough from './components/CreatorWalkthrough';
@@ -43,21 +40,17 @@ export default async function HomePage() {
       <FeedbackWidget />
       <LiveActivityTicker />
       <Hero user={session} />
-      <CreatorWalkthrough user={session} />
-      <CreatorShowcase />
+      <CreatorWalkthrough />
       <EarningsCalculator />
       <Features />
       <FoundingCreatorProgram stats={foundingStats} />
       <HowItWorks />
-      <LookingForSomeoneSection />
-      <FeaturedCreators />
       <FAQSection />
-      <WhyWeBuiltByUs />
+      <WhyWeBuiltByUs user={session} />
       {/* PlatformGoalGauge (app/components/PlatformGoalGauge.jsx) pulled for now -- with
           one creator and no revenue yet, "our best month so far: $0.00" reads as a red
           flag to a visitor rather than a growth story. Bring it back once there's an
           actual best month worth showing. */}
-      <ClosingCta user={session} />
     </div>
   );
 }
@@ -287,22 +280,6 @@ function Hero({ user }) {
               </a>
             </div>
 
-            {/* The live-demo link, demoted from a filled pill to plain text with a small
-                live-pulse dot -- it still lets a skeptical creator click through the
-                whole product (tiers, a locked post unlocking, the payout math) before
-                committing to an account, but it no longer competes with the two primary
-                CTAs above for the first look. */}
-            <p className="mt-5 flex items-center gap-2 text-sm text-brand-paper/85">
-              <span className="relative flex h-2 w-2" aria-hidden="true">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-gold opacity-70" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-brand-gold" />
-              </span>
-              <a href="/demo" className="font-semibold underline-offset-2 hover:underline">
-                View a live demo
-              </a>
-              — no sign-up required
-            </p>
-
             <ul
               aria-label="Creator account highlights"
               className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-brand-paper/90"
@@ -432,19 +409,6 @@ function LockGlyphLarge() {
 // visitor has any reason to have a name in mind would compete with the pitch for
 // the first look. By the time someone's scrolled past the numbers, they're ready
 // to either start their own page or go looking for one they already have in mind.
-function LookingForSomeoneSection() {
-  return (
-    <section className="mx-auto max-w-xl px-6 py-2 text-center">
-      <p className="font-display text-sm font-semibold uppercase tracking-wide text-brand-ink/50">
-        Looking for someone specific?
-      </p>
-      <div className="mt-2 flex justify-center">
-        <CreatorSearch />
-      </div>
-    </section>
-  );
-}
-
 // Replaces the old icon+text feature cards with small, realistic previews of the
 // product itself -- a mock payout breakdown, a mock tier picker, and a locked post --
 // so a visitor sees roughly what these look like inside ByUs instead of reading an
@@ -465,25 +429,11 @@ function Features() {
         </p>
       </div>
 
-      {/* Eight cards in one grid -- previously Direct payouts sat in an oversized
-          slot beside a stacked 2x2 of the rest, sized with h-full so it stretched to
-          match whatever height the stack beside it happened to reach. That worked at
-          four compact cards; once Engagement became a fifth, the stack grew taller
-          than the payout card needed and the stretch left a large empty gap inside
-          it. All cards now share one card treatment and one grid, so each card is
-          exactly as tall as its own content instead of being stretched to match a
-          sibling column. Uploaded video is the seventh compact card; Text notifications
-          takes the wide "newest shipment" slot Engagement held until this one shipped --
-          see SmsNotificationsDemo below. */}
-      <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <PayoutDemo />
+      <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2">
         <TiersDemo />
-        <GatedContentDemo />
         <CommunitySyncDemo />
-        <RssImportDemo />
+        <ContentImportDemo />
         <EngagementDemo />
-        <VideoUploadDemo />
-        <SmsNotificationsDemo />
       </div>
     </section>
   );
@@ -529,6 +479,9 @@ function TiersDemo() {
     <div className="rounded-2xl border border-brand-ink/15 bg-brand-paper p-6 shadow-sm">
       <span className="text-xs font-extrabold uppercase tracking-wide text-[#0F766E]">Tiered memberships</span>
       <h3 className="mt-2 font-display text-lg font-bold text-[#172033]">Fans pick what fits</h3>
+      <p className="mt-2 text-sm leading-relaxed text-brand-ink/70">
+        Set your own prices and choose which posts are public or reserved for members.
+      </p>
       <div className="mt-4 space-y-2">
         {tiers.map((t) => (
           <div
@@ -586,11 +539,11 @@ function GatedContentDemo() {
 function CommunitySyncDemo() {
   return (
     <div className="rounded-2xl border border-brand-ink/15 bg-brand-paper p-6 shadow-sm">
-      <span className="text-xs font-extrabold uppercase tracking-wide text-[#5865F2]">Discord &amp; Telegram</span>
+      <span className="text-xs font-extrabold uppercase tracking-wide text-[#5865F2]">Community tools</span>
       <h3 className="mt-2 font-display text-lg font-bold text-[#172033]">Community, synced automatically</h3>
       <p className="mt-2 text-sm leading-relaxed text-brand-ink/70">
-        Connect a Discord server or Telegram group and subscribers get a role or an invite the
-        moment they join — removed automatically if they ever cancel.
+        Connect Discord or Telegram for automatic member access, and let fans opt into text
+        notifications when you publish something new.
       </p>
     </div>
   );
@@ -601,14 +554,14 @@ function CommunitySyncDemo() {
 // into ByUs -- not a private feed ByUs hands back out to fans. Orange as this card's accent
 // is the closest thing RSS has to a brand color, same "borrow a color that's actually its
 // own" reasoning as GatedContentDemo (brand-clay) and CommunitySyncDemo (Discord blurple).
-function RssImportDemo() {
+function ContentImportDemo() {
   return (
     <div className="rounded-2xl border border-brand-ink/15 bg-brand-paper p-6 shadow-sm">
-      <span className="text-xs font-extrabold uppercase tracking-wide text-[#EA580C]">RSS import</span>
-      <h3 className="mt-2 font-display text-lg font-bold text-[#172033]">Already blogging? Bring it with you</h3>
+      <span className="text-xs font-extrabold uppercase tracking-wide text-[#EA580C]">Bring your content</span>
+      <h3 className="mt-2 font-display text-lg font-bold text-[#172033]">Start with work you already own</h3>
       <p className="mt-2 text-sm leading-relaxed text-brand-ink/70">
-        Point ByUs at your WordPress, Ghost, or Substack feed, then sync in one click any time
-        you publish — no copy-pasting, no second place to write.
+        Import posts from WordPress, Ghost, or Substack by RSS, or upload video files from your
+        device. Link imports and bulk channel transfers are not currently supported.
       </p>
     </div>
   );
@@ -776,28 +729,26 @@ function HowItWorks() {
 }
 
 
-function WhyWeBuiltByUs() {
+function WhyWeBuiltByUs({ user }) {
+  const dashboardHref = user?.role === 'creator' ? '/creator/dashboard' : '/fan/dashboard';
   return (
-    <section className="relative overflow-hidden bg-brand-cream">
+    <section className="relative overflow-hidden bg-brand-teal">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -right-28 top-1/2 h-72 w-72 -translate-y-1/2 rounded-full bg-brand-gold/15 blur-3xl"
       />
-      <div className="relative mx-auto max-w-4xl px-6 py-16 sm:py-20">
-        <div className="rounded-3xl border border-brand-ink/10 bg-brand-paper px-7 py-10 shadow-sm sm:px-12 sm:py-12">
-          <span className="text-xs font-extrabold uppercase tracking-[0.18em] text-brand-clay">
+      <div className="relative mx-auto max-w-4xl px-6 py-14 sm:py-16">
+        <div className="text-center">
+          <span className="text-xs font-extrabold uppercase tracking-[0.18em] text-brand-gold">
             Our reason for building ByUs
           </span>
-          <h2 className="mt-4 font-display text-3xl font-semibold text-[#172033] sm:text-4xl">
+          <h2 className="mt-4 font-display text-3xl font-semibold text-white sm:text-4xl">
             Creators deserve better.
           </h2>
-          <div className="mt-6 space-y-4 text-base leading-relaxed text-brand-ink/75 sm:text-lg">
+          <div className="mx-auto mt-5 max-w-2xl space-y-3 text-base leading-relaxed text-white/80">
             <p>
               ByUs began with a conversation. A creator told us that a supporter spent $500 sending
               her virtual gifts on another platform—but only about $200 reached her.
-            </p>
-            <p className="font-display text-xl font-semibold text-brand-teal">
-              That didn&rsquo;t feel right.
             </p>
             <p>
               Creators do the work, build the communities, and create the value. They deserve to
@@ -806,58 +757,18 @@ function WhyWeBuiltByUs() {
               conversions.
             </p>
           </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ClosingCta({ user }) {
-  const dashboardHref = user?.role === 'creator' ? '/creator/dashboard' : '/fan/dashboard';
-
-  return (
-    <section className="relative overflow-hidden bg-brand-teal">
-      <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-brand-gold/20 blur-3xl" />
-      <div className="mx-auto max-w-3xl px-6 py-14 text-center">
-        <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-brand-gold">
-          {user ? 'Your ByUs account' : 'Now welcoming founding creators'}
-        </p>
-        <h2 className="mt-3 font-display text-3xl font-semibold text-white sm:text-4xl">
-          {user ? 'Welcome back.' : 'Be one of the first creators on ByUs.'}
-        </h2>
-        <p className="mx-auto mt-4 max-w-xl text-white/75">
-          {user
-            ? 'Pick up right where you left off.'
-            : 'We’re building our founding creator community now. Set up your page, shape the early experience, and lock in the founding rate.'}
-        </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-4">
-          {user ? (
-            <a
-              href={dashboardHref}
-              className="rounded-full bg-brand-paper px-7 py-3 font-semibold text-brand-teal shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
-            >
-              Go to your dashboard
-            </a>
-          ) : (
-            <a
-              href="/signup?role=creator"
-              className="rounded-full bg-brand-paper px-7 py-3 font-semibold text-brand-teal shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
-            >
-              Join as a founding creator
-            </a>
-          )}
           <a
-            href="#creator-examples"
-            className="rounded-full border border-white/40 px-7 py-3 font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/10"
+            href={user ? dashboardHref : '/signup?role=creator'}
+            className="mt-7 inline-flex rounded-full bg-brand-paper px-7 py-3 font-semibold text-brand-teal shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
           >
-            Explore example creator pages
+            {user ? 'Go to your dashboard' : 'Join the creator waitlist'} →
           </a>
+          {!user && (
+            <p className="mt-4 text-xs text-white/60">
+              No follower minimum · Payments secured by Stripe
+            </p>
+          )}
         </div>
-        {!user && (
-          <p className="mt-5 text-xs text-white/60">
-            No follower minimum · Payments secured by Stripe
-          </p>
-        )}
       </div>
     </section>
   );
