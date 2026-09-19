@@ -418,6 +418,24 @@ const limiters = {
     limiter: Ratelimit.slidingWindow(20, '1 h'),
     prefix: 'rl:telegram-link',
   }),
+  // Guards POST /api/fan/phone/send-code -- each call sends a real text through a
+  // paid provider (sent.dm), unlike telegram-link's free deep link, so this is
+  // tighter: enough for someone retrying a typo'd number a few times, not enough for
+  // it to become a way to run up someone else's SMS bill or spam an arbitrary number.
+  'phone-verify-send': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(5, '1 h'),
+    prefix: 'rl:phone-verify-send',
+  }),
+  // Guards POST /api/fan/phone/verify. Looser than the send limit above -- checking a
+  // code you already received is much lower-cost to allow generously -- but still
+  // bounded on top of phone-verification.js's own per-code CODE_MAX_ATTEMPTS, as a
+  // floor against a script hammering the endpoint across many different codes.
+  'phone-verify-check': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(20, '1 h'),
+    prefix: 'rl:phone-verify-check',
+  }),
 };
 
 // Best-effort client IP. Vercel always sets x-forwarded-for in production; the

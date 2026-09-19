@@ -13,12 +13,20 @@ import { FOUNDING_CREATOR_LIMIT, DISCOUNTED_FEE_PERCENT } from '@/lib/pricing';
 import { isAdmin } from '@/lib/admin';
 import { publicAvatarUrl } from '@/lib/avatar-url';
 
+// phone itself is deliberately left out of this shared select -- the client never
+// needs the full number once it's verified (see PhoneNotificationsCard in
+// app/settings/SettingsClient.js, which only ever shows the last 4 digits), so there's
+// no reason to ship it to the browser at all. phone_last4/phone_verified are computed
+// here instead of being real columns.
 export const USER_SELECT_FIELDS = `id, email, role, display_name, bio, profile_image_url,
        stripe_connect_onboarded, content_policy_accepted_at, review_cleared_at, tags,
        email_verified, platform_fee_percent, notify_new_posts,
        show_support_publicly, support_goal_cents, zero_fee_promo_expires_at,
        discord_guild_id, discord_subscriber_role_id, telegram_chat_id,
-       rss_feed_url, rss_last_synced_at, rss_last_sync_error`;
+       rss_feed_url, rss_last_synced_at, rss_last_sync_error,
+       (phone_verified_at IS NOT NULL) AS phone_verified,
+       CASE WHEN phone_verified_at IS NOT NULL THEN right(phone, 4) ELSE NULL END AS phone_last4,
+       notify_new_posts_sms`;
 
 // profile_image_url in the DB is a private Blob pathname (or a `preset:<id>`
 // marker), never exposed directly — point the client at our own public proxy
