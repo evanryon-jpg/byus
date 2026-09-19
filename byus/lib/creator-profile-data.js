@@ -11,7 +11,8 @@ import { query } from '@/lib/db';
 import { signPlaybackToken } from '@/lib/mux-jwt';
 import { getPollVoteCounts, getMyPollVotes, buildPollPayload } from '@/lib/polls';
 import { publicAvatarUrl } from '@/lib/avatar-url';
-import { isFoundingCreator } from '@/lib/fees';
+import { getFoundingCreatorRank } from '@/lib/fees';
+import { FOUNDING_CREATOR_LIMIT } from '@/lib/pricing';
 import { recordPaymentEvidenceBestEffort } from '@/lib/payment-evidence';
 
 // Returns null if no such (non-suspended) creator exists — callers render their own
@@ -64,6 +65,14 @@ export async function loadCreatorProfile(creatorId, session) {
   if (!creatorRow) return null;
 
   const id = creatorRow.id; // resolved UUID — everything below queries by this, not the raw param
+  // Same live-computed rank lib/user-profile.js uses for the dashboard's own "you're
+  // founding creator #N" view (getFoundingCreatorRank, lib/fees.js) — reused here so the
+  // public badge's number can never drift from what actually grants the permanent 10%
+  // fee. One query gets both is_founding and the rank shown on the badge, rather than
+  // the two separate lookups isFoundingCreator()+a second rank query would need.
+  const foundingRank = await getFoundingCreatorRank(query, id);
+  const isFounding = foundingRank !== null && foundingRank <= FOUNDING_CREATOR_LIMIT;
+
   // profile_image_url in the DB is a private Blob pathname — point the client at our
   // own public proxy route instead of exposing it directly. Built explicitly (not a
   // spread of creatorRow) so mux_playback_id never leaks into the public payload —
@@ -82,7 +91,9 @@ export async function loadCreatorProfile(creatorId, session) {
     // One of the first FOUNDING_CREATOR_LIMIT creators on ByUs (see lib/fees.js) — same
     // check that grants the permanent 10% fee, reused here so the public "Founding
     // Creator" badge on this page can never drift out of sync with who actually has it.
-    is_founding: await isFoundingCreator(query, id),
+    is_founding: isFounding,
+    founding_creator_rank: isFounding ? foundingRank : null,
+    founding_creator_limit: FOUNDING_CREATOR_LIMIT,
   };
 
   // A creator's optional monthly support goal (set in their dashboard) shown as a
