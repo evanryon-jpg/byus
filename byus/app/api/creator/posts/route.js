@@ -13,7 +13,7 @@ import { buildPollPayload } from '@/lib/polls';
 import { createBroadcastJob, processBroadcastJobChunk } from '@/lib/broadcast-jobs';
 import { containsBlockedContent } from '@/lib/content-policy';
 import { loadCreatorPosts } from '@/lib/creator-dashboard-data';
-import { getUpload, getAsset } from '@/lib/mux';
+import { createModerationJob, getUpload, getAsset } from '@/lib/mux';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { sendSms, isSmsConfigured, SMS_BATCH_SIZE } from '@/lib/sms';
 import { createSmsBroadcastHold, SMS_HOLD_THRESHOLD } from '@/lib/sms-holds';
@@ -176,8 +176,8 @@ export async function POST(request) {
     // /api/creator/upload, stored as-is — it's only ever resolved back into
     // real file bytes through the gated /api/posts/:id/media route.
     const result = await query(
-      `INSERT INTO posts (creator_id, title, body, media_url, visibility, poll_options, pending_review, mux_asset_id, mux_playback_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `INSERT INTO posts (creator_id, title, body, media_url, visibility, poll_options, pending_review, mux_asset_id, mux_playback_id, video_moderation_status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        RETURNING id, title, body, media_url, visibility, poll_options, pending_review, created_at, mux_playback_id`,
       [
         session.userId,
@@ -189,12 +189,34 @@ export async function POST(request) {
         pendingReview,
         muxAssetId,
         muxPlaybackId,
+        videoUploadId ? 'queued' : 'not_required',
       ]
     );
 
     // eslint-disable-next-line no-unused-vars -- mux_playback_id pulled out so it never
     // gets echoed back raw in the response below (see has_video instead).
     const { mux_playback_id: _muxPlaybackId, ...post } = result.rows[0];
+
+    // Keep the post hidden if Mux Robots is unavailable. A failed scan is surfaced in
+    // the existing human queue rather than turning a provider outage into a bypass.
+    if (muxAssetId) {
+      try {
+        const moderationJob = await createModerationJob(muxAssetId);
+        await query(
+          `UPDATE posts
+           SET video_moderation_status = 'scanning', video_moderation_job_id = $2
+           WHERE id = $1 AND video_moderation_status = 'queued'`,
+          [post.id, moderationJob.id]
+        );
+      } catch (err) {
+        console.error('Mux moderation job creation failed:', err);
+        await query(
+          `UPDATE posts SET video_moderation_status = 'scan_failed'
+           WHERE id = $1 AND video_moderation_status = 'queued'`,
+          [post.id]
+        );
+      }
+    }
 
     // Best-effort — a notification failure should never mean the post itself didn't get
     // created. Goes out to every active subscriber who hasn't turned this off, regardless

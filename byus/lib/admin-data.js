@@ -383,6 +383,7 @@ export async function loadCreatorReviewQueue() {
 export async function loadPendingVideoReviewQueue() {
   const result = await query(
     `SELECT p.id, p.title, p.body, p.visibility, p.created_at, p.mux_playback_id,
+            p.video_moderation_status, p.video_moderation_scores, p.video_moderated_at,
             u.id AS creator_id, u.display_name AS creator_name, u.email AS creator_email,
             u.review_cleared_at
      FROM posts p
@@ -403,6 +404,9 @@ export async function loadPendingVideoReviewQueue() {
     creatorName: row.creator_name,
     creatorEmail: row.creator_email,
     creatorReviewCleared: Boolean(row.review_cleared_at),
+    moderationStatus: row.video_moderation_status,
+    moderationScores: row.video_moderation_scores,
+    moderatedAt: row.video_moderated_at,
     video: {
       playbackId: row.mux_playback_id,
       playbackToken: signPlaybackToken(row.mux_playback_id),

@@ -79,6 +79,24 @@ export async function getAsset(assetId) {
   return muxFetch(`/video/v1/assets/${assetId}`);
 }
 
+// Mux Robots moderation samples frames and scores them for sexual and violent
+// content. The first pass is intentionally inexpensive; the webhook starts a denser
+// second pass only when a result lands close to either threshold.
+export async function createModerationJob(assetId, { dense = false } = {}) {
+  return muxFetch('/robots/v0/jobs/moderate', {
+    method: 'POST',
+    body: JSON.stringify({
+      parameters: {
+        asset_id: assetId,
+        thresholds: { sexual: 0.6, violence: 0.7 },
+        ...(dense
+          ? { sampling_interval: 5, max_samples: 120 }
+          : { max_samples: 20 }),
+      },
+    }),
+  });
+}
+
 // Best-effort cleanup when a video post is deleted -- an orphaned Mux asset costs
 // storage/minutes, not correctness, so callers swallow this rather than let a Mux
 // hiccup block the deletion the creator actually asked for (same pattern as the Blob

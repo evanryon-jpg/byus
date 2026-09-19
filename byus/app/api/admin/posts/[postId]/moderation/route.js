@@ -47,7 +47,13 @@ export async function POST(request, { params }) {
           { status: 409 }
         );
       }
-      await query('UPDATE posts SET pending_review = false WHERE id = $1', [postId]);
+      await query(
+        `UPDATE posts
+         SET pending_review = false, video_moderation_status = 'manual_approved',
+             video_moderated_at = now()
+         WHERE id = $1`,
+        [postId]
+      );
       return NextResponse.json({ approved: true });
     }
 

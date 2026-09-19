@@ -44,8 +44,13 @@ export async function POST(request, { params }) {
     // Clearing the creator's one-time account review must never bypass per-video
     // moderation. Only non-video posts are released here; videos have their own queue.
     await query(
-      `UPDATE posts SET pending_review = false
-       WHERE creator_id = $1 AND mux_playback_id IS NULL`,
+      `UPDATE posts SET pending_review = false,
+          video_moderation_status = CASE
+            WHEN video_moderation_status = 'approved_creator_pending' THEN 'approved'
+            ELSE video_moderation_status
+          END
+       WHERE creator_id = $1
+         AND (mux_playback_id IS NULL OR video_moderation_status = 'approved_creator_pending')`,
       [params.id]
     );
 
