@@ -16,6 +16,8 @@ import { loadCreatorPosts } from '@/lib/creator-dashboard-data';
 import { getUpload, getAsset } from '@/lib/mux';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { sendSms, isSmsConfigured, SMS_BATCH_SIZE } from '@/lib/sms';
+import { createSmsBroadcastHold, SMS_HOLD_THRESHOLD } from '@/lib/sms-holds';
+import { alertOps } from '@/lib/alerts';
 
 // This request already has to wait on the post INSERT and (for a video post) a Mux
 // lookup before it gets anywhere near this -- so unlike the broadcast route's deliberate
@@ -264,23 +266,35 @@ async function notifySubscribersOfNewPost(creatorId, post) {
     await processBroadcastJobChunk(jobId, { budgetMs: NEW_POST_INLINE_BUDGET_MS });
   }
 
-  await notifySubscribersOfNewPostBySms(subscribersResult.rows, { creatorName, creatorUrl, post });
+  await notifySubscribersOfNewPostBySms(subscribersResult.rows, { creatorId, creatorName, creatorUrl, post });
 }
 
 // Separate from the email path above on purpose: sent.dm accepts up to SMS_BATCH_SIZE
-// (1000) recipients per call for one message, so even a creator with a subscriber count
-// that would need this app's resumable broadcast-job system for email (see
-// lib/broadcast-jobs.js's own header comment on why that exists) still finishes in a
-// handful of synchronous calls here, well inside NEW_POST_INLINE_BUDGET_MS-scale time --
-// no job/worker machinery needed for this channel yet. Never throws: a texting failure
+// (1000) recipients per call for one message, so a send at or under SMS_HOLD_THRESHOLD
+// still finishes in a handful of synchronous calls here, well inside
+// NEW_POST_INLINE_BUDGET_MS-scale time -- no job/worker machinery needed for that case.
+// Above the threshold, this is a real, unbounded dollar amount (sent.dm bills per
+// contact per month plus per-text carrier cost) that nothing here used to cap, so it's
+// held for a human instead of firing automatically -- see lib/sms-holds.js and
+// app/api/admin/sms-holds/route.js. Never throws either way: a texting failure
 // (misconfigured provider, sent.dm outage) should never take down post creation or the
 // email notifications above, which is why the caller already wraps this whole function
 // in its own try/catch.
-async function notifySubscribersOfNewPostBySms(subscriberRows, { creatorName, creatorUrl, post }) {
+async function notifySubscribersOfNewPostBySms(subscriberRows, { creatorId, creatorName, creatorUrl, post }) {
   if (!isSmsConfigured()) return;
 
   const phones = subscriberRows.map((row) => row.sms_phone).filter(Boolean);
   if (phones.length === 0) return;
+
+  if (phones.length > SMS_HOLD_THRESHOLD) {
+    const hold = await createSmsBroadcastHold({ creatorId, postId: post.id, recipientCount: phones.length });
+    await alertOps(`sms-broadcast-hold:${hold.id}`, {
+      message: `${creatorName} just published a post that would text ${phones.length.toLocaleString()} subscribers ` +
+        `(over the ${SMS_HOLD_THRESHOLD.toLocaleString()} auto-send limit). Held for review -- approve or reject it ` +
+        `from the "Pending SMS sends" section of /admin.`,
+    });
+    return;
+  }
 
   const title = post.title ? `"${post.title}"` : 'a new post';
   const text = `${creatorName} just posted ${title} on ByUs: ${creatorUrl}`;
