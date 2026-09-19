@@ -14,6 +14,38 @@ import PostVideoPlayer from '../../components/PostVideoPlayer';
 import { TRIAL_DAY_OPTIONS } from '@/lib/trials';
 import { MIN_DISCOUNT_PERCENT, MAX_DISCOUNT_PERCENT } from '@/lib/discounts';
 import { STANDARD_FEE_PERCENT } from '@/lib/pricing';
+import {
+  MAX_VIDEO_DURATION_SECONDS,
+  MAX_VIDEO_SIZE_BYTES,
+  VIDEO_LIMITS_LABEL,
+} from '@/lib/video-limits';
+
+async function validateVideoFile(file) {
+  if (file.size > MAX_VIDEO_SIZE_BYTES) {
+    return 'This file is larger than the 2 GB video limit.';
+  }
+
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const duration = await new Promise((resolve, reject) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.onloadedmetadata = () => resolve(video.duration);
+      video.onerror = () => reject(new Error('metadata'));
+      video.src = objectUrl;
+    });
+    if (Number.isFinite(duration) && duration > MAX_VIDEO_DURATION_SECONDS) {
+      return 'This video is longer than the 30-minute limit.';
+    }
+  } catch {
+    // Mux remains the authority for files whose local metadata the browser cannot read.
+    // The post endpoint checks the transcoded asset duration before allowing publication.
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+
+  return '';
+}
 
 // All the interactive dashboard UI. The initial user/tiers/posts/links data comes in
 // as props from the server-rendered app/creator/dashboard/page.js — the mount-time
@@ -1865,7 +1897,7 @@ function BatchVideoImporter({ onCreated }) {
       const res = await fetch(`/api/creator/posts/video-upload/${uploadId}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Could not check this video.');
-      if (data.errored) throw new Error('Mux could not process this video.');
+      if (data.errored) throw new Error(data.error || 'Mux could not process this video.');
       if (data.ready) return;
     }
 
@@ -1877,6 +1909,7 @@ function BatchVideoImporter({ onCreated }) {
     e.target.value = '';
     if (!selected.length) return;
 
+    const validationErrors = await Promise.all(selected.map(validateVideoFile));
     const queued = selected.map((file, index) => ({
       id: `${Date.now()}-${index}`,
       file,
@@ -1885,8 +1918,8 @@ function BatchVideoImporter({ onCreated }) {
       body: '',
       visibility: 'public',
       uploadId: null,
-      status: 'waiting',
-      error: '',
+      status: validationErrors[index] ? 'error' : 'waiting',
+      error: validationErrors[index],
       publishing: false,
     }));
 
@@ -1896,6 +1929,7 @@ function BatchVideoImporter({ onCreated }) {
     // Upload sequentially. It is gentler on a creator's connection and keeps this
     // deliberately small importer inside the existing 15-video/hour safety limit.
     for (const item of queued) {
+      if (item.error) continue;
       updateItem(item.id, { status: 'uploading', error: '' });
       try {
         const startRes = await fetch('/api/creator/posts/video-upload', { method: 'POST' });
@@ -1988,8 +2022,8 @@ function BatchVideoImporter({ onCreated }) {
               className="w-full text-sm disabled:opacity-50"
             />
             <p className="mt-1 text-xs text-brand-ink/55">
-              MP4, MOV, WebM, or M4V. Upload files you own or have permission to reuse.
-              TikTok and YouTube links cannot be pasted here.
+              {VIDEO_LIMITS_LABEL} Select up to five files you own or have permission to
+              reuse. TikTok and YouTube links cannot be pasted here.
             </p>
           </div>
 
@@ -2115,7 +2149,7 @@ function PostSection({ posts, onCreated }) {
         const res = await fetch(`/api/creator/posts/video-upload/${uploadId}`);
         const data = await res.json();
         if (data.errored) {
-          setVideoError('Mux could not process this video. Try a different file.');
+          setVideoError(data.error || 'Mux could not process this video. Try a different file.');
           setVideoStatus('error');
           return;
         }
@@ -2139,6 +2173,13 @@ function PostSection({ posts, onCreated }) {
     setVideoFile(selected);
     setVideoUploadId(null);
     setVideoError('');
+
+    const validationError = await validateVideoFile(selected);
+    if (validationError) {
+      setVideoError(validationError);
+      setVideoStatus('error');
+      return;
+    }
     setVideoStatus('uploading');
 
     try {
@@ -2290,6 +2331,7 @@ function PostSection({ posts, onCreated }) {
           </div>
           <div>
             <label className="mb-1 block text-sm text-brand-ink/70">Video (optional)</label>
+            <p className="mb-2 text-xs text-brand-ink/55">{VIDEO_LIMITS_LABEL}</p>
             {videoFile && videoStatus !== 'idle' ? (
               <div className="flex items-center gap-2 rounded-lg border border-brand-ink/10 bg-brand-ink/[0.02] px-3 py-2 text-sm">
                 <span className="min-w-0 flex-1 truncate text-brand-ink/70">{videoFile.name}</span>

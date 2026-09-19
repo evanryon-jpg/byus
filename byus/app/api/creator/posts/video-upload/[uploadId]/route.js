@@ -12,6 +12,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { getUpload, getAsset } from '@/lib/mux';
+import { MAX_VIDEO_DURATION_SECONDS } from '@/lib/video-limits';
 
 export async function GET(request, { params }) {
   const session = await getCurrentUser();
@@ -44,6 +45,13 @@ export async function GET(request, { params }) {
     }
     if (asset.status !== 'ready') {
       return NextResponse.json({ ready: false }); // still transcoding
+    }
+    if (Number(asset.duration) > MAX_VIDEO_DURATION_SECONDS) {
+      return NextResponse.json({
+        ready: false,
+        errored: true,
+        error: 'Videos must be 30 minutes or shorter.',
+      });
     }
 
     return NextResponse.json({ ready: true, playbackId: asset.playback_ids?.[0]?.id || null });

@@ -18,6 +18,7 @@ import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { sendSms, isSmsConfigured, SMS_BATCH_SIZE } from '@/lib/sms';
 import { createSmsBroadcastHold, SMS_HOLD_THRESHOLD } from '@/lib/sms-holds';
 import { alertOps } from '@/lib/alerts';
+import { MAX_VIDEO_DURATION_SECONDS } from '@/lib/video-limits';
 
 // This request already has to wait on the post INSERT and (for a video post) a Mux
 // lookup before it gets anywhere near this -- so unlike the broadcast route's deliberate
@@ -146,6 +147,9 @@ export async function POST(request) {
       const asset = await getAsset(upload.asset_id);
       if (asset.status !== 'ready') {
         return NextResponse.json({ error: 'Video is still processing — try again in a moment.' }, { status: 400 });
+      }
+      if (Number(asset.duration) > MAX_VIDEO_DURATION_SECONDS) {
+        return NextResponse.json({ error: 'Videos must be 30 minutes or shorter.' }, { status: 400 });
       }
       muxAssetId = asset.id;
       muxPlaybackId = asset.playback_ids?.[0]?.id || null;

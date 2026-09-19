@@ -620,8 +620,9 @@ function VideoUploadDemo() {
         </span>
       </div>
       <p className="mt-3 text-xs text-brand-ink/55">
-        Every video is reviewed before fans can see it. ByUs cannot pull from a TikTok or
-        YouTube link or bulk-import a channel or library.
+        Up to 30 minutes and 2 GB per video, with resolutions up to 4K. Every video is
+        checked before fans can see it. ByUs cannot pull from a TikTok or YouTube link or
+        bulk-import a channel or library.
       </p>
     </div>
   );
