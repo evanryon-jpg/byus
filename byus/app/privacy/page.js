@@ -3,7 +3,7 @@ export const metadata = {
   description: 'What information ByUs collects, how it is used, and who to contact about it.',
 };
 
-const LAST_UPDATED = 'September 12, 2026';
+const LAST_UPDATED = 'September 19, 2026';
 const CONTACT_EMAIL = 'support@byusapp.com';
 
 export default function PrivacyPage() {
@@ -113,8 +113,8 @@ export default function PrivacyPage() {
 
         <Section title="9. Contact">
           <p>
-            Questions about this policy, or want to access, correct, or delete your data? Email
-            us at{' '}
+            ByUs is operated by Ryon Digital LLC. Questions about this policy, or want to access,
+            correct, or delete your data? Email us at{' '}
             <a href={`mailto:${CONTACT_EMAIL}`} className="text-brand-teal underline">
               {CONTACT_EMAIL}
             </a>.
