@@ -168,7 +168,9 @@ export async function POST(request) {
     const creatorResult = await query('SELECT review_cleared_at FROM users WHERE id = $1', [
       session.userId,
     ]);
-    const pendingReview = !creatorResult.rows[0]?.review_cleared_at;
+    // Every video is held for per-post moderation, even after the creator's one-time
+    // account review has cleared. Text/image posts keep the existing account-review rule.
+    const pendingReview = Boolean(videoUploadId) || !creatorResult.rows[0]?.review_cleared_at;
 
     // mediaUrl here is actually the private Blob pathname returned by
     // /api/creator/upload, stored as-is — it's only ever resolved back into

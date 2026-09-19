@@ -2043,7 +2043,7 @@ function BatchVideoImporter({ onCreated }) {
                   onClick={() => publishItem(item)}
                   className="rounded-full bg-[#0F766E] px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
                 >
-                  {item.publishing ? 'Publishing…' : 'Publish video'}
+                  {item.publishing ? 'Submitting…' : 'Submit for review'}
                 </button>
                 <button
                   type="button"
@@ -2372,7 +2372,7 @@ function PostSection({ posts, onCreated }) {
               ? 'Waiting on video…'
               : saving
               ? (file ? 'Uploading…' : 'Posting…')
-              : 'Post'}
+              : videoStatus === 'ready' ? 'Submit video for review' : 'Post'}
           </button>
         </form>
       )}
@@ -2456,6 +2456,11 @@ function PostRow({ post, onChanged }) {
           {post.poll && (
             <span className="ml-2 rounded-full bg-[#0F766E]/10 px-2 py-0.5 text-xs font-medium text-[#0F766E]">
               Poll
+            </span>
+          )}
+          {post.pending_review && post.hasVideo && (
+            <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+              Pending video review
             </span>
           )}
         </span>

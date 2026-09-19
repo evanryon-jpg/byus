@@ -9,6 +9,7 @@
 import { query } from '@/lib/db';
 import { getAdminEmails } from '@/lib/admin';
 import { containsUrl } from '@/lib/content-policy';
+import { signPlaybackToken } from '@/lib/mux-jwt';
 
 const MONTHS_OF_HISTORY = 12;
 const RECENT_CREATORS_LIMIT = 25;
@@ -373,6 +374,39 @@ export async function loadCreatorReviewQueue() {
     stripeConnectOnboarded: row.stripe_connect_onboarded,
     bioFlagged: containsUrl(row.bio),
     needsReview: true,
+  }));
+}
+
+// Every uploaded video remains hidden until an admin approves this individual post.
+// The signed token is generated server-side and only passed to the already-authorized
+// /admin page, so moderators can inspect the actual video without making it public.
+export async function loadPendingVideoReviewQueue() {
+  const result = await query(
+    `SELECT p.id, p.title, p.body, p.visibility, p.created_at, p.mux_playback_id,
+            u.id AS creator_id, u.display_name AS creator_name, u.email AS creator_email,
+            u.review_cleared_at
+     FROM posts p
+     JOIN users u ON u.id = p.creator_id
+     WHERE p.pending_review = true AND p.mux_playback_id IS NOT NULL
+     ORDER BY p.created_at ASC
+     LIMIT $1`,
+    [REVIEW_QUEUE_LIMIT]
+  );
+
+  return result.rows.map((row) => ({
+    id: row.id,
+    title: row.title,
+    body: row.body,
+    visibility: row.visibility,
+    createdAt: row.created_at,
+    creatorId: row.creator_id,
+    creatorName: row.creator_name,
+    creatorEmail: row.creator_email,
+    creatorReviewCleared: Boolean(row.review_cleared_at),
+    video: {
+      playbackId: row.mux_playback_id,
+      playbackToken: signPlaybackToken(row.mux_playback_id),
+    },
   }));
 }
 
