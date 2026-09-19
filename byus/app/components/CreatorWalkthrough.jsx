@@ -37,6 +37,12 @@ export default function CreatorWalkthrough() {
             aria-label="A step-by-step demonstration of building a ByUs creator page"
           >
             <source src="/videos/byus-creator-page-demo.mp4" type="video/mp4" />
+            <track
+              kind="captions"
+              src="/videos/byus-creator-page-demo-en.vtt"
+              srcLang="en"
+              label="English"
+            />
             Your browser does not support embedded video.
           </video>
         </div>
