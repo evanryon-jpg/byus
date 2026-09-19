@@ -38,7 +38,29 @@ export async function loadCreatorProfile(creatorId, session) {
          FROM users WHERE slug = $1 AND role = 'creator' AND is_suspended = false`,
     [creatorId]
   );
-  const creatorRow = creatorResult.rows[0];
+  let creatorRow = creatorResult.rows[0];
+
+  // No one currently holds this slug live -- if it used to belong to a creator who's
+  // since changed their vanity URL, resolve through to whoever that is now (see
+  // creator_slug_history, written by app/api/creator/slug/route.js on every slug
+  // change) instead of dead-ending on a link the creator already shared. The query
+  // above already wins whenever a slug is live, so this only ever fires for a
+  // genuinely abandoned old one -- a currently-claimed slug can never be shadowed by a
+  // stale redirect. Returning this row with its *current* slug is enough: the caller
+  // in app/creator/[creatorId]/page.js already redirects whenever the resolved slug
+  // differs from the requested creatorId.
+  if (!creatorRow && !isUuid) {
+    const historyResult = await query(
+      `SELECT u.id, u.display_name, u.bio, u.profile_image_url, u.social_links, u.slug, u.is_live,
+              u.mux_playback_id, u.stripe_connect_onboarded, u.support_goal_cents
+       FROM creator_slug_history h
+       JOIN users u ON u.id = h.user_id
+       WHERE h.old_slug = $1 AND u.role = 'creator' AND u.is_suspended = false`,
+      [creatorId]
+    );
+    creatorRow = historyResult.rows[0];
+  }
+
   if (!creatorRow) return null;
 
   const id = creatorRow.id; // resolved UUID — everything below queries by this, not the raw param
