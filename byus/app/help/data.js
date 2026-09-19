@@ -157,7 +157,7 @@ export const HELP_CATEGORIES = [
       },
       {
         q: 'Can I upload videos I already have?',
-        a: 'Yes. The original platform does not matter if you have the video file and the right to reuse it. From the Posts card on your creator dashboard, choose an MP4, MOV, WebM, or M4V file from your device—whether it is your original TikTok or YouTube upload, a phone recording, or an edited export. You can upload one video with a new post or use “Bring over several videos” to queue up to five files, then review the title, caption, and audience for each before publishing. ByUs cannot pull a video from a TikTok or YouTube link or automatically copy an entire channel or library.',
+        a: 'Yes. The original platform does not matter if you have the video file and the right to reuse it. From the Posts card on your creator dashboard, choose an MP4, MOV, WebM, or M4V file from your device—whether it is your original TikTok or YouTube upload, a phone recording, or an edited export. You can upload one video with a new post or use “Bring over several videos” to queue up to five files. You—not ByUs staff—choose the title, caption, and audience for each before publishing; there is no human pre-approval queue. ByUs cannot pull a video from a TikTok or YouTube link or automatically copy an entire channel or library.',
       },
       {
         q: 'How do fans search or filter my posts?',
