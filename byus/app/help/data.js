@@ -53,7 +53,7 @@ export const HELP_CATEGORIES = [
     articles: [
       {
         q: 'What is ByUs?',
-        a: 'ByUs is a place for creators to earn direct support from their audience — through paid monthly (or annual) memberships, one-time tips, or both. In exchange, creators post updates, photos, and members-only content straight to their ByUs page.',
+        a: 'ByUs is a place for creators to earn direct support from their audience — through paid monthly (or annual) memberships, one-time tips, or both. In exchange, creators post updates, photos, videos, and members-only content straight to their ByUs page.',
       },
       {
         q: 'How do I support a creator?',
@@ -137,11 +137,11 @@ export const HELP_CATEGORIES = [
     slug: 'posts-content',
     icon: '📝',
     title: 'Posts & content',
-    description: 'Publishing updates, photos, and polls.',
+    description: 'Publishing updates, photos, videos, and polls.',
     articles: [
       {
         q: 'How do I publish a post?',
-        a: 'From the Posts card on your dashboard, write a title (optional) and body, add a photo if you want one, choose Public or Subscribers only, and click Post. It appears on your page immediately.',
+        a: 'From the Posts card on your dashboard, write a title (optional) and body, add a photo or prerecorded video if you want one, choose Public or Subscribers only, and click Post. Photos appear immediately; a video may need a short processing step before the post is ready.',
       },
       {
         q: "What's the difference between a public and a members-only post?",
@@ -154,6 +154,10 @@ export const HELP_CATEGORIES = [
       {
         q: 'Can I add photos to a post?',
         a: 'Yes, one photo per post via the Image field when you’re writing it. A members-only post’s photo is served privately — it’s never sent to a visitor’s browser unless they’re actually subscribed.',
+      },
+      {
+        q: 'Can I upload videos I already have?',
+        a: 'Yes. The original platform does not matter if you have the video file and the right to reuse it. From the Posts card on your creator dashboard, choose an MP4, MOV, WebM, or M4V file from your device—whether it is your original TikTok or YouTube upload, a phone recording, or an edited export. ByUs processes it for playback, and you can publish the post publicly or for subscribers only. ByUs cannot pull a video from a TikTok or YouTube link or bulk-import a channel or library; videos are added one post at a time.',
       },
       {
         q: 'How do fans search or filter my posts?',

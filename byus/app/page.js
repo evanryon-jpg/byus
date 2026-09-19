@@ -255,8 +255,8 @@ function Hero({ user }) {
             </p>
 
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-brand-paper/85">
-              Build your page, connect payments, and share your work — tiers, posts, and
-              payouts handled, with standard domestic payment processing covered in that fee.
+              Build your page, connect payments, and share your work — tiers, posts, video,
+              and payouts handled, with standard domestic payment processing covered in that fee.
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -465,16 +465,16 @@ function Features() {
         </p>
       </div>
 
-      {/* Seven cards in one grid -- previously Direct payouts sat in an oversized
+      {/* Eight cards in one grid -- previously Direct payouts sat in an oversized
           slot beside a stacked 2x2 of the rest, sized with h-full so it stretched to
           match whatever height the stack beside it happened to reach. That worked at
           four compact cards; once Engagement became a fifth, the stack grew taller
           than the payout card needed and the stretch left a large empty gap inside
           it. All cards now share one card treatment and one grid, so each card is
           exactly as tall as its own content instead of being stretched to match a
-          sibling column. Text notifications is the seventh, and takes over the wide
-          "newest shipment" slot Engagement held until this one shipped -- see
-          SmsNotificationsDemo below. */}
+          sibling column. Uploaded video is the seventh compact card; Text notifications
+          takes the wide "newest shipment" slot Engagement held until this one shipped --
+          see SmsNotificationsDemo below. */}
       <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <PayoutDemo />
         <TiersDemo />
@@ -482,6 +482,7 @@ function Features() {
         <CommunitySyncDemo />
         <RssImportDemo />
         <EngagementDemo />
+        <VideoUploadDemo />
         <SmsNotificationsDemo />
       </div>
     </section>
@@ -637,6 +638,38 @@ function EngagementDemo() {
           <span aria-hidden="true" className="text-[#A6432E]">♥</span> 340 likes
         </span>
       </div>
+    </div>
+  );
+}
+
+// Creators can bring prerecorded videos they already own into a ByUs post through
+// the dashboard's direct Mux upload flow. This is deliberately described as a file upload,
+// not an automatic YouTube/TikTok/Patreon migration: each video is attached to a post and
+// the creator chooses Public or Subscribers only. The small player preview mirrors that
+// straightforward workflow rather than implying a bulk-import feature that does not exist.
+function VideoUploadDemo() {
+  return (
+    <div className="rounded-2xl border border-brand-ink/15 bg-brand-paper p-6 shadow-sm">
+      <span className="text-xs font-extrabold uppercase tracking-wide text-[#7C3AED]">
+        Video uploads
+      </span>
+      <h3 className="mt-2 font-display text-lg font-bold text-[#172033]">
+        Bring the videos you already have
+      </h3>
+      <p className="mt-2 text-sm leading-relaxed text-brand-ink/70">
+        Have the file on your device? Upload an MP4, MOV, WebM, or M4V from TikTok,
+        YouTube, your phone, or another platform—provided it’s yours to reuse—then publish it
+        publicly or for subscribers only.
+      </p>
+      <div className="mt-4 flex aspect-video items-center justify-center rounded-xl bg-[#172033]">
+        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/95 pl-0.5 text-[#7C3AED] shadow-lg" aria-hidden="true">
+          ▶
+        </span>
+      </div>
+      <p className="mt-3 text-xs text-brand-ink/55">
+        ByUs uploads video files one post at a time. It cannot pull from a TikTok or YouTube
+        link or bulk-import a channel or library.
+      </p>
     </div>
   );
 }
