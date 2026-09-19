@@ -3,7 +3,7 @@ import { BloggerCampaignLink, BloggerCampaignView } from './BloggerCampaignTrack
 export const metadata = {
   title: 'ByUs for bloggers',
   description:
-    'Bring your blog to ByUs. Connect your RSS feed and your posts import automatically, then add paid membership on top.',
+    'Bring your blog to ByUs. Connect your RSS feed, sync with one click any time you publish, then add paid membership on top.',
 };
 
 export default function BloggersLandingPage() {
@@ -22,8 +22,8 @@ export default function BloggersLandingPage() {
             Your blog, with membership built in.
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-brand-paper/80">
-            Point ByUs at your RSS feed and every post you already write shows up on your page
-            automatically — no copy-pasting, no second place to publish. Add paid tiers whenever
+            Point ByUs at your RSS feed, then sync any time you publish and your post shows up on
+            your page too — no copy-pasting, no second place to publish. Add paid tiers whenever
             you're ready.
           </p>
           <p className="mx-auto mt-4 max-w-xl text-base font-medium text-brand-paper/65">
