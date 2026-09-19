@@ -276,7 +276,7 @@ function Hero({ user }) {
                 href="#creator-walkthrough"
                 className="rounded-full border-2 border-brand-paper/30 bg-brand-paper/10 px-7 py-3.5 text-base font-semibold text-brand-paper backdrop-blur transition hover:border-brand-gold hover:bg-brand-paper/15"
               >
-                ▶ Watch the 37-second demo
+                ▶ Watch the 38-second demo
               </a>
             </div>
 
