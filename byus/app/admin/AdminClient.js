@@ -8,6 +8,7 @@
 
 import { useState } from 'react';
 import MonthlyBarChart from '../components/charts/MonthlyBarChart';
+import PostVideoPlayer from '../components/PostVideoPlayer';
 import { formatUSD, formatCompactUSD } from '@/lib/format';
 
 export default function AdminClient({
@@ -24,6 +25,8 @@ export default function AdminClient({
   initialWaitlistError,
   initialReviewQueue,
   initialReviewQueueError,
+  initialVideoReviewQueue,
+  initialVideoReviewError,
   initialTasks,
   initialTasksError,
   initialSmsHolds,
@@ -64,6 +67,11 @@ export default function AdminClient({
     <div className="mx-auto max-w-5xl px-6 py-12">
       <h1 className="text-2xl font-bold">Platform overview</h1>
       <p className="text-brand-ink/65">What ByUs itself has earned, and how the platform is growing.</p>
+
+      <VideoModerationSection
+        initialVideos={initialVideoReviewQueue}
+        initialError={initialVideoReviewError}
+      />
 
       <PendingSmsSendsSection
         initialHolds={initialSmsHolds}
@@ -361,6 +369,104 @@ export default function AdminClient({
             <ReportsSection initialReports={initialReports} initialError={initialReportsError} />
       <SuggestionsSection initialSuggestions={initialSuggestions} initialError={initialSuggestionsError} />
     </div>
+  );
+}
+
+function VideoModerationSection({ initialVideos, initialError }) {
+  const [videos, setVideos] = useState(initialVideos || []);
+  const [error, setError] = useState(initialError || '');
+  const [pendingId, setPendingId] = useState(null);
+
+  async function moderate(video, action) {
+    if (action === 'reject' && !confirm('Reject and permanently delete this video? This cannot be undone.')) {
+      return;
+    }
+
+    setPendingId(video.id);
+    setError('');
+    try {
+      const response = await fetch(`/api/admin/posts/${video.id}/moderation`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Could not review this video.');
+      setVideos((current) => current.filter((item) => item.id !== video.id));
+    } catch (err) {
+      setError(err.message || 'Could not review this video.');
+    } finally {
+      setPendingId(null);
+    }
+  }
+
+  return (
+    <section className="mt-6 rounded-2xl border-2 border-amber-300 bg-amber-50 p-5">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h2 className="font-semibold text-[#172033]">Pending video moderation</h2>
+          <p className="mt-1 max-w-2xl text-sm text-brand-ink/65">
+            Every uploaded video stays hidden from fans until you watch and approve it here.
+            Rejecting permanently deletes the post and its stored video.
+          </p>
+        </div>
+        <span className="rounded-full bg-amber-200 px-3 py-1 text-sm font-bold text-amber-900">
+          {videos.length} waiting
+        </span>
+      </div>
+
+      {error && <p className="mt-3 text-sm font-medium text-red-700">{error}</p>}
+
+      <div className="mt-4 space-y-4">
+        {videos.map((video) => (
+          <article key={video.id} className="rounded-xl border border-amber-200 bg-white p-4">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <h3 className="font-semibold text-[#172033]">{video.title || '(untitled video)'}</h3>
+                <p className="text-xs text-brand-ink/55">
+                  {video.creatorName || video.creatorEmail} · {video.visibility === 'subscribers_only' ? 'Subscribers only' : 'Public'} · {new Date(video.createdAt).toLocaleString()}
+                </p>
+              </div>
+              {!video.creatorReviewCleared && (
+                <span className="rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-700">
+                  Creator account review still pending
+                </span>
+              )}
+            </div>
+
+            <div className="mt-3 max-w-xl overflow-hidden rounded-xl bg-black">
+              <PostVideoPlayer playbackId={video.video.playbackId} playbackToken={video.video.playbackToken} />
+            </div>
+            <p className="mt-3 whitespace-pre-wrap text-sm text-brand-ink/75">{video.body}</p>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={pendingId === video.id || !video.creatorReviewCleared}
+                onClick={() => moderate(video, 'approve')}
+                className="rounded-full bg-[#0F766E] px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
+              >
+                {pendingId === video.id ? 'Working…' : 'Approve and publish'}
+              </button>
+              <button
+                type="button"
+                disabled={pendingId === video.id}
+                onClick={() => moderate(video, 'reject')}
+                className="rounded-full border border-red-300 px-4 py-2 text-sm font-semibold text-red-700 disabled:opacity-40"
+              >
+                Reject and delete
+              </button>
+            </div>
+          </article>
+        ))}
+
+        {videos.length === 0 && !error && (
+          <p className="rounded-xl border border-dashed border-amber-300 px-4 py-5 text-center text-sm text-brand-ink/60">
+            No videos are waiting for review.
+          </p>
+        )}
+      </div>
+    </section>
   );
 }
 
