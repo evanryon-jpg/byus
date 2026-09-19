@@ -146,13 +146,26 @@ export default function TermsPage() {
           <p>
             ByUs expects creators to only post content they own or are otherwise authorized to
             use. If you believe something on ByUs infringes your copyright, use the
-            &ldquo;Report&rdquo; option on the relevant creator&rsquo;s page, or email{' '}
+            &ldquo;Report&rdquo; option on the relevant creator&rsquo;s page, or send a notice to
+            our designated agent:
+          </p>
+          <p className="mt-3">
+            Ryon Digital LLC (dba ByUs)
+            <br />
+            Copyright Agent
+            <br />
+            Email:{' '}
             <a href={`mailto:${CONTACT_EMAIL}`} className="text-brand-teal underline">
               {CONTACT_EMAIL}
-            </a>{' '}
-            with: the copyrighted work you believe is infringed, the specific ByUs page or post
-            where you found the material, your contact information, and a statement that you
-            have a good-faith belief the use is unauthorized and that your notice is accurate.
+            </a>
+            <br />
+            Registered with the U.S. Copyright Office, Designation No. DMCA-1080725
+          </p>
+          <p className="mt-3">
+            Your notice should include: the copyrighted work you believe is infringed, the
+            specific ByUs page or post where you found the material, your contact information,
+            and a statement that you have a good-faith belief the use is unauthorized and that
+            your notice is accurate.
           </p>
           <p className="mt-3">
             We review copyright notices and remove or restrict access to material we determine
