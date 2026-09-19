@@ -657,8 +657,9 @@ function VideoUploadDemo() {
         Bring the videos you already have
       </h3>
       <p className="mt-2 text-sm leading-relaxed text-brand-ink/70">
-        Upload a prerecorded video file directly from your dashboard, attach it to a public
-        or subscribers-only post, and let ByUs handle playback.
+        Have the file on your device? Upload an MP4, MOV, WebM, or M4V from TikTok,
+        YouTube, your phone, or another platform—provided it’s yours to reuse—then publish it
+        publicly or for subscribers only.
       </p>
       <div className="mt-4 flex aspect-video items-center justify-center rounded-xl bg-[#172033]">
         <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/95 pl-0.5 text-[#7C3AED] shadow-lg" aria-hidden="true">
@@ -666,7 +667,8 @@ function VideoUploadDemo() {
         </span>
       </div>
       <p className="mt-3 text-xs text-brand-ink/55">
-        Videos are added one post at a time; automatic library imports are not yet available.
+        ByUs uploads video files one post at a time. It cannot pull from a TikTok or YouTube
+        link or bulk-import a channel or library.
       </p>
     </div>
   );
