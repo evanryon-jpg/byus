@@ -1845,6 +1845,226 @@ function LinksSection({ links: savedLinks, onSaved }) {
   );
 }
 
+function BatchVideoImporter({ onCreated }) {
+  const [open, setOpen] = useState(false);
+  const [items, setItems] = useState([]);
+  const [uploading, setUploading] = useState(false);
+
+  function updateItem(id, changes) {
+    setItems((current) =>
+      current.map((item) => (item.id === id ? { ...item, ...changes } : item))
+    );
+  }
+
+  async function waitUntilReady(uploadId) {
+    const startedAt = Date.now();
+    const TIMEOUT_MS = 10 * 60 * 1000;
+
+    while (Date.now() - startedAt < TIMEOUT_MS) {
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      const res = await fetch(`/api/creator/posts/video-upload/${uploadId}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not check this video.');
+      if (data.errored) throw new Error('Mux could not process this video.');
+      if (data.ready) return;
+    }
+
+    throw new Error('This video is taking longer than expected to process.');
+  }
+
+  async function handleFiles(e) {
+    const selected = Array.from(e.target.files || []).slice(0, 5);
+    e.target.value = '';
+    if (!selected.length) return;
+
+    const queued = selected.map((file, index) => ({
+      id: `${Date.now()}-${index}`,
+      file,
+      name: file.name,
+      title: file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' '),
+      body: '',
+      visibility: 'public',
+      uploadId: null,
+      status: 'waiting',
+      error: '',
+      publishing: false,
+    }));
+
+    setItems(queued);
+    setUploading(true);
+
+    // Upload sequentially. It is gentler on a creator's connection and keeps this
+    // deliberately small importer inside the existing 15-video/hour safety limit.
+    for (const item of queued) {
+      updateItem(item.id, { status: 'uploading', error: '' });
+      try {
+        const startRes = await fetch('/api/creator/posts/video-upload', { method: 'POST' });
+        const startData = await startRes.json();
+        if (!startRes.ok) throw new Error(startData.error || 'Could not start the upload.');
+
+        const putRes = await fetch(startData.uploadUrl, { method: 'PUT', body: item.file });
+        if (!putRes.ok) throw new Error('The upload failed partway through.');
+
+        updateItem(item.id, {
+          status: 'processing',
+          uploadId: startData.uploadId,
+        });
+        await waitUntilReady(startData.uploadId);
+        updateItem(item.id, { status: 'ready' });
+      } catch (err) {
+        updateItem(item.id, {
+          status: 'error',
+          error: err.message || 'Could not upload this video.',
+        });
+      }
+    }
+
+    setUploading(false);
+  }
+
+  async function publishItem(item) {
+    if (!item.body.trim()) {
+      updateItem(item.id, { error: 'Add a short caption before publishing.' });
+      return;
+    }
+
+    updateItem(item.id, { publishing: true, error: '' });
+    try {
+      const res = await fetch('/api/creator/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: item.title,
+          body: item.body,
+          visibility: item.visibility,
+          videoUploadId: item.uploadId,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not publish this video.');
+
+      setItems((current) => current.filter((candidate) => candidate.id !== item.id));
+      onCreated();
+    } catch (err) {
+      updateItem(item.id, {
+        publishing: false,
+        error: err.message || 'Could not publish this video.',
+      });
+    }
+  }
+
+  return (
+    <div className="mt-4 rounded-xl border border-[#0F766E]/20 bg-[#0F766E]/[0.04] p-4">
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        className="flex w-full items-center justify-between gap-3 text-left"
+      >
+        <span>
+          <span className="block text-sm font-semibold text-brand-ink">
+            Bring over several videos
+          </span>
+          <span className="mt-0.5 block text-xs text-brand-ink/60">
+            Select up to five original files, then review each post before publishing.
+          </span>
+        </span>
+        <span className="shrink-0 text-sm font-semibold text-[#0F766E]">
+          {open ? 'Close' : 'Start'}
+        </span>
+      </button>
+
+      {open && (
+        <div className="mt-4 space-y-3 border-t border-[#0F766E]/15 pt-4">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-brand-ink/75">
+              Choose video files
+            </label>
+            <input
+              type="file"
+              multiple
+              accept="video/mp4,video/quicktime,video/webm,video/x-m4v"
+              disabled={uploading}
+              onChange={handleFiles}
+              className="w-full text-sm disabled:opacity-50"
+            />
+            <p className="mt-1 text-xs text-brand-ink/55">
+              MP4, MOV, WebM, or M4V. Upload files you own or have permission to reuse.
+              TikTok and YouTube links cannot be pasted here.
+            </p>
+          </div>
+
+          {items.map((item) => (
+            <div key={item.id} className="space-y-2 rounded-xl border border-brand-ink/10 bg-brand-paper p-3">
+              <div className="flex items-center gap-2 text-sm">
+                <span className="min-w-0 flex-1 truncate font-medium text-brand-ink">{item.name}</span>
+                <span className={`shrink-0 text-xs font-semibold ${
+                  item.status === 'ready'
+                    ? 'text-green-700'
+                    : item.status === 'error'
+                    ? 'text-red-600'
+                    : 'text-brand-ink/55'
+                }`}>
+                  {item.status === 'waiting' && 'Waiting'}
+                  {item.status === 'uploading' && 'Uploading…'}
+                  {item.status === 'processing' && 'Processing…'}
+                  {item.status === 'ready' && '✓ Ready to review'}
+                  {item.status === 'error' && 'Upload failed'}
+                </span>
+              </div>
+
+              <input
+                aria-label={`Title for ${item.name}`}
+                value={item.title}
+                onChange={(e) => updateItem(item.id, { title: e.target.value })}
+                placeholder="Post title"
+                className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
+              />
+              <textarea
+                aria-label={`Caption for ${item.name}`}
+                value={item.body}
+                onChange={(e) => updateItem(item.id, { body: e.target.value })}
+                placeholder="Add a caption or tell fans about this video…"
+                rows={2}
+                className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
+              />
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  aria-label={`Audience for ${item.name}`}
+                  value={item.visibility}
+                  onChange={(e) => updateItem(item.id, { visibility: e.target.value })}
+                  className="min-w-44 rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
+                >
+                  <option value="public">Public</option>
+                  <option value="subscribers_only">Subscribers only</option>
+                </select>
+                <button
+                  type="button"
+                  disabled={item.status !== 'ready' || item.publishing}
+                  onClick={() => publishItem(item)}
+                  className="rounded-full bg-[#0F766E] px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
+                >
+                  {item.publishing ? 'Publishing…' : 'Publish video'}
+                </button>
+                <button
+                  type="button"
+                  disabled={item.status === 'uploading' || item.status === 'processing'}
+                  onClick={() =>
+                    setItems((current) => current.filter((candidate) => candidate.id !== item.id))
+                  }
+                  className="px-2 py-2 text-xs font-medium text-brand-ink/55 hover:text-red-600 disabled:opacity-40"
+                >
+                  Remove
+                </button>
+              </div>
+              {item.error && <p className="text-xs text-red-600">{item.error}</p>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PostSection({ posts, onCreated }) {
   // A brand-new creator with zero posts lands on an empty section and a "+ New post"
   // button they have to know to click. Opening the composer by default the first time
@@ -2037,6 +2257,8 @@ function PostSection({ posts, onCreated }) {
           <PostRow key={p.id} post={p} onChanged={onCreated} />
         ))}
       </ul>
+
+      <BatchVideoImporter onCreated={onCreated} />
 
       {open && (
         <form onSubmit={handleCreate} className="mt-4 space-y-3 border-t border-brand-ink/5 pt-4">
