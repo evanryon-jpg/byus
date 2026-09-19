@@ -250,11 +250,11 @@ function Hero({ user }) {
               on ByUs. Period.
             </h1>
 
-            <p className="mt-3 font-display text-xl italic text-brand-paper/60">
+            <p className="mt-3 font-display text-xl italic text-brand-paper/80">
               The home your fans keep coming back to.
             </p>
 
-            <p className="mt-6 max-w-lg text-lg leading-relaxed text-brand-paper/75">
+            <p className="mt-6 max-w-lg text-lg leading-relaxed text-brand-paper/85">
               Build your page, connect payments, and share your work — tiers, posts, and
               payouts handled, with standard domestic payment processing covered in that fee.
             </p>
@@ -292,7 +292,7 @@ function Hero({ user }) {
                 whole product (tiers, a locked post unlocking, the payout math) before
                 committing to an account, but it no longer competes with the two primary
                 CTAs above for the first look. */}
-            <p className="mt-5 flex items-center gap-2 text-sm text-brand-paper/60">
+            <p className="mt-5 flex items-center gap-2 text-sm text-brand-paper/85">
               <span className="relative flex h-2 w-2" aria-hidden="true">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-gold opacity-70" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-brand-gold" />
@@ -403,7 +403,7 @@ function HeroArtCollage() {
         ))}
       </div>
 
-      <p className="relative mt-1 text-center text-xs text-brand-ink/45">
+      <p className="relative mt-2 text-center text-xs font-medium text-brand-ink/65">
         Memberships, posts, and downloads — all in one creator page.
       </p>
     </div>
