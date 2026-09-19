@@ -1,12 +1,13 @@
-// One fee discount, re-evaluated every month:
-//
-// Personal tier -- every creator starts at STANDARD_FEE_PERCENT; for any calendar month
-// their earnings on ByUs reach FEE_DISCOUNT_THRESHOLD_CENTS, their own stored rate
-// (`users.platform_fee_percent`) drops to DISCOUNTED_FEE_PERCENT for the rest of that month.
-// It moves back to STANDARD_FEE_PERCENT as soon as a new month starts without crossing the
-// threshold again -- this is a month-to-month rate, not a one-time lifetime unlock, so a
-// creator trickling to $2,000 over a full year no longer locks in a permanent discount that
-// doesn't match their actual volume.
+// Personal tier -- every creator's own stored rate (`users.platform_fee_percent`) is just
+// STANDARD_FEE_PERCENT, unless they're a founding creator (see isFoundingCreator /
+// FOUNDING_CREATOR_LIMIT), in which case it's DISCOUNTED_FEE_PERCENT permanently, from day
+// one. There used to also be a $2,000/mo earned-discount tier here -- any creator's rate
+// would drop to DISCOUNTED_FEE_PERCENT for the rest of a calendar month once their gross
+// ByUs earnings that month crossed FEE_DISCOUNT_THRESHOLD_CENTS, resetting the following
+// month if they didn't cross it again. It's paused (business decision, 2026-09-19, not a
+// bug) -- see the comment on FEE_DISCOUNT_THRESHOLD_CENTS in lib/pricing.js for why and how
+// to bring it back. `monthToDateCents` is no longer computed here as a result; if that tier
+// returns, restore both the query and its branch in the targetFeePercent ternary below.
 //
 // There used to be a second, stacking discount here -- a platform-wide milestone bonus
 // that lowered every creator's fee further as ByUs's own revenue grew. It's retired:
@@ -34,7 +35,6 @@ import { paymentProvider } from './payments';
 import {
   STANDARD_FEE_PERCENT,
   DISCOUNTED_FEE_PERCENT,
-  FEE_DISCOUNT_THRESHOLD_CENTS,
   MIN_FEE_PERCENT,
   FOUNDING_CREATOR_LIMIT,
 } from './pricing';
@@ -102,19 +102,20 @@ export function applyPlatformMilestoneReduction(basePercent, reductionPoints) {
 // belt-and-suspenders guard on top of the webhook's own per-event idempotency claim —
 // stamped with the EFFECTIVE rate actually charged (personal tier minus whatever
 // milestone bonus already existed before this invoice), so historical net-earnings math
-// stays accurate no matter how either discount moves later. Then recomputes the personal
-// tier off THIS CALENDAR MONTH's earnings so far (including the invoice just recorded) and
-// checks the platform-wide milestone crossings this payment might have triggered. Also
-// checks whether this is the creator's very first-ever earning -- their page's "launch",
-// for the creator-referral promo below -- and grants their referrer (if any, and if that
-// referrer is themselves a creator) a full month at 0% fee. Returns null when nothing
-// changed (duplicate delivery, not a creator, or none of the three discounts moved),
-// otherwise `{ personalTierChange, crossedMilestones, referrerFeeGranted }` —
-// personalTierChange is the creator's new personal-tier percent when this month's total
-// just crossed (or fell back below) the threshold, or their own 0%-promo just started or
-// lapsed (null otherwise); crossedMilestones is the list of platform milestones (if any)
-// newly crossed by this payment; referrerFeeGranted is the referrer's user id when this
-// invoice just launched them a free 0%-fee month (null otherwise). The caller syncs
+// stays accurate no matter how either discount moves later. Then re-checks the creator's
+// personal tier (founding/standard, plus any active referral promo) and the platform-wide
+// milestone crossings this payment might have triggered. Also checks whether this is the
+// creator's very first-ever earning -- their page's "launch", for the creator-referral
+// promo below -- and grants their referrer (if any, and if that referrer is themselves a
+// creator) a full month at 0% fee. Returns null when nothing changed (duplicate delivery,
+// not a creator, or none of the three discounts moved), otherwise
+// `{ personalTierChange, crossedMilestones, referrerFeeGranted }` — personalTierChange is
+// the creator's new personal-tier percent when their 0%-promo just started or lapsed (the
+// only way this changes mid-tenure now that founding status is permanent and the
+// $2,000/mo tier is paused — see the file header), otherwise null; crossedMilestones is
+// the list of platform milestones (if any) newly crossed by this payment; referrerFeeGranted
+// is the referrer's user id when this invoice just launched them a free 0%-fee month (null
+// otherwise). The caller syncs
 // whichever of those actually happened to Stripe once the transaction is safely committed.
 export async function recordEarningAndCheckFeeTier(client, { creatorId, stripeInvoiceId, amountCents }) {
   if (!creatorId || !stripeInvoiceId || !(amountCents > 0)) return null;
@@ -156,31 +157,20 @@ export async function recordEarningAndCheckFeeTier(client, { creatorId, stripeIn
   const isFirstEverEarning = Number(totalEarningsRowsResult.rows[0].n) === 1;
   const referrerFeeGranted = isFirstEverEarning ? await rewardCreatorReferrerLaunch(client, creatorId) : null;
 
-  // This calendar month's earnings so far (including the invoice just recorded above)
-  // decide the personal tier for the rest of the month. Unlike a lifetime total this can
-  // move in either direction — a creator who crossed $2,000 last month but hasn't yet this
-  // month goes back to STANDARD_FEE_PERCENT the moment their next invoice lands, rather than
-  // staying discounted forever off one good month long past.
-  const monthTotalResult = await client.query(
-    `SELECT COALESCE(SUM(amount_cents), 0)::bigint AS total
-     FROM creator_earnings
-     WHERE creator_id = $1 AND created_at >= date_trunc('month', now())`,
-    [creatorId]
-  );
-  const monthToDateCents = Number(monthTotalResult.rows[0].total);
   // Highest priority: a still-active "invite a creator friend" 0%-fee month (see
   // lib/referrals.js) beats everything else below, including the founding rate. Once it
-  // lapses, this naturally falls through to the founding/standard/discounted tiers on
-  // whichever invoice comes next -- no separate revert job needed.
+  // lapses, this naturally falls through to the founding/standard tiers on whichever
+  // invoice comes next -- no separate revert job needed.
   const zeroFeePromoActive =
     creatorResult.rows[0].zero_fee_promo_expires_at &&
     new Date(creatorResult.rows[0].zero_fee_promo_expires_at) > new Date();
-  // Founding creators skip the milestone check entirely -- they're always at the
-  // discounted rate, full stop, not just started there for one qualifying month.
+  // Founding creators are always at the discounted rate, full stop. Everyone else is
+  // just STANDARD_FEE_PERCENT -- see the file header for the $2,000/mo tier this used to
+  // also check, currently paused.
   const founding = await isFoundingCreator(client.query.bind(client), creatorId);
   const targetFeePercent = zeroFeePromoActive
     ? 0
-    : founding || monthToDateCents >= FEE_DISCOUNT_THRESHOLD_CENTS
+    : founding
     ? DISCOUNTED_FEE_PERCENT
     : STANDARD_FEE_PERCENT;
 

@@ -6,18 +6,23 @@
 // numbers — app/api/me, app/api/creator/earnings, app/api/creators — never needs to depend
 // on the payments layer at all.
 
-// Your platform's take rate, applied to every subscription charge. Every creator starts
-// at STANDARD_FEE_PERCENT; for any calendar month their gross revenue on ByUs reaches
-// FEE_DISCOUNT_THRESHOLD_CENTS, their rate drops to DISCOUNTED_FEE_PERCENT for the rest of
-// that month — and moves back to STANDARD_FEE_PERCENT the moment a new month starts without
-// crossing it again, so a fee drop always reflects that month's actual volume rather than a
-// slow trickle accumulated over a year or more. See lib/fees.js for where that crossing is
-// detected (on each successful invoice, in the payment-provider webhook) and applied (to
-// that creator's stored rate and every one of their live subscriptions). Kept in one place
-// so it's easy to find/change — never hardcode these numbers elsewhere in the app.
+// Your platform's take rate, applied to every subscription charge. Every non-founding
+// creator is simply STANDARD_FEE_PERCENT, full stop; founding creators (see
+// FOUNDING_CREATOR_LIMIT below) are DISCOUNTED_FEE_PERCENT from day one.
+//
+// FEE_DISCOUNT_THRESHOLD_CENTS below is currently unused — business decision, 2026-09-19:
+// with only a handful of creators on the platform, a second earned-discount tier ($2,000/mo
+// in gross revenue drops a standard creator to DISCOUNTED_FEE_PERCENT for the rest of that
+// month) added billing complexity nobody was earning enough to reach yet. Paused rather than
+// deleted so it's a one-line change in lib/fees.js's recordEarningAndCheckFeeTier to bring
+// back once there's real creator volume: re-add the monthToDateCents query and restore
+// `founding || monthToDateCents >= FEE_DISCOUNT_THRESHOLD_CENTS` to the targetFeePercent
+// ternary there. If it comes back, restore the matching FAQ/Help/Terms/homepage copy too
+// (see app/components/faqs-data.js, app/help/data.js, app/terms/page.js, app/page.js) —
+// all four were rewritten to describe the current founding-only, flat-13%-otherwise story.
 export const STANDARD_FEE_PERCENT = 13;
 export const DISCOUNTED_FEE_PERCENT = 10;
-export const FEE_DISCOUNT_THRESHOLD_CENTS = 200000; // $2,000 gross revenue in a calendar month
+export const FEE_DISCOUNT_THRESHOLD_CENTS = 200000; // $2,000 gross revenue in a calendar month — currently unused, see above
 
 // Sustainable floors for new paid checkouts. Existing subscriptions below this amount
 // may renew unchanged, but no new supporter can start a below-floor checkout.
@@ -40,10 +45,10 @@ export const MIN_ANNUAL_BILLING_MONTHS = 10;
 export const MIN_FEE_PERCENT = 10;
 
 // Launch promo: the first FOUNDING_CREATOR_LIMIT creator accounts ever created on ByUs
-// get DISCOUNTED_FEE_PERCENT (10%) permanently, from day one -- the $2,000/mo milestone in
-// FEE_DISCOUNT_THRESHOLD_CENTS above is waived for them entirely rather than just started
-// at a lower point. See getFoundingCreatorRank / isFoundingCreator in lib/fees.js for how
-// "first 100" is determined (live off signup order, not a stamped flag).
+// get DISCOUNTED_FEE_PERCENT (10%) permanently, from day one -- currently the only way to
+// reach that rate at all, since the $2,000/mo earned-discount tier is paused (see above).
+// See getFoundingCreatorRank / isFoundingCreator in lib/fees.js for how "first 100" is
+// determined (live off signup order, not a stamped flag).
 export const FOUNDING_CREATOR_LIMIT = 100;
 
 // One-time tips ("buy a coffee") use the same percentage fee as subscriptions. The $5
