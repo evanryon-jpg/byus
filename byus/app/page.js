@@ -327,6 +327,7 @@ function HeroArtCollage() {
   const creators = [
     {
       name: 'Maya Sinclair',
+      href: '/demo/maya-sinclair',
       specialty: 'Illustrator & artist',
       image: '/creators/maya-sinclair/hero.jpg',
       accent: 'bg-brand-clay',
@@ -334,6 +335,7 @@ function HeroArtCollage() {
     },
     {
       name: 'Liam Carter',
+      href: '/demo/liam-carter',
       specialty: 'Fitness coach',
       image: '/creators/liam-carter/hero.jpg',
       accent: 'bg-brand-teal',
@@ -341,6 +343,7 @@ function HeroArtCollage() {
     },
     {
       name: 'Elena Park',
+      href: '/demo/elena-park',
       specialty: 'Educator',
       image: '/creators/elena-park/hero.jpg',
       accent: 'bg-brand-clay',
@@ -357,9 +360,11 @@ function HeroArtCollage() {
 
       <div className="relative grid min-h-[430px] grid-cols-2 items-center gap-3 sm:min-h-[470px] sm:gap-4">
         {creators.map((creator, index) => (
-          <article
+          <a
             key={creator.name}
-            className={`overflow-hidden rounded-2xl border-[5px] border-white bg-white shadow-[0_24px_55px_-22px_rgba(23,37,84,0.45)] ${
+            href={creator.href}
+            aria-label={`View ${creator.name}'s example creator page`}
+            className={`group block rounded-2xl outline-none transition duration-200 hover:-translate-y-1 focus-visible:ring-4 focus-visible:ring-brand-gold/70 ${
               index === 0
                 ? '-rotate-3 self-end'
                 : index === 1
@@ -367,6 +372,7 @@ function HeroArtCollage() {
                 : 'col-start-1 row-start-2 -mt-5 rotate-2'
             }`}
           >
+            <article className="overflow-hidden rounded-2xl border-[5px] border-white bg-white shadow-[0_24px_55px_-22px_rgba(23,37,84,0.45)] transition-shadow duration-200 group-hover:shadow-[0_30px_65px_-20px_rgba(23,37,84,0.58)]">
             <div className="relative aspect-[16/9] overflow-hidden rounded-xl bg-slate-100">
               <Image
                 src={creator.image}
@@ -388,11 +394,12 @@ function HeroArtCollage() {
                 </div>
               </div>
               <p className="mt-3 text-xs font-medium text-brand-ink/65">{creator.detail}</p>
-              <div className={`mt-3 rounded-full px-3 py-2 text-center text-xs font-bold text-white ${creator.accent}`}>
-                View creator page
+              <div className={`mt-3 rounded-full px-3 py-2 text-center text-xs font-bold text-white ${creator.accent} transition group-hover:brightness-110`}>
+                View creator page <span aria-hidden="true">→</span>
               </div>
             </div>
-          </article>
+            </article>
+          </a>
         ))}
       </div>
 
