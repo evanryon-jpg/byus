@@ -14,6 +14,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { publicAvatarUrl } from '@/lib/avatar-url';
 import { FOUNDING_CREATOR_LIMIT } from '@/lib/pricing';
+import { getAdminEmails } from '@/lib/admin';
 
 // 'popular' and 'trending' both need a subscriber count to sort by, so they're a
 // distinct query shape rather than just an ORDER BY swap on the same SELECT. 'trending'
@@ -46,9 +47,14 @@ export async function GET(request) {
     // concerned -- not a separate filter the visitor could ever toggle off, so it's
     // baked into the base condition list rather than something q/tag could interact
     // with. See app/api/admin/users/[id]/route.js for where is_suspended gets set.
-    const conditions = [`u.role = 'creator'`, `u.is_suspended = false`];
-    const values = [];
-    let i = 1;
+    const adminEmails = getAdminEmails();
+    const conditions = [
+      `u.role = 'creator'`,
+      `u.is_suspended = false`,
+      `NOT (LOWER(u.email) = ANY($1::text[]))`,
+    ];
+    const values = [adminEmails];
+    let i = 2;
 
     if (q) {
       conditions.push(`(u.display_name ILIKE $${i} OR u.bio ILIKE $${i})`);
@@ -77,7 +83,9 @@ export async function GET(request) {
            -- than a second round trip per creator.
            SELECT id, ROW_NUMBER() OVER (ORDER BY created_at, id) AS founding_rank
            FROM users
-           WHERE role = 'creator' AND is_suspended = false
+           WHERE role = 'creator'
+             AND is_suspended = false
+             AND NOT (LOWER(email) = ANY($1::text[]))
            ORDER BY created_at, id
            LIMIT ${FOUNDING_CREATOR_LIMIT}
          ) founding ON founding.id = u.id
@@ -103,7 +111,12 @@ export async function GET(request) {
       ),
       query(
         `SELECT DISTINCT unnest(tags) AS tag FROM users
-         WHERE role = 'creator' AND cardinality(tags) > 0 ORDER BY tag`
+         WHERE role = 'creator'
+           AND is_suspended = false
+           AND NOT (LOWER(email) = ANY($1::text[]))
+           AND cardinality(tags) > 0
+         ORDER BY tag`,
+        [adminEmails]
       ),
     ]);
 
