@@ -1,6 +1,7 @@
 export default function CreatorWalkthrough() {
   return (
     <section
+      id="creator-walkthrough"
       aria-labelledby="creator-walkthrough-title"
       className="relative overflow-hidden bg-[#F8FAFC] px-6 py-16 sm:py-20"
     >
@@ -32,6 +33,7 @@ export default function CreatorWalkthrough() {
             controls
             playsInline
             preload="metadata"
+            poster="/images/byus-video-poster.jpg"
             aria-label="A step-by-step demonstration of building a ByUs creator page"
           >
             <source src="/videos/byus-creator-page-demo.mp4" type="video/mp4" />
