@@ -128,8 +128,29 @@ export default function ProfileClient({ data, justSubscribed, subscribedTierId, 
         <div>
           <h1 className="text-2xl font-bold">{creator.display_name}</h1>
           {creator.is_founding && (
-            <span className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-brand-clay px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-[#F8FAFC]">
-              Founding creator
+            // Foil "founding number" tag -- names this creator's actual claim order
+            // (getFoundingCreatorRank, lib/fees.js) rather than a generic "Founding"
+            // label, since the low number itself is the status symbol. Gradient is a
+            // literal 4-stop diagonal (same inline-style pattern the Hero section
+            // already uses for its glows) -- Tailwind's gradient utilities only cover
+            // 2-3 stops, not enough for the foil-sheen look.
+            <span
+              className="mt-1 inline-flex items-center gap-2 rounded-lg border border-[#9C7C3E]/50 px-2.5 py-1 shadow-[0_3px_8px_-3px_rgba(156,124,62,0.55)]"
+              style={{ background: 'linear-gradient(100deg, #f4e6c1, #C9A961 35%, #b6903f 65%, #E4CE95)' }}
+              aria-label={`Founding creator, spot ${creator.founding_creator_rank} of ${creator.founding_creator_limit}`}
+            >
+              <span aria-hidden="true" className="font-display text-[15px] font-extrabold tabular-nums text-[#4a3708]">
+                {String(creator.founding_creator_rank).padStart(2, '0')}
+              </span>
+              <span aria-hidden="true" className="h-3.5 w-px bg-[#4a3708]/35" />
+              <span aria-hidden="true" className="leading-tight">
+                <span className="block font-display text-[11.5px] font-bold text-[#4a3708]">
+                  Founding Creator
+                </span>
+                <span className="block text-[8.5px] font-bold uppercase tracking-wider text-[#4a3708]/65">
+                  of {creator.founding_creator_limit}
+                </span>
+              </span>
             </span>
           )}
           <div className="mt-2 flex flex-wrap items-center gap-2">
