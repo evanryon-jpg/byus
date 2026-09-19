@@ -67,10 +67,16 @@ export async function GET(request) {
                 COALESCE(s.active_subscriber_count, 0)::int AS active_subscriber_count,
                 COALESCE(r.recent_subscriber_count, 0)::int AS recent_subscriber_count,
                 COALESCE(f.follower_count, 0)::int AS follower_count,
-                (founding.id IS NOT NULL) AS is_founding
+                (founding.id IS NOT NULL) AS is_founding,
+                founding.founding_rank AS founding_creator_rank
          FROM users u
          LEFT JOIN (
-           SELECT id FROM users
+           -- Same tie-break order (created_at, id) as getFoundingCreatorRank (lib/fees.js),
+           -- so the number badged here always matches the one on a creator's own profile
+           -- page -- computed inside this already-existing is_founding subquery rather
+           -- than a second round trip per creator.
+           SELECT id, ROW_NUMBER() OVER (ORDER BY created_at, id) AS founding_rank
+           FROM users
            WHERE role = 'creator' AND is_suspended = false
            ORDER BY created_at, id
            LIMIT ${FOUNDING_CREATOR_LIMIT}
@@ -107,6 +113,8 @@ export async function GET(request) {
     const creators = creatorsResult.rows.slice(0, pageSize).map((c) => ({
       ...c,
       profile_image_url: publicAvatarUrl(c.id, c.profile_image_url),
+      founding_creator_rank: c.founding_creator_rank != null ? Number(c.founding_creator_rank) : null,
+      founding_creator_limit: FOUNDING_CREATOR_LIMIT,
     }));
     const availableTags = tagsResult.rows.map((r) => r.tag);
 
