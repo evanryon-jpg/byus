@@ -277,8 +277,8 @@ export default function DashboardClient({
           <>
             <p className="mt-2 text-sm text-brand-ink/70">
               This is the last step: tap the button, and Stripe walks you through the rest.
-              That's where your money gets paid out to — any draft tiers above go live the
-              moment this is done.
+              That's where your money gets paid out to — once it's done, head to your tiers
+              below and hit Reactivate on each one to make them live.
             </p>
             <p className="mt-2 text-xs text-brand-ink/60">
               Stripe Express is a secure, simplified checkout that lets you route money straight
@@ -914,7 +914,8 @@ function AiSetupSection({ stripeConnected, onProfileSaved, onTierAdded }) {
             <p className="text-xs font-medium uppercase tracking-wide text-brand-ink/60">Suggested tiers</p>
             {!stripeConnected && (
               <p className="mt-1 text-xs text-brand-ink/60">
-                Added as drafts — they'll go live once you connect Stripe below.
+                Added as drafts — once you connect Stripe below, hit Reactivate on each one to
+                make it live.
               </p>
             )}
             <div className="mt-2 grid gap-2 sm:grid-cols-3">
@@ -1108,8 +1109,8 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent, ze
       )}
       {!stripeConnected && (
         <p className="mt-2 text-sm text-brand-ink/60">
-          You can build tiers now — they'll save as drafts and go live once you connect Stripe
-          below.
+          You can build tiers now — they'll save as drafts. Once you connect Stripe below,
+          hit Reactivate on each one to make it live.
         </p>
       )}
 
@@ -1225,7 +1226,8 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent, ze
               </div>
               {!stripeConnected && (
                 <p className="text-xs text-brand-ink/60">
-                  Saves as a draft — hidden from your profile until Stripe is connected.
+                  Saves as a draft — hidden from your profile until you connect Stripe and
+                  hit Reactivate on it.
                 </p>
               )}
               {error && <p className="text-sm text-red-600">{error}</p>}
