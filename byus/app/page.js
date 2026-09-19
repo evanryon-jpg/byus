@@ -303,9 +303,17 @@ function Hero({ user }) {
               — no sign-up required
             </p>
 
-            <p className="mt-4 text-base font-semibold text-brand-paper/85">
-              $0 to start&nbsp;&nbsp;·&nbsp;&nbsp;fee drops to 10% once you're earning $2k+/mo&nbsp;&nbsp;·&nbsp;&nbsp;cancel anytime
-            </p>
+            <ul
+              aria-label="Creator account highlights"
+              className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-brand-paper/90"
+            >
+              {['$0 to start', 'Standard processing included', 'Cancel anytime'].map((item) => (
+                <li key={item} className="flex items-center gap-1.5">
+                  <span className="text-brand-gold" aria-hidden="true">✓</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
           </div>
 
           <HeroArtCollage />
