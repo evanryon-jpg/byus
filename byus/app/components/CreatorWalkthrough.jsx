@@ -1,9 +1,4 @@
-export default function CreatorWalkthrough({ user }) {
-  const primaryCta = user?.role === 'creator'
-    ? { href: '/creator/dashboard', label: 'Go to your creator dashboard' }
-    : user
-      ? { href: '#creator-examples', label: 'Explore example creator pages' }
-      : { href: '/signup?role=creator', label: 'Join the founding creator waitlist' };
+export default function CreatorWalkthrough() {
   return (
     <section
       id="creator-walkthrough"
@@ -80,16 +75,10 @@ export default function CreatorWalkthrough({ user }) {
           </ol>
         </div>
 
-        <div className="mt-7 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
-          <a
-            href={primaryCta.href}
-            className="inline-flex min-h-12 items-center justify-center rounded-full bg-brand-teal px-6 py-3 font-bold text-white shadow-[0_14px_30px_-16px_rgba(15,118,110,0.7)] transition hover:-translate-y-0.5 hover:bg-[#115E59]"
-          >
-            {primaryCta.label}
-          </a>
+        <div className="mt-7 flex justify-center">
           <a
             href="/demo"
-            className="inline-flex min-h-12 items-center justify-center rounded-full border border-brand-ink/15 bg-white px-6 py-3 font-bold text-[#172033] transition hover:-translate-y-0.5 hover:shadow-md"
+            className="inline-flex min-h-12 items-center justify-center rounded-full bg-brand-teal px-6 py-3 font-bold text-white shadow-[0_14px_30px_-16px_rgba(15,118,110,0.7)] transition hover:-translate-y-0.5 hover:bg-[#115E59]"
           >
             Explore the interactive demo
           </a>
