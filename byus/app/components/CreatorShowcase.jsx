@@ -83,7 +83,7 @@ const CREATORS = [
 
 export default function CreatorShowcase() {
   return (
-    <section className="mx-auto max-w-6xl px-6 py-10 sm:py-14">
+    <section id="creator-examples" className="mx-auto max-w-6xl scroll-mt-20 px-6 py-10 sm:py-14">
       <div className="max-w-2xl">
         <span className="text-xs font-extrabold uppercase tracking-wide text-brand-clay">
           Demonstration creator pages
