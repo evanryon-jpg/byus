@@ -3,7 +3,7 @@ export default function CreatorWalkthrough() {
     <section
       id="creator-walkthrough"
       aria-labelledby="creator-walkthrough-title"
-      className="relative overflow-hidden bg-[#F8FAFC] px-6 py-16 sm:py-20"
+      className="relative scroll-mt-20 overflow-hidden bg-[#F8FAFC] px-6 py-16 sm:py-20"
     >
       <div
         aria-hidden="true"
@@ -39,6 +39,34 @@ export default function CreatorWalkthrough() {
             <source src="/videos/byus-creator-page-demo.mp4" type="video/mp4" />
             Your browser does not support embedded video.
           </video>
+        </div>
+
+        <div className="mx-auto mt-6 max-w-4xl">
+          <p className="text-center text-xs font-extrabold uppercase tracking-[0.16em] text-brand-ink/55">
+            What you&rsquo;ll see
+          </p>
+          <ol className="mt-3 grid gap-2 sm:grid-cols-3">
+            {[
+              ['01', 'Add your profile', 'Photo, name, bio, and page details'],
+              ['02', 'Build membership tiers', 'Set pricing and explain each benefit'],
+              ['03', 'Preview the finished page', 'See exactly what fans will experience'],
+            ].map(([number, title, detail]) => (
+              <li
+                key={number}
+                className="flex items-start gap-3 rounded-xl border border-brand-ink/10 bg-white px-4 py-3 text-left shadow-sm"
+              >
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-teal text-xs font-extrabold text-white">
+                  {number}
+                </span>
+                <span>
+                  <strong className="block text-sm text-[#172033]">{title}</strong>
+                  <span className="mt-0.5 block text-xs leading-relaxed text-brand-ink/60">
+                    {detail}
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ol>
         </div>
 
         <div className="mt-7 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
