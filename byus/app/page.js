@@ -438,7 +438,7 @@ function Features() {
     <section className="mx-auto max-w-5xl px-6 py-16">
       <div className="text-center">
         <h2 className="font-display text-3xl font-semibold text-[#172033]">
-          Everything a ByUs membership needs, nothing it doesn&rsquo;t
+          Everything your community needs, nothing it doesn&rsquo;t
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-brand-ink/70">
           No churn dashboards to configure — just the parts that make a subscription work, shown as
@@ -698,7 +698,7 @@ function HowItWorks() {
     <section id="how-it-works" className="bg-brand-paper">
       <div className="mx-auto max-w-5xl px-6 py-16">
         <h2 className="text-center font-display text-3xl font-semibold text-[#172033]">
-          Up and running on ByUs in four steps
+          From Passion to Paycheck in 4 Steps
         </h2>
 
         <div className="mt-10 grid grid-cols-2 gap-x-8 gap-y-8 sm:grid-cols-4 sm:gap-y-10">
@@ -768,7 +768,7 @@ function ClosingCta({ user }) {
       <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-brand-gold/20 blur-3xl" />
       <div className="mx-auto max-w-3xl px-6 py-14 text-center">
         <h2 className="font-display text-3xl font-semibold text-white sm:text-4xl">
-          {user ? 'Welcome back.' : 'Ready to get started?'}
+          {user ? 'Welcome back.' : 'Turn your passion into a paycheck.'}
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-white/75">
           {user
