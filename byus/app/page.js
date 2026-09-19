@@ -318,12 +318,12 @@ function HeroArtCollage() {
       detail: 'Studio tutorials · Glazing guides',
     },
     {
-      name: 'Liam Carter',
-      href: '/demo/liam-carter',
-      specialty: 'Musician',
-      image: '/creators/liam-carter/hero.jpg',
-      accent: 'bg-brand-teal',
-      detail: 'New songs · Behind the scenes',
+      name: 'Maya Sinclair',
+      href: '/demo/maya-sinclair',
+      specialty: 'Photographer',
+      image: '/creators/maya-sinclair/hero.jpg',
+      accent: 'bg-brand-clay',
+      detail: 'Photo stories · Field notes',
     },
     {
       name: 'Elena Park',
@@ -332,6 +332,14 @@ function HeroArtCollage() {
       image: '/creators/elena-park/hero.jpg',
       accent: 'bg-brand-clay',
       detail: 'Video lessons · Community access',
+    },
+    {
+      name: 'Liam Carter',
+      href: '/demo/liam-carter',
+      specialty: 'Musician',
+      image: '/creators/liam-carter/hero.jpg',
+      accent: 'bg-brand-teal',
+      detail: 'New songs · Behind the scenes',
     },
   ];
 
@@ -352,8 +360,10 @@ function HeroArtCollage() {
               index === 0
                 ? '-rotate-3 self-end'
                 : index === 1
-                ? 'z-10 row-span-2 rotate-1'
-                : 'col-start-1 row-start-2 -mt-5 rotate-2'
+                ? 'rotate-2 -translate-y-2'
+                : index === 2
+                ? '-mt-5 rotate-2'
+                : '-mt-3 -rotate-1'
             }`}
           >
             <article className="overflow-hidden rounded-2xl border-[5px] border-white bg-white shadow-[0_24px_55px_-22px_rgba(23,37,84,0.45)] transition-shadow duration-200 group-hover:shadow-[0_30px_65px_-20px_rgba(23,37,84,0.58)]">
