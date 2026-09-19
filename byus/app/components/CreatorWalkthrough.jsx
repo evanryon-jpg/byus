@@ -2,7 +2,7 @@ export default function CreatorWalkthrough({ user }) {
   const primaryCta = user?.role === 'creator'
     ? { href: '/creator/dashboard', label: 'Go to your creator dashboard' }
     : user
-      ? { href: '/browse', label: 'Browse creators' }
+      ? { href: '#creator-examples', label: 'Explore example creator pages' }
       : { href: '/signup?role=creator', label: 'Join the founding creator waitlist' };
   return (
     <section
