@@ -112,7 +112,11 @@ export default function CreatorShowcase() {
 
 function CreatorCard({ creator }) {
   return (
-    <div className="group relative overflow-hidden rounded-sm border border-brand-ink/10 shadow-sm">
+    <a
+      href={creator.href}
+      aria-label={`View ${creator.name}'s demonstration creator page`}
+      className="group relative block overflow-hidden rounded-sm border border-brand-ink/10 shadow-sm outline-none transition duration-200 hover:-translate-y-1 hover:shadow-lg focus-visible:ring-4 focus-visible:ring-brand-gold/70"
+    >
       <ArtSlot
         src={creator.art}
         alt={`${creator.name}, ${creator.craft.toLowerCase()} -- example ByUs creator page`}
@@ -142,21 +146,9 @@ function CreatorCard({ creator }) {
         </p>
 
         <div className="mt-2.5 sm:mt-4">
-          {creator.href ? (
-            <a
-              href={creator.href}
-              className="inline-flex items-center gap-1.5 rounded-full bg-brand-teal px-3 py-1.5 text-xs font-semibold text-brand-paper shadow-sm transition hover:opacity-90 sm:px-4 sm:py-2 sm:text-sm"
-            >
-              {creator.cta || 'View Creator'} →
-            </a>
-          ) : (
-            <span
-              className="inline-flex items-center gap-1.5 rounded-full bg-brand-teal px-3 py-1.5 text-xs font-semibold text-brand-paper opacity-80 sm:px-4 sm:py-2 sm:text-sm"
-              aria-disabled="true"
-            >
-              View Creator →
-            </span>
-          )}
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-teal px-3 py-1.5 text-xs font-semibold text-brand-paper shadow-sm transition group-hover:bg-[#115E59] sm:px-4 sm:py-2 sm:text-sm">
+            {creator.cta || 'View Creator'} →
+          </span>
         </div>
 
         <p className="mt-2.5 hidden text-[11px] text-brand-paper/50 sm:block">
@@ -170,6 +162,6 @@ function CreatorCard({ creator }) {
             : 'Demonstration profile — a quick preview, not the full interactive sandbox.'}
         </p>
       </div>
-    </div>
+    </a>
   );
 }
