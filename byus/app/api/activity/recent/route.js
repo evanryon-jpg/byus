@@ -21,23 +21,23 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { FOUNDING_CREATOR_LIMIT } from '@/lib/pricing';
 
-const LOOKBACK = "interval '30 days'"; // old history isn't "activity" -- an ancient signup
-// showing up as if it just happened would be its own small dishonesty, so events fall off
-// the ticker entirely after a month rather than being relabeled with a stale timestamp.
+const LOOKBACK = "interval '72 hours'"; // Only genuinely recent events belong in a live
+// activity toast. Older real activity still counts elsewhere, but showing it here can make
+// a quiet homepage feel stale rather than trustworthy.
 const EVENT_LIMIT = 12;
 
 function toActivityMessage(row) {
   const name = row.display_name || 'A creator';
   if (row.type === 'creator_joined') {
     return row.founding_rank != null
-      ? { emoji: '🎉', message: `${name} just claimed founding spot #${row.founding_rank}` }
-      : { emoji: '🎨', message: `${name} just joined ByUs as a creator` };
+      ? { emoji: '🎉', message: `${name} claimed founding spot #${row.founding_rank}` }
+      : { emoji: '🎨', message: `${name} joined ByUs as a creator` };
   }
   if (row.type === 'new_follow') {
-    return { emoji: '💛', message: `Someone just followed ${name}` };
+    return { emoji: '💛', message: `Someone followed ${name}` };
   }
   // 'new_subscription'
-  return { emoji: '✨', message: `Someone just subscribed to ${name}` };
+  return { emoji: '✨', message: `Someone subscribed to ${name}` };
 }
 
 export async function GET() {
