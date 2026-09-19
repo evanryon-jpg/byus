@@ -41,7 +41,18 @@ export default function DiscoverPage() {
     setError('');
     try {
       const res = await fetch(`/api/discover?offset=${nextOffset}`);
-      const data = await res.json();
+      // Parsed separately from the res.ok check below on purpose: a cold-start timeout
+      // or network hiccup can come back with an empty/truncated body even on requests
+      // that otherwise look fine, and res.json() throws its own raw parser error
+      // ("Unexpected end of JSON input") in that case -- letting that reach the catch
+      // block below meant real users (and Google's crawler, which is how this got
+      // caught) saw that exact JS exception text rendered as the page's error message.
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error('Could not load the feed. Try again.');
+      }
       if (!res.ok) throw new Error(data.error || 'Could not load the feed.');
       setPosts((current) => [...current, ...(data.posts || [])]);
       setHasMore(Boolean(data.hasMore));
