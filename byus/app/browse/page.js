@@ -80,41 +80,46 @@ export default function BrowsePage({ searchParams }) {
   }
 
   const isFiltered = Boolean(q.trim() || tag);
+  const marketplaceEmpty = !loading && creators.length === 0 && !isFiltered && availableTags.length === 0;
 
   return (
     <div>
       <section className="border-b border-brand-ink/10">
         <div className="mx-auto max-w-4xl px-6 pt-10 pb-10">
           <h1 className="font-display text-3xl font-bold text-[#172033]">Browse creators</h1>
-          <p className="mt-2 max-w-lg text-brand-ink/70">
-            Find someone whose work you already love, or discover your next favorite.
+          <p className="mt-2 max-w-xl text-brand-ink/70">
+            {marketplaceEmpty
+              ? 'ByUs is welcoming its first founding creators now. This directory will grow as their pages go live.'
+              : 'Find someone whose work you already love, or discover your next favorite.'}
           </p>
 
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <input
-              type="text"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search by name or bio…"
-              className="w-full rounded-full border border-brand-ink/10 bg-brand-paper px-4 py-2 text-sm focus:border-[#0F766E]/40 focus:outline-none sm:flex-1"
-            />
+          {!marketplaceEmpty && (
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <input
+                type="text"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search by name or bio…"
+                className="w-full rounded-full border border-brand-ink/10 bg-brand-paper px-4 py-2 text-sm focus:border-[#0F766E]/40 focus:outline-none sm:flex-1"
+              />
 
-            <div className="flex shrink-0 items-center gap-1 self-start rounded-full bg-brand-paper p-1 text-xs font-medium shadow-sm sm:self-auto">
-              {SORT_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setSort(opt.value)}
-                  aria-pressed={sort === opt.value}
-                  className={`rounded-full px-3 py-1.5 ${
-                    sort === opt.value ? 'bg-[#0F766E]/10 text-[#0F766E]' : 'text-brand-ink/65 hover:text-brand-ink/80'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
+              <div className="flex shrink-0 items-center gap-1 self-start rounded-full bg-brand-paper p-1 text-xs font-medium shadow-sm sm:self-auto">
+                {SORT_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setSort(opt.value)}
+                    aria-pressed={sort === opt.value}
+                    className={`rounded-full px-3 py-1.5 ${
+                      sort === opt.value ? 'bg-[#0F766E]/10 text-[#0F766E]' : 'text-brand-ink/65 hover:text-brand-ink/80'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </section>
 
@@ -154,8 +159,45 @@ export default function BrowsePage({ searchParams }) {
       {!loading && creators.length === 0 && isFiltered && (
         <p className="mt-6 text-brand-ink/60">No creators match your search.</p>
       )}
-      {!loading && creators.length === 0 && !isFiltered && (
-        <p className="mt-6 text-brand-ink/60">No creators yet — check back soon.</p>
+      {marketplaceEmpty && (
+        <section className="overflow-hidden rounded-3xl border border-brand-teal/20 bg-brand-paper shadow-sm">
+          <div className="bg-gradient-to-br from-brand-teal/10 via-transparent to-brand-gold/15 px-6 py-9 text-center sm:px-10 sm:py-12">
+            <span className="inline-flex rounded-full bg-brand-teal/10 px-3 py-1 text-xs font-extrabold uppercase tracking-[0.16em] text-brand-teal">
+              Founding stage
+            </span>
+            <h2 className="mx-auto mt-4 max-w-xl font-display text-2xl font-bold text-[#172033] sm:text-3xl">
+              The first creator pages are being built.
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl leading-relaxed text-brand-ink/70">
+              We won&rsquo;t fill this directory with pretend members. Until real creators publish
+              their pages, you can explore honest demonstration profiles or become one of the
+              creators who helps shape ByUs from the beginning.
+            </p>
+
+            <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+              <a
+                href="/signup?role=creator"
+                className="inline-flex min-h-12 items-center justify-center rounded-full bg-brand-teal px-6 py-3 font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#115E59]"
+              >
+                Join as a founding creator
+              </a>
+              <a
+                href="/#creator-examples"
+                className="inline-flex min-h-12 items-center justify-center rounded-full border border-brand-ink/15 bg-white px-6 py-3 font-bold text-[#172033] transition hover:-translate-y-0.5 hover:shadow-md"
+              >
+                Explore example creator pages
+              </a>
+            </div>
+
+            <div className="mx-auto mt-7 flex max-w-xl flex-wrap justify-center gap-x-5 gap-y-2 text-xs font-semibold text-brand-ink/60">
+              <span>No follower minimum</span>
+              <span aria-hidden="true">•</span>
+              <span>Founding rate locked in</span>
+              <span aria-hidden="true">•</span>
+              <span>Page setup in minutes</span>
+            </div>
+          </div>
+        </section>
       )}
       <ul className="mt-6 grid gap-4 sm:grid-cols-2">
         {creators.map((c) => (
