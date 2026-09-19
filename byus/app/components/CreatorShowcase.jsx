@@ -89,7 +89,7 @@ export default function CreatorShowcase() {
           Demonstration creator pages
         </span>
         <h2 className="mt-3 font-display text-3xl font-bold leading-tight text-[#172033] sm:text-4xl">
-          See what your page could look like
+          This could be your page.
         </h2>
         <p className="mt-3 text-brand-ink/70">
           Six example profiles across different kinds of creative work — built to show the range of
