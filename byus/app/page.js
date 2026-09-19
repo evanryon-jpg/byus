@@ -411,14 +411,16 @@ function Features() {
         </p>
       </div>
 
-      {/* Six even cards in one grid -- previously Direct payouts sat in an oversized
+      {/* Seven cards in one grid -- previously Direct payouts sat in an oversized
           slot beside a stacked 2x2 of the rest, sized with h-full so it stretched to
           match whatever height the stack beside it happened to reach. That worked at
           four compact cards; once Engagement became a fifth, the stack grew taller
           than the payout card needed and the stretch left a large empty gap inside
-          it. All six now share one card treatment and one grid, so each card is
+          it. All cards now share one card treatment and one grid, so each card is
           exactly as tall as its own content instead of being stretched to match a
-          sibling column. */}
+          sibling column. Text notifications is the seventh, and takes over the wide
+          "newest shipment" slot Engagement held until this one shipped -- see
+          SmsNotificationsDemo below. */}
       <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <PayoutDemo />
         <TiersDemo />
@@ -426,6 +428,7 @@ function Features() {
         <CommunitySyncDemo />
         <RssImportDemo />
         <EngagementDemo />
+        <SmsNotificationsDemo />
       </div>
     </section>
   );
@@ -556,35 +559,78 @@ function RssImportDemo() {
   );
 }
 
-// The newest addition to the feed (see the post_likes table and view_count column added
-// Sep 18, 2026) — spans both columns of the small-card grid so it reads as a highlighted
-// recent shipment rather than competing for the same width as the four cards above it,
-// and gets a "New" pill for the same reason. Gold as its accent since every other card
-// here already claims its own color (teal/payouts, clay/gated, Discord blurple, RSS
-// orange) and gold is the one brand color still unclaimed.
+// Was the feed's "newest addition" (the post_likes table and view_count column,
+// added Sep 18, 2026) and held the wide, "New"-pilled slot below for exactly one day
+// -- SmsNotificationsDemo takes that slot over now that it's the more recent
+// shipment, so this reverts to the same plain single-column treatment as
+// TiersDemo/CommunitySyncDemo/RssImportDemo. Amber stays its accent (still the one
+// brand-gold-family shade no other card claims); the view/like chips move from a
+// side-by-side strip to a stacked one now that the card is back to a single column.
 function EngagementDemo() {
   return (
-    <div className="flex flex-col justify-between gap-4 rounded-2xl border border-brand-ink/15 bg-brand-paper p-6 shadow-sm sm:col-span-2 sm:flex-row sm:items-center">
-      <div>
-        <span className="inline-flex items-center gap-2">
-          <span className="text-xs font-extrabold uppercase tracking-wide text-[#B45309]">Engagement</span>
-          <span className="rounded-full bg-brand-gold/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#B45309]">
-            New
-          </span>
-        </span>
-        <h3 className="mt-2 font-display text-lg font-bold text-[#172033]">See what&rsquo;s actually landing</h3>
-        <p className="mt-2 max-w-md text-sm leading-relaxed text-brand-ink/70">
-          Fans can like any post, and every post tracks its own view count — both show up on your
-          dashboard so you know what&rsquo;s connecting, not just what you posted.
-        </p>
-      </div>
-      <div className="flex shrink-0 gap-3 rounded-xl border border-brand-ink/10 bg-[#F8FAFC] px-5 py-4 text-sm font-semibold text-brand-ink/70 sm:flex-col sm:gap-2">
+    <div className="rounded-2xl border border-brand-ink/15 bg-brand-paper p-6 shadow-sm">
+      <span className="text-xs font-extrabold uppercase tracking-wide text-[#B45309]">Engagement</span>
+      <h3 className="mt-2 font-display text-lg font-bold text-[#172033]">See what&rsquo;s actually landing</h3>
+      <p className="mt-2 text-sm leading-relaxed text-brand-ink/70">
+        Fans can like any post, and every post tracks its own view count — both show up on your
+        dashboard so you know what&rsquo;s connecting, not just what you posted.
+      </p>
+      <div className="mt-4 flex gap-4 rounded-xl border border-brand-ink/10 bg-[#F8FAFC] px-4 py-3 text-sm font-semibold text-brand-ink/70">
         <span className="flex items-center gap-1.5">
           <span aria-hidden="true">👁</span> 1.2K views
         </span>
         <span className="flex items-center gap-1.5">
           <span aria-hidden="true" className="text-[#A6432E]">♥</span> 340 likes
         </span>
+      </div>
+    </div>
+  );
+}
+
+// The newest addition to the feed (see lib/sms.js, the phone_verification_codes
+// table, and TextNotificationsCard in app/settings/SettingsClient.js) — inherits the
+// wide, "New"-pilled slot EngagementDemo held above, for the same reason: whichever
+// feature actually shipped last gets the extra width, not a permanent claim on it.
+// The heading is written to land for both audiences at once ("you post" / "they
+// know") since this pitches fans (opt in, stop missing posts) and creators (fans
+// hear about new work the moment it's up) equally, per how the feature was scoped.
+// Green as its accent, the same "borrow a color that's actually its own" reasoning
+// as Discord blurple and RSS orange -- it's the color of an SMS/MMS bubble on a
+// phone (as opposed to iMessage blue), so "text message" reads before any label
+// does. The mock notification is a lock-screen-style preview rather than an icon
+// standing in for the idea, matching how PayoutDemo shows a real receipt and
+// GatedContentDemo shows a real locked post.
+function SmsNotificationsDemo() {
+  return (
+    <div className="flex flex-col justify-between gap-4 rounded-2xl border border-brand-ink/15 bg-brand-paper p-6 shadow-sm sm:col-span-2 sm:flex-row sm:items-center">
+      <div>
+        <span className="inline-flex items-center gap-2">
+          <span className="text-xs font-extrabold uppercase tracking-wide text-[#16A34A]">
+            Text notifications
+          </span>
+          <span className="rounded-full bg-[#16A34A]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#15803D]">
+            New
+          </span>
+        </span>
+        <h3 className="mt-2 font-display text-lg font-bold text-[#172033]">
+          The moment you post, they know
+        </h3>
+        <p className="mt-2 max-w-md text-sm leading-relaxed text-brand-ink/70">
+          Fans verify a phone number once in Settings, then get a text the second a creator they
+          follow publishes something new — no app to open, no feed to scroll and hope you catch it.
+        </p>
+      </div>
+      <div className="w-full shrink-0 rounded-xl border border-brand-ink/10 bg-[#F8FAFC] p-3.5 sm:w-64">
+        <div className="flex items-center gap-2">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[#16A34A] text-[10px] font-bold text-white">
+            B
+          </span>
+          <span className="text-xs font-bold text-[#172033]">ByUs</span>
+          <span className="ml-auto text-[10px] font-medium text-brand-ink/40">now</span>
+        </div>
+        <p className="mt-1.5 text-xs leading-snug text-brand-ink/70">
+          Alex Rivers just posted: &ldquo;New behind-the-scenes video is up 🎬&rdquo; — tap to view
+        </p>
       </div>
     </div>
   );
