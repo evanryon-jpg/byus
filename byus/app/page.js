@@ -141,23 +141,58 @@ function FoundingCreatorProgram({ stats }) {
             </p>
           ) : (
             <>
+              <FoundingSpotsGrid claimed={stats.claimed} limit={stats.limit} remaining={stats.remaining} />
               <a
                 href="/signup?role=creator"
-                className="inline-block rounded-full bg-brand-gold px-8 py-3.5 text-base font-bold text-[#172554] shadow-[0_16px_30px_-14px_rgba(15,118,110,0.5)] transition hover:-translate-y-0.5"
+                className="mt-6 inline-block rounded-full bg-brand-gold px-8 py-3.5 text-base font-bold text-[#172554] shadow-[0_16px_30px_-14px_rgba(15,118,110,0.5)] transition hover:-translate-y-0.5"
               >
                 Join the founding waitlist →
               </a>
-              <p className="mt-3 text-sm font-medium tabular-nums text-brand-paper/55">
-                <strong className="font-display text-base text-brand-paper">
-                  {stats.remaining.toLocaleString()}
-                </strong>{' '}
-                founding {stats.remaining === 1 ? 'spot remains' : 'spots remain'}
-              </p>
             </>
           )}
         </div>
       </div>
     </section>
+  );
+}
+
+// A depleting 10x10 dot grid visualizing the Founding Creator Program's fixed 100-spot
+// cap -- one dot per spot, lit gold once claimed. Deliberately literal rather than an
+// abstract percentage bar: "100 spots" is a real, countable thing (FOUNDING_CREATOR_LIMIT
+// in lib/pricing.js), driven by the same stats.claimed/stats.limit that already come
+// straight from a live COUNT(*) query in getFoundingPromoStats() (lib/fees.js) -- so this
+// can't drift from what a creator actually gets. Assumes a grid-legible spot count
+// (roughly <=100): if FOUNDING_CREATOR_LIMIT is ever raised well past that, this should
+// become a scaled/grouped visualization instead of one <span> per spot.
+function FoundingSpotsGrid({ claimed, limit, remaining }) {
+  const dots = Array.from({ length: limit }, (_, i) => i < claimed);
+
+  return (
+    <div className="mx-auto flex max-w-xs flex-col items-center gap-3">
+      <div
+        className="grid w-full grid-cols-10 gap-1.5"
+        role="img"
+        aria-label={`${claimed} of ${limit} founding spots claimed, ${remaining} remaining`}
+      >
+        {dots.map((filled, i) => (
+          <span
+            key={i}
+            aria-hidden="true"
+            className={
+              filled
+                ? 'aspect-square w-full rounded-full bg-brand-gold shadow-[0_0_0_3px_rgba(201,169,97,0.15)]'
+                : 'aspect-square w-full rounded-full border border-brand-paper/20 bg-brand-paper/10'
+            }
+          />
+        ))}
+      </div>
+      <p className="text-sm text-brand-paper/70">
+        <strong className="font-display text-base font-bold text-brand-paper">
+          {remaining.toLocaleString()}
+        </strong>{' '}
+        founding {remaining === 1 ? 'spot remains' : 'spots remain'}
+      </p>
+    </div>
   );
 }
 
