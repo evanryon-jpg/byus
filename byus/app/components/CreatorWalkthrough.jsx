@@ -1,4 +1,9 @@
-export default function CreatorWalkthrough() {
+export default function CreatorWalkthrough({ user }) {
+  const primaryCta = user?.role === 'creator'
+    ? { href: '/creator/dashboard', label: 'Go to your creator dashboard' }
+    : user
+      ? { href: '/browse', label: 'Browse creators' }
+      : { href: '/signup?role=creator', label: 'Join the founding creator waitlist' };
   return (
     <section
       id="creator-walkthrough"
@@ -77,10 +82,10 @@ export default function CreatorWalkthrough() {
 
         <div className="mt-7 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
           <a
-            href="/signup?role=creator"
+            href={primaryCta.href}
             className="inline-flex min-h-12 items-center justify-center rounded-full bg-brand-teal px-6 py-3 font-bold text-white shadow-[0_14px_30px_-16px_rgba(15,118,110,0.7)] transition hover:-translate-y-0.5 hover:bg-[#115E59]"
           >
-            Join the founding creator waitlist
+            {primaryCta.label}
           </a>
           <a
             href="/demo"
