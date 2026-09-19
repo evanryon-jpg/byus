@@ -36,21 +36,19 @@ export default async function AdminPage() {
     );
   }
 
-  let data = null;
-  try {
-    data = await loadAdminOverview();
-  } catch (err) {
-    console.error('admin: overview load failed:', err);
-  }
-
-  if (!data) {
-    return (
-      <div className="p-12 text-center text-brand-ink/60">Could not load the platform overview.</div>
-    );
-  }
-
-  const [reportsResult, suggestionsResult, outreachResult, siteFeedbackResult, waitlistResult, reviewQueueResult] =
+  // All seven queries used to run as one awaited alone (overview) followed by a
+  // Promise.all for the rest -- two sequential round trips to Neon back to back on
+  // every single load, for no reason: none of the other six loaders read anything
+  // from the overview result, so there was nothing to wait for. That extra round
+  // trip was pure added latency on the server's response, which pushes out TTFB
+  // and therefore this page's Real Experience Score. Running all seven together
+  // cuts it to one round trip's worth of wall-clock time.
+  const [overviewResult, reportsResult, suggestionsResult, outreachResult, siteFeedbackResult, waitlistResult, reviewQueueResult] =
     await Promise.all([
+      loadAdminOverview().catch((err) => {
+        console.error('admin: overview load failed:', err);
+        return null;
+      }),
       loadAdminReports()
         .then((reports) => ({ reports, error: '' }))
         .catch((err) => {
@@ -89,9 +87,15 @@ export default async function AdminPage() {
         }),
     ]);
 
+  if (!overviewResult) {
+    return (
+      <div className="p-12 text-center text-brand-ink/60">Could not load the platform overview.</div>
+    );
+  }
+
   return (
     <AdminClient
-      data={data}
+      data={overviewResult}
       initialReports={reportsResult.reports}
       initialReportsError={reportsResult.error}
       initialSuggestions={suggestionsResult.suggestions}
