@@ -15,6 +15,7 @@ import {
   loadCreatorReviewQueue,
   loadAdminTasks,
 } from '@/lib/admin-data';
+import { listPendingSmsBroadcastHolds, SMS_HOLD_THRESHOLD } from '@/lib/sms-holds';
 import AdminClient from './AdminClient';
 
 export const dynamic = 'force-dynamic';
@@ -44,7 +45,7 @@ export default async function AdminPage() {
   // trip was pure added latency on the server's response, which pushes out TTFB
   // and therefore this page's Real Experience Score. Running all seven together
   // cuts it to one round trip's worth of wall-clock time.
-  const [overviewResult, reportsResult, suggestionsResult, outreachResult, siteFeedbackResult, waitlistResult, reviewQueueResult, tasksResult] =
+  const [overviewResult, reportsResult, suggestionsResult, outreachResult, siteFeedbackResult, waitlistResult, reviewQueueResult, tasksResult, smsHoldsResult] =
     await Promise.all([
       loadAdminOverview().catch((err) => {
         console.error('admin: overview load failed:', err);
@@ -92,6 +93,12 @@ export default async function AdminPage() {
           console.error('admin: tasks load failed:', err);
           return { tasks: null, error: 'Could not load the task list.' };
         }),
+      listPendingSmsBroadcastHolds()
+        .then((holds) => ({ holds, error: '' }))
+        .catch((err) => {
+          console.error('admin: pending SMS holds load failed:', err);
+          return { holds: null, error: 'Could not load pending SMS sends.' };
+        }),
     ]);
 
   if (!overviewResult) {
@@ -117,6 +124,9 @@ export default async function AdminPage() {
       initialReviewQueueError={reviewQueueResult.error}
       initialTasks={tasksResult.tasks}
       initialTasksError={tasksResult.error}
+      initialSmsHolds={smsHoldsResult.holds}
+      initialSmsHoldsError={smsHoldsResult.error}
+      smsHoldThreshold={SMS_HOLD_THRESHOLD}
     />
   );
 }

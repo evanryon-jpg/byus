@@ -26,6 +26,9 @@ export default function AdminClient({
   initialReviewQueueError,
   initialTasks,
   initialTasksError,
+  initialSmsHolds,
+  initialSmsHoldsError,
+  smsHoldThreshold,
 }) {
   const {
     creatorCount,
@@ -61,6 +64,12 @@ export default function AdminClient({
     <div className="mx-auto max-w-5xl px-6 py-12">
       <h1 className="text-2xl font-bold">Platform overview</h1>
       <p className="text-brand-ink/65">What ByUs itself has earned, and how the platform is growing.</p>
+
+      <PendingSmsSendsSection
+        initialHolds={initialSmsHolds}
+        initialError={initialSmsHoldsError}
+        threshold={smsHoldThreshold}
+      />
 
       <TasksSection initialTasks={initialTasks} initialError={initialTasksError} />
 
@@ -944,10 +953,118 @@ function CreatorWaitlistSection({ initialWaitlist, initialError }) {
   );
 }
 
+// Guardrail for the automatic new-post text blast (see lib/sms-holds.js and
+// notifySubscribersOfNewPostBySms in app/api/creator/posts/route.js) -- sent.dm bills
+// per contact per month plus per-text carrier cost, so anything over the threshold is
+// held here instead of sent automatically. Sits above the task list since a pending
+// hold is real, waiting money, not a to-do item; unlike the task list it's meant to sit
+// empty most of the time, so it stays visually quiet (no border/tint) when there's
+// nothing waiting rather than permanently claiming attention on an otherwise calm page.
+function PendingSmsSendsSection({ initialHolds, initialError, threshold }) {
+  const [holds, setHolds] = useState(initialHolds); // null = failed to load
+  const [error, setError] = useState(initialError || '');
+  const [busyId, setBusyId] = useState(null);
+  const [notes, setNotes] = useState({}); // id -> outcome message, shown briefly after approve
+
+  async function resolve(id, action) {
+    setBusyId(id);
+    setError('');
+    try {
+      const res = await fetch(`/api/admin/sms-holds/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error || '');
+      setHolds((current) => current.filter((h) => h.id !== id));
+      if (action === 'approve') {
+        setNotes((current) => ({
+          ...current,
+          [id]: `Sent to ${body.sent.toLocaleString()} of ${body.eligible.toLocaleString()} currently opted-in fans.`,
+        }));
+      }
+    } catch (err) {
+      setError(err.message || `Could not ${action === 'approve' ? 'send' : 'dismiss'} that — try again.`);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  const hasPending = holds !== null && holds.length > 0;
+
+  return (
+    <section className={`mt-6 rounded-2xl border p-6 ${hasPending ? 'border-amber-300 bg-amber-50/50' : 'border-brand-ink/10 bg-brand-paper'}`}>
+      <div className="flex items-center justify-between">
+        <h2 className="font-semibold text-[#172033]">Pending SMS sends</h2>
+        {hasPending && (
+          <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800">
+            {holds.length} waiting
+          </span>
+        )}
+      </div>
+      <p className="mt-1 text-sm text-brand-ink/65">
+        A new-post text blast over {threshold?.toLocaleString() || '2,000'} recipients costs real money and waits
+        here for approval instead of sending itself.
+      </p>
+
+      {error && <p className="mt-3 text-xs text-red-600">{error}</p>}
+
+      {holds === null ? (
+        <p className="mt-4 text-sm text-brand-ink/60">Could not load pending SMS sends.</p>
+      ) : holds.length === 0 ? (
+        <p className="mt-4 text-sm text-brand-ink/50">Nothing waiting.</p>
+      ) : (
+        <div className="mt-4 space-y-3">
+          {holds.map((hold) => (
+            <div key={hold.id} className="rounded-xl border border-amber-300/70 bg-brand-paper p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-[#172033]">
+                    {hold.creatorName}
+                    {hold.postTitle ? <> &mdash; &ldquo;{hold.postTitle}&rdquo;</> : null}
+                  </p>
+                  <p className="mt-1 text-sm text-brand-ink/65">
+                    Would text{' '}
+                    <span className="font-bold tabular-nums text-amber-800">
+                      {hold.recipientCount.toLocaleString()}
+                    </span>{' '}
+                    subscribers &middot; held {new Date(hold.createdAt).toLocaleString()}
+                  </p>
+                  {notes[hold.id] && <p className="mt-1 text-sm font-medium text-green-700">{notes[hold.id]}</p>}
+                </div>
+                <div className="flex shrink-0 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => resolve(hold.id, 'approve')}
+                    disabled={busyId === hold.id}
+                    className="rounded-full bg-[#0F766E] px-4 py-1.5 text-sm font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
+                  >
+                    {busyId === hold.id ? 'Working…' : 'Approve & send'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => resolve(hold.id, 'reject')}
+                    disabled={busyId === hold.id}
+                    className="rounded-full border border-brand-ink/20 px-4 py-1.5 text-sm font-semibold text-brand-ink/70 hover:bg-brand-ink/5 disabled:opacity-50"
+                  >
+                    Reject
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 // The team's own internal punch-list (see database/migrations/20260919_admin_tasks.sql)
 // -- a running list of what still needs doing as the platform grows, replacing tracking
-// it by hand across chat/notes. Sits first on the page since it's the one section meant
-// to be checked and updated constantly, not just reviewed when something comes in.
+// it by hand across chat/notes. Sits right under PendingSmsSendsSection -- that one
+// holds real waiting money and gets first look, this is the next thing meant to be
+// checked and updated constantly.
 const TASK_STATUSES = ['todo', 'doing', 'done'];
 const TASK_STATUS_LABELS = { todo: 'To do', doing: 'Doing', done: 'Done' };
 const TASK_STATUS_STYLES = {
