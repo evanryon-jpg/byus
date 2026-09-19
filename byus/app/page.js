@@ -300,8 +300,7 @@ function Hero({ user }) {
   );
 }
 
-// A small editorial collage of real artwork from Alex Rivers's page (see
-// /public/creators/alex-rivers and the live /demo route) -- three crops, offset and
+// A small editorial collage of creator examples -- three crops, offset and
 // lightly rotated like pinned prints rather than a clean grid, so the hero shows a
 // real example of "what you can build" instead of describing it. The member-exclusive
 // crop keeps a light blur and lock badge so a first-time visitor also sees, at a
@@ -311,12 +310,12 @@ function Hero({ user }) {
 function HeroArtCollage() {
   const creators = [
     {
-      name: 'Maya Sinclair',
-      href: '/demo/maya-sinclair',
-      specialty: 'Photographer',
-      image: '/creators/maya-sinclair/hero.jpg',
+      name: 'Sophie Lane',
+      href: '/demo/sophie-lane',
+      specialty: 'Ceramic Artist',
+      image: '/creators/sophie-lane/hero.jpg',
       accent: 'bg-brand-clay',
-      detail: 'Photo stories · Field notes',
+      detail: 'Studio tutorials · Glazing guides',
     },
     {
       name: 'Liam Carter',
