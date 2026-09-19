@@ -178,18 +178,12 @@ export default function BrowsePage({ searchParams }) {
               creators who helps shape ByUs from the beginning.
             </p>
 
-            <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+            <div className="mt-7 flex justify-center">
               <a
                 href="/signup?role=creator"
                 className="inline-flex min-h-12 items-center justify-center rounded-full bg-brand-teal px-6 py-3 font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#115E59]"
               >
                 Join as a founding creator
-              </a>
-              <a
-                href="/#creator-examples"
-                className="inline-flex min-h-12 items-center justify-center rounded-full border border-brand-ink/15 bg-white px-6 py-3 font-bold text-[#172033] transition hover:-translate-y-0.5 hover:shadow-md"
-              >
-                Explore example creator pages
               </a>
             </div>
 
@@ -269,18 +263,12 @@ export default function BrowsePage({ searchParams }) {
             Join Evan at the beginning, build your membership page in minutes, and lock in the
             founding creator rate while spots remain.
           </p>
-          <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+          <div className="mt-6 flex justify-center">
             <a
               href="/signup?role=creator"
               className="inline-flex min-h-12 items-center justify-center rounded-full bg-brand-teal px-6 py-3 font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#115E59]"
             >
               Become creator #2
-            </a>
-            <a
-              href="/#creator-walkthrough"
-              className="inline-flex min-h-12 items-center justify-center rounded-full border border-brand-ink/15 bg-white px-6 py-3 font-bold text-[#172033] transition hover:-translate-y-0.5 hover:shadow-md"
-            >
-              Watch how page setup works
             </a>
           </div>
         </section>
