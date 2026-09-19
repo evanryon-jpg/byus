@@ -15,6 +15,7 @@ import { containsBlockedContent } from '@/lib/content-policy';
 import { loadCreatorPosts } from '@/lib/creator-dashboard-data';
 import { getUpload, getAsset } from '@/lib/mux';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { sendSms, isSmsConfigured, SMS_BATCH_SIZE } from '@/lib/sms';
 
 // This request already has to wait on the post INSERT and (for a video post) a Mux
 // lookup before it gets anywhere near this -- so unlike the broadcast route's deliberate
@@ -230,34 +231,65 @@ async function notifySubscribersOfNewPost(creatorId, post) {
   const [creatorResult, subscribersResult] = await Promise.all([
     query('SELECT display_name, slug FROM users WHERE id = $1', [creatorId]),
     query(
-      `SELECT u.email FROM subscriptions s
+      `SELECT CASE WHEN u.notify_new_posts = true THEN u.email ELSE NULL END AS email,
+              CASE WHEN u.notify_new_posts_sms = true THEN u.phone ELSE NULL END AS sms_phone
+       FROM subscriptions s
        JOIN users u ON u.id = s.fan_id
        WHERE s.creator_id = $1 AND s.status = 'active'
          AND (s.current_period_end IS NULL OR s.current_period_end > now())
-         AND u.notify_new_posts = true`,
+         AND (u.notify_new_posts = true OR (u.notify_new_posts_sms = true AND u.phone_verified_at IS NOT NULL))`,
       [creatorId]
     ),
   ]);
-
-  const recipients = subscribersResult.rows.map((row) => row.email).filter(Boolean);
-  if (recipients.length === 0) return;
 
   const creator = creatorResult.rows[0];
   const creatorName = creator?.display_name || 'Your creator';
   const creatorUrl = `${process.env.APP_URL}/creator/${creator?.slug || creatorId}`;
 
-  // Queues every recipient the same way the "message your subscribers" broadcast does
-  // (see lib/broadcast-jobs.js) instead of sending to all of them inline here -- this
-  // route fires on every single post a creator publishes, automatically, with no
-  // creator action to gate it the way a deliberate broadcast send has. Any creator whose
-  // active subscriber count got large enough to blow a request timeout would otherwise
-  // hit this on every post, not just occasionally.
-  const jobId = await createBroadcastJob({
-    creatorId,
-    creatorName,
-    kind: 'new_post',
-    metadata: { creatorUrl, postTitle: post.title, postExcerpt: post.body },
-    recipients,
-  });
-  await processBroadcastJobChunk(jobId, { budgetMs: NEW_POST_INLINE_BUDGET_MS });
+  const recipients = subscribersResult.rows.map((row) => row.email).filter(Boolean);
+  if (recipients.length > 0) {
+    // Queues every recipient the same way the "message your subscribers" broadcast does
+    // (see lib/broadcast-jobs.js) instead of sending to all of them inline here -- this
+    // route fires on every single post a creator publishes, automatically, with no
+    // creator action to gate it the way a deliberate broadcast send has. Any creator whose
+    // active subscriber count got large enough to blow a request timeout would otherwise
+    // hit this on every post, not just occasionally.
+    const jobId = await createBroadcastJob({
+      creatorId,
+      creatorName,
+      kind: 'new_post',
+      metadata: { creatorUrl, postTitle: post.title, postExcerpt: post.body },
+      recipients,
+    });
+    await processBroadcastJobChunk(jobId, { budgetMs: NEW_POST_INLINE_BUDGET_MS });
+  }
+
+  await notifySubscribersOfNewPostBySms(subscribersResult.rows, { creatorName, creatorUrl, post });
+}
+
+// Separate from the email path above on purpose: sent.dm accepts up to SMS_BATCH_SIZE
+// (1000) recipients per call for one message, so even a creator with a subscriber count
+// that would need this app's resumable broadcast-job system for email (see
+// lib/broadcast-jobs.js's own header comment on why that exists) still finishes in a
+// handful of synchronous calls here, well inside NEW_POST_INLINE_BUDGET_MS-scale time --
+// no job/worker machinery needed for this channel yet. Never throws: a texting failure
+// (misconfigured provider, sent.dm outage) should never take down post creation or the
+// email notifications above, which is why the caller already wraps this whole function
+// in its own try/catch.
+async function notifySubscribersOfNewPostBySms(subscriberRows, { creatorName, creatorUrl, post }) {
+  if (!isSmsConfigured()) return;
+
+  const phones = subscriberRows.map((row) => row.sms_phone).filter(Boolean);
+  if (phones.length === 0) return;
+
+  const title = post.title ? `"${post.title}"` : 'a new post';
+  const text = `${creatorName} just posted ${title} on ByUs: ${creatorUrl}`;
+
+  for (let i = 0; i < phones.length; i += SMS_BATCH_SIZE) {
+    const batch = phones.slice(i, i + SMS_BATCH_SIZE);
+    const result = await sendSms(batch, text);
+    if (!result.ok) {
+      console.error(`New-post SMS: batch of ${batch.length} failed:`, result.error);
+    }
+  }
 }
