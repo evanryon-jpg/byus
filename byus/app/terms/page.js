@@ -3,7 +3,7 @@ export const metadata = {
   description: 'The terms that govern using ByUs as a creator or a fan.',
 };
 
-const LAST_UPDATED = 'September 13, 2026';
+const LAST_UPDATED = 'September 19, 2026';
 const CONTACT_EMAIL = 'support@byusapp.com';
 
 export default function TermsPage() {
@@ -122,6 +122,15 @@ export default function TermsPage() {
             on ByUs and results in an immediate account ban.
           </p>
           <p className="mt-3">
+            Every photo or video you post must be your own work, or something you have clear
+            rights and permission to share — including the permission of anyone else who appears
+            in it. Content depicting a real person without their consent, including
+            non-consensual intimate imagery, secretly recorded footage, or a deepfake or other
+            manipulated media that portrays a real person in a sexual, violent, or misleading way,
+            is never allowed, regardless of where it was originally created or hosted, and results
+            in an immediate account ban.
+          </p>
+          <p className="mt-3">
             We use automated screening — including keyword and link filtering — to catch
             violations of this section before content is published, in addition to manual
             review. New creator accounts go through a one-time initial review before they can
@@ -133,7 +142,28 @@ export default function TermsPage() {
           </p>
         </Section>
 
-        <Section title="6. Fake accounts and abuse">
+        <Section title="6. Copyright and repeat infringement">
+          <p>
+            ByUs expects creators to only post content they own or are otherwise authorized to
+            use. If you believe something on ByUs infringes your copyright, use the
+            &ldquo;Report&rdquo; option on the relevant creator&rsquo;s page, or email{' '}
+            <a href={`mailto:${CONTACT_EMAIL}`} className="text-brand-teal underline">
+              {CONTACT_EMAIL}
+            </a>{' '}
+            with: the copyrighted work you believe is infringed, the specific ByUs page or post
+            where you found the material, your contact information, and a statement that you
+            have a good-faith belief the use is unauthorized and that your notice is accurate.
+          </p>
+          <p className="mt-3">
+            We review copyright notices and remove or restrict access to material we determine
+            infringes. A creator whose content is removed this way can respond with a
+            counter-notice, using the same contact method above, if they believe the removal was
+            a mistake. Accounts that receive repeated, substantiated copyright complaints will be
+            suspended or terminated.
+          </p>
+        </Section>
+
+        <Section title="7. Fake accounts and abuse">
           <p>
             Automated, fraudulent, or duplicate account creation, and any attempt to circumvent
             our account-verification or rate-limiting protections, is not allowed and may result
@@ -141,7 +171,7 @@ export default function TermsPage() {
           </p>
         </Section>
 
-        <Section title="7. Termination">
+        <Section title="8. Termination">
           <p>
             You can stop using ByUs and delete your account at any time. We can suspend or
             terminate accounts that violate these terms. Where reasonably possible we&rsquo;ll
@@ -149,7 +179,7 @@ export default function TermsPage() {
           </p>
         </Section>
 
-        <Section title="8. Disclaimers and liability">
+        <Section title="9. Disclaimers and liability">
           <p>
             ByUs is provided &ldquo;as is,&rdquo; without warranties of any kind. We&rsquo;re not
             liable for indirect, incidental, or consequential damages arising from your use of
@@ -158,7 +188,7 @@ export default function TermsPage() {
           </p>
         </Section>
 
-        <Section title="9. Changes to these terms">
+        <Section title="10. Changes to these terms">
           <p>
             We may update these terms as ByUs evolves. If we make material changes, we&rsquo;ll
             update the date at the top of this page. Continuing to use ByUs after a change means
@@ -166,7 +196,7 @@ export default function TermsPage() {
           </p>
         </Section>
 
-        <Section title="10. Contact">
+        <Section title="11. Contact">
           <p>
             Questions about these terms? Reach us at{' '}
             <a href={`mailto:${CONTACT_EMAIL}`} className="text-brand-teal underline">
