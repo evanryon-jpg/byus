@@ -336,26 +336,26 @@ function HeroArtCollage() {
     {
       name: 'Maya Sinclair',
       href: '/demo/maya-sinclair',
-      specialty: 'Illustrator & artist',
+      specialty: 'Photographer',
       image: '/creators/maya-sinclair/hero.jpg',
       accent: 'bg-brand-clay',
-      detail: 'Process posts · Brush packs',
+      detail: 'Photo stories · Field notes',
     },
     {
       name: 'Liam Carter',
       href: '/demo/liam-carter',
-      specialty: 'Fitness coach',
+      specialty: 'Musician',
       image: '/creators/liam-carter/hero.jpg',
       accent: 'bg-brand-teal',
-      detail: 'Workouts · Member guides',
+      detail: 'New songs · Behind the scenes',
     },
     {
       name: 'Elena Park',
       href: '/demo/elena-park',
-      specialty: 'Educator',
+      specialty: 'ASL educator',
       image: '/creators/elena-park/hero.jpg',
       accent: 'bg-brand-clay',
-      detail: 'Lessons · PDF downloads',
+      detail: 'Video lessons · Community access',
     },
   ];
 
