@@ -43,7 +43,7 @@ export default async function HomePage() {
       <FeedbackWidget />
       <LiveActivityTicker />
       <Hero user={session} />
-      <CreatorWalkthrough />
+      <CreatorWalkthrough user={session} />
       <CreatorShowcase />
       <EarningsCalculator />
       <Features />
