@@ -92,7 +92,7 @@ function FoundingCreatorProgram({ stats }) {
     {
       icon: <RankIcon />,
       title: 'Priority placement',
-      body: `Automatically sorted first in Browse Creators and the homepage's showcase — before things get crowded.`,
+      body: `Automatically sorted first in Browse Creators when your page is live — before things get crowded.`,
     },
     {
       icon: <KeyIcon />,
@@ -786,13 +786,16 @@ function ClosingCta({ user }) {
     <section className="relative overflow-hidden bg-brand-teal">
       <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-brand-gold/20 blur-3xl" />
       <div className="mx-auto max-w-3xl px-6 py-14 text-center">
-        <h2 className="font-display text-3xl font-semibold text-white sm:text-4xl">
-          {user ? 'Welcome back.' : 'Turn your passion into a paycheck.'}
+        <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-brand-gold">
+          {user ? 'Your ByUs account' : 'Now welcoming founding creators'}
+        </p>
+        <h2 className="mt-3 font-display text-3xl font-semibold text-white sm:text-4xl">
+          {user ? 'Welcome back.' : 'Be one of the first creators on ByUs.'}
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-white/75">
           {user
             ? 'Pick up right where you left off.'
-            : 'Whether you’re here to support someone or to build your own membership, it takes a couple of minutes to set up.'}
+            : 'We’re building our founding creator community now. Set up your page, shape the early experience, and lock in the founding rate.'}
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-4">
           {user ? (
@@ -804,21 +807,23 @@ function ClosingCta({ user }) {
             </a>
           ) : (
             <a
-              href="/signup"
+              href="/signup?role=creator"
               className="rounded-full bg-brand-paper px-7 py-3 font-semibold text-brand-teal shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
             >
-              Create your account
+              Join as a founding creator
             </a>
           )}
           <a
-            href="/browse"
+            href="#creator-examples"
             className="rounded-full border border-white/40 px-7 py-3 font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/10"
           >
-            Browse creators
+            Explore example creator pages
           </a>
         </div>
         {!user && (
-          <p className="mt-5 text-xs text-white/50">🔒 Payments secured by Stripe</p>
+          <p className="mt-5 text-xs text-white/60">
+            No follower minimum · Payments secured by Stripe
+          </p>
         )}
       </div>
     </section>
