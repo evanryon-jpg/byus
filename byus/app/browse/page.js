@@ -81,6 +81,8 @@ export default function BrowsePage({ searchParams }) {
 
   const isFiltered = Boolean(q.trim() || tag);
   const marketplaceEmpty = !loading && creators.length === 0 && !isFiltered && availableTags.length === 0;
+  const foundingDirectory = !loading && creators.length === 1 && !isFiltered;
+  const showDiscoveryControls = loading || creators.length > 1 || isFiltered;
 
   return (
     <div>
@@ -90,10 +92,12 @@ export default function BrowsePage({ searchParams }) {
           <p className="mt-2 max-w-xl text-brand-ink/70">
             {marketplaceEmpty
               ? 'ByUs is welcoming its first founding creators now. This directory will grow as their pages go live.'
-              : 'Find someone whose work you already love, or discover your next favorite.'}
+              : foundingDirectory
+                ? 'Meet ByUs creator #1. New founding creator pages will appear here as they go live.'
+                : 'Find someone whose work you already love, or discover your next favorite.'}
           </p>
 
-          {!marketplaceEmpty && (
+          {showDiscoveryControls && (
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
               <input
                 type="text"
@@ -252,6 +256,36 @@ export default function BrowsePage({ searchParams }) {
           </li>
         ))}
       </ul>
+
+      {foundingDirectory && (
+        <section className="mt-8 rounded-3xl border border-brand-gold/35 bg-[#FFF9E8] px-6 py-8 text-center sm:px-10">
+          <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#9A6700]">
+            The founding community is open
+          </span>
+          <h2 className="mt-3 font-display text-2xl font-bold text-[#172033]">
+            Creator #2 could be you.
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl leading-relaxed text-brand-ink/70">
+            Join Evan at the beginning, build your membership page in minutes, and lock in the
+            founding creator rate while spots remain.
+          </p>
+          <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+            <a
+              href="/signup?role=creator"
+              className="inline-flex min-h-12 items-center justify-center rounded-full bg-brand-teal px-6 py-3 font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#115E59]"
+            >
+              Become creator #2
+            </a>
+            <a
+              href="/#creator-walkthrough"
+              className="inline-flex min-h-12 items-center justify-center rounded-full border border-brand-ink/15 bg-white px-6 py-3 font-bold text-[#172033] transition hover:-translate-y-0.5 hover:shadow-md"
+            >
+              Watch how page setup works
+            </a>
+          </div>
+        </section>
+      )}
+
       {!loading && nextOffset !== null && (
         <div className="mt-8 text-center">
           <button
