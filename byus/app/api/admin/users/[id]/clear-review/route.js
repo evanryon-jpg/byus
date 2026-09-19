@@ -41,7 +41,13 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'Creator not found.' }, { status: 404 });
     }
 
-    await query(`UPDATE posts SET pending_review = false WHERE creator_id = $1`, [params.id]);
+    // Clearing the creator's one-time account review must never bypass per-video
+    // moderation. Only non-video posts are released here; videos have their own queue.
+    await query(
+      `UPDATE posts SET pending_review = false
+       WHERE creator_id = $1 AND mux_playback_id IS NULL`,
+      [params.id]
+    );
 
     return NextResponse.json({ user: result.rows[0] });
   } catch (err) {
