@@ -549,8 +549,8 @@ function RssImportDemo() {
       <span className="text-xs font-extrabold uppercase tracking-wide text-[#EA580C]">RSS import</span>
       <h3 className="mt-2 font-display text-lg font-bold text-[#172033]">Already blogging? Bring it with you</h3>
       <p className="mt-2 text-sm leading-relaxed text-brand-ink/70">
-        Point ByUs at your WordPress, Ghost, or Substack feed and every post you publish there
-        shows up on your page automatically — no copy-pasting, no second place to write.
+        Point ByUs at your WordPress, Ghost, or Substack feed, then sync in one click any time
+        you publish — no copy-pasting, no second place to write.
       </p>
     </div>
   );
