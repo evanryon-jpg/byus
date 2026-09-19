@@ -1965,7 +1965,7 @@ function BatchVideoImporter({ onCreated }) {
             Bring over several videos
           </span>
           <span className="mt-0.5 block text-xs text-brand-ink/60">
-            Select up to five original files, then review each post before publishing.
+            Select up to five original files, then you choose what each post says and who can see it.
           </span>
         </span>
         <span className="shrink-0 text-sm font-semibold text-[#0F766E]">
