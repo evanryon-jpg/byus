@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import FoundingBadge from '../components/FoundingBadge';
 
 // searchParams is passed in automatically by Next.js for page.js files, client or
 // server, so a link like /browse?q=aria (from the homepage search, or its autocomplete
@@ -180,9 +181,7 @@ export default function BrowsePage({ searchParams }) {
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold">{c.display_name || 'Unnamed creator'}</h3>
                   {c.is_founding && (
-                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-clay px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-[#F8FAFC]">
-                      Founding
-                    </span>
+                    <FoundingBadge rank={c.founding_creator_rank} limit={c.founding_creator_limit} />
                   )}
                 </div>
                 {c.bio && <p className="mt-1 text-sm text-brand-ink/65 line-clamp-2">{c.bio}</p>}
