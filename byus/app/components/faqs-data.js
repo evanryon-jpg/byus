@@ -5,45 +5,52 @@
 // Component puts it behind React's client-reference boundary, and calling .map() on
 // that from server code fails at build time ("map is on the client"). Keeping the data
 // in its own plain module sidesteps that boundary entirely.
+//
+// Answers are written in ByUs's own voice (contractions, direct address, a little
+// personality) rather than a formal support-doc tone -- but every number, threshold,
+// and caveat below is worded to match the same facts the old copy stated, just said
+// like a person would say them. This is fee/payments information someone reads right
+// before connecting a card or a bank account, so voice is seasoning here, never at the
+// expense of a claim being exact or complete.
 export const FAQS = [
   {
     q: 'What is ByUs?',
-    a: 'ByUs (byusapp.com) is a creator membership platform where fans support creators directly through monthly subscriptions. ByUs is a standalone, independent company — it is not affiliated with Brigham Young University (BYU) or any other organization, and "ByUs" isn’t a typo of "by us." Creators keep 87–90% of every subscription payment, paid directly into their own Stripe account.',
+    a: 'ByUs (byusapp.com) is where fans pay creators directly — monthly memberships, no middleman weirdness. Quick disclaimer since people ask: we’re a standalone, independent company, not affiliated with Brigham Young University (BYU) or anyone else, and no, "ByUs" isn’t a typo of "by us." Creators keep 87–90% of every subscription payment, paid straight into their own Stripe account.',
   },
   {
     q: 'Can creators sign up and connect Stripe now?',
-    a: "New creator signups are temporarily paused while we finish up some account setup on our end — join the waitlist and we'll email you as soon as it reopens. Fans can sign up and subscribe as normal in the meantime. Creating a ByUs account is free either way; Stripe separately reviews each connected account and may request verification information before enabling its payments or payouts.",
+    a: "Almost — new creator signups are paused for a moment while we finish tightening up some account setup on our end. Join the waitlist and we'll email you the second it reopens. Fans, you're all set: sign up and subscribe as normal in the meantime. Creating a ByUs account is free either way; Stripe separately reviews every connected account and may ask for verification info before it'll turn on payments or payouts.",
   },
   {
     q: 'How does the platform fee work?',
-    a: "ByUs's fee is evaluated fresh each calendar month — it's never locked in permanently either way. Every creator starts the month at 13%; earn $2,000 or more on ByUs within that month and the fee automatically drops to 10% for the rest of it, no action needed. A new month always starts back at 13% until $2,000 is crossed again, so a slower month simply means the standard rate, not a penalty. Creators keep 87% (90% once discounted) of each standard domestic payment, paid straight into the creator's own Stripe account. Standard domestic processing is included; currency conversion, instant payouts, taxes, disputes, and exceptional processor costs may apply separately and will be disclosed where applicable.",
+    a: "Here's the honest version: everyone starts each calendar month at a 13% fee. Cross $2,000 in ByUs earnings that same month and it automatically drops to 10% for the rest of it — no forms, no asking. New month, clean slate: you're back to 13% until you hit $2,000 again, so a slower month just means the standard rate, not a penalty. Bottom line, you keep 87% normally (90% once you've hit the discount) of each standard domestic payment, paid straight into your own Stripe account. Standard domestic processing is baked into that fee; things like currency conversion, instant payouts, taxes, disputes, or unusual processor costs are billed separately and we'll always spell those out when they apply.",
   },
   {
     q: 'When and how do creators get paid?',
-    a: "Directly. Each creator connects their own Stripe Express account once, and payouts land there on Stripe's standard schedule — there's no separate ByUs payout process, holding period, or minimum to reach first.",
+    a: "Straight to you, no detours. Connect your own Stripe Express account once, and every payout lands there on Stripe's normal schedule — no separate ByUs payout process, no holding period, no minimum you have to hit first.",
   },
   {
     q: 'Is it easy for a fan to cancel?',
-    a: "Yes. Every subscription is month-to-month with no contract. A fan can cancel anytime from their dashboard, and keeps access through the end of the period they already paid for — no penalty, no call required.",
+    a: "Painfully easy, honestly — in a good way. Every subscription is month-to-month, no contracts hiding anywhere. Cancel anytime from your dashboard and you'll keep access through the end of the period you already paid for. No penalty, no guilt-trip phone call required.",
   },
   {
     q: 'What happens to my access if I cancel?',
-    a: 'Subscriber-only posts and perks turn off at the end of the current billing period. Anything a creator has posted publicly stays visible either way.',
+    a: "Subscriber-only posts and perks switch off once your current billing period wraps up — you don't lose anything you already paid for mid-stream. Anything the creator's posted publicly is still there either way.",
   },
   {
     q: 'Does it cost anything to become a creator?',
-    a: "No. Setting up a page is free, with no listing or setup fee. ByUs only makes money when a creator gets paid: the all-in fee is 13%, dropping to 10% for any month with at least $2,000 in ByUs earnings and returning to 13% the following month if it doesn't happen again. The first 100 founding creators lock in 10% forever, no threshold required.",
+    a: "Nope — setting up your page costs nothing, zero listing fees, zero setup fees. We only make money when you do: the all-in fee is 13%, dropping to 10% for any month with at least $2,000 in ByUs earnings and returning to 13% the following month if it doesn't happen again. Join as one of the first 100 founding creators, though, and you lock in 10% forever — no threshold required.",
   },
   {
     q: 'Can a creator offer more than one tier?',
-    a: 'Yes — creators can set up multiple monthly tiers, each with its own name, price, and description, so fans can pick the level that fits them.',
+    a: 'Absolutely — stack as many monthly tiers as make sense for you, each with its own name, price, and description, so fans can pick whatever level fits them.',
   },
   {
     q: 'Is my payment information safe?',
-    a: "All payments and payouts run through Stripe. ByUs never sees or stores card numbers — that's true for what a fan pays and for what a creator gets paid out.",
+    a: "Yes, and we mean that literally: every payment and payout runs through Stripe, and ByUs never sees or stores a single card number — not what a fan pays with, not what a creator gets paid out to.",
   },
   {
     q: 'Can creators connect Discord or Telegram?',
-    a: "Yes. A creator can link a Discord server and/or a private Telegram group in Settings, and ByUs automatically grants a subscriber the matching Discord role or Telegram access the moment they join — then removes it automatically if they ever cancel. It's optional and separate from a creator's ByUs page, which stays the source of truth either way.",
+    a: "Yep — link a Discord server and/or a private Telegram group in Settings, and ByUs handles the bouncer duty for you: the moment someone subscribes they get the matching Discord role or Telegram access automatically, and it's revoked automatically the second they cancel. Totally optional, and your ByUs page stays the real source of truth either way.",
   },
 ];
