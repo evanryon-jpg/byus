@@ -13,6 +13,7 @@ import {
   loadSiteFeedback,
   loadCreatorWaitlist,
   loadCreatorReviewQueue,
+  loadAdminTasks,
 } from '@/lib/admin-data';
 import AdminClient from './AdminClient';
 
@@ -43,7 +44,7 @@ export default async function AdminPage() {
   // trip was pure added latency on the server's response, which pushes out TTFB
   // and therefore this page's Real Experience Score. Running all seven together
   // cuts it to one round trip's worth of wall-clock time.
-  const [overviewResult, reportsResult, suggestionsResult, outreachResult, siteFeedbackResult, waitlistResult, reviewQueueResult] =
+  const [overviewResult, reportsResult, suggestionsResult, outreachResult, siteFeedbackResult, waitlistResult, reviewQueueResult, tasksResult] =
     await Promise.all([
       loadAdminOverview().catch((err) => {
         console.error('admin: overview load failed:', err);
@@ -85,6 +86,12 @@ export default async function AdminPage() {
           console.error('admin: creator review queue load failed:', err);
           return { reviewQueue: null, error: 'Could not load the creator review queue.' };
         }),
+      loadAdminTasks()
+        .then((tasks) => ({ tasks, error: '' }))
+        .catch((err) => {
+          console.error('admin: tasks load failed:', err);
+          return { tasks: null, error: 'Could not load the task list.' };
+        }),
     ]);
 
   if (!overviewResult) {
@@ -108,6 +115,8 @@ export default async function AdminPage() {
       initialWaitlistError={waitlistResult.error}
       initialReviewQueue={reviewQueueResult.reviewQueue}
       initialReviewQueueError={reviewQueueResult.error}
+      initialTasks={tasksResult.tasks}
+      initialTasksError={tasksResult.error}
     />
   );
 }

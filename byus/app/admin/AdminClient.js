@@ -24,6 +24,8 @@ export default function AdminClient({
   initialWaitlistError,
   initialReviewQueue,
   initialReviewQueueError,
+  initialTasks,
+  initialTasksError,
 }) {
   const {
     creatorCount,
@@ -59,6 +61,8 @@ export default function AdminClient({
     <div className="mx-auto max-w-5xl px-6 py-12">
       <h1 className="text-2xl font-bold">Platform overview</h1>
       <p className="text-brand-ink/65">What ByUs itself has earned, and how the platform is growing.</p>
+
+      <TasksSection initialTasks={initialTasks} initialError={initialTasksError} />
 
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatTile label="ByUs fees collected" value={formatCompactUSD(lifetimePlatformFeeCents)} hero />
@@ -937,6 +941,232 @@ function CreatorWaitlistSection({ initialWaitlist, initialError }) {
         </div>
       )}
     </section>
+  );
+}
+
+// The team's own internal punch-list (see database/migrations/20260919_admin_tasks.sql)
+// -- a running list of what still needs doing as the platform grows, replacing tracking
+// it by hand across chat/notes. Sits first on the page since it's the one section meant
+// to be checked and updated constantly, not just reviewed when something comes in.
+const TASK_STATUSES = ['todo', 'doing', 'done'];
+const TASK_STATUS_LABELS = { todo: 'To do', doing: 'Doing', done: 'Done' };
+const TASK_STATUS_STYLES = {
+  todo: 'bg-brand-ink/5 text-brand-ink/60',
+  doing: 'bg-amber-50 text-amber-700',
+  done: 'bg-green-50 text-green-700',
+};
+
+function TasksSection({ initialTasks, initialError }) {
+  const [tasks, setTasks] = useState(initialTasks); // null = failed to load
+  const [error, setError] = useState(initialError || '');
+  const [title, setTitle] = useState('');
+  const [category, setCategory] = useState('');
+  const [adding, setAdding] = useState(false);
+  const [hideDone, setHideDone] = useState(true);
+
+  async function handleAdd(e) {
+    e.preventDefault();
+    const trimmed = title.trim();
+    if (!trimmed || adding) return;
+    setAdding(true);
+    setError('');
+    try {
+      const res = await fetch('/api/admin/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: trimmed, category: category.trim() }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error || '');
+      setTasks((current) => [body.task, ...(current || [])]);
+      setTitle('');
+      setCategory('');
+    } catch (err) {
+      setError(err.message || 'Could not add that task — try again.');
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  async function updateTask(id, patch) {
+    const previous = tasks;
+    setTasks((current) => current.map((t) => (t.id === id ? { ...t, ...patch } : t)));
+    try {
+      const res = await fetch(`/api/admin/tasks/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setTasks(previous);
+      setError('Could not save that change — try again.');
+    }
+  }
+
+  async function deleteTask(id) {
+    const previous = tasks;
+    setTasks((current) => current.filter((t) => t.id !== id));
+    try {
+      const res = await fetch(`/api/admin/tasks/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error();
+    } catch {
+      setTasks(previous);
+      setError('Could not remove that task — try again.');
+    }
+  }
+
+  const openCount = tasks?.filter((t) => t.status !== 'done').length ?? 0;
+  const visibleTasks = tasks?.filter((t) => !hideDone || t.status !== 'done') ?? null;
+
+  return (
+    <section className="mt-6 rounded-2xl border border-[#0F766E]/15 bg-brand-paper p-6">
+      <div className="flex items-center justify-between">
+        <h2 className="font-semibold text-[#172033]">Task list</h2>
+        {tasks !== null && (
+          <span className="rounded-full bg-[#0F766E]/10 px-2.5 py-1 text-xs font-medium text-[#0F766E]">
+            {openCount} open
+          </span>
+        )}
+      </div>
+      <p className="mt-1 text-sm text-brand-ink/65">Your own running punch-list — visible only to you.</p>
+
+      <form onSubmit={handleAdd} className="mt-4 flex flex-wrap gap-2">
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Add a task…"
+          maxLength={200}
+          className="min-w-[200px] flex-1 rounded-lg border border-brand-ink/10 px-3 py-1.5 text-sm"
+        />
+        <input
+          type="text"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          placeholder="Category (optional)"
+          maxLength={60}
+          className="w-40 rounded-lg border border-brand-ink/10 px-3 py-1.5 text-sm"
+        />
+        <button
+          type="submit"
+          disabled={adding || !title.trim()}
+          className="shrink-0 rounded-full bg-[#0F766E] px-4 py-1.5 text-sm font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
+        >
+          {adding ? 'Adding…' : 'Add'}
+        </button>
+      </form>
+
+      {error && <p className="mt-3 text-xs text-red-600">{error}</p>}
+
+      {tasks !== null && tasks.some((t) => t.status === 'done') && (
+        <label className="mt-4 flex items-center gap-2 text-xs text-brand-ink/60">
+          <input type="checkbox" checked={hideDone} onChange={(e) => setHideDone(e.target.checked)} />
+          Hide done tasks
+        </label>
+      )}
+
+      {tasks === null ? (
+        <p className="mt-4 text-sm text-brand-ink/60">Could not load the task list.</p>
+      ) : visibleTasks.length === 0 ? (
+        <p className="mt-4 text-sm text-brand-ink/60">
+          {tasks.length === 0 ? 'Nothing on the list yet.' : 'Nothing open — everything is done.'}
+        </p>
+      ) : (
+        <div className="mt-4 space-y-3">
+          {visibleTasks.map((t) => (
+            <TaskRow
+              key={t.id}
+              task={t}
+              onUpdate={(patch) => updateTask(t.id, patch)}
+              onDelete={() => deleteTask(t.id)}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function TaskRow({ task, onUpdate, onDelete }) {
+  const [editingNotes, setEditingNotes] = useState(false);
+  const [notes, setNotes] = useState(task.notes || '');
+  const [savingNotes, setSavingNotes] = useState(false);
+
+  async function handleSaveNotes() {
+    setSavingNotes(true);
+    await onUpdate({ notes });
+    setSavingNotes(false);
+    setEditingNotes(false);
+  }
+
+  return (
+    <div className={`rounded-lg border p-3 ${task.status === 'done' ? 'border-brand-ink/5 bg-brand-ink/[0.015]' : 'border-brand-ink/10'}`}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className={task.status === 'done' ? 'text-sm text-brand-ink/45 line-through' : 'text-sm font-medium text-[#172033]'}>
+            {task.title}
+          </span>
+          {task.category && (
+            <span className="rounded-full bg-brand-ink/5 px-2 py-0.5 text-[11px] font-medium text-brand-ink/55">
+              {task.category}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <select
+            value={task.status}
+            onChange={(e) => onUpdate({ status: e.target.value })}
+            className={`rounded-full border-0 px-2.5 py-1 text-xs font-medium ${TASK_STATUS_STYLES[task.status]}`}
+          >
+            {TASK_STATUSES.map((st) => (
+              <option key={st} value={st}>
+                {TASK_STATUS_LABELS[st]}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => setEditingNotes((v) => !v)}
+            className="text-xs font-medium text-brand-ink/45 hover:text-brand-ink/70"
+          >
+            {task.notes ? 'Notes' : '+ Note'}
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            className="text-xs font-medium text-red-600/70 hover:text-red-700"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+
+      {!editingNotes && task.notes && (
+        <p className="mt-2 text-sm text-brand-ink/70">{task.notes}</p>
+      )}
+
+      {editingNotes && (
+        <div className="mt-2 flex items-start gap-2">
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Notes…"
+            rows={2}
+            maxLength={4000}
+            className="w-full rounded-lg border border-brand-ink/10 px-3 py-1.5 text-sm"
+          />
+          <button
+            type="button"
+            onClick={handleSaveNotes}
+            disabled={savingNotes}
+            className="shrink-0 rounded-full border border-[#0F766E] px-3 py-1.5 text-xs font-medium text-[#0F766E] hover:bg-[#0F766E]/5 disabled:opacity-50"
+          >
+            {savingNotes ? 'Saving…' : 'Save'}
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
