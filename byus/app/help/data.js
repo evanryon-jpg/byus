@@ -33,7 +33,7 @@ export const HELP_CATEGORIES = [
       },
       {
         q: 'What are subscription tiers, and how many should I create?',
-        a: 'A tier is a recurring monthly (or annual) price with its own name, description, and perks — think "Supporter," "Fan club," "VIP." Most creators start with one to three tiers. You can create tiers before connecting Stripe; they save as drafts and go live automatically once Stripe is connected.',
+        a: 'A tier is a recurring monthly (or annual) price with its own name, description, and perks — think "Supporter," "Fan club," "VIP." Most creators start with one to three tiers. You can create tiers before connecting Stripe; they save as drafts, and once Stripe is connected you’ll hit Reactivate on each one to make it live.',
       },
       {
         q: 'Do I need tiers to accept tips?',
