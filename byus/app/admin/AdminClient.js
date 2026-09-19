@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 22428)
-Total output lines: 2133
-
 'use client';
 
 // All the interactive admin UI. The platform overview, reports, and suggestions all
@@ -915,7 +912,227 @@ function OpinionInvitationRow({ contact, onUpdate, onDelete, pending }) {
           {contact.followerCount === null ? 'Followers not entered' : `${contact.followerCount.toLocaleString()} followers`}
         </p>
       </td>
-      <td className="max-w-xs…2428 tokens truncated…${hasPending ? 'border-amber-300 bg-amber-50/50' : 'border-brand-ink/10 bg-brand-paper'}`}>
+      <td className="max-w-xs py-3 pr-4 text-xs leading-relaxed text-brand-ink/65">
+        {contact.latestContentNote || 'Add a genuine detail before messaging.'}
+      </td>
+      <td className="py-3 pr-4">
+        <select
+          value={contact.status}
+          disabled={pending}
+          onChange={(event) => onUpdate(contact.id, { status: event.target.value }).catch(() => {})}
+          className="rounded-full border border-brand-ink/10 bg-white px-2.5 py-1 text-xs disabled:opacity-50"
+        >
+          {Object.entries(statusLabels).map(([value, label]) => (
+            <option key={value} value={value}>{label}</option>
+          ))}
+        </select>
+      </td>
+      <td className="py-3 pr-4 text-xs">
+        {contact.followedUpAt ? (
+          <span className="text-[#0F766E]">Follow-up sent</span>
+        ) : due ? (
+          <span className={overdue ? 'font-semibold text-amber-700' : 'text-brand-ink/60'}>
+            {overdue ? 'Due now' : due.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+          </span>
+        ) : (
+          <span className="text-brand-ink/40">Starts after sending</span>
+        )}
+      </td>
+      <td className="py-3 pr-4">
+        {contact.status === 'planned' ? (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => onUpdate(contact.id, { action: 'mark_messaged' }).catch(() => {})}
+            className="text-xs font-semibold text-[#0F766E] hover:underline disabled:opacity-50 disabled:no-underline"
+          >
+            {pending ? 'Sending…' : 'Mark opinion request sent'}
+          </button>
+        ) : contact.status === 'messaged' && !contact.followedUpAt ? (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => onUpdate(contact.id, { action: 'mark_followed_up' }).catch(() => {})}
+            className="text-xs font-semibold text-[#0F766E] hover:underline disabled:opacity-50 disabled:no-underline"
+          >
+            {pending ? 'Sending…' : 'Mark follow-up sent'}
+          </button>
+        ) : (
+          <span className="text-xs text-brand-ink/40">—</span>
+        )}
+      </td>
+      <td className="py-3 pr-4">
+        {confirmingDelete ? (
+          <div className="flex flex-col items-start gap-1">
+            <span className="text-xs font-medium text-amber-700">Remove @{contact.instagramHandle}?</span>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => onDelete(contact.id)}
+                className="text-xs font-semibold text-red-600 hover:underline disabled:opacity-50"
+              >
+                {pending ? 'Removing…' : 'Yes, remove'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmingDelete(false)}
+                className="text-xs font-semibold text-brand-ink/60 hover:underline"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex gap-3">
+            <button
+              type="button"
+              disabled={pending}
+              onClick={startEditing}
+              className="text-xs font-semibold text-brand-ink/70 hover:underline disabled:opacity-50"
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => setConfirmingDelete(true)}
+              className="text-xs font-semibold text-red-600/80 hover:underline disabled:opacity-50"
+            >
+              Remove
+            </button>
+          </div>
+        )}
+      </td>
+    </tr>
+  );
+}
+
+// Anonymous "what do you think of this page?" widget results — see
+// app/components/FeedbackWidget.jsx (the floating tab near the top of the homepage)
+// and app/api/feedback/route.js. Unlike ReportsSection/SuggestionsSection below, there's
+// no admin_note reply here: it's anonymous, so there's no one to reply to — just a
+// new/reviewed toggle for triage.
+const FEEDBACK_REACTION_LABELS = { up: '👍 Liked it', down: '👎 Didn’t like it' };
+
+// Read-only list of everyone who's joined the creator waitlist (see
+// lib/admin-data.js's loadCreatorWaitlist and the comment there for how this differs
+// from the frozen "Instagram waitlist applications (historical)" stat above). No
+// mutations here on purpose — there's no status to track yet, just "reopen creator
+// signup" (flip CREATOR_SIGNUP_PAUSED in lib/creator-signup.js back to false), at which
+// point everyone below can be emailed at the addresses they gave.
+const WAITLIST_SOURCE_LABELS = {
+  instagram: 'Instagram',
+  instagram_campaign: 'Instagram (legacy)',
+  blogger: 'Bloggers page',
+};
+
+function CreatorWaitlistSection({ initialWaitlist, initialError }) {
+  return (
+    <section className="mt-8 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="font-semibold text-[#172033]">Creator waitlist</h2>
+        {initialWaitlist && initialWaitlist.length > 0 && (
+          <span className="rounded-full bg-brand-ink/5 px-2.5 py-1 text-xs font-medium text-brand-ink/60">
+            {initialWaitlist.length.toLocaleString()} total
+          </span>
+        )}
+      </div>
+      <p className="mt-1 text-sm text-brand-ink/65">
+        Everyone who's asked to be notified when creator signup reopens (see the "I'm a creator" tab on{' '}
+        <code className="text-xs">/signup</code>). Nothing to do here yet — once signup reopens, this is the
+        list to email.
+      </p>
+
+      {initialError && <p className="mt-3 text-xs text-red-600">{initialError}</p>}
+
+      {initialWaitlist === null ? (
+        <p className="mt-4 text-sm text-brand-ink/60">Could not load the creator waitlist.</p>
+      ) : initialWaitlist.length === 0 ? (
+        <p className="mt-4 text-sm text-brand-ink/60">Nobody's joined the waitlist yet.</p>
+      ) : (
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full min-w-[640px] border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-brand-ink/10 text-left text-xs font-medium uppercase tracking-wide text-brand-ink/60">
+                <th className="py-2 pr-4">Contact</th>
+                <th className="py-2 pr-4">Source</th>
+                <th className="py-2 pr-4">Referral</th>
+                <th className="py-2 pr-4">Joined</th>
+              </tr>
+            </thead>
+            <tbody>
+              {initialWaitlist.map((w) => (
+                <tr key={w.id} className="border-b border-brand-ink/5">
+                  <td className="py-2.5 pr-4">
+                    <div className="font-medium text-[#172033]">{w.displayName || 'No name given'}</div>
+                    <a href={`mailto:${w.email}`} className="text-xs text-[#0F766E] hover:underline">
+                      {w.email}
+                    </a>
+                  </td>
+                  <td className="py-2.5 pr-4 text-brand-ink/70">
+                    {w.source ? WAITLIST_SOURCE_LABELS[w.source] || w.source : '—'}
+                  </td>
+                  <td className="py-2.5 pr-4 text-brand-ink/70">{w.referralCode || '—'}</td>
+                  <td className="py-2.5 pr-4 text-brand-ink/70">
+                    {new Date(w.createdAt).toLocaleDateString(undefined, {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
+
+// Guardrail for the automatic new-post text blast (see lib/sms-holds.js and
+// notifySubscribersOfNewPostBySms in app/api/creator/posts/route.js) -- sent.dm bills
+// per contact per month plus per-text carrier cost, so anything over the threshold is
+// held here instead of sent automatically. Sits above the task list since a pending
+// hold is real, waiting money, not a to-do item; unlike the task list it's meant to sit
+// empty most of the time, so it stays visually quiet (no border/tint) when there's
+// nothing waiting rather than permanently claiming attention on an otherwise calm page.
+function PendingSmsSendsSection({ initialHolds, initialError, threshold }) {
+  const [holds, setHolds] = useState(initialHolds); // null = failed to load
+  const [error, setError] = useState(initialError || '');
+  const [busyId, setBusyId] = useState(null);
+  const [notes, setNotes] = useState({}); // id -> outcome message, shown briefly after approve
+
+  async function resolve(id, action) {
+    setBusyId(id);
+    setError('');
+    try {
+      const res = await fetch(`/api/admin/sms-holds/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error || '');
+      setHolds((current) => current.filter((h) => h.id !== id));
+      if (action === 'approve') {
+        setNotes((current) => ({
+          ...current,
+          [id]: `Sent to ${body.sent.toLocaleString()} of ${body.eligible.toLocaleString()} currently opted-in fans.`,
+        }));
+      }
+    } catch (err) {
+      setError(err.message || `Could not ${action === 'approve' ? 'send' : 'dismiss'} that — try again.`);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  const hasPending = holds !== null && holds.length > 0;
+
+  return (
+    <section className={`mt-6 rounded-2xl border p-6 ${hasPending ? 'border-amber-300 bg-amber-50/50' : 'border-brand-ink/10 bg-brand-paper'}`}>
       <div className="flex items-center justify-between">
         <h2 className="font-semibold text-[#172033]">Pending SMS sends</h2>
         {hasPending && (
