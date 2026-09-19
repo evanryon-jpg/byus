@@ -335,7 +335,7 @@ function HeroArtCollage() {
                 fill
                 sizes="(min-width: 1024px) 20vw, 42vw"
                 className="object-cover"
-                priority={index === 1}
+                priority
               />
             </div>
             <div className="p-3 sm:p-4">
