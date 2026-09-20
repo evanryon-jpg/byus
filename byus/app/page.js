@@ -94,8 +94,8 @@ function FoundingCreatorProgram({ stats }) {
     },
     {
       icon: <FastForwardIcon />,
-      title: 'Lowest rate from day one',
-      body: `Founding creators lock in a 10% all-in platform fee from the beginning — and keep it for good.`,
+      title: 'Skip the $2,000/mo wait',
+      body: `Standard accounts reach 10% once they're earning $2,000/mo on ByUs. Founding creators start there, from day one.`,
     },
   ];
 
@@ -115,8 +115,8 @@ function FoundingCreatorProgram({ stats }) {
           {stats.limit} spots. <span className="text-brand-gold">10% forever.</span>
         </p>
         <p className="mx-auto mt-4 max-w-lg text-brand-paper/70">
-          The first {stats.limit} creators to join lock in our lowest fee for good. No deadline,
-          application, or earnings requirement.
+          The first {stats.limit} creators to join lock in our lowest fee for good — everyone else
+          earns their way there at $2,000/mo.
         </p>
         <div className="mx-auto mt-8 grid max-w-3xl gap-4 text-left sm:grid-cols-3">
           {perks.map((p) => (
@@ -276,7 +276,7 @@ function Hero({ user }) {
                 href="#creator-walkthrough"
                 className="rounded-full border-2 border-brand-paper/30 bg-brand-paper/10 px-7 py-3.5 text-base font-semibold text-brand-paper backdrop-blur transition hover:border-brand-gold hover:bg-brand-paper/15"
               >
-                ▶ Watch the 38-second demo
+                ▶ Watch the creator walkthrough
               </a>
             </div>
 
@@ -300,7 +300,8 @@ function Hero({ user }) {
   );
 }
 
-// A small editorial collage of creator examples -- three crops, offset and
+// A small editorial collage of real artwork from Alex Rivers's page (see
+// /public/creators/alex-rivers and the live /demo route) -- three crops, offset and
 // lightly rotated like pinned prints rather than a clean grid, so the hero shows a
 // real example of "what you can build" instead of describing it. The member-exclusive
 // crop keeps a light blur and lock badge so a first-time visitor also sees, at a
@@ -310,14 +311,6 @@ function Hero({ user }) {
 function HeroArtCollage() {
   const creators = [
     {
-      name: 'Sophie Lane',
-      href: '/demo/sophie-lane',
-      specialty: 'Ceramic Artist',
-      image: '/creators/sophie-lane/hero.jpg',
-      accent: 'bg-brand-clay',
-      detail: 'Studio tutorials · Glazing guides',
-    },
-    {
       name: 'Maya Sinclair',
       href: '/demo/maya-sinclair',
       specialty: 'Photographer',
@@ -326,20 +319,20 @@ function HeroArtCollage() {
       detail: 'Photo stories · Field notes',
     },
     {
-      name: 'Elena Park',
-      href: '/demo/elena-park',
-      specialty: 'ASL educator',
-      image: '/creators/elena-park/hero.jpg',
-      accent: 'bg-brand-clay',
-      detail: 'Video lessons · Community access',
-    },
-    {
       name: 'Liam Carter',
       href: '/demo/liam-carter',
       specialty: 'Musician',
       image: '/creators/liam-carter/hero.jpg',
       accent: 'bg-brand-teal',
       detail: 'New songs · Behind the scenes',
+    },
+    {
+      name: 'Elena Park',
+      href: '/demo/elena-park',
+      specialty: 'ASL educator',
+      image: '/creators/elena-park/hero.jpg',
+      accent: 'bg-brand-clay',
+      detail: 'Video lessons · Community access',
     },
   ];
 
@@ -360,10 +353,8 @@ function HeroArtCollage() {
               index === 0
                 ? '-rotate-3 self-end'
                 : index === 1
-                ? 'rotate-2 -translate-y-2'
-                : index === 2
-                ? '-mt-5 rotate-2'
-                : '-mt-3 -rotate-1'
+                ? 'z-10 row-span-2 rotate-1'
+                : 'col-start-1 row-start-2 -mt-5 rotate-2'
             }`}
           >
             <article className="overflow-hidden rounded-2xl border-[5px] border-white bg-white shadow-[0_24px_55px_-22px_rgba(23,37,84,0.45)] transition-shadow duration-200 group-hover:shadow-[0_30px_65px_-20px_rgba(23,37,84,0.58)]">
@@ -629,9 +620,8 @@ function VideoUploadDemo() {
         </span>
       </div>
       <p className="mt-3 text-xs text-brand-ink/55">
-        Up to 30 minutes and 2 GB per video, with resolutions up to 4K. Every video is
-        checked before fans can see it. ByUs cannot pull from a TikTok or YouTube link or
-        bulk-import a channel or library.
+        Every video is reviewed before fans can see it. ByUs cannot pull from a TikTok or
+        YouTube link or bulk-import a channel or library.
       </p>
     </div>
   );

@@ -22,8 +22,8 @@ export default function CreatorWalkthrough() {
             See how quickly your page comes together
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-brand-ink/70 sm:text-lg">
-            Add your profile, create membership tiers, and preview the page your fans will see—all
-            in under a minute.
+            Add your profile, create membership tiers, and explore the tools that help you earn,
+            publish, and manage your community.
           </p>
         </div>
 
@@ -33,7 +33,7 @@ export default function CreatorWalkthrough() {
             controls
             playsInline
             preload="metadata"
-            poster="/images/byus-video-poster-v2.jpg"
+            poster="/images/byus-video-poster.jpg"
             aria-label="A step-by-step demonstration of building a ByUs creator page"
           >
             <source src="/videos/byus-creator-page-demo.mp4" type="video/mp4" />
