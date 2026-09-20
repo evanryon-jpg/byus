@@ -226,7 +226,7 @@ function Hero({ user, stats }) {
               {stats.limit} founding creator spots
             </span>
 
-            <h1 className="mt-7 max-w-[650px] font-display text-[3.25rem] font-medium leading-[0.98] tracking-[-0.045em] text-[#fffdf8] sm:text-[4.25rem] lg:text-[4.65rem] xl:text-[5.25rem]">
+            <h1 className="mt-7 max-w-[650px] font-display text-[2.9rem] font-medium leading-[1.02] tracking-[-0.045em] text-[#fffdf8] sm:text-[4.25rem] sm:leading-[0.98] lg:text-[4.65rem] xl:text-[5.25rem]">
               The home your fans keep coming back to.
             </h1>
 
@@ -298,20 +298,26 @@ function ProductHeroPreview() {
           </span>
         </div>
 
-        <div className="grid min-h-[530px] grid-cols-[74px_1fr] sm:grid-cols-[150px_1fr]">
-          <aside className="border-r border-white/10 bg-[#071321]/80 px-3 py-5 sm:px-4">
-            <p className="hidden font-display text-xl font-semibold text-white sm:block">ByUs</p>
+        <div className="grid min-h-[530px] grid-cols-1 sm:grid-cols-[150px_1fr]">
+          <aside className="hidden border-r border-white/10 bg-[#071321]/80 px-4 py-5 sm:block">
+            <p className="font-display text-xl font-semibold text-white">ByUs</p>
             <div className="mt-7 space-y-1.5 text-[11px] font-medium text-white/45">
               {['Home', 'Audience', 'Content', 'Memberships', 'Tips', 'Products', 'Community'].map((item, index) => (
                 <div key={item} className={`flex items-center gap-2 rounded-lg px-2.5 py-2.5 ${index === 0 ? 'bg-white/10 text-white' : ''}`}>
-                  <span className="h-1.5 w-1.5 shrink-0 rounded-full border border-current sm:h-2 sm:w-2" />
-                  <span className="hidden sm:inline">{item}</span>
+                  <span className="h-2 w-2 shrink-0 rounded-full border border-current" />
+                  <span>{item}</span>
                 </div>
               ))}
             </div>
           </aside>
 
           <div className="min-w-0 p-4 sm:p-6">
+            <div className="mb-5 flex items-center justify-between sm:hidden">
+              <p className="font-display text-lg font-semibold text-white">ByUs</p>
+              <span className="rounded-full border border-white/15 px-3 py-1.5 text-[9px] font-semibold text-white/60">
+                Page preview
+              </span>
+            </div>
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-[#7fd9ce]">Your page on ByUs</p>
