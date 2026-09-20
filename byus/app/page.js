@@ -59,7 +59,7 @@ export default async function HomePage() {
 // FoundingPromoBanner's fee-framing banner and FoundersCircleSection's two perk cards
 // -- which repeated the same "founding creators keep more, sooner" point twice back to
 // back). `stats` comes straight from lib/fees.js's getFoundingPromoStats(), which
-// counts real creator signups (`SELECT COUNT(*) FROM users WHERE role='creator'`) --
+// counts permanent founding reservations, including claimed creator accounts --
 // `stats.limit`/`stats.remaining`/`stats.claimed` are never hardcoded, so this section
 // can't drift from what a creator actually gets when they sign up. The literal "100
 // SPOTS. 10% FOREVER." framing from the brief is built from `stats.limit` rather than a
@@ -76,9 +76,7 @@ export default async function HomePage() {
 // than another feature bullet -- the treatment the brief asked for when it said this
 // needed to be "more visible."
 //
-// Creator signup and Stripe Connect onboarding are open. ByUs's own platform payout
-// remains under Stripe review, but connected creator onboarding and payments are not
-// presented as paused. The real creator count determines remaining founding spots.
+// Creator signup is paused. Waitlist entries reserve available founding spots.
 function FoundingCreatorProgram({ stats }) {
   const soldOut = stats.remaining <= 0;
   const perks = [
@@ -115,8 +113,8 @@ function FoundingCreatorProgram({ stats }) {
           {stats.limit} spots. <span className="text-brand-gold">10% forever.</span>
         </p>
         <p className="mx-auto mt-4 max-w-lg text-brand-paper/70">
-          The first {stats.limit} creators to join lock in our lowest fee for good. No deadline,
-          application, or earnings requirement.
+          The first {stats.limit} founding spots lock in our lowest fee for good.
+          No follower minimum or earnings requirement.
         </p>
         <div className="mx-auto mt-8 grid max-w-3xl gap-4 text-left sm:grid-cols-3">
           {perks.map((p) => (
@@ -133,8 +131,7 @@ function FoundingCreatorProgram({ stats }) {
         <div className="mt-8">
           {soldOut ? (
             <p className="text-sm font-semibold text-brand-paper/70">
-              All {stats.limit} founding spots have been claimed — standard rates now apply to new
-              signups.
+              All {stats.limit} founding spots are reserved. New waitlist entries receive standard pricing. Existing reservations keep their founding rate.
             </p>
           ) : (
             <>
@@ -143,8 +140,12 @@ function FoundingCreatorProgram({ stats }) {
                 href="/signup?role=creator"
                 className="mt-6 inline-block rounded-full bg-brand-gold px-8 py-3.5 text-base font-bold text-[#172554] shadow-[0_16px_30px_-14px_rgba(15,118,110,0.5)] transition hover:-translate-y-0.5"
               >
-                Join the founding waitlist →
+                Reserve your founding spot →
               </a>
+              <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-brand-paper/85">
+                Creator signups are temporarily paused. Joining the waitlist reserves an available
+                founding spot and the 10% rate for good. Use the same email to create your account when signups reopen.
+              </p>
             </>
           )}
         </div>
@@ -157,7 +158,7 @@ function FoundingCreatorProgram({ stats }) {
 // cap -- one dot per spot, lit gold once claimed. Deliberately literal rather than an
 // abstract percentage bar: "100 spots" is a real, countable thing (FOUNDING_CREATOR_LIMIT
 // in lib/pricing.js), driven by the same stats.claimed/stats.limit that already come
-// straight from a live COUNT(*) query in getFoundingPromoStats() (lib/fees.js) -- so this
+// straight from the reservation count in getFoundingPromoStats() (lib/fees.js) -- so this
 // can't drift from what a creator actually gets. Assumes a grid-legible spot count
 // (roughly <=100): if FOUNDING_CREATOR_LIMIT is ever raised well past that, this should
 // become a scaled/grouped visualization instead of one <span> per spot.
@@ -169,7 +170,7 @@ function FoundingSpotsGrid({ claimed, limit, remaining }) {
       <div
         className="grid w-full grid-cols-10 gap-1.5"
         role="img"
-        aria-label={`${claimed} of ${limit} founding spots claimed, ${remaining} remaining`}
+        aria-label={`${claimed} of ${limit} founding spots reserved or claimed, ${remaining} remaining`}
       >
         {dots.map((filled, i) => (
           <span
@@ -197,12 +198,12 @@ function Hero({ user }) {
   const dashboardHref = user?.role === 'creator' ? '/creator/dashboard' : '/fan/dashboard';
 
   return (
-    // Dark band fading down into the page's own cream. Two columns on desktop now --
+    // Keep a dark background behind all hero text and controls. Two columns on desktop --
     // copy on the left, a small editorial collage of real Alex Rivers artwork on the
     // right, so the hero shows what a ByUs page actually looks like instead of telling
     // you. Stacks to a single column on mobile, art below the copy, so the CTAs and
     // fine print still come first for outreach traffic.
-    <section className="relative overflow-hidden bg-gradient-to-b from-[#172554] via-[#134B61] to-brand-cream">
+    <section className="relative overflow-hidden bg-gradient-to-b from-[#172554] via-[#134B61] to-[#134B61]">
       {/* Two subtle ambient color glows add depth to the dark band without
           competing with the message or creator previews. Purely
           decorative background motion, kept separate from the live-pulse dot on the
@@ -274,11 +275,18 @@ function Hero({ user }) {
                   without leaving the page. */}
               <a
                 href="#creator-walkthrough"
-                className="rounded-full border-2 border-brand-paper/30 bg-brand-paper/10 px-7 py-3.5 text-base font-semibold text-brand-paper backdrop-blur transition hover:border-brand-gold hover:bg-brand-paper/15"
+                className="rounded-full border-2 border-brand-paper bg-brand-paper px-7 py-3.5 text-base font-semibold text-[#172554] transition hover:-translate-y-0.5 hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
               >
                 ▶ Watch the creator walkthrough
               </a>
             </div>
+
+            {!user && (
+              <p className="mt-4 max-w-lg text-sm leading-relaxed text-brand-paper/90">
+                Creator signups are temporarily paused. Join the waitlist to reserve a founding spot
+                while available. We’ll email you when you can create your page.
+              </p>
+            )}
 
             <ul
               aria-label="Creator account highlights"
@@ -397,7 +405,7 @@ function HeroArtCollage() {
         ))}
       </div>
 
-      <p className="relative mt-2 text-center text-xs font-medium text-brand-ink/65">
+      <p className="relative mt-2 text-center text-xs font-medium text-brand-paper/90">
         Memberships, posts, and downloads — all in one creator page.
       </p>
     </div>

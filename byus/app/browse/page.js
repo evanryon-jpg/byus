@@ -91,7 +91,7 @@ export default function BrowsePage({ searchParams }) {
           <h1 className="font-display text-3xl font-bold text-[#172033]">Browse creators</h1>
           <p className="mt-2 max-w-xl text-brand-ink/70">
             {marketplaceEmpty
-              ? 'ByUs is welcoming its first founding creators now. This directory will grow as their pages go live.'
+              ? 'Creator signups are temporarily paused. Join the waitlist to hear when they reopen; this directory will grow as pages go live.'
               : foundingDirectory
                 ? 'Meet ByUs creator #1. New founding creator pages will appear here as they go live.'
                 : 'Find someone whose work you already love, or discover your next favorite.'}
@@ -174,8 +174,8 @@ export default function BrowsePage({ searchParams }) {
             </h2>
             <p className="mx-auto mt-3 max-w-xl leading-relaxed text-brand-ink/70">
               We won&rsquo;t fill this directory with pretend members. Until real creators publish
-              their pages, you can explore honest demonstration profiles or become one of the
-              creators who helps shape ByUs from the beginning.
+              their pages, you can explore demonstration profiles or join the creator waitlist
+              for an email when signups reopen. Joining reserves a founding spot while available.
             </p>
 
             <div className="mt-7 flex justify-center">
@@ -183,16 +183,16 @@ export default function BrowsePage({ searchParams }) {
                 href="/signup?role=creator"
                 className="inline-flex min-h-12 items-center justify-center rounded-full bg-brand-teal px-6 py-3 font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#115E59]"
               >
-                Join as a founding creator
+                Join the creator waitlist
               </a>
             </div>
 
             <div className="mx-auto mt-7 flex max-w-xl flex-wrap justify-center gap-x-5 gap-y-2 text-xs font-semibold text-brand-ink/60">
               <span>No follower minimum</span>
               <span aria-hidden="true">•</span>
-              <span>Founding rate locked in</span>
+              <span>No payment required</span>
               <span aria-hidden="true">•</span>
-              <span>Page setup in minutes</span>
+              <span>Email when signups reopen</span>
             </div>
           </div>
         </section>
@@ -254,21 +254,22 @@ export default function BrowsePage({ searchParams }) {
       {foundingDirectory && (
         <section className="mt-8 rounded-3xl border border-brand-gold/35 bg-[#FFF9E8] px-6 py-8 text-center sm:px-10">
           <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#9A6700]">
-            The founding community is open
+            Join the creator waitlist
           </span>
           <h2 className="mt-3 font-display text-2xl font-bold text-[#172033]">
             Creator #2 could be you.
           </h2>
           <p className="mx-auto mt-3 max-w-xl leading-relaxed text-brand-ink/70">
-            Join Evan at the beginning, build your membership page in minutes, and lock in the
-            founding creator rate while spots remain.
+            New creator accounts are temporarily paused. Join Evan at the beginning by signing up
+            for an email when creator registration reopens. Joining the waitlist reserves an available founding spot and locks in the 10% rate.
+            Use the same email when you create your account.
           </p>
           <div className="mt-6 flex justify-center">
             <a
               href="/signup?role=creator"
               className="inline-flex min-h-12 items-center justify-center rounded-full bg-brand-teal px-6 py-3 font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#115E59]"
             >
-              Become creator #2
+              Join the creator waitlist
             </a>
           </div>
         </section>

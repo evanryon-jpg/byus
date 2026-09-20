@@ -40,35 +40,23 @@ import {
 } from './pricing';
 import { rewardCreatorReferrerLaunch } from './referrals';
 
-// This creator's signup rank among every creator account ever created, oldest first.
-// Rank 1 is the very first creator on ByUs. Computed live off `created_at` (tie-broken by
-// id) rather than stamped on the row at signup time -- that keeps it correct with zero
-// schema change and with no risk of drifting if an earlier account is ever removed.
-// `queryFn` lets callers pass either the shared pool (`query`) or a transaction client.
+// Permanent founding number, reserved on the waitlist or at creator signup.
 export async function getFoundingCreatorRank(queryFn, creatorId) {
   const result = await queryFn(
-    `SELECT rank FROM (
-       SELECT id, ROW_NUMBER() OVER (ORDER BY created_at, id) AS rank
-       FROM users WHERE role = 'creator'
-     ) ranked WHERE id = $1`,
+    'SELECT spot_number AS rank FROM founding_reservations WHERE creator_id = $1',
     [creatorId]
   );
   return result.rows[0] ? Number(result.rows[0].rank) : null;
 }
 
-// Founding promo: the first FOUNDING_CREATOR_LIMIT creators get DISCOUNTED_FEE_PERCENT
-// (10%) from day one, no $2,000/mo milestone required -- see recordEarningAndCheckFeeTier
-// below, which is where this actually takes effect on billing.
 export async function isFoundingCreator(queryFn, creatorId) {
   const rank = await getFoundingCreatorRank(queryFn, creatorId);
   return rank !== null && rank <= FOUNDING_CREATOR_LIMIT;
 }
 
-// Live counts for the homepage promo banner -- how many of the FOUNDING_CREATOR_LIMIT
-// founding spots are already claimed by a real creator account right now, so the copy
-// never overstates (or understates) what's actually left.
+// Includes both claimed creator accounts and reserved waitlist places.
 export async function getFoundingPromoStats(queryFn) {
-  const result = await queryFn(`SELECT COUNT(*)::int AS count FROM users WHERE role = 'creator'`);
+  const result = await queryFn('SELECT COUNT(*)::int AS count FROM founding_reservations');
   const claimed = Math.min(result.rows[0].count, FOUNDING_CREATOR_LIMIT);
   return { limit: FOUNDING_CREATOR_LIMIT, claimed, remaining: FOUNDING_CREATOR_LIMIT - claimed };
 }
