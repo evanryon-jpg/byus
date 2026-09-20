@@ -1,4 +1,49 @@
+'use client';
+
+import { useRef } from 'react';
+
+// Timestamps below are pulled straight from the walkthrough's own caption track
+// (public/videos/byus-creator-walkthrough-final-20260920-en.vtt) -- each one is the
+// start of the caption cue where that step's narration begins, so "Get paid, with
+// guidance" jumps to 1:24, right where the video actually starts talking about Stripe
+// payouts. If the video is ever re-cut, re-check these against the new .vtt rather
+// than guessing -- a wrong jump point is worse than no jump point at all.
+const STEPS = [
+  ['01', 'Add your profile', 'Photo, name, bio, social links, and page details', 3],
+  ['02', 'Build membership tiers', 'Pricing from $5, benefits, and a live fan preview', 16],
+  ['03', 'Publish and sell', 'Posts, imports, tips, downloads, and live streaming', 35],
+  ['04', 'Grow your community', 'Discord and Telegram sync, notifications, and analytics', 60],
+  ['05', 'Get paid, with guidance', 'Stripe payouts, yearly reporting, and the Page Coach', 84],
+  ['06', 'Preview and publish', 'See the finished page, then share it with your audience', 105],
+];
+
 export default function CreatorWalkthrough() {
+  const videoRef = useRef(null);
+
+  // Seeking a <video> before its metadata has loaded is a no-op in most browsers, so
+  // if we're not there yet we wait for `loadedmetadata` once rather than dropping the
+  // click. preload="metadata" on the element means that's normally instant.
+  const jumpTo = (seconds) => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const seekAndPlay = () => {
+      video.currentTime = seconds;
+      video.play().catch(() => {
+        // Autoplay can be blocked (e.g. low-power mode); the video is still seeked,
+        // so the visible frame and scrubber are correct even if playback didn't start.
+      });
+    };
+
+    video.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    if (video.readyState >= 1) {
+      seekAndPlay();
+    } else {
+      video.addEventListener('loadedmetadata', seekAndPlay, { once: true });
+    }
+  };
+
   return (
     <section
       id="creator-walkthrough"
@@ -29,6 +74,7 @@ export default function CreatorWalkthrough() {
 
         <div className="mx-auto mt-9 max-w-5xl overflow-hidden rounded-2xl border border-brand-ink/10 bg-[#0C1730] shadow-[0_28px_80px_-28px_rgba(13,32,58,0.5)] sm:rounded-3xl">
           <video
+            ref={videoRef}
             className="block aspect-video w-full bg-[#0C1730]"
             controls
             playsInline
@@ -49,30 +95,27 @@ export default function CreatorWalkthrough() {
 
         <div className="mx-auto mt-6 max-w-4xl">
           <p className="text-center text-xs font-extrabold uppercase tracking-[0.16em] text-brand-ink/55">
-            What you&rsquo;ll see
+            What you&rsquo;ll see <span className="normal-case text-brand-ink/40">(tap a step to jump there)</span>
           </p>
           <ol className="mt-3 grid gap-2 sm:grid-cols-3">
-            {[
-              ['01', 'Add your profile', 'Photo, name, bio, social links, and page details'],
-              ['02', 'Build membership tiers', 'Pricing from $5, benefits, and a live fan preview'],
-              ['03', 'Publish and sell', 'Posts, imports, tips, downloads, and live streaming'],
-              ['04', 'Grow your community', 'Discord and Telegram sync, notifications, and analytics'],
-              ['05', 'Get paid, with guidance', 'Stripe payouts, yearly reporting, and the Page Coach'],
-              ['06', 'Preview and publish', 'See the finished page, then share it with your audience'],
-            ].map(([number, title, detail]) => (
-              <li
-                key={number}
-                className="flex items-start gap-3 rounded-xl border border-brand-ink/10 bg-white px-4 py-3 text-left shadow-sm"
-              >
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-teal text-xs font-extrabold text-white">
-                  {number}
-                </span>
-                <span>
-                  <strong className="block text-sm text-[#172033]">{title}</strong>
-                  <span className="mt-0.5 block text-xs leading-relaxed text-brand-ink/60">
-                    {detail}
+            {STEPS.map(([number, title, detail, seconds]) => (
+              <li key={number}>
+                <button
+                  type="button"
+                  onClick={() => jumpTo(seconds)}
+                  aria-label={`Jump to "${title}" (${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}) in the walkthrough video`}
+                  className="group flex w-full items-start gap-3 rounded-xl border border-brand-ink/10 bg-white px-4 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-brand-teal/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal/60"
+                >
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-teal text-xs font-extrabold text-white transition group-hover:brightness-110">
+                    {number}
                   </span>
-                </span>
+                  <span>
+                    <strong className="block text-sm text-[#172033]">{title}</strong>
+                    <span className="mt-0.5 block text-xs leading-relaxed text-brand-ink/60">
+                      {detail}
+                    </span>
+                  </span>
+                </button>
               </li>
             ))}
           </ol>
