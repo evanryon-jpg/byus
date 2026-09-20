@@ -20,27 +20,39 @@ const STEPS = [
 export default function CreatorWalkthrough() {
   const videoRef = useRef(null);
 
-  // Seeking a <video> before its metadata has loaded is a no-op in most browsers, so
-  // if we're not there yet we wait for `loadedmetadata` once rather than dropping the
-  // click. preload="metadata" on the element means that's normally instant.
+  // Two things have to happen on click: seek to the timestamp, and start playback.
+  // They can't share one code path. Seeking needs metadata (duration/keyframes), which
+  // preload="metadata" usually has ready by the time someone clicks -- but if it isn't
+  // yet, we have to wait for the `loadedmetadata` event before setting currentTime.
+  // Starting playback is different: Safari (and some mobile browsers) only allow
+  // video.play() to succeed when it's called synchronously inside the click handler
+  // itself. Call it from inside that async `loadedmetadata` callback instead -- even a
+  // few milliseconds later -- and the browser no longer credits it as a direct result
+  // of the tap, and silently blocks it. So play() always fires first, synchronously,
+  // right here; the seek is applied whenever metadata is actually ready, even if that's
+  // a beat after playback has already started.
   const jumpTo = (seconds) => {
     const video = videoRef.current;
     if (!video) return;
 
-    const seekAndPlay = () => {
-      video.currentTime = seconds;
-      video.play().catch(() => {
-        // Autoplay can be blocked (e.g. low-power mode); the video is still seeked,
-        // so the visible frame and scrubber are correct even if playback didn't start.
-      });
-    };
-
     video.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
+    const applySeek = () => {
+      video.currentTime = seconds;
+    };
+
     if (video.readyState >= 1) {
-      seekAndPlay();
+      applySeek();
     } else {
-      video.addEventListener('loadedmetadata', seekAndPlay, { once: true });
+      video.addEventListener('loadedmetadata', applySeek, { once: true });
+    }
+
+    const playPromise = video.play();
+    if (playPromise && typeof playPromise.catch === 'function') {
+      playPromise.catch(() => {
+        // Playback can still be blocked (e.g. reduced-data mode); the seek above still
+        // lands once metadata loads, so the scrubber and poster frame stay correct.
+      });
     }
   };
 
