@@ -989,7 +989,7 @@ function CommunitySyncNudge() {
         <h2 className="text-sm font-semibold text-[#172033]">Sync Discord or Telegram</h2>
         <p className="mt-0.5 text-sm text-brand-ink/65">
           Give subscribers a role in your Discord server or access to your private Telegram group automatically
-          — and remove it if they ever cancel.
+          — and remove it when their paid subscription period ends.
         </p>
       </div>
       <a

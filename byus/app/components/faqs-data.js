@@ -35,7 +35,7 @@ export const FAQS = [
   },
   {
     q: 'What happens to my access if I cancel?',
-    a: "Subscriber-only posts and perks switch off once your current billing period wraps up — you don't lose anything you already paid for mid-stream. Anything the creator's posted publicly is still there either way.",
+    a: "You keep subscriber-only posts and connected Discord or Telegram access through the end of the billing period you already paid for. When that period ends, member-only access is removed automatically. Public posts remain available either way.",
   },
   {
     q: 'Does it cost anything to become a creator?',
@@ -51,6 +51,6 @@ export const FAQS = [
   },
   {
     q: 'Can creators connect Discord or Telegram?',
-    a: "Yep — link a Discord server and/or a private Telegram group in Settings, and ByUs handles the bouncer duty for you: the moment someone subscribes they get the matching Discord role or Telegram access automatically, and it's revoked automatically the second they cancel. Totally optional, and your ByUs page stays the real source of truth either way.",
+    a: "Yep — link a Discord server and/or a private Telegram group in Settings, and ByUs handles the bouncer duty for you: the moment someone subscribes they get the matching Discord role or Telegram access automatically. If they cancel, that access remains through their paid billing period and is removed automatically when the subscription ends. Totally optional, and your ByUs page stays the real source of truth either way.",
   },
 ];
