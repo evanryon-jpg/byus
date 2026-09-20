@@ -55,7 +55,7 @@ export default function FeedbackWidget() {
   }
 
   return (
-    <div className="fixed right-0 top-24 z-40 print:hidden">
+    <div className="fixed right-0 top-24 z-40 hidden print:hidden sm:block">
       {open ? (
         <div className="mr-3 w-72 rounded-xl border border-brand-ink/10 bg-white p-4 shadow-lg sm:w-80">
           {status === 'sent' ? (
