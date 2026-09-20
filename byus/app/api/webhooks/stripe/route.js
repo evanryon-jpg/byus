@@ -218,7 +218,7 @@ export async function POST(request) {
                     creator_net_cents, stripe_charge_id, status, message)
                  VALUES ($1, $2, $3, $4, $5, $6, 'succeeded', $7)`,
                 [fan_id, creator_id, grossCents, feeCents, netCents, chargeId,
-                 `PDF purchase: ${product_id}`]
+                 `Digital product purchase: ${product_id}`]
               );
 
               const result = await recordEarningAndCheckFeeTier(client, {
