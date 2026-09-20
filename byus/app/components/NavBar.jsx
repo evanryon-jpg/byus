@@ -12,6 +12,10 @@ export default function NavBar() {
   const [user, setUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
+  const isHome = pathname === '/';
+  const linkTone = isHome
+    ? 'hover:bg-white/10 hover:text-white'
+    : 'hover:bg-[#0F766E]/5 hover:text-[#0F766E]';
 
   // Re-check on every client-side navigation, not just the first mount. Login and
   // signup redirect into the app with router.push() rather than a full page load, so
@@ -57,24 +61,35 @@ export default function NavBar() {
     <>
       <a
         href="/browse"
-        className="block rounded-lg px-3 py-2 hover:bg-[#0F766E]/5 hover:text-[#0F766E]"
+        className={`block rounded-lg px-3 py-2 ${linkTone}`}
         onClick={() => setMenuOpen(false)}
       >
         Browse creators
       </a>
 
+      {isHome && (
+        <>
+          <a href="#features" className={`block rounded-lg px-3 py-2 ${linkTone}`} onClick={() => setMenuOpen(false)}>
+            Features
+          </a>
+          <a href="#creator-walkthrough" className={`block rounded-lg px-3 py-2 ${linkTone}`} onClick={() => setMenuOpen(false)}>
+            How it works
+          </a>
+        </>
+      )}
+
       {status === 'in' && (
         <>
           <a
             href={dashboardHref}
-            className="block rounded-lg px-3 py-2 hover:bg-[#0F766E]/5 hover:text-[#0F766E]"
+            className={`block rounded-lg px-3 py-2 ${linkTone}`}
             onClick={() => setMenuOpen(false)}
           >
             Dashboard
           </a>
           <a
             href="/settings"
-            className="block rounded-lg px-3 py-2 hover:bg-[#0F766E]/5 hover:text-[#0F766E]"
+            className={`block rounded-lg px-3 py-2 ${linkTone}`}
             onClick={() => setMenuOpen(false)}
           >
             Settings
@@ -82,7 +97,7 @@ export default function NavBar() {
           {user?.is_admin && (
             <a
               href="/admin"
-              className="block rounded-lg px-3 py-2 hover:bg-[#0F766E]/5 hover:text-[#0F766E]"
+              className={`block rounded-lg px-3 py-2 ${linkTone}`}
               onClick={() => setMenuOpen(false)}
             >
               Admin
@@ -91,7 +106,9 @@ export default function NavBar() {
           <button
             type="button"
             onClick={handleLogout}
-            className="w-full rounded-full border border-[#0F766E] px-4 py-2.5 text-left text-[#0F766E] hover:bg-[#0F766E]/5 sm:ml-2 sm:w-auto sm:text-center"
+            className={`w-full rounded-full border px-4 py-2.5 text-left lg:ml-2 lg:w-auto lg:text-center ${
+              isHome ? 'border-white/45 text-white hover:bg-white/10' : 'border-[#0F766E] text-[#0F766E] hover:bg-[#0F766E]/5'
+            }`}
           >
             Log out
           </button>
@@ -102,23 +119,25 @@ export default function NavBar() {
         <>
           <a
             href="/login"
-            className="block rounded-lg px-3 py-2 hover:bg-[#0F766E]/5 hover:text-[#0F766E]"
+            className={`block rounded-lg px-3 py-2 ${linkTone}`}
             onClick={() => setMenuOpen(false)}
           >
             Log in
           </a>
           <a
-            href="/signup"
-            className="block rounded-full bg-[#0F766E] px-4 py-2.5 text-center text-white hover:bg-[#115E59] sm:ml-2 sm:inline-block"
+            href={isHome ? '/signup?role=creator' : '/signup'}
+            className={`block rounded-full px-5 py-2.5 text-center text-white lg:ml-2 lg:inline-block ${
+              isHome ? 'bg-[#b85138] hover:bg-[#a84631]' : 'bg-[#0F766E] hover:bg-[#115E59]'
+            }`}
             onClick={() => setMenuOpen(false)}
           >
-            Sign up
+            {isHome ? 'Reserve a spot' : 'Sign up'}
           </a>
         </>
       )}
 
       {status === 'loading' && (
-        <span className="text-[#172033]/30" aria-hidden="true">···</span>
+        <span className={isHome ? 'text-white/30' : 'text-[#172033]/30'} aria-hidden="true">···</span>
       )}
     </>
   );
@@ -128,18 +147,20 @@ export default function NavBar() {
     // scrolling a long page (the homepage, browse, a creator's post feed) instead
     // of scrolling away with the content. z-50 keeps it above the mobile dropdown
     // panel and anything else on the page.
-    <nav className="sticky top-0 z-50 border-b border-brand-ink/5 bg-brand-paper">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+    <nav className={`sticky top-0 z-50 border-b backdrop-blur-xl ${
+      isHome ? 'border-white/10 bg-[#08182d]/95 text-white' : 'border-brand-ink/5 bg-brand-paper text-brand-ink'
+    }`}>
+      <div className={`mx-auto flex items-center justify-between px-6 py-4 ${isHome ? 'max-w-[1280px] lg:px-10' : 'max-w-5xl'}`}>
         <a
           href="/"
           className="flex items-center"
           onClick={() => setMenuOpen(false)}
         >
-          <ByUsLogo className="h-10 w-auto" />
+          <ByUsLogo className="h-10 w-auto" light={isHome} />
         </a>
 
         {/* Full inline nav from the small-tablet breakpoint up. */}
-        <div className="hidden items-center gap-1 text-sm font-medium sm:flex">{links}</div>
+        <div className="hidden items-center gap-1 text-sm font-medium lg:flex">{links}</div>
 
         {/* Hamburger toggle below that — 44px tap target, matches the site's other pill controls. */}
         <button
@@ -147,7 +168,9 @@ export default function NavBar() {
           onClick={() => setMenuOpen((open) => !open)}
           aria-expanded={menuOpen}
           aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-          className="flex h-11 w-11 items-center justify-center rounded-lg border border-brand-ink/15 text-[#0F766E] hover:bg-[#0F766E]/5 sm:hidden"
+          className={`flex h-11 w-11 items-center justify-center rounded-lg border lg:hidden ${
+            isHome ? 'border-white/20 text-white hover:bg-white/10' : 'border-brand-ink/15 text-[#0F766E] hover:bg-[#0F766E]/5'
+          }`}
         >
           {menuOpen ? (
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
@@ -169,7 +192,9 @@ export default function NavBar() {
           previously it opened as a few plain lines of text that were easy to miss
           tapping into on a small screen. */}
       {menuOpen && (
-        <div className="space-y-1 border-t border-brand-ink/15 bg-[#F8FAFC] px-4 py-4 text-sm font-semibold shadow-lg sm:hidden">
+        <div className={`space-y-1 border-t px-4 py-4 text-sm font-semibold shadow-lg lg:hidden ${
+          isHome ? 'border-white/10 bg-[#08182d] text-white' : 'border-brand-ink/15 bg-[#F8FAFC] text-brand-ink'
+        }`}>
           {links}
         </div>
       )}
