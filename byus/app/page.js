@@ -238,14 +238,14 @@ function Hero({ user, stats }) {
               {user ? (
                 <a
                   href={dashboardHref}
-                  className="inline-flex min-h-14 items-center justify-center rounded-full bg-[#b85138] px-8 py-4 text-base font-bold text-white shadow-[0_18px_45px_-18px_rgba(184,81,56,0.9)] transition hover:-translate-y-0.5 hover:bg-[#a84631] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+                  className="inline-flex min-h-14 items-center justify-center whitespace-nowrap rounded-full bg-[#b85138] px-6 py-4 text-sm font-bold text-white shadow-[0_18px_45px_-18px_rgba(184,81,56,0.9)] transition hover:-translate-y-0.5 hover:bg-[#a84631] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white xl:px-8 xl:text-base"
                 >
                   {user.role === 'creator' ? 'Go to your dashboard' : 'Your subscriptions'} →
                 </a>
               ) : (
                 <a
                   href="/signup?role=creator"
-                  className="inline-flex min-h-14 items-center justify-center rounded-full bg-[#b85138] px-8 py-4 text-base font-bold text-white shadow-[0_18px_45px_-18px_rgba(184,81,56,0.9)] transition hover:-translate-y-0.5 hover:bg-[#a84631] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+                  className="inline-flex min-h-14 items-center justify-center whitespace-nowrap rounded-full bg-[#b85138] px-6 py-4 text-sm font-bold text-white shadow-[0_18px_45px_-18px_rgba(184,81,56,0.9)] transition hover:-translate-y-0.5 hover:bg-[#a84631] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white xl:px-8 xl:text-base"
                 >
                   Reserve your founding spot →
                 </a>
@@ -253,7 +253,7 @@ function Hero({ user, stats }) {
 
               <a
                 href="#creator-walkthrough"
-                className="inline-flex min-h-14 items-center justify-center rounded-full border border-white/35 bg-white/[0.03] px-8 py-4 text-base font-semibold text-white transition hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/[0.08] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+                className="inline-flex min-h-14 items-center justify-center whitespace-nowrap rounded-full border border-white/35 bg-white/[0.03] px-6 py-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/[0.08] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white xl:px-8 xl:text-base"
               >
                 See how ByUs works <span className="ml-3 text-sm" aria-hidden="true">▶</span>
               </a>
@@ -293,7 +293,7 @@ function ProductHeroPreview() {
           <span className="h-2.5 w-2.5 rounded-full bg-[#b85138]/80" />
           <span className="h-2.5 w-2.5 rounded-full bg-brand-gold/80" />
           <span className="h-2.5 w-2.5 rounded-full bg-[#58d4c3]/70" />
-          <span className="ml-3 flex-1 rounded-full border border-white/10 bg-white/[0.035] px-4 py-1 text-center text-[10px] tracking-wide text-white/35">
+          <span className="ml-3 min-w-0 flex-1 truncate rounded-full border border-white/10 bg-white/[0.035] px-4 py-1 text-center text-[10px] tracking-wide text-white/35">
             byusapp.com/your-page
           </span>
         </div>
@@ -335,11 +335,7 @@ function ProductHeroPreview() {
                 className="object-cover opacity-65"
                 priority
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#07182a]/25 via-transparent to-[#07182a]/80" />
-              <div className="absolute right-5 top-1/2 max-w-[180px] -translate-y-1/2 text-right sm:right-7 sm:max-w-[230px]">
-                <p className="font-display text-2xl italic text-white sm:text-3xl">More than content.</p>
-                <p className="mt-2 text-[9px] font-bold uppercase tracking-[0.22em] text-white/55">A closer kind of connection</p>
-              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-[#07182a]/30 via-transparent to-transparent" />
             </div>
 
             <div className="mt-5 grid gap-3 sm:grid-cols-[1.15fr_0.85fr]">
@@ -383,7 +379,7 @@ function ProductHeroPreview() {
               </div>
             </div>
 
-            <div className="mt-3 grid grid-cols-2 gap-3">
+            <div className="mt-3 grid grid-cols-1 gap-3 min-[380px]:grid-cols-2">
               <div className="rounded-xl border border-white/10 bg-white/[0.035] p-3.5">
                 <p className="text-[10px] font-semibold text-white">Digital downloads</p>
                 <p className="mt-2 text-[9px] text-white/40">PDFs and files, delivered securely</p>
@@ -713,7 +709,7 @@ function HowItWorks() {
           From Passion to Paycheck in 4 Steps
         </h2>
 
-        <div className="mt-10 grid grid-cols-2 gap-x-8 gap-y-8 sm:grid-cols-4 sm:gap-y-10">
+        <div className="mt-10 grid grid-cols-1 gap-x-8 gap-y-8 min-[380px]:grid-cols-2 sm:grid-cols-4 sm:gap-y-10">
           {steps.map((s, i) => (
             <div key={s.n} className="relative text-left">
               <span className="font-display text-3xl font-semibold text-brand-gold/70">{s.n}</span>
