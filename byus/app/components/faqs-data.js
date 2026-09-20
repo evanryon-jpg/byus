@@ -19,11 +19,11 @@ export const FAQS = [
   },
   {
     q: 'Can creators sign up and connect Stripe now?',
-    a: "Almost — new creator signups are paused for a moment while we finish tightening up some account setup on our end. Join the waitlist and we'll email you the second it reopens. Fans, you're all set: sign up and subscribe as normal in the meantime. Creating a ByUs account is free either way; Stripe separately reviews every connected account and may ask for verification info before it'll turn on payments or payouts.",
+    a: "New creator accounts are temporarily paused. Join the free waitlist and we'll email you when signups reopen. A waitlist entry does not create a creator account, reserve a founding spot, or lock in a rate. Fans, you're all set: sign up and subscribe as normal in the meantime. Creating a ByUs account is free either way; Stripe separately reviews every connected account and may ask for verification info before it'll turn on payments or payouts.",
   },
   {
     q: 'How does the platform fee work?',
-    a: "ByUs's standard all-in platform fee is 13% of each payment. The first 100 founding creators lock in a 10% rate for good. Standard domestic payment processing is included, and the rest is paid straight into the creator's connected Stripe account. Currency conversion, instant payouts, taxes, disputes, or unusual processor costs may apply separately, and we'll spell those out when they do.",
+    a: "ByUs's standard all-in platform fee is 13% of each payment. The first 100 creator accounts lock in a 10% founding rate for good, with no earnings requirement. Standard domestic payment processing is included, and the rest is paid straight into the creator's connected Stripe account. Currency conversion, instant payouts, taxes, disputes, or unusual processor costs may apply separately, and we'll spell those out when they do.",
   },
   {
     q: 'When and how do creators get paid?',

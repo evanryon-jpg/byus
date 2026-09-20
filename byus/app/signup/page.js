@@ -302,7 +302,7 @@ function CreatorWaitlistPanel({ acquisitionSource, referralCode }) {
         </h2>
         <p className="mt-1.5 text-sm text-brand-ink/65">
           We'll email {waitlistResult.email} as soon as creator signups reopen — including whether a founding
-          spot is still available.
+          spot is still available. Your waitlist entry does not reserve a founding spot or lock in a rate.
         </p>
         <a href="/" className="mt-4 inline-block text-sm font-semibold text-[#0F766E] underline">
           Back to ByUs
@@ -314,8 +314,9 @@ function CreatorWaitlistPanel({ acquisitionSource, referralCode }) {
   return (
     <div className="mt-6">
       <p className="text-sm text-brand-ink/70">
-        We've temporarily paused new creator signups while we finish up some account setup on our end. Pop your
-        email below and we'll let you know the moment we reopen.
+        New creator accounts are temporarily paused. Leave your email and we'll notify you when
+        signups reopen. Joining is free and does not create a creator account, reserve a founding
+        spot, or lock in a rate.
       </p>
 
       <form onSubmit={handleWaitlistSubmit} noValidate className="mt-5 space-y-4">

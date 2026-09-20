@@ -76,9 +76,8 @@ export default async function HomePage() {
 // than another feature bullet -- the treatment the brief asked for when it said this
 // needed to be "more visible."
 //
-// Creator signup and Stripe Connect onboarding are open. ByUs's own platform payout
-// remains under Stripe review, but connected creator onboarding and payments are not
-// presented as paused. The real creator count determines remaining founding spots.
+// Creator signup is paused. Waitlist entries do not reserve founding spots;
+// the real creator account count determines remaining spots.
 function FoundingCreatorProgram({ stats }) {
   const soldOut = stats.remaining <= 0;
   const perks = [
@@ -115,8 +114,8 @@ function FoundingCreatorProgram({ stats }) {
           {stats.limit} spots. <span className="text-brand-gold">10% forever.</span>
         </p>
         <p className="mx-auto mt-4 max-w-lg text-brand-paper/70">
-          The first {stats.limit} creators to join lock in our lowest fee for good. No deadline,
-          application, or earnings requirement.
+          The first {stats.limit} creator accounts lock in our lowest fee for good.
+          No follower minimum or earnings requirement.
         </p>
         <div className="mx-auto mt-8 grid max-w-3xl gap-4 text-left sm:grid-cols-3">
           {perks.map((p) => (
@@ -145,6 +144,10 @@ function FoundingCreatorProgram({ stats }) {
               >
                 Join the founding waitlist →
               </a>
+              <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-brand-paper/85">
+                New creator accounts are temporarily paused. Join for an email when signups reopen.
+                Joining the waitlist does not reserve a founding spot or lock in a rate.
+              </p>
             </>
           )}
         </div>
@@ -197,12 +200,12 @@ function Hero({ user }) {
   const dashboardHref = user?.role === 'creator' ? '/creator/dashboard' : '/fan/dashboard';
 
   return (
-    // Dark band fading down into the page's own cream. Two columns on desktop now --
+    // Keep a dark background behind all hero text and controls. Two columns on desktop --
     // copy on the left, a small editorial collage of real Alex Rivers artwork on the
     // right, so the hero shows what a ByUs page actually looks like instead of telling
     // you. Stacks to a single column on mobile, art below the copy, so the CTAs and
     // fine print still come first for outreach traffic.
-    <section className="relative overflow-hidden bg-gradient-to-b from-[#172554] via-[#134B61] to-brand-cream">
+    <section className="relative overflow-hidden bg-gradient-to-b from-[#172554] via-[#134B61] to-[#134B61]">
       {/* Two subtle ambient color glows add depth to the dark band without
           competing with the message or creator previews. Purely
           decorative background motion, kept separate from the live-pulse dot on the
@@ -274,11 +277,18 @@ function Hero({ user }) {
                   without leaving the page. */}
               <a
                 href="#creator-walkthrough"
-                className="rounded-full border-2 border-brand-paper/30 bg-brand-paper/10 px-7 py-3.5 text-base font-semibold text-brand-paper backdrop-blur transition hover:border-brand-gold hover:bg-brand-paper/15"
+                className="rounded-full border-2 border-brand-paper bg-brand-paper px-7 py-3.5 text-base font-semibold text-[#172554] transition hover:-translate-y-0.5 hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
               >
                 ▶ Watch the creator walkthrough
               </a>
             </div>
+
+            {!user && (
+              <p className="mt-4 max-w-lg text-sm leading-relaxed text-brand-paper/90">
+                Creator signups are temporarily paused. Join for an email when they reopen;
+                a waitlist entry does not reserve a founding spot.
+              </p>
+            )}
 
             <ul
               aria-label="Creator account highlights"
@@ -397,7 +407,7 @@ function HeroArtCollage() {
         ))}
       </div>
 
-      <p className="relative mt-2 text-center text-xs font-medium text-brand-ink/65">
+      <p className="relative mt-2 text-center text-xs font-medium text-brand-paper/90">
         Memberships, posts, and downloads — all in one creator page.
       </p>
     </div>

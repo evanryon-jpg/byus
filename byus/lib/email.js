@@ -165,7 +165,7 @@ export async function sendWaitlistConfirmationEmail(to, { displayName }) {
     html: `
       <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; color: #1A1A1A;">
         <h2 style="color:#146359;">You're on the list, ${greeting}.</h2>
-        <p>Thanks for joining the ByUs Founding Creator waitlist. We're temporarily pausing new creator signups while we finish up some account setup on our end — we'll email you the moment it's your turn, including whether a founding spot (10% platform fee, forever) is still available.</p>
+        <p>Thanks for joining the ByUs Founding Creator waitlist. We're temporarily pausing new creator signups while we finish up some account setup on our end — we'll email you when creator signups reopen, including whether a founding spot (10% platform fee, forever) is still available. Joining the waitlist does not create a creator account, reserve a founding spot, or lock in a rate.</p>
         <p style="margin: 24px 0;">
           <a href="https://byusapp.com" style="background:#146359;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;">Visit ByUs</a>
         </p>

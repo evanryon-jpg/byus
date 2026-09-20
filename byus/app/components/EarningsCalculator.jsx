@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { STANDARD_FEE_PERCENT, DISCOUNTED_FEE_PERCENT } from '@/lib/pricing';
+import { STANDARD_FEE_PERCENT, DISCOUNTED_FEE_PERCENT, FOUNDING_CREATOR_LIMIT, MIN_MEMBERSHIP_PRICE_CENTS } from '@/lib/pricing';
 
 // Interactive "what would I actually keep" calculator for a prospective creator sizing
 // up whether ByUs is worth it before they sign up. Fee numbers now come straight from
@@ -95,21 +95,13 @@ function useReveal() {
 }
 
 export default function EarningsCalculator() {
-  // Defaults land on a believable "already have some traction" creator (150 subs at
-  // $15/mo = $2,250/mo gross) rather than a token 50-subscriber toy example. That gross
-  // clears the $2,000/mo discount threshold (see lib/pricing.js), so defaulting the tier
-  // to 'grown' here matches what this creator would actually be billed -- it's not
-  // picking a rosier tier than their own numbers support. The old defaults (50 subs,
-  // $10/mo, starter tier) computed to just ~$14.50/mo more than a Patreon-style
-  // competitor, because the 13% starter fee is barely below Patreon's blended ~12.9% +
-  // $0.30/charge -- not a compelling first impression for someone sizing up whether
-  // switching is worth it.
+  // Preview standard pricing by default; founding status depends on account signup order.
   const [subscribers, setSubscribers] = useState(150);
   const [price, setPrice] = useState(15);
-  const [tier, setTier] = useState('grown'); // 'starter' | 'grown'
+  const [tier, setTier] = useState('standard'); // 'standard' | 'founding'
   const [revealRef, revealed] = useReveal();
 
-  const feePercent = tier === 'grown' ? DISCOUNTED_FEE_PERCENT : STANDARD_FEE_PERCENT;
+  const feePercent = tier === 'founding' ? DISCOUNTED_FEE_PERCENT : STANDARD_FEE_PERCENT;
   const grossCents = Math.round(subscribers * price * 100);
   const feeCents = Math.round((grossCents * feePercent) / 100);
   const netCents = grossCents - feeCents;
@@ -154,8 +146,8 @@ export default function EarningsCalculator() {
           See what you&rsquo;d actually keep
         </h2>
         <p className="mt-2 max-w-xl text-sm leading-relaxed text-brand-ink/70">
-          Move the sliders to your numbers — this runs the same fee math ByUs applies to
-          every charge, not a rough estimate.
+          Estimate your monthly earnings using ByUs’s current rates. Choose standard pricing
+          or preview the founding creator rate.
         </p>
 
         <div className="mt-8 grid gap-8 sm:grid-cols-[0.95fr_1.05fr] sm:gap-10">
@@ -175,7 +167,7 @@ export default function EarningsCalculator() {
             <SliderField
               label="Monthly tier price"
               value={price}
-              min={1}
+              min={MIN_MEMBERSHIP_PRICE_CENTS / 100}
               max={50}
               step={0.5}
               onChange={setPrice}
@@ -187,13 +179,18 @@ export default function EarningsCalculator() {
                 Your fee tier
               </p>
               <div className="flex gap-1 rounded-full border border-brand-ink/15 bg-brand-cream p-1 text-xs font-bold">
-                <TierButton active={tier === 'starter'} onClick={() => setTier('starter')}>
-                  Just starting — {STANDARD_FEE_PERCENT}%
+                <TierButton active={tier === 'standard'} onClick={() => setTier('standard')}>
+                  Standard — {STANDARD_FEE_PERCENT}%
                 </TierButton>
-                <TierButton active={tier === 'grown'} onClick={() => setTier('grown')}>
-                  $2k+ this month — {DISCOUNTED_FEE_PERCENT}%
+                <TierButton active={tier === 'founding'} onClick={() => setTier('founding')}>
+                  Founding creator — {DISCOUNTED_FEE_PERCENT}%
                 </TierButton>
               </div>
+              <p className="mt-3 text-xs leading-relaxed text-brand-ink/75">
+                Standard pricing is {STANDARD_FEE_PERCENT}%. The first {FOUNDING_CREATOR_LIMIT} creator
+                accounts keep the {DISCOUNTED_FEE_PERCENT}% founding rate for good, with no earnings
+                requirement. Both rates include standard domestic payment processing.
+              </p>
             </div>
           </div>
 
@@ -236,11 +233,11 @@ export default function EarningsCalculator() {
                 className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-brand-gold text-sm font-bold text-[#172033]"
                 aria-hidden="true"
               >
-                ↑
+                {extraKeptCents >= 0 ? '↑' : '↓'}
               </span>
               <p className="text-[13.5px] leading-snug text-[#6b5325]">
                 You&rsquo;d keep{' '}
-                <strong className="font-display text-[15px] text-[#5a4419]">{fmt(extraKeptDisplay)}</strong> more
+                <strong className="font-display text-[15px] text-[#5a4419]">{fmt(Math.abs(extraKeptDisplay))}</strong> {extraKeptCents >= 0 ? 'more' : 'less'}
                 per month with ByUs.
               </p>
             </div>
