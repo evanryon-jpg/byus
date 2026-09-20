@@ -23,7 +23,7 @@ export const FAQS = [
   },
   {
     q: 'How does the platform fee work?',
-    a: "ByUs's standard all-in platform fee is 13% of each payment. The 100 founding spots carry a 10% rate for good, with no earnings requirement. Join the waitlist to reserve a spot while available. Standard domestic payment processing is included, and the rest is paid straight into the creator's connected Stripe account. Currency conversion, instant payouts, taxes, disputes, or unusual processor costs may apply separately, and we'll spell those out when they do.",
+    a: "ByUs's standard all-in platform fee starts at 13% of each payment. When a non-founding creator reaches $2,000 in gross ByUs earnings during a calendar month, the rate drops to 10% for the rest of that month and resets to 13% at the start of the next month until the threshold is reached again. The 100 founding spots carry a 10% rate for good, with no earnings requirement. Standard domestic payment processing is included, and the rest is paid straight into the creator's connected Stripe account. Currency conversion, instant payouts, taxes, disputes, or unusual processor costs may apply separately, and we'll spell those out when they do.",
   },
   {
     q: 'When and how do creators get paid?',
@@ -39,7 +39,7 @@ export const FAQS = [
   },
   {
     q: 'Does it cost anything to become a creator?',
-    a: "Nope — setting up your page costs nothing, with zero listing fees and zero setup fees. We only make money when you do. The standard all-in fee is 13%, while creators with a reserved founding spot lock in a 10% rate forever.",
+    a: "Nope — setting up your page costs nothing, with zero listing fees and zero setup fees. We only make money when you do. The standard all-in fee starts at 13% and drops to 10% for the rest of a calendar month after $2,000 in gross ByUs earnings, while creators with a reserved founding spot lock in 10% forever.",
   },
   {
     q: 'Can a creator offer more than one tier?',

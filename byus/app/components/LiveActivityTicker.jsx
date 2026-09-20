@@ -64,7 +64,7 @@ export default function LiveActivityTicker() {
     <div
       role="status"
       aria-live="polite"
-      className={`fixed bottom-5 left-5 z-40 max-w-xs transition-all duration-500 ease-out motion-reduce:transition-none print:hidden ${
+      className={`fixed bottom-3 left-3 right-3 z-40 max-w-none transition-all duration-500 ease-out motion-reduce:transition-none print:hidden sm:bottom-5 sm:left-5 sm:right-auto sm:max-w-xs ${
         visible ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-3 opacity-0'
       }`}
     >

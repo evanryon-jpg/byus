@@ -1,7 +1,13 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { STANDARD_FEE_PERCENT, DISCOUNTED_FEE_PERCENT, FOUNDING_CREATOR_LIMIT, MIN_MEMBERSHIP_PRICE_CENTS } from '@/lib/pricing';
+import {
+  STANDARD_FEE_PERCENT,
+  DISCOUNTED_FEE_PERCENT,
+  FEE_DISCOUNT_THRESHOLD_CENTS,
+  FOUNDING_CREATOR_LIMIT,
+  MIN_MEMBERSHIP_PRICE_CENTS,
+} from '@/lib/pricing';
 
 // Interactive "what would I actually keep" calculator for a prospective creator sizing
 // up whether ByUs is worth it before they sign up. Fee numbers now come straight from
@@ -101,9 +107,19 @@ export default function EarningsCalculator() {
   const [tier, setTier] = useState('standard'); // 'standard' | 'founding'
   const [revealRef, revealed] = useReveal();
 
-  const feePercent = tier === 'founding' ? DISCOUNTED_FEE_PERCENT : STANDARD_FEE_PERCENT;
   const grossCents = Math.round(subscribers * price * 100);
-  const feeCents = Math.round((grossCents * feePercent) / 100);
+  const qualifiesForEarnedRate = grossCents >= FEE_DISCOUNT_THRESHOLD_CENTS;
+  const feeLabel = tier === 'founding'
+    ? `${DISCOUNTED_FEE_PERCENT}%`
+    : qualifiesForEarnedRate
+    ? `${STANDARD_FEE_PERCENT}% → ${DISCOUNTED_FEE_PERCENT}%`
+    : `${STANDARD_FEE_PERCENT}%`;
+  const feeCents = tier === 'founding'
+    ? Math.round((grossCents * DISCOUNTED_FEE_PERCENT) / 100)
+    : Math.round(
+        (Math.min(grossCents, FEE_DISCOUNT_THRESHOLD_CENTS) * STANDARD_FEE_PERCENT) / 100 +
+        (Math.max(0, grossCents - FEE_DISCOUNT_THRESHOLD_CENTS) * DISCOUNTED_FEE_PERCENT) / 100
+      );
   const netCents = grossCents - feeCents;
 
   const competitorFeeCents = Math.round(
@@ -178,18 +194,19 @@ export default function EarningsCalculator() {
               <p className="mb-2.5 text-[11px] font-bold uppercase tracking-wide text-brand-ink/60">
                 Your fee tier
               </p>
-              <div className="flex gap-1 rounded-full border border-brand-ink/15 bg-brand-cream p-1 text-xs font-bold">
+              <div className="grid grid-cols-1 gap-1 rounded-2xl border border-brand-ink/15 bg-brand-cream p-1 text-xs font-bold sm:grid-cols-2">
                 <TierButton active={tier === 'standard'} onClick={() => setTier('standard')}>
-                  Standard — {STANDARD_FEE_PERCENT}%
+                  Standard — {STANDARD_FEE_PERCENT}% → {DISCOUNTED_FEE_PERCENT}% at $2K
                 </TierButton>
                 <TierButton active={tier === 'founding'} onClick={() => setTier('founding')}>
                   Founding creator — {DISCOUNTED_FEE_PERCENT}%
                 </TierButton>
               </div>
               <p className="mt-3 text-xs leading-relaxed text-brand-ink/75">
-                Standard pricing is {STANDARD_FEE_PERCENT}%. Creators with one of the {FOUNDING_CREATOR_LIMIT} founding
-                spots keep the {DISCOUNTED_FEE_PERCENT}% founding rate for good, with no earnings
-                requirement. Join the waitlist to reserve a spot while available. Both rates include standard domestic payment processing.
+                Standard pricing starts at {STANDARD_FEE_PERCENT}%. After a non-founding creator reaches $2,000 in gross
+                ByUs earnings during a calendar month, the rate becomes {DISCOUNTED_FEE_PERCENT}% for the rest of that month.
+                Creators with one of the {FOUNDING_CREATOR_LIMIT} founding spots keep {DISCOUNTED_FEE_PERCENT}% for good,
+                with no earnings requirement. Both rates include standard domestic payment processing.
               </p>
             </div>
           </div>
@@ -205,12 +222,12 @@ export default function EarningsCalculator() {
               <span className="relative text-[11px] font-bold uppercase tracking-wide text-brand-gold">
                 With ByUs
               </span>
-              <div className="relative mt-3 flex items-baseline justify-between gap-2.5 text-[13px] text-brand-paper/70">
+              <div className="relative mt-3 flex flex-col gap-1 text-[13px] text-brand-paper/70 min-[380px]:flex-row min-[380px]:items-baseline min-[380px]:justify-between min-[380px]:gap-2.5">
                 <span>Monthly gross revenue</span>
                 <span className="tabular-nums font-medium text-brand-paper/85">{fmt(grossDisplay)}</span>
               </div>
-              <div className="relative mt-2 flex items-baseline justify-between gap-2.5 text-[13px] text-brand-paper/70">
-                <span>Platform fee ({feePercent}%)</span>
+              <div className="relative mt-2 flex flex-col gap-1 text-[13px] text-brand-paper/70 min-[380px]:flex-row min-[380px]:items-baseline min-[380px]:justify-between min-[380px]:gap-2.5">
+                <span>Platform fee ({feeLabel})</span>
                 <span className="tabular-nums font-medium text-brand-paper/85">{fmt(feeDisplay)}</span>
               </div>
               <div className="relative mt-3.5 border-t border-brand-paper/20 pt-3">
@@ -221,11 +238,11 @@ export default function EarningsCalculator() {
               </div>
             </div>
 
-            <div className="mt-3 flex items-center justify-between gap-2.5 rounded-xl border border-brand-ink/15 bg-brand-cream px-4 py-3 text-[12.5px]">
+            <div className="mt-3 flex flex-col items-start gap-1.5 rounded-xl border border-brand-ink/15 bg-brand-cream px-4 py-3 text-[12.5px] min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between min-[380px]:gap-2.5">
               <span className="text-brand-ink/70">
                 Competitor estimate (10% + processing) would leave you
               </span>
-              <span className="tabular-nums font-bold text-brand-ink/70">{fmt(competitorNetDisplay)}</span>
+              <span className="self-end tabular-nums font-bold text-brand-ink/70 min-[380px]:self-auto">{fmt(competitorNetDisplay)}</span>
             </div>
 
             <div className="mt-3 flex items-center gap-2.5 rounded-2xl border border-brand-gold/50 bg-gradient-to-r from-brand-gold/15 to-brand-gold/5 px-4 py-3.5">
@@ -247,7 +264,8 @@ export default function EarningsCalculator() {
         <p className="mt-7 text-xs text-brand-ink/55">
           Estimate only. Competitor fees vary. ByUs includes standard domestic payment processing
           in its fee. Other charges may apply for refunds, international payments, currency
-          conversion, or optional instant payouts.
+          conversion, or optional instant payouts. For standard pricing, the estimate applies 13%
+          through $2,000 and 10% after the threshold; the exact total can vary with payment timing.
         </p>
       </div>
     </section>
@@ -301,10 +319,10 @@ function SliderField({
   }
   return (
     <div className="mb-6 last:mb-0">
-      <div className="mb-2.5 flex items-baseline justify-between">
+      <div className="mb-2.5 flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
         <label className="text-[11px] font-bold uppercase tracking-wide text-brand-ink/60">{label}</label>
         {editable ? (
-          <div className="text-right">
+          <div className="self-end text-right sm:self-auto">
             <div className="flex items-stretch overflow-hidden rounded-lg border border-brand-ink/15 bg-brand-cream focus-within:border-brand-teal">
               <input
                 type="number"
@@ -314,7 +332,7 @@ function SliderField({
                 value={value}
                 onChange={handleTypedValue}
                 aria-label={`${label} (enter an exact number)`}
-                className="w-36 bg-transparent px-3 py-1.5 text-right font-display text-lg font-bold tabular-nums text-[#172033] outline-none"
+                className="w-32 bg-transparent px-3 py-1.5 text-right font-display text-lg font-bold tabular-nums text-[#172033] outline-none sm:w-36"
               />
               <div className="flex w-8 flex-col border-l border-brand-ink/15">
                 <button
@@ -367,7 +385,7 @@ function TierButton({ active, onClick, children }) {
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`flex-1 rounded-full px-2 py-2 transition ${
+      className={`min-w-0 rounded-xl px-3 py-2 transition sm:rounded-full ${
         active
           ? 'bg-brand-teal text-brand-paper shadow-[0_4px_10px_-4px_rgba(20,99,89,0.5)]'
           : 'text-brand-ink/70 hover:text-brand-ink/85'

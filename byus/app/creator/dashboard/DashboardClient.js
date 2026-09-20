@@ -279,7 +279,7 @@ export default function DashboardClient({
       {/* Posts */}
       <PostSection posts={posts} onCreated={load} />
 
-      {/* Secure paid and member-only PDF downloads */}
+      {/* Secure paid and member-only digital downloads */}
       <DigitalProductManager userId={user?.id} />
 
       {/* Message subscribers directly by email */}

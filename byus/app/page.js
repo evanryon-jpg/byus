@@ -28,8 +28,10 @@ const faqJsonLd = {
 };
 
 export default async function HomePage() {
-  const session = await getCurrentUser();
-  const foundingStats = await getFoundingPromoStats(query);
+  const [session, foundingStats] = await Promise.all([
+    getCurrentUser(),
+    getFoundingPromoStats(query),
+  ]);
 
   return (
     <div>
@@ -39,7 +41,7 @@ export default async function HomePage() {
       />
       <FeedbackWidget />
       <LiveActivityTicker />
-      <Hero user={session} />
+      <Hero user={session} stats={foundingStats} />
       <CreatorWalkthrough />
       <EarningsCalculator />
       <Features />
@@ -98,7 +100,7 @@ function FoundingCreatorProgram({ stats }) {
   ];
 
   return (
-    <section className="relative overflow-hidden bg-[#172554]">
+    <section id="founding" className="relative overflow-hidden bg-[#172554]">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -left-24 -top-24 h-96 w-96 rounded-full blur-3xl"
@@ -115,6 +117,10 @@ function FoundingCreatorProgram({ stats }) {
         <p className="mx-auto mt-4 max-w-lg text-brand-paper/70">
           The first {stats.limit} founding spots lock in our lowest fee for good.
           No follower minimum or earnings requirement.
+        </p>
+        <p className="mx-auto mt-2 max-w-xl text-sm text-brand-paper/55">
+          After the founding spots, creators start at 13% and move to 10% for the rest of
+          any calendar month in which they reach $2,000 in gross ByUs earnings.
         </p>
         <div className="mx-auto mt-8 grid max-w-3xl gap-4 text-left sm:grid-cols-3">
           {perks.map((p) => (
@@ -194,235 +200,173 @@ function FoundingSpotsGrid({ claimed, limit, remaining }) {
   );
 }
 
-function Hero({ user }) {
+function Hero({ user, stats }) {
   const dashboardHref = user?.role === 'creator' ? '/creator/dashboard' : '/fan/dashboard';
 
   return (
-    // Keep a dark background behind all hero text and controls. Two columns on desktop --
-    // copy on the left, a small editorial collage of real Alex Rivers artwork on the
-    // right, so the hero shows what a ByUs page actually looks like instead of telling
-    // you. Stacks to a single column on mobile, art below the copy, so the CTAs and
-    // fine print still come first for outreach traffic.
-    <section className="relative overflow-hidden bg-gradient-to-b from-[#172554] via-[#134B61] to-[#134B61]">
-      {/* Two subtle ambient color glows add depth to the dark band without
-          competing with the message or creator previews. Purely
-          decorative background motion, kept separate from the live-pulse dot on the
-          demo link below (which is tied to something real); `motion-safe:` means
-          prefers-reduced-motion is handled without any JS. */}
+    <section className="relative isolate overflow-hidden bg-[#08182d]">
+      <div className="absolute inset-0 bg-[linear-gradient(112deg,#08172d_0%,#0b2037_48%,#0a4b55_100%)]" />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -right-40 -top-28 h-[560px] w-[560px] rounded-full blur-md motion-safe:animate-byus-drift"
-        style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.12), transparent 65%)' }}
+        className="pointer-events-none absolute -right-24 -top-48 h-[640px] w-[640px] rounded-full blur-3xl motion-safe:animate-byus-drift"
+        style={{ background: 'radial-gradient(circle, rgba(20,184,166,0.22), transparent 66%)' }}
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -left-36 bottom-[10%] h-[420px] w-[420px] rounded-full"
-        style={{ background: 'radial-gradient(circle, rgba(15,118,110,0.08), transparent 65%)' }}
+        className="pointer-events-none absolute -left-52 top-[32%] h-[520px] w-[520px] rounded-full blur-3xl"
+        style={{ background: 'radial-gradient(circle, rgba(30,64,175,0.18), transparent 68%)' }}
       />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.045] [background-image:url('data:image/svg+xml,%3Csvg viewBox=%220 0 180 180%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22n%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%22.9%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23n)%22 opacity=%22.7%22/%3E%3C/svg%3E')]" />
 
-      <div className="relative mx-auto max-w-6xl px-6 pt-14 pb-16">
-        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14">
-          <div className="text-left">
-            <span className="inline-flex -rotate-2 items-center gap-2 rounded border border-dashed border-brand-gold bg-brand-gold/10 px-4 py-1.5 font-display text-xs font-semibold italic tracking-wide text-brand-gold">
-              Made for creators, built around fairness
+      <div className="relative mx-auto max-w-[1280px] px-6 pb-16 pt-16 sm:pb-20 sm:pt-20 lg:px-10 lg:pb-24 lg:pt-24">
+        <div className="grid grid-cols-1 items-start gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-12 xl:gap-16">
+          <div className="relative z-10 max-w-2xl text-left">
+            <span className="inline-flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.28em] text-[#58d4c3] sm:text-xs">
+              <span className="h-px w-8 bg-[#58d4c3]/80" aria-hidden="true" />
+              {stats.limit} founding creator spots
             </span>
 
-            <h1 className="mt-6 font-display text-4xl font-extrabold leading-[1.08] tracking-tight text-brand-paper sm:text-5xl lg:text-[3.25rem]">
-              You keep{' '}
-              <span className="relative inline-block whitespace-nowrap">
-                87&ndash;90%
-                <svg
-                  className="absolute -bottom-1.5 left-0 w-full"
-                  height="10"
-                  viewBox="0 0 200 10"
-                  preserveAspectRatio="none"
-                  aria-hidden="true"
-                >
-                  <path d="M2 6 Q 50 1, 100 5 T 198 6" stroke="#0F766E" strokeWidth="4" fill="none" strokeLinecap="round" />
-                </svg>
-              </span>{' '}
-              on ByUs. Period.
+            <h1 className="mt-7 max-w-[650px] font-display text-[2.9rem] font-medium leading-[1.02] tracking-[-0.045em] text-[#fffdf8] sm:text-[4.25rem] sm:leading-[0.98] lg:text-[4rem] xl:text-[4.25rem]">
+              The home your fans keep coming back to.
             </h1>
 
-            <p className="mt-3 font-display text-xl italic text-brand-paper/80">
-              The home your fans keep coming back to.
+            <p className="mt-7 max-w-xl text-lg leading-8 text-[#dce8eb]/85 sm:text-xl">
+              Memberships, tips, video, downloads, and community access — together on one creator page.
             </p>
 
-            <p className="mt-6 max-w-lg text-lg leading-relaxed text-brand-paper/85">
-              Build your page, connect payments, and share your work — tiers, posts, video,
-              and payouts handled, with standard domestic payment processing covered in that fee.
-            </p>
-
-            <div className="mt-8 flex flex-wrap items-center gap-4">
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
               {user ? (
                 <a
                   href={dashboardHref}
-                  className="rounded-full bg-[#0F766E] px-7 py-3.5 text-base font-semibold text-brand-paper shadow-[0_16px_30px_-14px_rgba(15,118,110,0.38)] transition hover:-translate-y-0.5 hover:bg-[#115E59]"
+                  className="inline-flex min-h-14 items-center justify-center whitespace-nowrap rounded-full bg-[#b85138] px-6 py-4 text-sm font-bold text-white shadow-[0_18px_45px_-18px_rgba(184,81,56,0.9)] transition hover:-translate-y-0.5 hover:bg-[#a84631] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white xl:px-8 xl:text-base"
                 >
                   {user.role === 'creator' ? 'Go to your dashboard' : 'Your subscriptions'} →
                 </a>
               ) : (
                 <a
                   href="/signup?role=creator"
-                  className="rounded-full bg-[#0F766E] px-7 py-3.5 text-base font-semibold text-brand-paper shadow-[0_16px_30px_-14px_rgba(15,118,110,0.38)] transition hover:-translate-y-0.5 hover:bg-[#115E59]"
+                  className="inline-flex min-h-14 items-center justify-center whitespace-nowrap rounded-full bg-[#b85138] px-6 py-4 text-sm font-bold text-white shadow-[0_18px_45px_-18px_rgba(184,81,56,0.9)] transition hover:-translate-y-0.5 hover:bg-[#a84631] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white xl:px-8 xl:text-base"
                 >
-                  Join the creator waitlist →
+                  Reserve your founding spot →
                 </a>
               )}
 
-              {/* Anchors down to HowItWorks -- for a visitor who isn't ready to commit
-                  to either CTA yet, this answers "okay, but how does it actually work"
-                  without leaving the page. */}
               <a
                 href="#creator-walkthrough"
-                className="rounded-full border-2 border-brand-paper bg-brand-paper px-7 py-3.5 text-base font-semibold text-[#172554] transition hover:-translate-y-0.5 hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+                className="inline-flex min-h-14 items-center justify-center whitespace-nowrap rounded-full border border-white/35 bg-white/[0.03] px-6 py-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/[0.08] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white xl:px-8 xl:text-base"
               >
-                ▶ Watch the creator walkthrough
+                See how ByUs works <span className="ml-3 text-sm" aria-hidden="true">▶</span>
               </a>
             </div>
 
-            {!user && (
-              <p className="mt-4 max-w-lg text-sm leading-relaxed text-brand-paper/90">
-                Creator signups are temporarily paused. Join the waitlist to reserve a founding spot
-                while available. We’ll email you when you can create your page.
-              </p>
-            )}
+            <div className="mt-7 flex items-start gap-4">
+              <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center text-[#58d4c3]" aria-hidden="true">
+                <ShieldCheckIcon />
+              </span>
+              <div>
+                <p className="text-base font-semibold text-white">Keep 90% for good</p>
+                <p className="mt-1 text-sm leading-relaxed text-[#dce8eb]/65">
+                  10% founding rate with standard domestic processing included.
+                </p>
+              </div>
+            </div>
 
-            <ul
-              aria-label="Creator account highlights"
-              className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-brand-paper/90"
-            >
-              {['$0 to start', 'Standard processing included', 'Cancel anytime'].map((item) => (
-                <li key={item} className="flex items-center gap-1.5">
-                  <span className="text-brand-gold" aria-hidden="true">✓</span>
-                  {item}
-                </li>
-              ))}
-            </ul>
+            {!user && <p className="mt-7 text-sm text-[#dce8eb]/60">$0 to reserve · No payment information required · Creator onboarding is temporarily paused.</p>}
+
+            <p className="mt-7 max-w-sm font-script text-[2.5rem] font-medium leading-[0.88] text-[#67d8dc] sm:text-[3rem]">
+              A more human<br />internet for creators.
+              <span className="mt-2 block h-0.5 w-24 rotate-[-5deg] rounded-full bg-[#d25d3f]" aria-hidden="true" />
+            </p>
           </div>
 
-          <HeroArtCollage />
+          <HeroCreatorExamples />
         </div>
       </div>
     </section>
   );
 }
 
-// A small editorial collage of creator examples -- three crops, offset and
-// lightly rotated like pinned prints rather than a clean grid, so the hero shows a
-// real example of "what you can build" instead of describing it. The member-exclusive
-// crop keeps a light blur and lock badge so a first-time visitor also sees, at a
-// glance, that gated content is part of the picture. All three sit inside the Hero
-// section's own `overflow-hidden`, so the small negative offsets that give the pinned
-// look never cause page-level horizontal scroll.
-function HeroArtCollage() {
-  const creators = [
-    {
-      name: 'Sophie Lane',
-      href: '/demo/sophie-lane',
-      specialty: 'Ceramic Artist',
-      image: '/creators/sophie-lane/hero.jpg',
-      accent: 'bg-brand-clay',
-      detail: 'Studio tutorials · Glazing guides',
-    },
-    {
-      name: 'Maya Sinclair',
-      href: '/demo/maya-sinclair',
-      specialty: 'Photographer',
-      image: '/creators/maya-sinclair/hero.jpg',
-      accent: 'bg-brand-clay',
-      detail: 'Photo stories · Field notes',
-    },
-    {
-      name: 'Elena Park',
-      href: '/demo/elena-park',
-      specialty: 'ASL educator',
-      image: '/creators/elena-park/hero.jpg',
-      accent: 'bg-brand-clay',
-      detail: 'Video lessons · Community access',
-    },
-    {
-      name: 'Liam Carter',
-      href: '/demo/liam-carter',
-      specialty: 'Musician',
-      image: '/creators/liam-carter/hero.jpg',
-      accent: 'bg-brand-teal',
-      detail: 'New songs · Behind the scenes',
-    },
-  ];
+const HERO_CREATOR_EXAMPLES = [
+  {
+    name: 'Maya Sinclair',
+    craft: 'Photographer',
+    image: '/creators/maya-sinclair/hero.jpg',
+    href: '/demo/maya-sinclair',
+  },
+  {
+    name: 'Liam Carter',
+    craft: 'Musician',
+    image: '/creators/liam-carter/hero.jpg',
+    href: '/demo/liam-carter',
+  },
+  {
+    name: 'Elena Park',
+    craft: 'ASL educator',
+    image: '/creators/elena-park/hero.jpg',
+    href: '/demo/elena-park',
+  },
+  {
+    name: 'Sophie Lane',
+    craft: 'Ceramic artist',
+    image: '/creators/sophie-lane/hero.jpg',
+    href: '/demo/sophie-lane',
+  },
+];
 
+function HeroCreatorExamples() {
   return (
-    <div className="relative mx-auto w-full max-w-xl pb-8 lg:max-w-none">
+    <div className="relative mx-auto w-full max-w-3xl lg:max-w-none">
       <div
         aria-hidden="true"
-        className="absolute inset-x-[8%] inset-y-[5%] rounded-full bg-blue-300/20 blur-3xl"
+        className="absolute -inset-8 rounded-[3rem] bg-cyan-300/10 blur-3xl"
       />
-
-      <div className="relative mb-3 flex justify-center lg:justify-start">
-        <span className="inline-flex rounded-full border border-brand-paper/25 bg-brand-paper/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-brand-paper backdrop-blur">
+      <div className="relative">
+        <p className="mb-4 text-center text-[10px] font-bold uppercase tracking-[0.3em] text-[#7fd9ce] sm:text-xs lg:text-left">
           Example creator pages
-        </span>
+        </p>
+        <div className="grid grid-cols-2 gap-3 sm:gap-4">
+          {HERO_CREATOR_EXAMPLES.map((creator) => (
+            <HeroCreatorCard key={creator.name} creator={creator} />
+          ))}
+        </div>
       </div>
-
-      <div className="relative grid min-h-[430px] grid-cols-2 items-center gap-3 sm:min-h-[470px] sm:gap-4">
-        {creators.map((creator, index) => (
-          <a
-            key={creator.name}
-            href={creator.href}
-            aria-label={`View ${creator.name}'s example creator page`}
-            className={`group block rounded-2xl outline-none transition duration-200 hover:-translate-y-1 focus-visible:ring-4 focus-visible:ring-brand-gold/70 ${
-              index === 0
-                ? '-rotate-3 self-end'
-                : index === 1
-                ? 'rotate-2 -translate-y-2'
-                : index === 2
-                ? '-mt-5 rotate-2'
-                : '-mt-3 -rotate-1'
-            }`}
-          >
-            <article className="overflow-hidden rounded-2xl border-[5px] border-white bg-white shadow-[0_24px_55px_-22px_rgba(23,37,84,0.45)] transition-shadow duration-200 group-hover:shadow-[0_30px_65px_-20px_rgba(23,37,84,0.58)]">
-            <div className="relative aspect-[16/9] overflow-hidden rounded-xl bg-slate-100">
-              <Image
-                src={creator.image}
-                alt={`${creator.name}, an example ByUs creator`}
-                fill
-                sizes="(min-width: 1024px) 20vw, 42vw"
-                className="object-cover"
-                priority
-              />
-            </div>
-            <div className="p-3 sm:p-4">
-              <div className="flex items-center gap-2.5">
-                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${creator.accent}`}>
-                  {creator.name.split(' ').map((part) => part[0]).join('')}
-                </span>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-bold text-brand-ink">{creator.name}</p>
-                  <p className="truncate text-xs text-brand-ink/55">{creator.specialty}</p>
-                </div>
-              </div>
-              <p className="mt-3 text-xs font-medium text-brand-ink/65">{creator.detail}</p>
-              <div className={`mt-3 rounded-full px-3 py-2 text-center text-xs font-bold text-white ${creator.accent} transition group-hover:brightness-110`}>
-                Explore example <span aria-hidden="true">→</span>
-              </div>
-            </div>
-            </article>
-          </a>
-        ))}
-      </div>
-
-      <p className="relative mt-2 text-center text-xs font-medium text-brand-paper/90">
-        Fictional examples showing memberships, posts, and downloads on ByUs.
-      </p>
     </div>
   );
 }
 
-function LockGlyphLarge() {
+function HeroCreatorCard({ creator }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" aria-hidden="true">
-      <rect x="4" y="11" width="16" height="10" rx="2" />
-      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+    <a
+      href={creator.href}
+      aria-label={`View ${creator.name}'s example creator page`}
+      className="group relative block aspect-[4/5] overflow-hidden rounded-2xl border border-white/20 bg-[#0b2037] shadow-[0_24px_55px_-28px_rgba(0,0,0,0.9)] outline-none transition duration-300 hover:-translate-y-1 hover:border-white/40 hover:shadow-[0_30px_65px_-28px_rgba(0,0,0,0.95)] focus-visible:ring-2 focus-visible:ring-[#67d8dc] focus-visible:ring-offset-4 focus-visible:ring-offset-[#08182d] sm:aspect-[5/4] lg:aspect-[4/5] xl:aspect-[5/4]"
+    >
+      <Image
+        src={creator.image}
+        alt={`${creator.name}, ${creator.craft.toLowerCase()} — example ByUs creator page`}
+        fill
+        sizes="(min-width: 1280px) 24vw, (min-width: 1024px) 27vw, (min-width: 640px) 45vw, 44vw"
+        className="object-cover transition duration-500 group-hover:scale-[1.035]"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#061321]/95 via-[#061321]/20 to-transparent" aria-hidden="true" />
+      <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4 xl:p-5">
+        <h2 className="font-display text-lg font-semibold leading-tight text-white sm:text-2xl">{creator.name}</h2>
+        <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.18em] text-brand-gold sm:text-[11px]">
+          {creator.craft}
+        </p>
+        <span className="mt-2 inline-flex items-center text-[10px] font-semibold text-white/80 transition group-hover:text-white sm:text-xs">
+          View example →
+        </span>
+      </div>
+    </a>
+  );
+}
+
+function ShieldCheckIcon() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <path d="M16 3.5 26 7v8.1c0 6.3-4.2 11.1-10 13.4-5.8-2.3-10-7.1-10-13.4V7l10-3.5Z" />
+      <path d="m11.5 15.8 3 3 6.5-7" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -441,14 +385,14 @@ function LockGlyphLarge() {
 // look identical.
 function Features() {
   return (
-    <section className="mx-auto max-w-5xl px-6 py-16">
+    <section id="features" className="mx-auto max-w-5xl scroll-mt-24 px-6 py-16">
       <div className="text-center">
         <h2 className="font-display text-3xl font-semibold text-[#172033]">
           Everything your community needs, nothing it doesn&rsquo;t
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-brand-ink/70">
-          No churn dashboards to configure — just the parts that make a subscription work, shown as
-          they actually appear.
+          No churn dashboards to configure — just the tools already built into ByUs to help a
+          subscription community work.
         </p>
       </div>
 
@@ -730,7 +674,7 @@ function HowItWorks() {
           From Passion to Paycheck in 4 Steps
         </h2>
 
-        <div className="mt-10 grid grid-cols-2 gap-x-8 gap-y-8 sm:grid-cols-4 sm:gap-y-10">
+        <div className="mt-10 grid grid-cols-1 gap-x-8 gap-y-8 min-[380px]:grid-cols-2 sm:grid-cols-4 sm:gap-y-10">
           {steps.map((s, i) => (
             <div key={s.n} className="relative text-left">
               <span className="font-display text-3xl font-semibold text-brand-gold/70">{s.n}</span>

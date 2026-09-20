@@ -30,6 +30,9 @@ export default function EarningsSection() {
 
   const {
     effectiveFeePercent,
+    discountedFeePercent,
+    thresholdCents,
+    monthToDateGrossCents,
     lifetimeGrossCents,
     lifetimeNetCents,
     activeSubscriberCount,
@@ -40,6 +43,9 @@ export default function EarningsSection() {
 
   const thisMonth = monthly[monthly.length - 1];
   const netNewThisMonth = thisMonth?.netNewSubscribers ?? 0;
+  const thresholdProgress = thresholdCents > 0
+    ? Math.min(100, Math.round((monthToDateGrossCents / thresholdCents) * 100))
+    : 0;
 
   const hasAnyActivity =
     lifetimeGrossCents > 0 || activeSubscriberCount > 0 || monthly.some((m) => m.newSubscribers > 0);
@@ -51,6 +57,20 @@ export default function EarningsSection() {
           Your current all-in platform fee is {effectiveFeePercent}%. Standard domestic payment
           processing is included, and your earnings go directly to your connected Stripe account.
         </p>
+        {effectiveFeePercent > discountedFeePercent && thresholdCents > 0 && (
+          <div className="mt-3">
+            <div className="flex items-center justify-between gap-3 text-xs text-brand-ink/60">
+              <span>{formatUSD(monthToDateGrossCents)} earned this month</span>
+              <span>{formatUSD(thresholdCents)} for the {discountedFeePercent}% rate</span>
+            </div>
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-brand-ink/10">
+              <div
+                className="h-full rounded-full bg-brand-teal transition-[width]"
+                style={{ width: `${thresholdProgress}%` }}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Stat tiles */}
