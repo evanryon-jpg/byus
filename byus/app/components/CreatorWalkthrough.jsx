@@ -36,10 +36,10 @@ export default function CreatorWalkthrough() {
             poster="/images/byus-video-poster-v2.jpg"
             aria-label="A step-by-step demonstration of building a ByUs creator page"
           >
-            <source src="/videos/byus-creator-page-demo.mp4?v=20260920-final" type="video/mp4" />
+            <source src="/videos/byus-creator-walkthrough-final-20260920.mp4" type="video/mp4" />
             <track
               kind="captions"
-              src="/videos/byus-creator-page-demo-en.vtt?v=20260920-final"
+              src="/videos/byus-creator-walkthrough-final-20260920-en.vtt"
               srcLang="en"
               label="English"
             />
