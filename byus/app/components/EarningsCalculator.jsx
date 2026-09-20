@@ -194,7 +194,7 @@ export default function EarningsCalculator() {
               <p className="mb-2.5 text-[11px] font-bold uppercase tracking-wide text-brand-ink/60">
                 Your fee tier
               </p>
-              <div className="flex gap-1 rounded-full border border-brand-ink/15 bg-brand-cream p-1 text-xs font-bold">
+              <div className="grid grid-cols-1 gap-1 rounded-2xl border border-brand-ink/15 bg-brand-cream p-1 text-xs font-bold sm:grid-cols-2">
                 <TierButton active={tier === 'standard'} onClick={() => setTier('standard')}>
                   Standard — {STANDARD_FEE_PERCENT}% → {DISCOUNTED_FEE_PERCENT}% at $2K
                 </TierButton>
@@ -222,11 +222,11 @@ export default function EarningsCalculator() {
               <span className="relative text-[11px] font-bold uppercase tracking-wide text-brand-gold">
                 With ByUs
               </span>
-              <div className="relative mt-3 flex items-baseline justify-between gap-2.5 text-[13px] text-brand-paper/70">
+              <div className="relative mt-3 flex flex-col gap-1 text-[13px] text-brand-paper/70 min-[380px]:flex-row min-[380px]:items-baseline min-[380px]:justify-between min-[380px]:gap-2.5">
                 <span>Monthly gross revenue</span>
                 <span className="tabular-nums font-medium text-brand-paper/85">{fmt(grossDisplay)}</span>
               </div>
-              <div className="relative mt-2 flex items-baseline justify-between gap-2.5 text-[13px] text-brand-paper/70">
+              <div className="relative mt-2 flex flex-col gap-1 text-[13px] text-brand-paper/70 min-[380px]:flex-row min-[380px]:items-baseline min-[380px]:justify-between min-[380px]:gap-2.5">
                 <span>Platform fee ({feeLabel})</span>
                 <span className="tabular-nums font-medium text-brand-paper/85">{fmt(feeDisplay)}</span>
               </div>
@@ -238,11 +238,11 @@ export default function EarningsCalculator() {
               </div>
             </div>
 
-            <div className="mt-3 flex items-center justify-between gap-2.5 rounded-xl border border-brand-ink/15 bg-brand-cream px-4 py-3 text-[12.5px]">
+            <div className="mt-3 flex flex-col items-start gap-1.5 rounded-xl border border-brand-ink/15 bg-brand-cream px-4 py-3 text-[12.5px] min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between min-[380px]:gap-2.5">
               <span className="text-brand-ink/70">
                 Competitor estimate (10% + processing) would leave you
               </span>
-              <span className="tabular-nums font-bold text-brand-ink/70">{fmt(competitorNetDisplay)}</span>
+              <span className="self-end tabular-nums font-bold text-brand-ink/70 min-[380px]:self-auto">{fmt(competitorNetDisplay)}</span>
             </div>
 
             <div className="mt-3 flex items-center gap-2.5 rounded-2xl border border-brand-gold/50 bg-gradient-to-r from-brand-gold/15 to-brand-gold/5 px-4 py-3.5">
@@ -319,10 +319,10 @@ function SliderField({
   }
   return (
     <div className="mb-6 last:mb-0">
-      <div className="mb-2.5 flex items-baseline justify-between">
+      <div className="mb-2.5 flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
         <label className="text-[11px] font-bold uppercase tracking-wide text-brand-ink/60">{label}</label>
         {editable ? (
-          <div className="text-right">
+          <div className="self-end text-right sm:self-auto">
             <div className="flex items-stretch overflow-hidden rounded-lg border border-brand-ink/15 bg-brand-cream focus-within:border-brand-teal">
               <input
                 type="number"
@@ -332,7 +332,7 @@ function SliderField({
                 value={value}
                 onChange={handleTypedValue}
                 aria-label={`${label} (enter an exact number)`}
-                className="w-36 bg-transparent px-3 py-1.5 text-right font-display text-lg font-bold tabular-nums text-[#172033] outline-none"
+                className="w-32 bg-transparent px-3 py-1.5 text-right font-display text-lg font-bold tabular-nums text-[#172033] outline-none sm:w-36"
               />
               <div className="flex w-8 flex-col border-l border-brand-ink/15">
                 <button
@@ -385,7 +385,7 @@ function TierButton({ active, onClick, children }) {
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`flex-1 rounded-full px-2 py-2 transition ${
+      className={`min-w-0 rounded-xl px-3 py-2 transition sm:rounded-full ${
         active
           ? 'bg-brand-teal text-brand-paper shadow-[0_4px_10px_-4px_rgba(20,99,89,0.5)]'
           : 'text-brand-ink/70 hover:text-brand-ink/85'
