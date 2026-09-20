@@ -358,7 +358,7 @@ function HeroArtCollage() {
         className="absolute inset-x-[8%] inset-y-[5%] rounded-full bg-blue-300/20 blur-3xl"
       />
 
-      <div className="relative grid min-h-[430px] grid-cols-2 items-center gap-3 sm:min-h-[470px] sm:gap-4">
+      <div className="relative mb-3 flex justify-center lg:justify-start">\n        <span className="inline-flex rounded-full border border-brand-paper/25 bg-brand-paper/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-brand-paper backdrop-blur">\n          Example creator pages\n        </span>\n      </div>\n\n      <div className="relative grid min-h-[430px] grid-cols-2 items-center gap-3 sm:min-h-[470px] sm:gap-4">
         {creators.map((creator, index) => (
           <a
             key={creator.name}
@@ -397,7 +397,7 @@ function HeroArtCollage() {
               </div>
               <p className="mt-3 text-xs font-medium text-brand-ink/65">{creator.detail}</p>
               <div className={`mt-3 rounded-full px-3 py-2 text-center text-xs font-bold text-white ${creator.accent} transition group-hover:brightness-110`}>
-                View creator page <span aria-hidden="true">→</span>
+                Explore example <span aria-hidden="true">→</span>
               </div>
             </div>
             </article>
@@ -406,7 +406,7 @@ function HeroArtCollage() {
       </div>
 
       <p className="relative mt-2 text-center text-xs font-medium text-brand-paper/90">
-        Memberships, posts, and downloads — all in one creator page.
+        Fictional examples showing memberships, posts, and downloads on ByUs.
       </p>
     </div>
   );

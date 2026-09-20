@@ -830,7 +830,7 @@ function CreatorIntegrationsCard({ user }) {
       <h2 className="font-semibold">Discord &amp; Telegram</h2>
       <p className="mt-1 text-sm text-brand-ink/65">
         Automatically give subscribers a role in your Discord server and access to your
-        private Telegram group, and remove it when they cancel. Add the ByUs bot to each
+        private Telegram group, and remove it when their paid subscription period ends. Add the ByUs bot to each
         first, then fill in the IDs below.
       </p>
 
