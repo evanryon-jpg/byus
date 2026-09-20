@@ -1,4 +1,4 @@
-export default function ByUsLogo({ className = 'h-10 w-auto' }) {
+export default function ByUsLogo({ className = 'h-10 w-auto', light = false }) {
   return (
     <svg
       className={className}
@@ -44,7 +44,7 @@ export default function ByUsLogo({ className = 'h-10 w-auto' }) {
       <text
         x="47"
         y="28"
-        fill="#172033"
+        fill={light ? '#FFFDF8' : '#172033'}
         fontFamily="var(--font-display), Georgia, serif"
         fontSize="27"
         fontWeight="700"
