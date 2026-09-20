@@ -327,28 +327,13 @@ function ProductHeroPreview() {
             </div>
 
             <div className="relative mt-5 h-36 overflow-hidden rounded-2xl border border-white/10 sm:h-44">
-              <Image
-                src="/images/byus-video-poster.jpg"
-                alt="Preview of video content on a ByUs creator page"
-                fill
-                sizes="(min-width: 1024px) 42vw, 82vw"
-                className="object-cover opacity-65"
-                priority
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#07182a]/30 via-transparent to-transparent" />
+              <VideoPosterPreview />
             </div>
 
             <div className="mt-5 grid gap-3 sm:grid-cols-[1.15fr_0.85fr]">
               <div className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.035]">
                 <div className="relative h-28 sm:h-36">
-                  <Image
-                    src="/images/byus-video-poster.jpg"
-                    alt="Video post preview"
-                    fill
-                    sizes="(min-width: 1024px) 28vw, 75vw"
-                    className="object-cover opacity-70"
-                  />
-                  <span className="absolute left-1/2 top-1/2 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[#07182a]/80 pl-0.5 text-xs text-white ring-1 ring-white/25">▶</span>
+                  <VideoPosterPreview compact />
                 </div>
                 <div className="px-4 py-3">
                   <p className="text-xs font-semibold text-white">A look behind the scenes</p>
@@ -393,6 +378,38 @@ function ProductHeroPreview() {
         </div>
       </div>
       <p className="relative mt-4 text-center text-xs text-white/45">A concept preview built from tools already available on ByUs.</p>
+    </div>
+  );
+}
+
+function VideoPosterPreview({ compact = false }) {
+  return (
+    <div
+      role="img"
+      aria-label="ByUs creator-page walkthrough video preview"
+      className="absolute inset-0 overflow-hidden bg-[linear-gradient(135deg,#153a63_0%,#16496a_55%,#0a7778_100%)]"
+    >
+      <span className="absolute -bottom-24 -left-16 h-52 w-52 rounded-full bg-white/[0.035]" aria-hidden="true" />
+      <span className="absolute -right-12 -top-20 h-48 w-48 rounded-full bg-white/[0.045]" aria-hidden="true" />
+      <div className="relative flex h-full flex-col items-center justify-center px-4 text-center">
+        {!compact && (
+          <>
+            <p className="font-display text-xl font-semibold text-white sm:text-2xl">Build your creator page</p>
+            <p className="mt-1 text-[9px] text-white/60 sm:text-[10px]">See how it all comes together</p>
+          </>
+        )}
+        <span
+          className={`${compact ? 'h-10 w-10' : 'mt-3 h-11 w-11 sm:h-12 sm:w-12'} flex items-center justify-center rounded-full bg-white/90 pl-0.5 text-[#168b83] shadow-lg ring-1 ring-white/30`}
+          aria-hidden="true"
+        >
+          ▶
+        </span>
+        {!compact && (
+          <span className="mt-2 rounded-full bg-white/10 px-3 py-1 text-[7px] font-semibold text-white/60 sm:text-[8px]">
+            Profile · Tiers · Preview · Share
+          </span>
+        )}
+      </div>
     </div>
   );
 }
