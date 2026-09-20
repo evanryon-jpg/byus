@@ -272,145 +272,93 @@ function Hero({ user, stats }) {
             </div>
 
             {!user && <p className="mt-7 text-sm text-[#dce8eb]/60">$0 to reserve · No payment information required · Creator onboarding is temporarily paused.</p>}
+
+            <p className="mt-7 max-w-sm font-script text-[2.5rem] font-medium leading-[0.88] text-[#67d8dc] sm:text-[3rem]">
+              A more human<br />internet for creators.
+              <span className="mt-2 block h-0.5 w-24 rotate-[-5deg] rounded-full bg-[#d25d3f]" aria-hidden="true" />
+            </p>
           </div>
 
-          <ProductHeroPreview />
+          <HeroCreatorExamples />
         </div>
       </div>
     </section>
   );
 }
 
-function ProductHeroPreview() {
+const HERO_CREATOR_EXAMPLES = [
+  {
+    name: 'Maya Sinclair',
+    craft: 'Photographer',
+    image: '/creators/maya-sinclair/hero.jpg',
+    href: '/demo/maya-sinclair',
+  },
+  {
+    name: 'Liam Carter',
+    craft: 'Musician',
+    image: '/creators/liam-carter/hero.jpg',
+    href: '/demo/liam-carter',
+  },
+  {
+    name: 'Elena Park',
+    craft: 'ASL educator',
+    image: '/creators/elena-park/hero.jpg',
+    href: '/demo/elena-park',
+  },
+  {
+    name: 'Sophie Lane',
+    craft: 'Ceramic artist',
+    image: '/creators/sophie-lane/hero.jpg',
+    href: '/demo/sophie-lane',
+  },
+];
+
+function HeroCreatorExamples() {
   return (
     <div className="relative mx-auto w-full max-w-3xl lg:max-w-none">
       <div
         aria-hidden="true"
         className="absolute -inset-8 rounded-[3rem] bg-cyan-300/10 blur-3xl"
       />
-      <div className="relative overflow-hidden rounded-[1.75rem] border border-white/15 bg-[#09182a]/95 shadow-[0_45px_100px_-35px_rgba(0,0,0,0.8)] ring-1 ring-white/5">
-        <div className="flex h-11 items-center gap-2 border-b border-white/10 bg-white/[0.035] px-4">
-          <span className="h-2.5 w-2.5 rounded-full bg-[#b85138]/80" />
-          <span className="h-2.5 w-2.5 rounded-full bg-brand-gold/80" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[#58d4c3]/70" />
-          <span className="ml-3 min-w-0 flex-1 truncate rounded-full border border-white/10 bg-white/[0.035] px-4 py-1 text-center text-[10px] tracking-wide text-white/35">
-            byusapp.com/your-page
-          </span>
-        </div>
-
-        <div className="grid min-h-[530px] grid-cols-1 sm:grid-cols-[150px_1fr]">
-          <aside className="hidden border-r border-white/10 bg-[#071321]/80 px-4 py-5 sm:block">
-            <p className="font-display text-xl font-semibold text-white">ByUs</p>
-            <div className="mt-7 space-y-1.5 text-[11px] font-medium text-white/45">
-              {['Home', 'Audience', 'Content', 'Memberships', 'Tips', 'Products', 'Community'].map((item, index) => (
-                <div key={item} className={`flex items-center gap-2 rounded-lg px-2.5 py-2.5 ${index === 0 ? 'bg-white/10 text-white' : ''}`}>
-                  <span className="h-2 w-2 shrink-0 rounded-full border border-current" />
-                  <span>{item}</span>
-                </div>
-              ))}
-            </div>
-          </aside>
-
-          <div className="min-w-0 p-4 sm:p-6">
-            <div className="mb-5 flex items-center justify-between sm:hidden">
-              <p className="font-display text-lg font-semibold text-white">ByUs</p>
-              <span className="rounded-full border border-white/15 px-3 py-1.5 text-[9px] font-semibold text-white/60">
-                Page preview
-              </span>
-            </div>
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-[#7fd9ce]">Your page on ByUs</p>
-                <p className="mt-1.5 font-display text-xl font-semibold text-white sm:text-2xl">Your space, your way.</p>
-              </div>
-              <span className="hidden rounded-full border border-white/15 px-3 py-1.5 text-[10px] font-semibold text-white/60 sm:inline-flex">Preview page</span>
-            </div>
-
-            <div className="relative mt-5 h-36 overflow-hidden rounded-2xl border border-white/10 sm:h-44">
-              <VideoPosterPreview />
-            </div>
-
-            <div className="mt-5 grid gap-3 sm:grid-cols-[1.15fr_0.85fr]">
-              <div className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.035]">
-                <div className="relative h-28 sm:h-36">
-                  <VideoPosterPreview compact />
-                </div>
-                <div className="px-4 py-3">
-                  <p className="text-xs font-semibold text-white">A look behind the scenes</p>
-                  <p className="mt-1 text-[10px] text-white/40">Video · Members only</p>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-white/10 bg-white/[0.035] p-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold text-white">Memberships</p>
-                  <span className="text-[9px] text-white/35">Your prices</span>
-                </div>
-                <div className="mt-4 space-y-3">
-                  {[
-                    ['Supporter', 'Early access'],
-                    ['Insider', 'Exclusive posts'],
-                    ['All access', 'Community perks'],
-                  ].map(([name, detail], index) => (
-                    <div key={name} className="flex items-center gap-3">
-                      <span className={`h-7 w-7 rounded-full ${index === 0 ? 'bg-white/15' : index === 1 ? 'bg-[#2a7d7b]' : 'bg-[#a56a3d]'}`} />
-                      <div className="min-w-0">
-                        <p className="truncate text-[10px] font-semibold text-white">{name}</p>
-                        <p className="truncate text-[9px] text-white/35">{detail}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-3 grid grid-cols-1 gap-3 min-[380px]:grid-cols-2">
-              <div className="rounded-xl border border-white/10 bg-white/[0.035] p-3.5">
-                <p className="text-[10px] font-semibold text-white">Digital downloads</p>
-                <p className="mt-2 text-[9px] text-white/40">PDFs and files, delivered securely</p>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-white/[0.035] p-3.5">
-                <p className="text-[10px] font-semibold text-white">Community</p>
-                <p className="mt-2 text-[9px] text-white/40">Discord · Telegram · SMS</p>
-              </div>
-            </div>
-          </div>
+      <div className="relative">
+        <p className="mb-4 text-center text-[10px] font-bold uppercase tracking-[0.3em] text-[#7fd9ce] sm:text-xs lg:text-left">
+          Example creator pages
+        </p>
+        <div className="grid grid-cols-2 gap-3 sm:gap-4">
+          {HERO_CREATOR_EXAMPLES.map((creator) => (
+            <HeroCreatorCard key={creator.name} creator={creator} />
+          ))}
         </div>
       </div>
-      <p className="relative mt-4 text-center text-xs text-white/45">A concept preview built from tools already available on ByUs.</p>
     </div>
   );
 }
 
-function VideoPosterPreview({ compact = false }) {
+function HeroCreatorCard({ creator }) {
   return (
-    <div
-      role="img"
-      aria-label="ByUs creator-page walkthrough video preview"
-      className="absolute inset-0 overflow-hidden bg-[linear-gradient(135deg,#153a63_0%,#16496a_55%,#0a7778_100%)]"
+    <a
+      href={creator.href}
+      aria-label={`View ${creator.name}'s example creator page`}
+      className="group relative block aspect-[4/5] overflow-hidden rounded-2xl border border-white/20 bg-[#0b2037] shadow-[0_24px_55px_-28px_rgba(0,0,0,0.9)] outline-none transition duration-300 hover:-translate-y-1 hover:border-white/40 hover:shadow-[0_30px_65px_-28px_rgba(0,0,0,0.95)] focus-visible:ring-2 focus-visible:ring-[#67d8dc] focus-visible:ring-offset-4 focus-visible:ring-offset-[#08182d] sm:aspect-[5/4] lg:aspect-[4/5] xl:aspect-[5/4]"
     >
-      <span className="absolute -bottom-24 -left-16 h-52 w-52 rounded-full bg-white/[0.035]" aria-hidden="true" />
-      <span className="absolute -right-12 -top-20 h-48 w-48 rounded-full bg-white/[0.045]" aria-hidden="true" />
-      <div className="relative flex h-full flex-col items-center justify-center px-4 text-center">
-        {!compact && (
-          <>
-            <p className="font-display text-xl font-semibold text-white sm:text-2xl">Build your creator page</p>
-            <p className="mt-1 text-[9px] text-white/60 sm:text-[10px]">See how it all comes together</p>
-          </>
-        )}
-        <span
-          className={`${compact ? 'h-10 w-10' : 'mt-3 h-11 w-11 sm:h-12 sm:w-12'} flex items-center justify-center rounded-full bg-white/90 pl-0.5 text-[#168b83] shadow-lg ring-1 ring-white/30`}
-          aria-hidden="true"
-        >
-          ▶
+      <Image
+        src={creator.image}
+        alt={`${creator.name}, ${creator.craft.toLowerCase()} — example ByUs creator page`}
+        fill
+        sizes="(min-width: 1280px) 24vw, (min-width: 1024px) 27vw, (min-width: 640px) 45vw, 44vw"
+        className="object-cover transition duration-500 group-hover:scale-[1.035]"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#061321]/95 via-[#061321]/20 to-transparent" aria-hidden="true" />
+      <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4 xl:p-5">
+        <h2 className="font-display text-lg font-semibold leading-tight text-white sm:text-2xl">{creator.name}</h2>
+        <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.18em] text-brand-gold sm:text-[11px]">
+          {creator.craft}
+        </p>
+        <span className="mt-2 inline-flex items-center text-[10px] font-semibold text-white/80 transition group-hover:text-white sm:text-xs">
+          View example →
         </span>
-        {!compact && (
-          <span className="mt-2 rounded-full bg-white/10 px-3 py-1 text-[7px] font-semibold text-white/60 sm:text-[8px]">
-            Profile · Tiers · Preview · Share
-          </span>
-        )}
       </div>
-    </div>
+    </a>
   );
 }
 
