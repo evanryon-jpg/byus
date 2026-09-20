@@ -219,14 +219,14 @@ function Hero({ user, stats }) {
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.045] [background-image:url('data:image/svg+xml,%3Csvg viewBox=%220 0 180 180%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22n%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%22.9%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23n)%22 opacity=%22.7%22/%3E%3C/svg%3E')]" />
 
       <div className="relative mx-auto max-w-[1280px] px-6 pb-16 pt-16 sm:pb-20 sm:pt-20 lg:px-10 lg:pb-24 lg:pt-24">
-        <div className="grid grid-cols-1 items-center gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-12 xl:gap-16">
+        <div className="grid grid-cols-1 items-start gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-12 xl:gap-16">
           <div className="relative z-10 max-w-2xl text-left">
             <span className="inline-flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.28em] text-[#58d4c3] sm:text-xs">
               <span className="h-px w-8 bg-[#58d4c3]/80" aria-hidden="true" />
               {stats.limit} founding creator spots
             </span>
 
-            <h1 className="mt-7 max-w-[650px] font-display text-[2.9rem] font-medium leading-[1.02] tracking-[-0.045em] text-[#fffdf8] sm:text-[4.25rem] sm:leading-[0.98] lg:text-[4.65rem] xl:text-[5.25rem]">
+            <h1 className="mt-7 max-w-[650px] font-display text-[2.9rem] font-medium leading-[1.02] tracking-[-0.045em] text-[#fffdf8] sm:text-[4.25rem] sm:leading-[0.98] lg:text-[4rem] xl:text-[4.25rem]">
               The home your fans keep coming back to.
             </h1>
 
