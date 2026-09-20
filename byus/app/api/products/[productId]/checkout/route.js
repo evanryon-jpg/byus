@@ -79,7 +79,7 @@ export async function POST(request, { params }) {
       connectedAccountId: product.stripe_connect_account_id,
       successUrl: `${origin}/fan/dashboard?downloadPurchased=true`,
       cancelUrl: `${origin}/creator/${product.creator_id}`,
-      checkoutDisclosure: 'One-time purchase of a downloadable PDF. Digital purchases are generally non-refundable after download except where required by law or when ByUs determines a refund is appropriate.',
+      checkoutDisclosure: 'One-time purchase of a digital download. Digital purchases are generally non-refundable after download except where required by law or when ByUs determines a refund is appropriate.',
       metadata: {
         type: 'digital_product',
         product_id: product.id,
