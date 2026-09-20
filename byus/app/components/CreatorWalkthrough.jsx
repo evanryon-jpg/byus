@@ -53,9 +53,12 @@ export default function CreatorWalkthrough() {
           </p>
           <ol className="mt-3 grid gap-2 sm:grid-cols-3">
             {[
-              ['01', 'Add your profile', 'Photo, name, bio, and page details'],
-              ['02', 'Build membership tiers', 'Set pricing and explain each benefit'],
-              ['03', 'Preview the finished page', 'See exactly what fans will experience'],
+              ['01', 'Add your profile', 'Photo, name, bio, social links, and page details'],
+              ['02', 'Build membership tiers', 'Pricing from $5, benefits, and a live fan preview'],
+              ['03', 'Publish and sell', 'Posts, imports, tips, downloads, and live streaming'],
+              ['04', 'Grow your community', 'Discord and Telegram sync, notifications, and analytics'],
+              ['05', 'Get paid, with guidance', 'Stripe payouts, yearly reporting, and the Page Coach'],
+              ['06', 'Preview and publish', 'See the finished page, then share it with your audience'],
             ].map(([number, title, detail]) => (
               <li
                 key={number}
