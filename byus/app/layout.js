@@ -1,6 +1,6 @@
 import './globals.css';
 import { Suspense } from 'react';
-import { Fraunces, Karla } from 'next/font/google';
+import { Caveat, Fraunces, Karla } from 'next/font/google';
 import NavBar from './components/NavBar';
 import Footer from './components/Footer';
 import ConversionAnalytics from './components/ConversionAnalytics';
@@ -10,6 +10,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const fraunces = Fraunces({ subsets: ['latin'], weight: ['500', '600', '700', '800'], style: ['normal', 'italic'], variable: '--font-display', display: 'swap' });
 const karla = Karla({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-body', display: 'swap' });
+const caveat = Caveat({ subsets: ['latin'], weight: ['500'], variable: '--font-script', display: 'swap' });
 const SITE_URL = process.env.APP_URL || 'https://byus-ten.vercel.app';
 
 export const viewport = { themeColor: '#0F766E' };
@@ -46,7 +47,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${fraunces.variable} ${karla.variable}`}>
+    <html lang="en" className={`${fraunces.variable} ${karla.variable} ${caveat.variable}`}>
       <body className="flex min-h-screen flex-col bg-[#F8FAFC] text-[#172033] antialiased">
         <NavBar />
         <main className="flex-1">{children}</main>
