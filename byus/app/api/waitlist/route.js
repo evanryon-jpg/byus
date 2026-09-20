@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 // account. No account, password, or role is created by this endpoint either way.
 
 import { NextResponse } from 'next/server';
-import { query } from '@/lib/db';
+import { query, withTransaction } from '@/lib/db';
 import { checkRateLimit, rateLimitResponse, getClientIp } from '@/lib/rate-limit';
 import { sendWaitlistConfirmationEmail } from '@/lib/email';
 import { trackServerEvent } from '@/lib/analytics';
@@ -49,33 +49,30 @@ export async function POST(request) {
   if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
   try {
-    // Already on the list — treat it as a success rather than an error. There's nothing
-    // sensitive about "this email already applied" the way there is with login, and a
-    // visitor who double-submits (or applies again from a different CTA) shouldn't see
-    // a scary red error for it.
-    const existing = await query('SELECT id FROM founding_waitlist WHERE email = $1', [trimmedEmail]);
-    let isNew = existing.rows.length === 0;
-
-    if (isNew) {
-      await query(
+    const { isNew, foundingSpot } = await withTransaction(async (client) => {
+      // Shared with account creation: one email, one spot, no concurrent oversubscription.
+      await client.query("SELECT pg_advisory_xact_lock(hashtext('byus_founding_creator_signup'))");
+      const inserted = await client.query(
         `INSERT INTO founding_waitlist (email, display_name, source, referral_code)
-         VALUES ($1, $2, $3, $4)`,
+         VALUES ($1, $2, $3, $4) ON CONFLICT (email) DO NOTHING RETURNING id`,
         [trimmedEmail, trimmedName || null, trimmedSource, trimmedReferral]
       );
-    }
+      const reserved = await client.query('SELECT reserve_founding_spot($1) AS spot', [trimmedEmail]);
+      return { isNew: inserted.rows.length > 0, foundingSpot: reserved.rows[0].spot };
+    });
 
     if (isNew) {
       await trackServerEvent('funnel_waitlist_joined', { source: trimmedSource || 'unknown' }, request);
       // Best-effort — a delivery hiccup shouldn't block someone from joining the list.
       try {
-        await sendWaitlistConfirmationEmail(trimmedEmail, { displayName: trimmedName });
+        await sendWaitlistConfirmationEmail(trimmedEmail, { displayName: trimmedName, foundingSpot });
       } catch (err) {
         console.error('Waitlist confirmation email failed (continuing):', err);
       }
     }
 
     const count = await getWaitlistCount(query);
-    return NextResponse.json({ ok: true, alreadyApplied: !isNew, count });
+    return NextResponse.json({ ok: true, alreadyApplied: !isNew, count, foundingSpot });
   } catch (err) {
     console.error('waitlist POST failed:', err);
     return NextResponse.json({ error: 'Could not join the waitlist. Try again.' }, { status: 500 });

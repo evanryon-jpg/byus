@@ -59,7 +59,7 @@ export default async function HomePage() {
 // FoundingPromoBanner's fee-framing banner and FoundersCircleSection's two perk cards
 // -- which repeated the same "founding creators keep more, sooner" point twice back to
 // back). `stats` comes straight from lib/fees.js's getFoundingPromoStats(), which
-// counts real creator signups (`SELECT COUNT(*) FROM users WHERE role='creator'`) --
+// counts permanent founding reservations, including claimed creator accounts --
 // `stats.limit`/`stats.remaining`/`stats.claimed` are never hardcoded, so this section
 // can't drift from what a creator actually gets when they sign up. The literal "100
 // SPOTS. 10% FOREVER." framing from the brief is built from `stats.limit` rather than a
@@ -76,8 +76,7 @@ export default async function HomePage() {
 // than another feature bullet -- the treatment the brief asked for when it said this
 // needed to be "more visible."
 //
-// Creator signup is paused. Waitlist entries do not reserve founding spots;
-// the real creator account count determines remaining spots.
+// Creator signup is paused. Waitlist entries reserve available founding spots.
 function FoundingCreatorProgram({ stats }) {
   const soldOut = stats.remaining <= 0;
   const perks = [
@@ -114,7 +113,7 @@ function FoundingCreatorProgram({ stats }) {
           {stats.limit} spots. <span className="text-brand-gold">10% forever.</span>
         </p>
         <p className="mx-auto mt-4 max-w-lg text-brand-paper/70">
-          The first {stats.limit} creator accounts lock in our lowest fee for good.
+          The first {stats.limit} founding spots lock in our lowest fee for good.
           No follower minimum or earnings requirement.
         </p>
         <div className="mx-auto mt-8 grid max-w-3xl gap-4 text-left sm:grid-cols-3">
@@ -132,8 +131,7 @@ function FoundingCreatorProgram({ stats }) {
         <div className="mt-8">
           {soldOut ? (
             <p className="text-sm font-semibold text-brand-paper/70">
-              All {stats.limit} founding spots have been claimed — standard rates now apply to new
-              signups.
+              All {stats.limit} founding spots are reserved. New waitlist entries receive standard pricing. Existing reservations keep their founding rate.
             </p>
           ) : (
             <>
@@ -142,11 +140,11 @@ function FoundingCreatorProgram({ stats }) {
                 href="/signup?role=creator"
                 className="mt-6 inline-block rounded-full bg-brand-gold px-8 py-3.5 text-base font-bold text-[#172554] shadow-[0_16px_30px_-14px_rgba(15,118,110,0.5)] transition hover:-translate-y-0.5"
               >
-                Join the founding waitlist →
+                Reserve your founding spot →
               </a>
               <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-brand-paper/85">
-                New creator accounts are temporarily paused. Join for an email when signups reopen.
-                Joining the waitlist does not reserve a founding spot or lock in a rate.
+                Creator signups are temporarily paused. Joining the waitlist reserves an available
+                founding spot and the 10% rate for good. Use the same email to create your account when signups reopen.
               </p>
             </>
           )}
@@ -160,7 +158,7 @@ function FoundingCreatorProgram({ stats }) {
 // cap -- one dot per spot, lit gold once claimed. Deliberately literal rather than an
 // abstract percentage bar: "100 spots" is a real, countable thing (FOUNDING_CREATOR_LIMIT
 // in lib/pricing.js), driven by the same stats.claimed/stats.limit that already come
-// straight from a live COUNT(*) query in getFoundingPromoStats() (lib/fees.js) -- so this
+// straight from the reservation count in getFoundingPromoStats() (lib/fees.js) -- so this
 // can't drift from what a creator actually gets. Assumes a grid-legible spot count
 // (roughly <=100): if FOUNDING_CREATOR_LIMIT is ever raised well past that, this should
 // become a scaled/grouped visualization instead of one <span> per spot.
@@ -172,7 +170,7 @@ function FoundingSpotsGrid({ claimed, limit, remaining }) {
       <div
         className="grid w-full grid-cols-10 gap-1.5"
         role="img"
-        aria-label={`${claimed} of ${limit} founding spots claimed, ${remaining} remaining`}
+        aria-label={`${claimed} of ${limit} founding spots reserved or claimed, ${remaining} remaining`}
       >
         {dots.map((filled, i) => (
           <span
@@ -285,8 +283,8 @@ function Hero({ user }) {
 
             {!user && (
               <p className="mt-4 max-w-lg text-sm leading-relaxed text-brand-paper/90">
-                Creator signups are temporarily paused. Join for an email when they reopen;
-                a waitlist entry does not reserve a founding spot.
+                Creator signups are temporarily paused. Join the waitlist to reserve a founding spot
+                while available. We’ll email you when you can create your page.
               </p>
             )}
 

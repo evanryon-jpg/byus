@@ -71,15 +71,8 @@ export async function GET(request) {
                 founding.founding_rank AS founding_creator_rank
          FROM users u
          LEFT JOIN (
-           -- Same tie-break order (created_at, id) as getFoundingCreatorRank (lib/fees.js),
-           -- so the number badged here always matches the one on a creator's own profile
-           -- page -- computed inside this already-existing is_founding subquery rather
-           -- than a second round trip per creator.
-           SELECT id, ROW_NUMBER() OVER (ORDER BY created_at, id) AS founding_rank
-           FROM users
-           WHERE role = 'creator' AND is_suspended = false
-           ORDER BY created_at, id
-           LIMIT ${FOUNDING_CREATOR_LIMIT}
+           SELECT creator_id AS id, spot_number AS founding_rank
+           FROM founding_reservations WHERE creator_id IS NOT NULL
          ) founding ON founding.id = u.id
          LEFT JOIN (
            SELECT creator_id, COUNT(*) AS active_subscriber_count

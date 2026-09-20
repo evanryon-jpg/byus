@@ -175,7 +175,7 @@ export default function BrowsePage({ searchParams }) {
             <p className="mx-auto mt-3 max-w-xl leading-relaxed text-brand-ink/70">
               We won&rsquo;t fill this directory with pretend members. Until real creators publish
               their pages, you can explore demonstration profiles or join the creator waitlist
-              for an email when signups reopen. Waitlist entries do not reserve founding spots.
+              for an email when signups reopen. Joining reserves a founding spot while available.
             </p>
 
             <div className="mt-7 flex justify-center">
@@ -261,8 +261,8 @@ export default function BrowsePage({ searchParams }) {
           </h2>
           <p className="mx-auto mt-3 max-w-xl leading-relaxed text-brand-ink/70">
             New creator accounts are temporarily paused. Join Evan at the beginning by signing up
-            for an email when creator registration reopens. Joining the waitlist does not
-            reserve a founding spot or lock in the founding rate.
+            for an email when creator registration reopens. Joining the waitlist reserves an available founding spot and locks in the 10% rate.
+            Use the same email when you create your account.
           </p>
           <div className="mt-6 flex justify-center">
             <a

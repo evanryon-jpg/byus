@@ -283,7 +283,7 @@ function CreatorWaitlistPanel({ acquisitionSource, referralCode }) {
         setWaitlistError(data.error || 'Something went wrong. Please try again.');
         return;
       }
-      setWaitlistResult({ alreadyApplied: Boolean(data.alreadyApplied), email: trimmed });
+      setWaitlistResult({ alreadyApplied: Boolean(data.alreadyApplied), email: trimmed, foundingSpot: data.foundingSpot ?? null });
     } catch {
       setWaitlistError('Network error — please try again.');
     } finally {
@@ -301,8 +301,9 @@ function CreatorWaitlistPanel({ acquisitionSource, referralCode }) {
           {waitlistResult.alreadyApplied ? "You're already on the list" : "You're on the list"}
         </h2>
         <p className="mt-1.5 text-sm text-brand-ink/65">
-          We'll email {waitlistResult.email} as soon as creator signups reopen — including whether a founding
-          spot is still available. Your waitlist entry does not reserve a founding spot or lock in a rate.
+          {waitlistResult.foundingSpot
+            ? `Founding spot #${waitlistResult.foundingSpot} is reserved for ${waitlistResult.email}, with the 10% rate for good. Use this same email to create your creator account when signups reopen.`
+            : `We'll email ${waitlistResult.email} when creator signups reopen. All founding spots are reserved; standard pricing will apply to your new account.`}
         </p>
         <a href="/" className="mt-4 inline-block text-sm font-semibold text-[#0F766E] underline">
           Back to ByUs
@@ -315,8 +316,9 @@ function CreatorWaitlistPanel({ acquisitionSource, referralCode }) {
     <div className="mt-6">
       <p className="text-sm text-brand-ink/70">
         New creator accounts are temporarily paused. Leave your email and we'll notify you when
-        signups reopen. Joining is free and does not create a creator account, reserve a founding
-        spot, or lock in a rate.
+        signups reopen. Joining is free and reserves a founding spot with the 10% rate for good while spots
+        remain. Your confirmation will show your spot number. If all spots are reserved,
+        you can still join for updates at standard pricing. No creator account is created yet.
       </p>
 
       <form onSubmit={handleWaitlistSubmit} noValidate className="mt-5 space-y-4">

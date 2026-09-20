@@ -44,11 +44,11 @@ export const MIN_ANNUAL_BILLING_MONTHS = 10;
 // economics, this floor is the first number worth re-checking.
 export const MIN_FEE_PERCENT = 10;
 
-// Launch promo: the first FOUNDING_CREATOR_LIMIT creator accounts ever created on ByUs
+// Launch promo: FOUNDING_CREATOR_LIMIT permanent spots shared by waitlist reservations and creator accounts
 // get DISCOUNTED_FEE_PERCENT (10%) permanently, from day one -- currently the only way to
 // reach that rate at all, since the $2,000/mo earned-discount tier is paused (see above).
 // See getFoundingCreatorRank / isFoundingCreator in lib/fees.js for how "first 100" is
-// determined (live off signup order, not a stamped flag).
+// determined (persisted in founding_reservations, claimed by matching email at signup).
 export const FOUNDING_CREATOR_LIMIT = 100;
 
 // One-time tips ("buy a coffee") use the same percentage fee as subscriptions. The $5

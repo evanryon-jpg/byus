@@ -95,7 +95,7 @@ function useReveal() {
 }
 
 export default function EarningsCalculator() {
-  // Preview standard pricing by default; founding status depends on account signup order.
+  // Preview standard pricing by default; founding status depends on a reserved spot.
   const [subscribers, setSubscribers] = useState(150);
   const [price, setPrice] = useState(15);
   const [tier, setTier] = useState('standard'); // 'standard' | 'founding'
@@ -187,9 +187,9 @@ export default function EarningsCalculator() {
                 </TierButton>
               </div>
               <p className="mt-3 text-xs leading-relaxed text-brand-ink/75">
-                Standard pricing is {STANDARD_FEE_PERCENT}%. The first {FOUNDING_CREATOR_LIMIT} creator
-                accounts keep the {DISCOUNTED_FEE_PERCENT}% founding rate for good, with no earnings
-                requirement. Both rates include standard domestic payment processing.
+                Standard pricing is {STANDARD_FEE_PERCENT}%. Creators with one of the {FOUNDING_CREATOR_LIMIT} founding
+                spots keep the {DISCOUNTED_FEE_PERCENT}% founding rate for good, with no earnings
+                requirement. Join the waitlist to reserve a spot while available. Both rates include standard domestic payment processing.
               </p>
             </div>
           </div>

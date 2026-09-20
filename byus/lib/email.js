@@ -155,17 +155,20 @@ export async function sendWelcomeSubscriptionEmail(to, { creatorName, creatorUrl
 // app/api/waitlist/route.js). Creator signup is paused as of Sep 2026, so this confirms
 // the waitlist join and sets expectations for a follow-up once signup reopens — it must
 // NOT point people straight at /signup?role=creator as if they can finish onboarding today.
-export async function sendWaitlistConfirmationEmail(to, { displayName }) {
+export async function sendWaitlistConfirmationEmail(to, { displayName, foundingSpot }) {
   const resend = getClient();
   const greeting = displayName ? escapeHtml(displayName) : 'there';
   const { error } = await resend.emails.send({
     from: FROM_ADDRESS,
     to,
-    subject: "You're on the ByUs Founding Creator list",
+    subject: foundingSpot ? `Your ByUs founding spot #${foundingSpot} is reserved` : "You're on the ByUs creator waitlist",
     html: `
       <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; color: #1A1A1A;">
         <h2 style="color:#146359;">You're on the list, ${greeting}.</h2>
-        <p>Thanks for joining the ByUs Founding Creator waitlist. We're temporarily pausing new creator signups while we finish up some account setup on our end — we'll email you when creator signups reopen, including whether a founding spot (10% platform fee, forever) is still available. Joining the waitlist does not create a creator account, reserve a founding spot, or lock in a rate.</p>
+        <p>Thanks for joining the ByUs creator waitlist. New creator signups are temporarily paused; we'll email you when they reopen.</p>
+        <p>${foundingSpot
+          ? `Your founding spot #${Number(foundingSpot)} is reserved, with a 10% platform fee for good, including standard domestic processing. Create your creator account with this same email address when signups reopen to claim it.`
+          : 'All 100 founding spots are reserved. You are on the general creator waitlist; the standard 13% platform fee will apply.'}</p>
         <p style="margin: 24px 0;">
           <a href="https://byusapp.com" style="background:#146359;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;">Visit ByUs</a>
         </p>
