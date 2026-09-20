@@ -1,13 +1,8 @@
-// Personal tier -- every creator's own stored rate (`users.platform_fee_percent`) is just
-// STANDARD_FEE_PERCENT, unless they're a founding creator (see isFoundingCreator /
-// FOUNDING_CREATOR_LIMIT), in which case it's DISCOUNTED_FEE_PERCENT permanently, from day
-// one. There used to also be a $2,000/mo earned-discount tier here -- any creator's rate
-// would drop to DISCOUNTED_FEE_PERCENT for the rest of a calendar month once their gross
-// ByUs earnings that month crossed FEE_DISCOUNT_THRESHOLD_CENTS, resetting the following
-// month if they didn't cross it again. It's paused (business decision, 2026-09-19, not a
-// bug) -- see the comment on FEE_DISCOUNT_THRESHOLD_CENTS in lib/pricing.js for why and how
-// to bring it back. `monthToDateCents` is no longer computed here as a result; if that tier
-// returns, restore both the query and its branch in the targetFeePercent ternary below.
+// Personal tier -- founding creators stay at DISCOUNTED_FEE_PERCENT permanently. Other
+// creators start each calendar month at STANDARD_FEE_PERCENT and move to
+// DISCOUNTED_FEE_PERCENT for the rest of that month after their gross ByUs earnings reach
+// FEE_DISCOUNT_THRESHOLD_CENTS. The first payment that crosses the threshold is recorded
+// at the rate it was actually charged; the lower rate is then synced to future charges.
 //
 // There used to be a second, stacking discount here -- a platform-wide milestone bonus
 // that lowered every creator's fee further as ByUs's own revenue grew. It's retired:
@@ -35,6 +30,7 @@ import { paymentProvider } from './payments';
 import {
   STANDARD_FEE_PERCENT,
   DISCOUNTED_FEE_PERCENT,
+  FEE_DISCOUNT_THRESHOLD_CENTS,
   MIN_FEE_PERCENT,
   FOUNDING_CREATOR_LIMIT,
 } from './pricing';
@@ -98,9 +94,8 @@ export function applyPlatformMilestoneReduction(basePercent, reductionPoints) {
 // creator) a full month at 0% fee. Returns null when nothing changed (duplicate delivery,
 // not a creator, or none of the three discounts moved), otherwise
 // `{ personalTierChange, crossedMilestones, referrerFeeGranted }` — personalTierChange is
-// the creator's new personal-tier percent when their 0%-promo just started or lapsed (the
-// only way this changes mid-tenure now that founding status is permanent and the
-// $2,000/mo tier is paused — see the file header), otherwise null; crossedMilestones is
+// the creator's new personal-tier percent when their 0%-promo starts or lapses, or when
+// their current-month earnings cross the $2,000 tier; otherwise null. crossedMilestones is
 // the list of platform milestones (if any) newly crossed by this payment; referrerFeeGranted
 // is the referrer's user id when this invoice just launched them a free 0%-fee month (null
 // otherwise). The caller syncs
@@ -152,13 +147,20 @@ export async function recordEarningAndCheckFeeTier(client, { creatorId, stripeIn
   const zeroFeePromoActive =
     creatorResult.rows[0].zero_fee_promo_expires_at &&
     new Date(creatorResult.rows[0].zero_fee_promo_expires_at) > new Date();
-  // Founding creators are always at the discounted rate, full stop. Everyone else is
-  // just STANDARD_FEE_PERCENT -- see the file header for the $2,000/mo tier this used to
-  // also check, currently paused.
-  const founding = await isFoundingCreator(client.query.bind(client), creatorId);
+  const [founding, monthToDateResult] = await Promise.all([
+    isFoundingCreator(client.query.bind(client), creatorId),
+    client.query(
+      `SELECT COALESCE(SUM(amount_cents), 0)::bigint AS gross_cents
+       FROM creator_earnings
+       WHERE creator_id = $1
+         AND created_at >= date_trunc('month', now())`,
+      [creatorId]
+    ),
+  ]);
+  const monthToDateCents = Number(monthToDateResult.rows[0].gross_cents);
   const targetFeePercent = zeroFeePromoActive
     ? 0
-    : founding
+    : founding || monthToDateCents >= FEE_DISCOUNT_THRESHOLD_CENTS
     ? DISCOUNTED_FEE_PERCENT
     : STANDARD_FEE_PERCENT;
 
@@ -239,4 +241,33 @@ export async function syncActiveSubscriptionsToFeePercent(creatorId, personalTie
       console.error(`Failed to sync application_fee_percent for subscription ${stripe_subscription_id}:`, err);
     }
   }
+}
+
+// Runs at the start of each UTC calendar month. Founding creators return to their
+// permanent 10% rate, while non-founding creators return to 13% until they reach the
+// monthly earnings threshold again. Active referral promos remain at 0%. Updating Stripe
+// after the database write keeps existing recurring subscriptions aligned with the rate
+// shown in ByUs; failures are already isolated per subscription by the sync helper.
+export async function resetMonthlyEarnedFeeTiers() {
+  const changed = await query(
+    `WITH desired AS (
+       SELECT u.id,
+              CASE WHEN fr.creator_id IS NOT NULL THEN $1 ELSE $2 END::integer AS fee_percent
+       FROM users u
+       LEFT JOIN founding_reservations fr ON fr.creator_id = u.id
+       WHERE u.role = 'creator'
+         AND (u.zero_fee_promo_expires_at IS NULL OR u.zero_fee_promo_expires_at <= now())
+     )
+     UPDATE users u
+     SET platform_fee_percent = desired.fee_percent, updated_at = now()
+     FROM desired
+     WHERE u.id = desired.id AND u.platform_fee_percent <> desired.fee_percent
+     RETURNING u.id, u.platform_fee_percent`,
+    [DISCOUNTED_FEE_PERCENT, STANDARD_FEE_PERCENT]
+  );
+
+  for (const creator of changed.rows) {
+    await syncActiveSubscriptionsToFeePercent(creator.id, creator.platform_fee_percent);
+  }
+  return changed.rows.length;
 }
