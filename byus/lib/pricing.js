@@ -10,19 +10,12 @@
 // creator is simply STANDARD_FEE_PERCENT, full stop; founding creators (see
 // FOUNDING_CREATOR_LIMIT below) are DISCOUNTED_FEE_PERCENT from day one.
 //
-// FEE_DISCOUNT_THRESHOLD_CENTS below is currently unused — business decision, 2026-09-19:
-// with only a handful of creators on the platform, a second earned-discount tier ($2,000/mo
-// in gross revenue drops a standard creator to DISCOUNTED_FEE_PERCENT for the rest of that
-// month) added billing complexity nobody was earning enough to reach yet. Paused rather than
-// deleted so it's a one-line change in lib/fees.js's recordEarningAndCheckFeeTier to bring
-// back once there's real creator volume: re-add the monthToDateCents query and restore
-// `founding || monthToDateCents >= FEE_DISCOUNT_THRESHOLD_CENTS` to the targetFeePercent
-// ternary there. If it comes back, restore the matching FAQ/Help/Terms/homepage copy too
-// (see app/components/faqs-data.js, app/help/data.js, app/terms/page.js, app/page.js) —
-// all four were rewritten to describe the current founding-only, flat-13%-otherwise story.
+// A non-founding creator moves from 13% to 10% for the rest of a calendar month after
+// reaching $2,000 in gross ByUs earnings that month. The threshold includes memberships,
+// tips, and paid digital downloads because all three write to creator_earnings.
 export const STANDARD_FEE_PERCENT = 13;
 export const DISCOUNTED_FEE_PERCENT = 10;
-export const FEE_DISCOUNT_THRESHOLD_CENTS = 200000; // $2,000 gross revenue in a calendar month — currently unused, see above
+export const FEE_DISCOUNT_THRESHOLD_CENTS = 200000;
 
 // Sustainable floors for new paid checkouts. Existing subscriptions below this amount
 // may renew unchanged, but no new supporter can start a below-floor checkout.
@@ -45,8 +38,8 @@ export const MIN_ANNUAL_BILLING_MONTHS = 10;
 export const MIN_FEE_PERCENT = 10;
 
 // Launch promo: FOUNDING_CREATOR_LIMIT permanent spots shared by waitlist reservations and creator accounts
-// get DISCOUNTED_FEE_PERCENT (10%) permanently, from day one -- currently the only way to
-// reach that rate at all, since the $2,000/mo earned-discount tier is paused (see above).
+// get DISCOUNTED_FEE_PERCENT (10%) permanently, from day one, without needing to reach
+// the monthly earnings threshold.
 // See getFoundingCreatorRank / isFoundingCreator in lib/fees.js for how "first 100" is
 // determined (persisted in founding_reservations, claimed by matching email at signup).
 export const FOUNDING_CREATOR_LIMIT = 100;
