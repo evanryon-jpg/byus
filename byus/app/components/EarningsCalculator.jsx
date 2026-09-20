@@ -237,7 +237,7 @@ export default function EarningsCalculator() {
               </span>
               <p className="text-[13.5px] leading-snug text-[#6b5325]">
                 You&rsquo;d keep{' '}
-                <strong className="font-display text-[15px] text-[#5a4419]">{fmt(Math.abs(extraKeptDisplay))}</strong> {extraKeptCents >= 0 ? 'more' : 'less'}
+                <strong className="font-display text-[15px] text-[#5a4419]">{fmt(Math.abs(extraKeptDisplay))}</strong> {extraKeptCents >= 0 ? 'more' : 'less'}{' '}
                 per month with ByUs.
               </p>
             </div>
