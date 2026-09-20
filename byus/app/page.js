@@ -377,12 +377,13 @@ function ShieldCheckIcon() {
 // the first look. By the time someone's scrolled past the numbers, they're ready
 // to either start their own page or go looking for one they already have in mind.
 // Replaces the old icon+text feature cards with small, realistic previews of the
-// product itself -- a mock payout breakdown, a mock tier picker, and a locked post --
-// so a visitor sees roughly what these look like inside ByUs instead of reading an
-// icon standing in for the idea. The gated-content preview reuses real Alex Rivers
-// artwork (detail-piece.jpg) with the same blur+lock treatment as the live /demo
-// route's LockedHeroPiece, so the "locked" language on this page and the real product
-// look identical.
+// product itself, so a visitor sees roughly what these look like inside ByUs
+// instead of reading an icon standing in for the idea. Six cards: five plain
+// single-column ones plus SmsNotificationsDemo, which spans both columns as the
+// most recently shipped feature (see its own comment for why it gets the wide,
+// "New"-pilled slot). Five singles is an odd count against a two-column grid, so
+// one row is always left with a single card and an empty cell beside it --
+// accepted rather than forcing a sixth single-column card just to balance the grid.
 function Features() {
   return (
     <section id="features" className="mx-auto max-w-5xl scroll-mt-24 px-6 py-16">
@@ -400,7 +401,9 @@ function Features() {
         <TiersDemo />
         <CommunitySyncDemo />
         <ContentImportDemo />
+        <VideoUploadDemo />
         <EngagementDemo />
+        <SmsNotificationsDemo />
       </div>
     </section>
   );
