@@ -40,18 +40,19 @@ export default function TermsPage() {
           <p>
             Creators can publish public and subscribers-only posts and set one or more monthly
             or annual subscription tiers. Payments are processed through Stripe, and each creator
-            connects their own Stripe account to receive payouts. ByUs&rsquo;s standard all-in fee is
-            currently starts at 13% of each payment and includes standard domestic payment processing.
-            For non-founding creators, the rate becomes 10% for the remainder of a calendar month
-            after reaching $2,000 in gross ByUs earnings during that month, and resets to 13% at the
-            beginning of the next month until the threshold is reached again. Memberships, tips, and
-            paid digital downloads count toward that threshold. The first 100 founding creators
-            receive a 10% rate from day one. Separate promotional fee
-            credits may also apply. The rate actually charged is shown in
-            the creator dashboard and checkout flow, and ByUs routes the remaining proceeds to the
-            creator&rsquo;s connected Stripe account. Currency conversion, instant payouts, taxes,
-            disputes, nonstandard payment methods, or other exceptional processor charges may apply
-            separately and will be disclosed where applicable.
+            connects their own Stripe account to receive payouts. ByUs&rsquo;s standard all-in fee
+            currently starts at 13% of each payment and includes standard domestic and cross-border
+            payment processing &mdash; ByUs, not the creator, absorbs Stripe&rsquo;s additional charges
+            for international cards and currency conversion. For non-founding creators, the rate
+            becomes 10% for the remainder of a calendar month after reaching $2,000 in gross ByUs
+            earnings during that month, and resets to 13% at the beginning of the next month until the
+            threshold is reached again. Memberships, tips, and paid digital downloads count toward
+            that threshold. The first 100 founding creators receive a 10% rate from day one. Separate
+            promotional fee credits may also apply. The rate actually charged is shown in the creator
+            dashboard and checkout flow, and ByUs routes the remaining proceeds to the creator&rsquo;s
+            connected Stripe account. Instant payouts, taxes, disputes, nonstandard payment methods,
+            or other exceptional processor charges may still apply separately and will be disclosed
+            where applicable.
           </p>
           <p className="mt-3">
             You&rsquo;re responsible for the content you post and for honoring what you promise
