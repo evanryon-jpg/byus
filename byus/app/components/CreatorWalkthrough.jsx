@@ -3,7 +3,7 @@
 import { useRef } from 'react';
 
 // Timestamps below are pulled straight from the walkthrough's own caption track
-// (public/videos/byus-creator-walkthrough-final-20260920-en.vtt) -- each one is the
+// (public/videos/byus-creator-walkthrough-final-20260921-en.vtt) -- each one is the
 // start of the caption cue where that step's narration begins, so "Get paid, with
 // guidance" jumps to 1:24, right where the video actually starts talking about Stripe
 // payouts. If the video is ever re-cut, re-check these against the new .vtt rather
@@ -14,7 +14,7 @@ const STEPS = [
   ['03', 'Publish and sell', 'Posts, imports, tips, downloads, and live streaming', 35],
   ['04', 'Grow your community', 'Discord and Telegram sync, notifications, and analytics', 60],
   ['05', 'Get paid, with guidance', 'Stripe payouts, yearly reporting, and the Page Coach', 84],
-  ['06', 'Preview and publish', 'See the finished page, then share it with your audience', 105],
+  ['06', 'Preview and publish', 'See the finished page, then share it with your audience', 98],
 ];
 
 export default function CreatorWalkthrough() {
@@ -94,10 +94,10 @@ export default function CreatorWalkthrough() {
             poster="/images/byus-video-poster-v2.jpg"
             aria-label="A step-by-step demonstration of building a ByUs creator page"
           >
-            <source src="/videos/byus-creator-walkthrough-final-20260920.mp4" type="video/mp4" />
+            <source src="/videos/byus-creator-walkthrough-final-20260921.mp4" type="video/mp4" />
             <track
               kind="captions"
-              src="/videos/byus-creator-walkthrough-final-20260920-en.vtt"
+              src="/videos/byus-creator-walkthrough-final-20260921-en.vtt"
               srcLang="en"
               label="English"
             />
