@@ -117,9 +117,26 @@ export async function createSubscriptionCheckoutSession({
     ...(checkoutDisclosure
       ? { custom_text: { submit: { message: checkoutDisclosure } } }
       : {}),
+    // Stripe Tax: on these destination charges ByUs (the platform), not the creator, is
+    // the merchant of record (see this file's header comment -- on_behalf_of is never
+    // set anywhere). automatic_tax[liability][type]=self tells Stripe to calculate tax
+    // off ByUs's own tax settings/registrations rather than the connected account's, and
+    // subscription_data.invoice_settings.issuer[type]=self keeps renewal invoices issued
+    // in ByUs's name to match -- required in jurisdictions (the EU, notably) where the
+    // invoice PDF itself is the tax instrument. customer_update lets Checkout save
+    // whatever billing name/address it collects back onto the fan's saved Stripe
+    // Customer, so later automatic renewals keep calculating tax off a current address
+    // too, not just this one session.
+    // IMPORTANT: this calculates $0 tax everywhere until ByUs actually has tax
+    // registrations on file in the Stripe Dashboard (Tax > Registrations) for the
+    // jurisdictions it's required to collect in -- turning this on in code is necessary
+    // but not sufficient for real compliance. See TAX_SETUP.md at the repo root.
+    automatic_tax: { enabled: true, liability: { type: 'self' } },
+    customer_update: { address: 'auto', name: 'auto' },
     subscription_data: {
       application_fee_percent: applicationFeePercent,
       transfer_data: { destination: connectedAccountId },
+      invoice_settings: { issuer: { type: 'self' } },
       ...(trialDays > 0 ? { trial_period_days: trialDays } : {}),
       metadata,
     },
@@ -154,6 +171,12 @@ export async function createOneTimePaymentCheckoutSession({
     ...(checkoutDisclosure
       ? { custom_text: { submit: { message: checkoutDisclosure } } }
       : {}),
+    // Stripe Tax -- see the matching comment in createSubscriptionCheckoutSession above
+    // for the full reasoning. No invoice_settings/issuer needed here: a one-time
+    // Checkout Session in payment mode never generates an Invoice object, so there's no
+    // invoice-issuer identity to set. Same $0-until-registered caveat applies.
+    automatic_tax: { enabled: true, liability: { type: 'self' } },
+    customer_update: { address: 'auto', name: 'auto' },
     payment_intent_data: {
       application_fee_amount: applicationFeeCents,
       transfer_data: { destination: connectedAccountId },
