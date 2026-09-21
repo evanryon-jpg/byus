@@ -160,9 +160,9 @@ function FoundingCreatorProgram({ stats }) {
   );
 }
 
-// A depleting 10x10 dot grid visualizing the Founding Creator Program's fixed 100-spot
+// A depleting 10-column dot grid visualizing the Founding Creator Program's fixed 50-spot
 // cap -- one dot per spot, lit gold once claimed. Deliberately literal rather than an
-// abstract percentage bar: "100 spots" is a real, countable thing (FOUNDING_CREATOR_LIMIT
+// abstract percentage bar: "50 spots" is a real, countable thing (FOUNDING_CREATOR_LIMIT
 // in lib/pricing.js), driven by the same stats.claimed/stats.limit that already come
 // straight from the reservation count in getFoundingPromoStats() (lib/fees.js) -- so this
 // can't drift from what a creator actually gets. Assumes a grid-legible spot count
