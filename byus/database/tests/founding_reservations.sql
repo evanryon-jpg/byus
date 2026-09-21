@@ -6,7 +6,7 @@ DECLARE
   fee integer; n integer; test_email text := 'founding-test-' || gen_random_uuid() || '@example.invalid';
 BEGIN
   SELECT count(*) INTO original_count FROM founding_reservations;
-  ASSERT original_count < 99, 'Use a fixture with at least two available spots';
+  ASSERT original_count < 49, 'Use a fixture with at least two available spots';
   INSERT INTO founding_waitlist (email) VALUES (test_email);
   SELECT spot_number INTO spot FROM founding_reservations WHERE email = test_email;
   ASSERT spot = original_count + 1, 'Waitlist must immediately reserve the next spot';
@@ -16,10 +16,10 @@ BEGIN
   ASSERT (SELECT count(*) FROM founding_reservations) = original_count + 1, 'Duplicate entry consumed a spot';
 
   -- Exhaust the remaining pool, then sign up the reserved creator out of order.
-  FOR n IN 1..100 LOOP
+  FOR n IN 1..50 LOOP
     PERFORM reserve_founding_spot('capacity-' || n || '-' || test_email);
   END LOOP;
-  ASSERT (SELECT count(*) FROM founding_reservations) = 100, 'Pool must stop at 100';
+  ASSERT (SELECT count(*) FROM founding_reservations) = 50, 'Pool must stop at 50';
   ASSERT reserve_founding_spot('overflow-' || test_email) IS NULL, 'Sold-out pool allocated a spot';
   INSERT INTO users (email, role, platform_fee_percent)
   VALUES (test_email, 'creator', 13) RETURNING id, platform_fee_percent INTO user_id, fee;
@@ -34,7 +34,7 @@ BEGIN
   INSERT INTO founding_waitlist (email) VALUES ('overflow-waitlist-' || test_email);
   ASSERT NOT EXISTS (SELECT 1 FROM founding_reservations WHERE email = 'overflow-waitlist-' || test_email), 'General waitlist must not oversubscribe';
   INSERT INTO users (email, role) VALUES ('fan-' || test_email, 'fan');
-  ASSERT (SELECT count(*) FROM founding_reservations) = 100, 'Fan signup changed reservation count';
+  ASSERT (SELECT count(*) FROM founding_reservations) = 50, 'Fan signup changed reservation count';
   SET CONSTRAINTS ALL IMMEDIATE;
 END;
 $$;
