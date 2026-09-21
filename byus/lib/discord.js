@@ -86,3 +86,20 @@ export async function removeSubscriberRole({ guildId, roleId, discordUserId }) {
   if (res.status === 404) return false; // already not in the guild / doesn't have the role
   throw new Error(`Discord remove-role failed (${res.status}): ${await res.text()}`);
 }
+
+// Read-only check of a member's CURRENT roles, straight from Discord rather than
+// trusting that an earlier grant/revoke call actually landed. Used by the platform-access
+// reconciliation cron (see lib/platform-sync.js) to catch drift from a grant/revoke that
+// silently failed -- a rate limit, a brief Discord outage, the bot temporarily missing
+// permissions -- since those calls are deliberately best-effort and never retried inline.
+// Returns null if the fan isn't (or is no longer) a member of the guild at all.
+export async function getGuildMemberRoles({ guildId, discordUserId }) {
+  if (!BOT_TOKEN) throw new Error('DISCORD_BOT_TOKEN is not set.');
+  const res = await fetch(`${DISCORD_API}/guilds/${guildId}/members/${discordUserId}`, {
+    headers: { Authorization: `Bot ${BOT_TOKEN}` },
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`Discord get-member failed (${res.status}): ${await res.text()}`);
+  const member = await res.json();
+  return member.roles || [];
+}

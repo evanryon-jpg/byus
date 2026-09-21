@@ -91,3 +91,23 @@ export async function removeSubscriberFromChat(chatId, telegramUserId) {
 export async function setTelegramWebhook(url) {
   return callTelegram('setWebhook', { url, secret_token: getTelegramWebhookSecret() });
 }
+
+// Read-only check of whether a user is CURRENTLY in the chat, straight from Telegram
+// rather than trusting that an earlier invite/removal call actually landed. Used by the
+// platform-access reconciliation cron (see lib/platform-sync.js) to catch drift from a
+// grant/revoke that silently failed, since those calls are deliberately best-effort and
+// never retried inline. Returns Telegram's own status string ('member', 'administrator',
+// 'creator', 'restricted', 'left', 'kicked') so callers decide what counts as "has access"
+// rather than this function guessing.
+export async function getChatMemberStatus(chatId, telegramUserId) {
+  try {
+    const result = await callTelegram('getChatMember', { chat_id: chatId, user_id: telegramUserId });
+    return result.status;
+  } catch (err) {
+    // "user not found" / "PARTICIPANT_ID_INVALID" means they were never in the chat (or
+    // Telegram has already forgotten them after leaving/being removed) -- treat the same
+    // as an explicit 'left', not a failure worth surfacing.
+    if (/not found|PARTICIPANT_ID_INVALID/i.test(err.message)) return 'left';
+    throw err;
+  }
+}
