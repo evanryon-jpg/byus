@@ -168,7 +168,7 @@ export async function sendWaitlistConfirmationEmail(to, { displayName, foundingS
         <p>Thanks for joining the ByUs creator waitlist. New creator signups are temporarily paused; we'll email you when they reopen.</p>
         <p>${foundingSpot
           ? `Your founding spot #${Number(foundingSpot)} is reserved, with a 10% platform fee for good, including standard domestic processing. Create your creator account with this same email address when signups reopen to claim it.`
-          : 'All 100 founding spots are reserved. You are on the general creator waitlist; the standard 13% platform fee will apply.'}</p>
+          : 'All 50 founding spots are reserved. You are on the general creator waitlist; the standard 13% platform fee will apply.'}</p>
         <p style="margin: 24px 0;">
           <a href="https://byusapp.com" style="background:#146359;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;">Visit ByUs</a>
         </p>

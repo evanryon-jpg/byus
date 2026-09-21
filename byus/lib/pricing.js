@@ -40,9 +40,9 @@ export const MIN_FEE_PERCENT = 10;
 // Launch promo: FOUNDING_CREATOR_LIMIT permanent spots shared by waitlist reservations and creator accounts
 // get DISCOUNTED_FEE_PERCENT (10%) permanently, from day one, without needing to reach
 // the monthly earnings threshold.
-// See getFoundingCreatorRank / isFoundingCreator in lib/fees.js for how "first 100" is
+// See getFoundingCreatorRank / isFoundingCreator in lib/fees.js for how "first 50" is
 // determined (persisted in founding_reservations, claimed by matching email at signup).
-export const FOUNDING_CREATOR_LIMIT = 100;
+export const FOUNDING_CREATOR_LIMIT = 50;
 
 // One-time tips ("buy a coffee") use the same percentage fee as subscriptions. The $5
 // floor keeps Stripe's fixed per-transaction cost from consuming the entire ByUs share.
