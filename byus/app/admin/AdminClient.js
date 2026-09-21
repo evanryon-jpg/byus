@@ -68,6 +68,29 @@ export default function AdminClient({
       <h1 className="text-2xl font-bold">Platform overview</h1>
       <p className="text-brand-ink/65">What ByUs itself has earned, and how the platform is growing.</p>
 
+      <nav aria-label="Admin sections" className="mt-4 grid gap-3 sm:grid-cols-2">
+        <a
+          href="/admin/accounting"
+          className="flex items-center justify-between rounded-xl border border-[#0F766E]/20 bg-[#0F766E]/5 px-4 py-3 transition hover:bg-[#0F766E]/10"
+        >
+          <span>
+            <span className="block font-semibold text-[#172033]">Accounting</span>
+            <span className="block text-xs text-brand-ink/65">Real Stripe fees, statements, creators, payouts, tax, CSV exports</span>
+          </span>
+          <span aria-hidden="true" className="text-[#0F766E]">→</span>
+        </a>
+        <a
+          href="/admin/disputes"
+          className="flex items-center justify-between rounded-xl border border-brand-ink/10 bg-brand-paper px-4 py-3 transition hover:bg-brand-ink/5"
+        >
+          <span>
+            <span className="block font-semibold text-[#172033]">Disputes</span>
+            <span className="block text-xs text-brand-ink/65">Chargebacks ordered by response deadline</span>
+          </span>
+          <span aria-hidden="true" className="text-[#0F766E]">→</span>
+        </a>
+      </nav>
+
       <VideoModerationSection
         initialVideos={initialVideoReviewQueue}
         initialError={initialVideoReviewError}
@@ -166,7 +189,8 @@ export default function AdminClient({
       <div className="mt-3 rounded-xl border border-[#2563EB]/15 bg-[#2563EB]/5 px-4 py-3 text-xs text-brand-ink/65">
         Estimates use standard domestic card pricing of 2.9% + 30¢ plus 0.7% Billing.
         They exclude Connect account/payout fees, refunds, dispute fees, international costs,
-        taxes, and negotiated Stripe pricing. Stripe statements remain the source of truth.
+        taxes, and negotiated Stripe pricing. Stripe statements remain the source of truth —{' '}
+        <a href="/admin/accounting" className="font-semibold text-[#0F766E] hover:underline">Accounting</a> shows the real figures.
       </div>
 
       <div className="mt-6 space-y-4">
