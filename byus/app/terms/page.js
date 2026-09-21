@@ -47,7 +47,7 @@ export default function TermsPage() {
             becomes 10% for the remainder of a calendar month after reaching $2,000 in gross ByUs
             earnings during that month, and resets to 13% at the beginning of the next month until the
             threshold is reached again. Memberships, tips, and paid digital downloads count toward
-            that threshold. The first 100 founding creators receive a 10% rate from day one. Separate
+            that threshold. The first 50 founding creators receive a 10% rate from day one. Separate
             promotional fee credits may also apply. The rate actually charged is shown in the creator
             dashboard and checkout flow, and ByUs routes the remaining proceeds to the creator&rsquo;s
             connected Stripe account. Instant payouts, taxes, disputes, nonstandard payment methods,
