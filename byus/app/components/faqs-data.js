@@ -23,7 +23,7 @@ export const FAQS = [
   },
   {
     q: 'How does the platform fee work?',
-    a: "ByUs's standard all-in platform fee starts at 13% of each payment. When a non-founding creator reaches $2,000 in gross ByUs earnings during a calendar month, the rate drops to 10% for the rest of that month and resets to 13% at the start of the next month until the threshold is reached again. The 100 founding spots carry a 10% rate for good, with no earnings requirement. Standard domestic payment processing is included, and the rest is paid straight into the creator's connected Stripe account. Currency conversion, instant payouts, taxes, disputes, or unusual processor costs may apply separately, and we'll spell those out when they do.",
+    a: "ByUs's standard all-in platform fee starts at 13% of each payment. When a non-founding creator reaches $2,000 in gross ByUs earnings during a calendar month, the rate drops to 10% for the rest of that month and resets to 13% at the start of the next month until the threshold is reached again. The 100 founding spots carry a 10% rate for good, with no earnings requirement. That rate is genuinely all-in: it covers standard domestic and cross-border processing, and ByUs absorbs Stripe's extra charges for international cards and currency conversion, so a fan paying from outside the US doesn't cost you anything extra — the rest is paid straight into your connected Stripe account. Instant payouts, taxes, disputes, or other unusual processor costs may still apply separately, and we'll spell those out when they do.",
   },
   {
     q: 'When and how do creators get paid?',
