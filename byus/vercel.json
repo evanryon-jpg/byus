@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/reset-monthly-fees",
       "schedule": "0 0 1 * *"
+    },
+    {
+      "path": "/api/cron/reconcile-platform-access",
+      "schedule": "0 9 * * *"
     }
   ]
 }
