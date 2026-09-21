@@ -364,3 +364,61 @@ export async function retrieveDispute({ id }) {
 export async function retrieveInvoice({ id }) {
   return stripe.invoices.retrieve(id);
 }
+
+// ---- Accounting (read-only) -------------------------------------------------------------
+// Used by lib/accounting/sync.js to copy Stripe's own ledger into ledger_transactions.
+// Everything here only reads from Stripe. Objects are returned raw (same deliberate
+// "not normalized" boundary as the webhook helpers above) -- the accounting sync is the
+// one place that interprets balance-transaction shapes.
+
+// Every balance transaction on the ByUs platform account created at or after
+// `createdGte` (unix seconds; omit for full history), oldest-first order not guaranteed.
+// `source` is expanded so charge/refund/transfer/fee/dispute details come back inline.
+export async function listBalanceTransactions({ createdGte } = {}) {
+  const params = { limit: 100, expand: ['data.source'] };
+  if (createdGte) params.created = { gte: createdGte };
+  const rows = [];
+  for await (const bt of stripe.balanceTransactions.list(params)) rows.push(bt);
+  return rows;
+}
+
+export async function retrieveChargeForLedger({ id }) {
+  return stripe.charges.retrieve(id, { expand: ['invoice', 'payment_intent'] });
+}
+
+export async function retrieveTransfer({ id }) {
+  return stripe.transfers.retrieve(id);
+}
+
+export async function retrieveApplicationFee({ id }) {
+  return stripe.applicationFees.retrieve(id);
+}
+
+// Sales tax on a one-time (payment mode) Checkout purchase lives on the Checkout Session,
+// not on the charge. Returns null when no session is found.
+export async function findCheckoutSessionTaxByPaymentIntent({ paymentIntentId }) {
+  const sessions = await stripe.checkout.sessions.list({ payment_intent: paymentIntentId, limit: 1 });
+  const session = sessions.data[0];
+  if (!session) return null;
+  return session.total_details?.amount_tax ?? 0;
+}
+
+// Payouts from a creator's connected account to their bank.
+export async function listConnectedAccountPayouts({ accountId, createdGte }) {
+  const params = { limit: 100 };
+  if (createdGte) params.created = { gte: createdGte };
+  const rows = [];
+  for await (const payout of stripe.payouts.list(params, { stripeAccount: accountId })) rows.push(payout);
+  return rows;
+}
+
+// Balance of the platform account (no accountId) or of a creator's connected account.
+// Returns USD-only cents totals.
+export async function retrieveBalanceSummary({ accountId } = {}) {
+  const balance = accountId
+    ? await stripe.balance.retrieve({}, { stripeAccount: accountId })
+    : await stripe.balance.retrieve();
+  const sum = (list) =>
+    (list || []).filter((b) => b.currency === 'usd').reduce((total, b) => total + b.amount, 0);
+  return { availableCents: sum(balance.available), pendingCents: sum(balance.pending) };
+}
