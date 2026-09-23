@@ -32,7 +32,7 @@ export default function ContentPolicyPage() {
           <p>ByUs may use automated screening and human review. Depending on severity and history, we may limit distribution, remove material, pause sales or payouts where permitted, require information, suspend or terminate an account, preserve evidence, or report suspected unlawful conduct. Immediate action may be taken when safety, law, payment risk, or platform integrity requires it.</p>
         </Section>
         <Section title="7. Reports and appeals">
-          <p>Use the Report control on the relevant creator page or email <a href={`mailto:${CONTACT_EMAIL}`} className="text-brand-teal underline">{CONTACT_EMAIL}</a> with the URL, a description, and supporting information. Account holders may use the same address to request review of a moderation decision. Copyright notices and counter-notices follow Section 6 of the <a href="/terms" className="text-brand-teal underline">Terms of Service</a>.</p>
+          <p>Use the Report control on the relevant creator page or email <a href={`mailto:${CONTACT_EMAIL}`} className="text-brand-teal underline">{CONTACT_EMAIL}</a> with the URL, a description, and supporting information. An account holder who believes a suspension was a mistake can request review through the <a href="/appeal" className="text-brand-teal underline">appeal form</a> or the same email address. Copyright notices and counter-notices follow Section 6 of the <a href="/terms" className="text-brand-teal underline">Terms of Service</a>.</p>
         </Section>
       </div>
     </div>
