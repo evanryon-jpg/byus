@@ -182,6 +182,31 @@ export async function sendWaitlistConfirmationEmail(to, { displayName, foundingS
   }
 }
 
+// Confirms a suspension appeal was received — sent from POST /api/account/appeal.
+// Deliberately doesn't promise a specific outcome or timeline beyond "review," since
+// this fires before anyone on the team has actually looked at the case.
+export async function sendAppealReceivedEmail(to, { displayName }) {
+  const resend = getClient();
+  const greeting = displayName ? escapeHtml(displayName) : 'there';
+  const { error } = await resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: 'We received your ByUs appeal',
+    html: `
+      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; color: #1A1A1A;">
+        <h2 style="color:#146359;">Thanks, ${greeting} — we've got it.</h2>
+        <p>Your appeal of your ByUs account suspension has been received and is queued for review by the ByUs team.</p>
+        <p>We'll follow up at this email address once we've reviewed it. There's no need to submit a second appeal in the meantime — doing so won't speed up the review.</p>
+        <p style="color:#666;font-size:13px;">Questions in the meantime? Reply to this email or reach us at support@byusapp.com.</p>
+      </div>
+    `,
+  });
+  if (error) {
+    console.error('Resend send failed:', error);
+    throw new Error(error.message || 'Could not send the appeal confirmation email.');
+  }
+}
+
 // Urgent owner alert for a newly-opened card dispute. Kept separate from customer-facing
 // mail so a failed alert can be retried safely by the Stripe webhook without affecting the
 // payment itself. The webhook marks stripe_disputes.alert_sent_at only after this succeeds.

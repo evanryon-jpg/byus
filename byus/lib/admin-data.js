@@ -441,6 +441,97 @@ export async function loadAdminReports() {
   return result.rows;
 }
 
+const APPEAL_STATUS_ORDER = `CASE suspension_appeals.status WHEN 'open' THEN 0 ELSE 1 END`;
+
+// Every suspension appeal ever submitted (app/appeal/page.js), open-first then oldest
+// first within "open" (fairness — the longest-waiting appellant surfaces first), newest
+// first within "resolved". Joined against the target user's CURRENT suspension state so
+// the admin page can tell a still-open case apart from one where the account was
+// separately reinstated (or re-suspended) since the appeal was filed.
+export async function loadSuspensionAppeals() {
+  const result = await query(
+    `SELECT suspension_appeals.id, suspension_appeals.suspended_at, suspension_appeals.suspension_reason,
+            suspension_appeals.message, suspension_appeals.status, suspension_appeals.resolution,
+            suspension_appeals.reinstated, suspension_appeals.resolved_at, suspension_appeals.created_at,
+            u.id AS user_id, u.display_name AS user_name, u.email AS user_email, u.role AS user_role,
+            u.is_suspended AS user_currently_suspended, u.suspended_at AS user_current_suspended_at
+     FROM suspension_appeals
+     JOIN users u ON u.id = suspension_appeals.user_id
+     ORDER BY ${APPEAL_STATUS_ORDER},
+       CASE WHEN suspension_appeals.status = 'open' THEN suspension_appeals.created_at END ASC,
+       CASE WHEN suspension_appeals.status != 'open' THEN suspension_appeals.created_at END DESC
+     LIMIT $1`,
+    [ADMIN_REPORTS_LIMIT]
+  );
+  return result.rows;
+}
+
+// A single, always-current snapshot of ByUs's enforcement/compliance posture — built so
+// the next time a payment processor or auditor asks "prove you're actually enforcing
+// this," the answer is "here's a live page" instead of drafting a fresh explanation from
+// scratch. Every number here is a plain count over real records, not a self-reported
+// claim. See app/admin/compliance/page.js.
+export async function loadComplianceSnapshot() {
+  const [
+    suspensions30d,
+    suspensions90d,
+    currentlySuspended,
+    appealStats,
+    legalAcceptanceStats,
+    reportStats,
+    videoReviewStats,
+    disputeStats,
+  ] = await Promise.all([
+    query(`SELECT COUNT(*)::int AS n FROM users WHERE is_suspended = true AND suspended_at >= now() - interval '30 days'`),
+    query(`SELECT COUNT(*)::int AS n FROM users WHERE is_suspended = true AND suspended_at >= now() - interval '90 days'`),
+    query(
+      `SELECT COUNT(*)::int AS n, COUNT(*) FILTER (WHERE role = 'creator')::int AS creators
+       FROM users WHERE is_suspended = true`
+    ),
+    query(
+      `SELECT status,
+              COUNT(*)::int AS n,
+              AVG(EXTRACT(EPOCH FROM (resolved_at - created_at)) / 3600) FILTER (WHERE status = 'resolved') AS avg_resolution_hours
+       FROM suspension_appeals GROUP BY status`
+    ),
+    query(
+      `SELECT source, COUNT(*)::int AS n FROM legal_acceptances
+       WHERE accepted_at >= now() - interval '90 days' GROUP BY source`
+    ).catch(() => ({ rows: [] })), // table is self-created on first use — tolerate it not existing yet
+    query(
+      `SELECT status, COUNT(*)::int AS n FROM reports GROUP BY status`
+    ),
+    query(
+      `SELECT COUNT(*)::int AS n FROM posts WHERE pending_review = true AND mux_playback_id IS NOT NULL`
+    ),
+    query(
+      `SELECT COUNT(*)::int AS n FROM stripe_disputes WHERE status != ALL($1::text[])`,
+      [CLOSED_DISPUTE_STATUSES]
+    ),
+  ]);
+
+  const openReports = reportStats.rows.find((r) => r.status === 'new')?.n || 0;
+  const openAppeals = appealStats.rows.find((r) => r.status === 'open')?.n || 0;
+  const resolvedAppealRow = appealStats.rows.find((r) => r.status === 'resolved');
+
+  return {
+    suspensionsLast30d: suspensions30d.rows[0].n,
+    suspensionsLast90d: suspensions90d.rows[0].n,
+    currentlySuspended: currentlySuspended.rows[0].n,
+    currentlySuspendedCreators: currentlySuspended.rows[0].creators,
+    openAppeals,
+    resolvedAppeals: resolvedAppealRow?.n || 0,
+    avgAppealResolutionHours: resolvedAppealRow?.avg_resolution_hours
+      ? Number(resolvedAppealRow.avg_resolution_hours)
+      : null,
+    legalAcceptancesLast90d: legalAcceptanceStats.rows.reduce((sum, r) => sum + r.n, 0),
+    legalAcceptancesBySource: legalAcceptanceStats.rows,
+    openContentReports: openReports,
+    pendingVideoReviews: videoReviewStats.rows[0]?.n || 0,
+    openPaymentDisputes: disputeStats.rows[0].n,
+  };
+}
+
 const SUGGESTION_STATUS_ORDER = `CASE status
   WHEN 'new' THEN 0
   WHEN 'reviewed' THEN 1

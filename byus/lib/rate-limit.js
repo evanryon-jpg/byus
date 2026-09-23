@@ -160,6 +160,15 @@ const limiters = {
     limiter: Ratelimit.slidingWindow(5, '1 h'),
     prefix: 'rl:report',
   }),
+  // Submitting a suspension appeal is unauthenticated (a suspended account can't log
+  // in), so it's rate-limited by both IP and the email supplied — same generous-but-
+  // bounded shape as report above, since a genuine appeal is a rare, one-time thing per
+  // suspension, not something a real person retries dozens of times.
+  appeal: new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(5, '1 h'),
+    prefix: 'rl:appeal',
+  }),
   // Following is free and intentionally easy, but the public count must not be writable
   // at bot speed. This still allows a real person to follow many creators in one visit.
   follow: new Ratelimit({
