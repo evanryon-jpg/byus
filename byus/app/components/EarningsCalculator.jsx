@@ -102,8 +102,12 @@ function useReveal() {
 
 export default function EarningsCalculator() {
   // Preview standard pricing by default; founding status depends on a reserved spot.
-  const [subscribers, setSubscribers] = useState(150);
-  const [price, setPrice] = useState(15);
+  // 300 subs @ $20/mo lands the standard-tier blended rate (13% -> 10% at $2K) far
+  // enough past the discount threshold that the "you'd keep more" comparison reads
+  // as a meaningful number on first load, instead of the few dollars a small example
+  // shows before much of the revenue has crossed into the discounted portion.
+  const [subscribers, setSubscribers] = useState(300);
+  const [price, setPrice] = useState(20);
   const [tier, setTier] = useState('standard'); // 'standard' | 'founding'
   const [revealRef, revealed] = useReveal();
 
