@@ -7,6 +7,7 @@ export default function Footer() {
         <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
           <a href="/help" className="hover:text-brand-ink/80">Help Center</a>
           <a href="/terms" className="hover:text-brand-ink/80">Terms of Service</a>
+          <a href="/creator-terms" className="hover:text-brand-ink/80">Creator Agreement</a>
           <a href="/content-policy" className="hover:text-brand-ink/80">Content Policy</a>
           <a href="/privacy" className="hover:text-brand-ink/80">Privacy Policy</a>
           {/* Public ByUs community -- distinct from the per-creator Discord/Telegram
