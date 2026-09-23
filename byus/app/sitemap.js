@@ -8,7 +8,9 @@ export const dynamic = 'force-dynamic';
 import { query } from '@/lib/db';
 import { HELP_CATEGORIES } from './help/data';
 
-const BASE_URL = 'https://byusapp.com';
+// The apex domain redirects to www in production. Sitemap URLs should be the
+// final, canonical URLs so Google does not have to follow a redirect for each.
+const BASE_URL = 'https://www.byusapp.com';
 
 // Marketing/content pages worth surfacing in search. Deliberately leaves out
 // account-action routes (login, signup, settings, dashboards, admin) -- see
@@ -29,18 +31,14 @@ const STATIC_ROUTES = [
 ];
 
 export default async function sitemap() {
-  const now = new Date();
-
   const staticEntries = STATIC_ROUTES.map((route) => ({
     url: `${BASE_URL}${route.path}`,
-    lastModified: now,
     changeFrequency: route.changeFrequency,
     priority: route.priority,
   }));
 
   const helpEntries = HELP_CATEGORIES.map((category) => ({
     url: `${BASE_URL}/help/${category.slug}`,
-    lastModified: now,
     changeFrequency: 'monthly',
     priority: 0.5,
   }));
@@ -56,7 +54,7 @@ export default async function sitemap() {
     );
     creatorEntries = result.rows.map((row) => ({
       url: `${BASE_URL}/creator/${row.slug}`,
-      lastModified: row.updated_at || now,
+      ...(row.updated_at ? { lastModified: row.updated_at } : {}),
       changeFrequency: 'daily',
       priority: 0.7,
     }));
