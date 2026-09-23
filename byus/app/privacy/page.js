@@ -3,7 +3,7 @@ export const metadata = {
   description: 'What information ByUs collects, how it is used, and who to contact about it.',
 };
 
-const LAST_UPDATED = 'September 19, 2026';
+const LAST_UPDATED = 'September 23, 2026';
 const CONTACT_EMAIL = 'support@byusapp.com';
 
 export default function PrivacyPage() {
@@ -29,6 +29,11 @@ export default function PrivacyPage() {
             We also automatically collect basic technical information — IP address, browser
             type, and general usage activity — used for security purposes like rate-limiting and
             fraud prevention.
+          </p>
+          <p className="mt-3">
+            When you accept our legal terms, we keep an acceptance record containing your user
+            ID, account role, the versions accepted, date and time, signup method, IP address,
+            and browser user-agent. This helps us demonstrate consent and enforce our agreements.
           </p>
           <p className="mt-3">
             For paid memberships and payment-dispute handling, we may keep limited account-activity
@@ -85,6 +90,10 @@ export default function PrivacyPage() {
             reasonable time, except where we&rsquo;re required to retain records (for example,
             payment, fraud-prevention, dispute, tax, or legal records that need to be kept for a
             longer period).
+          </p>
+          <p className="mt-3">
+            Legal-acceptance records may be retained after account deletion when reasonably
+            necessary to establish, exercise, or defend legal claims and meet legal obligations.
           </p>
         </Section>
 

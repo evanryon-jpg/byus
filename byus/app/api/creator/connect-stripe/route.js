@@ -10,6 +10,8 @@ import { getCurrentUser } from '@/lib/session';
 import { paymentProvider } from '@/lib/payments';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { trackServerEvent } from '@/lib/analytics';
+import { recordLegalAcceptance } from '@/lib/legal-acceptance';
+import { CREATOR_AGREEMENT_VERSION, CONTENT_POLICY_VERSION } from '@/lib/legal';
 
 export async function POST(request) {
   const session = await getCurrentUser();
@@ -85,6 +87,16 @@ export async function POST(request) {
          WHERE id = $2`,
         [accountId, user.id]
       );
+      await recordLegalAcceptance({ query }, {
+        userId: user.id,
+        role: 'creator',
+        source: 'creator_onboarding',
+        request,
+        documents: {
+          creatorAgreement: CREATOR_AGREEMENT_VERSION,
+          contentPolicy: CONTENT_POLICY_VERSION,
+        },
+      });
     }
 
     // Generate a fresh onboarding link. These links expire quickly, so always generate

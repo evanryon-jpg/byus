@@ -15,6 +15,7 @@ import { checkRateLimit, rateLimitResponse, getClientIp } from '@/lib/rate-limit
 import { generateAppleClientSecret, verifyAppleIdToken } from '@/lib/apple-auth';
 import { attributeReferral } from '@/lib/referrals';
 import { trackServerEvent } from '@/lib/analytics';
+import { recordLegalAcceptance } from '@/lib/legal-acceptance';
 import {
   STANDARD_FEE_PERCENT,
   DISCOUNTED_FEE_PERCENT,
@@ -184,6 +185,11 @@ export async function POST(request) {
         );
         user = updated.rows[0];
       } else {
+        if (!saved.legalAccepted || !saved.legalDocuments) {
+          const signupUrl = new URL('/signup', origin);
+          signupUrl.searchParams.set('error', 'Please accept the Terms of Service and Privacy Policy before creating an account.');
+          return NextResponse.redirect(signupUrl.toString(), REDIRECT_STATUS);
+        }
         // 3. Brand new person — create the account with the role the flow started
         // with (fan by default, or creator if they clicked Apple from the creator
         // signup tab).
@@ -221,7 +227,15 @@ export async function POST(request) {
               acquisitionSource,
             ]
           );
-          return created.rows[0];
+          const createdUser = created.rows[0];
+          await recordLegalAcceptance(client, {
+            userId: createdUser.id,
+            role: createdUser.role,
+            source: 'apple_signup',
+            request,
+            documents: saved.legalDocuments,
+          });
+          return createdUser;
         });
         accountCreated = true;
         await attributeReferral(referralCode, user.id);

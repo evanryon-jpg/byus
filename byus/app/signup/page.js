@@ -38,8 +38,15 @@ function SignupForm() {
   const [error, setError] = useState(searchParams.get('error') || '');
   const [loading, setLoading] = useState(false);
 
-  const googleHref = `/api/auth/google?role=${role}${next ? `&next=${encodeURIComponent(next)}` : ''}${referralCode ? `&ref=${encodeURIComponent(referralCode)}` : ''}${acquisitionSource ? `&source=${acquisitionSource}` : ''}`;
-  const appleHref = `/api/auth/apple?role=${role}${next ? `&next=${encodeURIComponent(next)}` : ''}${referralCode ? `&ref=${encodeURIComponent(referralCode)}` : ''}${acquisitionSource ? `&source=${acquisitionSource}` : ''}`;
+  const legalQuery = termsAccepted ? '&intent=signup&legalAcceptance=1' : '';
+  const googleHref = `/api/auth/google?role=${role}${next ? `&next=${encodeURIComponent(next)}` : ''}${referralCode ? `&ref=${encodeURIComponent(referralCode)}` : ''}${acquisitionSource ? `&source=${acquisitionSource}` : ''}${legalQuery}`;
+  const appleHref = `/api/auth/apple?role=${role}${next ? `&next=${encodeURIComponent(next)}` : ''}${referralCode ? `&ref=${encodeURIComponent(referralCode)}` : ''}${acquisitionSource ? `&source=${acquisitionSource}` : ''}${legalQuery}`;
+
+  function requireTermsForOAuth(event) {
+    if (termsAccepted) return;
+    event.preventDefault();
+    setError('Please agree to the Terms of Service and Privacy Policy to continue.');
+  }
 
   function validate() {
     const errors = {};
@@ -104,32 +111,41 @@ function SignupForm() {
         <CreatorWaitlistPanel acquisitionSource={acquisitionSource} referralCode={referralCode} />
       ) : (
         <>
+          <label className="mt-6 flex items-start gap-2.5 rounded-xl border border-brand-ink/10 bg-white/60 p-3 text-sm text-brand-ink/80">
+            <input
+              type="checkbox"
+              checked={termsAccepted}
+              onChange={(e) => {
+                setTermsAccepted(e.target.checked);
+                if (e.target.checked) setError('');
+              }}
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-brand-ink/20 text-[#0F766E] focus:ring-[#0F766E]"
+            />
+            <span>
+              I have read and agree to the{' '}
+              <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-[#0F766E] underline">Terms of Service</a>
+              {' '}and acknowledge the{' '}
+              <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-[#0F766E] underline">Privacy Policy</a>.
+            </span>
+          </label>
           <a
             href={googleHref}
-            className="mt-6 flex w-full items-center justify-center gap-3 rounded-full border border-brand-ink/10 bg-brand-paper py-3 font-semibold text-[#172033] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+            onClick={requireTermsForOAuth}
+            aria-disabled={!termsAccepted}
+            className="mt-4 flex w-full items-center justify-center gap-3 rounded-full border border-brand-ink/10 bg-brand-paper py-3 font-semibold text-[#172033] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
           >
             <GoogleIcon />
             Continue with Google
           </a>
           <a
             href={appleHref}
+            onClick={requireTermsForOAuth}
+            aria-disabled={!termsAccepted}
             className="mt-3 flex w-full items-center justify-center gap-3 rounded-full bg-black py-3 font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
           >
             <AppleIcon />
             Continue with Apple
           </a>
-          <p className="mt-3 text-center text-xs text-brand-ink/60">
-            By continuing, you agree to our{' '}
-            <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline">
-              Terms of Service
-            </a>{' '}
-            and{' '}
-            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline">
-              Privacy Policy
-            </a>
-            .
-          </p>
-
           <Divider label="or sign up with email" />
 
           {/* noValidate: without it, a malformed address in the type="email" field trips the
@@ -186,26 +202,6 @@ function SignupForm() {
                 onChange={(e) => setWebsite(e.target.value)}
               />
             </div>
-
-            <label className="flex items-start gap-2.5 text-sm text-brand-ink/80">
-              <input
-                type="checkbox"
-                checked={termsAccepted}
-                onChange={(e) => setTermsAccepted(e.target.checked)}
-                className="mt-0.5 h-4 w-4 shrink-0 rounded border-brand-ink/20 text-[#0F766E] focus:ring-[#0F766E]"
-              />
-              <span>
-                I agree to the{' '}
-                <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-[#0F766E] underline">
-                  Terms of Service
-                </a>{' '}
-                and{' '}
-                <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-[#0F766E] underline">
-                  Privacy Policy
-                </a>
-                .
-              </span>
-            </label>
 
             {error && <p className="text-sm text-red-600">{error}</p>}
 

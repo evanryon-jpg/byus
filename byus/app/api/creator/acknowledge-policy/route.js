@@ -13,23 +13,40 @@ export const dynamic = 'force-dynamic';
 // yet has no gap to close -- they'll hit the original gate in connect-stripe when they do.
 
 import { NextResponse } from 'next/server';
-import { query } from '@/lib/db';
+import { withTransaction } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
+import { recordLegalAcceptance } from '@/lib/legal-acceptance';
+import { CREATOR_AGREEMENT_VERSION, CONTENT_POLICY_VERSION } from '@/lib/legal';
 
-export async function POST() {
+export async function POST(request) {
   const session = await getCurrentUser();
   if (!session || session.role !== 'creator') {
     return NextResponse.json({ error: 'Only creators can do this.' }, { status: 403 });
   }
 
   try {
-    const result = await query(
-      `UPDATE users
-       SET content_policy_accepted_at = COALESCE(content_policy_accepted_at, now())
-       WHERE id = $1 AND stripe_connect_onboarded = true
-       RETURNING content_policy_accepted_at`,
-      [session.userId]
-    );
+    const result = await withTransaction(async (client) => {
+      const updated = await client.query(
+        `UPDATE users
+         SET content_policy_accepted_at = COALESCE(content_policy_accepted_at, now())
+         WHERE id = $1 AND stripe_connect_onboarded = true
+         RETURNING content_policy_accepted_at`,
+        [session.userId]
+      );
+      if (updated.rows.length > 0) {
+        await recordLegalAcceptance(client, {
+          userId: session.userId,
+          role: 'creator',
+          source: 'policy_reacceptance',
+          request,
+          documents: {
+            creatorAgreement: CREATOR_AGREEMENT_VERSION,
+            contentPolicy: CONTENT_POLICY_VERSION,
+          },
+        });
+      }
+      return updated;
+    });
     if (result.rows.length === 0) {
       return NextResponse.json(
         { error: 'Connect Stripe first, then come back and confirm this.' },

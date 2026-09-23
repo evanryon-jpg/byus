@@ -24,6 +24,8 @@ const STATIC_ROUTES = [
   { path: '/support', changeFrequency: 'monthly', priority: 0.4 },
   { path: '/privacy', changeFrequency: 'yearly', priority: 0.2 },
   { path: '/terms', changeFrequency: 'yearly', priority: 0.2 },
+  { path: '/creator-terms', changeFrequency: 'yearly', priority: 0.2 },
+  { path: '/content-policy', changeFrequency: 'yearly', priority: 0.2 },
 ];
 
 export default async function sitemap() {

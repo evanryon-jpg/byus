@@ -10,6 +10,7 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { checkRateLimit, rateLimitResponse, getClientIp } from '@/lib/rate-limit';
 import { CREATOR_SIGNUP_PAUSED } from '@/lib/creator-signup';
+import { signupDocuments } from '@/lib/legal-acceptance';
 
 const STATE_COOKIE_NAME = 'byus_oauth_state';
 const STATE_MAX_AGE_SECONDS = 60 * 10; // 10 minutes — plenty of time to pick an Apple ID
@@ -54,13 +55,15 @@ export async function GET(request) {
   // attributed instead of silently dropping the referral.
   const referralCode = searchParams.get('ref') || '';
   const acquisitionSource = searchParams.get('source') === 'instagram' ? 'instagram' : '';
+  const legalAccepted = searchParams.get('intent') === 'signup' && searchParams.get('legalAcceptance') === '1';
+  const legalDocuments = legalAccepted ? signupDocuments(role) : null;
 
   // Random, unguessable CSRF token. It rides along in a short-lived httpOnly cookie
   // together with the role/next/ref we need to remember across the trip to Apple and
   // back, then gets compared against the `state` Apple hands back on the callback —
   // if they don't match, this browser isn't the one that started the flow.
   const state = crypto.randomBytes(24).toString('hex');
-  const payload = Buffer.from(JSON.stringify({ state, role, next, referralCode, acquisitionSource })).toString('base64url');
+  const payload = Buffer.from(JSON.stringify({ state, role, next, referralCode, acquisitionSource, legalAccepted, legalDocuments })).toString('base64url');
 
   const appleUrl = new URL('https://appleid.apple.com/auth/authorize');
   appleUrl.searchParams.set('client_id', process.env.APPLE_CLIENT_ID);

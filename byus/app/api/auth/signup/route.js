@@ -17,6 +17,7 @@ import {
   FOUNDING_CREATOR_LIMIT,
 } from '@/lib/pricing';
 import { CREATOR_SIGNUP_PAUSED, CREATOR_SIGNUP_PAUSED_MESSAGE } from '@/lib/creator-signup';
+import { recordLegalAcceptance } from '@/lib/legal-acceptance';
 
 const VERIFY_TOKEN_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -134,7 +135,14 @@ export async function POST(request) {
         normalizedSource,
       ]
     );
-    return result.rows[0];
+    const createdUser = result.rows[0];
+    await recordLegalAcceptance(client, {
+      userId: createdUser.id,
+      role: createdUser.role,
+      source: 'email_signup',
+      request,
+    });
+    return createdUser;
   });
 
   await attributeReferral(referralCode, user.id);

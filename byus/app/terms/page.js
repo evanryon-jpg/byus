@@ -3,7 +3,7 @@ export const metadata = {
   description: 'The terms that govern using ByUs as a creator or a fan.',
 };
 
-const LAST_UPDATED = 'September 19, 2026';
+const LAST_UPDATED = 'September 23, 2026';
 const CONTACT_EMAIL = 'support@byusapp.com';
 
 export default function TermsPage() {
@@ -61,6 +61,13 @@ export default function TermsPage() {
             account suspension.
           </p>
           <p className="mt-3">
+            Creators also agree to the{' '}
+            <a href="/creator-terms" className="text-brand-teal underline">Creator Agreement</a>
+            {' '}and{' '}
+            <a href="/content-policy" className="text-brand-teal underline">Content Policy</a>,
+            which are incorporated into these Terms.
+          </p>
+          <p className="mt-3">
             If a payment to you is refunded, reversed, disputed, charged back, or otherwise
             returned to a fan, you remain responsible for the creator portion of that transaction
             to the extent permitted by law and Stripe&rsquo;s rules. ByUs may reverse or recover funds
@@ -68,6 +75,49 @@ export default function TermsPage() {
             or a refund is issued. ByUs will not intentionally recover more than the creator share
             attributable to the affected transaction, and any recovery is subject to Stripe&rsquo;s
             technical and legal limitations.
+          </p>
+        </Section>
+
+        <Section title="3A. ByUs’s role">
+          <p>
+            ByUs provides technology that lets independent creators publish content, offer
+            memberships and digital products, and receive support from fans. Creators are not
+            employees, agents, partners, joint venturers, or representatives of ByUs. ByUs does
+            not create, control, endorse, or guarantee creator content, promises, products,
+            qualifications, statements, or conduct.
+          </p>
+          <p className="mt-3">
+            A transaction may be technically facilitated through ByUs, but each creator remains
+            responsible for the legality, accuracy, quality, delivery, and fulfillment of what
+            that creator offers, except for responsibilities that applicable law places directly
+            on ByUs and does not permit us to transfer.
+          </p>
+        </Section>
+
+        <Section title="3B. Creator promises, license, and responsibility for claims">
+          <p>
+            Each creator represents and warrants that they own their content or have every
+            license, release, consent, and permission needed to upload, display, sell, and
+            otherwise use it; that their content and offers are accurate and lawful; and that
+            they will provide every promised membership benefit, product, or service.
+          </p>
+          <p className="mt-3">
+            Creators retain ownership of their content. They grant ByUs a worldwide,
+            non-exclusive, royalty-free license to host, store, reproduce, format, transmit,
+            display, and distribute that content only as reasonably necessary to operate,
+            secure, moderate, promote, and improve ByUs. This license ends when the content is
+            deleted, except for reasonable backups, legal retention, and copies already shared
+            at the creator&rsquo;s direction.
+          </p>
+          <p className="mt-3">
+            To the fullest extent permitted by law, a creator will defend, indemnify, and hold
+            harmless Ryon Digital LLC, ByUs, and their owners, officers, contractors, and service
+            providers from third-party claims, losses, liabilities, damages, judgments, and
+            reasonable legal fees arising from that creator&rsquo;s content, offers, conduct, breach
+            of these Terms, violation of law, or infringement of another person&rsquo;s rights.
+            ByUs will provide reasonable notice of a covered claim and may participate in its
+            defense. A creator may not settle a claim in a way that admits fault by or imposes
+            obligations on ByUs without our written consent.
           </p>
         </Section>
 
@@ -166,17 +216,22 @@ export default function TermsPage() {
             Registered with the U.S. Copyright Office, Designation No. DMCA-1080725
           </p>
           <p className="mt-3">
-            Your notice should include: the copyrighted work you believe is infringed, the
-            specific ByUs page or post where you found the material, your contact information,
-            and a statement that you have a good-faith belief the use is unauthorized and that
-            your notice is accurate.
+            A notice must substantially comply with 17 U.S.C. § 512(c)(3), including a physical
+            or electronic signature; identification of the copyrighted work; identification and
+            location of the allegedly infringing material; sufficient contact information; a
+            good-faith statement that the disputed use is not authorized; and a statement, under
+            penalty of perjury, that the notice is accurate and the sender is authorized to act.
           </p>
           <p className="mt-3">
             We review copyright notices and remove or restrict access to material we determine
             infringes. A creator whose content is removed this way can respond with a
             counter-notice, using the same contact method above, if they believe the removal was
-            a mistake. Accounts that receive repeated, substantiated copyright complaints will be
-            suspended or terminated.
+            a mistake or misidentification. A counter-notice must substantially comply with
+            17 U.S.C. § 512(g)(3), including a signature, identification of the removed material,
+            a statement under penalty of perjury, and consent to the appropriate federal court&rsquo;s
+            jurisdiction and service of process. We may forward notices and counter-notices to
+            the affected parties. In appropriate circumstances, accounts of repeat infringers
+            will be terminated.
           </p>
         </Section>
 
@@ -199,21 +254,38 @@ export default function TermsPage() {
         <Section title="9. Disclaimers and liability">
           <p>
             ByUs is provided &ldquo;as is,&rdquo; without warranties of any kind. We&rsquo;re not
-            liable for indirect, incidental, or consequential damages arising from your use of
-            the platform, to the fullest extent the law allows. Nothing here limits liability
-            that can&rsquo;t legally be limited.
+            liable for indirect, incidental, special, exemplary, punitive, or consequential
+            damages, or for lost profits, revenue, data, goodwill, or business interruption,
+            arising from the platform or creator conduct, to the fullest extent the law allows.
+            To the fullest extent permitted by law, ByUs&rsquo;s total liability arising from the
+            service will not exceed the greater of $100 or the fees the claimant paid directly
+            to ByUs during the 12 months before the event giving rise to the claim. Nothing here
+            excludes liability that legally cannot be excluded or limited.
           </p>
         </Section>
 
-        <Section title="10. Changes to these terms">
+        <Section title="10. Governing law and disputes">
+          <p>
+            These Terms are governed by Florida law, without regard to conflict-of-law rules.
+            Unless applicable law requires otherwise, claims that are not resolved informally
+            will be brought exclusively in the state or federal courts serving the Florida county
+            where Ryon Digital LLC maintains its principal office, and each party consents to
+            those courts&rsquo; jurisdiction. Before filing, please contact us and allow 30 days for
+            a good-faith attempt to resolve the dispute.
+          </p>
+        </Section>
+
+        <Section title="11. Changes to these terms">
           <p>
             We may update these terms as ByUs evolves. If we make material changes, we&rsquo;ll
             update the date at the top of this page. Continuing to use ByUs after a change means
-            you accept the updated terms.
+            you accept the updated terms. When legally required or when a change materially
+            affects users&rsquo; rights, we will provide additional notice or require renewed
+            affirmative acceptance.
           </p>
         </Section>
 
-        <Section title="11. Contact">
+        <Section title="12. Contact">
           <p>
             Questions about these terms? Reach us at{' '}
             <a href={`mailto:${CONTACT_EMAIL}`} className="text-brand-teal underline">
