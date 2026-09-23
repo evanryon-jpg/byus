@@ -31,6 +31,6 @@ export default function robots() {
         '/verify-email',
       ],
     },
-    sitemap: 'https://byusapp.com/sitemap.xml',
+    sitemap: 'https://www.byusapp.com/sitemap.xml',
   };
 }

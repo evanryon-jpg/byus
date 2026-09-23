@@ -11,7 +11,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 const fraunces = Fraunces({ subsets: ['latin'], weight: ['500', '600', '700', '800'], style: ['normal', 'italic'], variable: '--font-display', display: 'swap' });
 const karla = Karla({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-body', display: 'swap' });
 const caveat = Caveat({ subsets: ['latin'], weight: ['500'], variable: '--font-script', display: 'swap' });
-const SITE_URL = process.env.APP_URL || 'https://byus-ten.vercel.app';
+const SITE_URL = process.env.APP_URL || 'https://www.byusapp.com';
 
 export const viewport = { themeColor: '#0F766E' };
 // Title and description both lead with "ByUs" / "ByUs App" by name -- ByUs is close
