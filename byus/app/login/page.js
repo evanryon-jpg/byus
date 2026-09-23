@@ -27,6 +27,7 @@ function LoginForm() {
   // A bounce back from /api/auth/google/callback lands here with ?error=... — surface
   // it the same way as any other login failure instead of silently dropping it.
   const [error, setError] = useState(searchParams.get('error') || '');
+  const [suspended, setSuspended] = useState(false);
   const [loading, setLoading] = useState(false);
 
   function validate() {
@@ -39,6 +40,7 @@ function LoginForm() {
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
+    setSuspended(false);
     const errors = validate();
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) return;
@@ -53,6 +55,7 @@ function LoginForm() {
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || 'Something went wrong.');
+        setSuspended(data.code === 'suspended');
         return;
       }
       router.push(next || (data.user.role === 'creator' ? '/creator/dashboard' : '/browse'));
@@ -143,7 +146,17 @@ function LoginForm() {
           {fieldErrors.password && <p className="mt-1 text-xs text-red-600">{fieldErrors.password}</p>}
         </label>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && (
+          <p className="text-sm text-red-600">
+            {error}
+            {suspended && (
+              <>
+                {' '}
+                <a href="/appeal" className="underline font-semibold">Appeal this suspension →</a>
+              </>
+            )}
+          </p>
+        )}
 
         <button
           type="submit"
