@@ -89,6 +89,26 @@ export default function AdminClient({
           </span>
           <span aria-hidden="true" className="text-[#0F766E]">→</span>
         </a>
+        <a
+          href="/admin/appeals"
+          className="flex items-center justify-between rounded-xl border border-brand-ink/10 bg-brand-paper px-4 py-3 transition hover:bg-brand-ink/5"
+        >
+          <span>
+            <span className="block font-semibold text-[#172033]">Suspension appeals</span>
+            <span className="block text-xs text-brand-ink/65">Tracked appeals, oldest open case first</span>
+          </span>
+          <span aria-hidden="true" className="text-[#0F766E]">→</span>
+        </a>
+        <a
+          href="/admin/compliance"
+          className="flex items-center justify-between rounded-xl border border-brand-ink/10 bg-brand-paper px-4 py-3 transition hover:bg-brand-ink/5"
+        >
+          <span>
+            <span className="block font-semibold text-[#172033]">Compliance snapshot</span>
+            <span className="block text-xs text-brand-ink/65">Live enforcement stats, ready for a processor review</span>
+          </span>
+          <span aria-hidden="true" className="text-[#0F766E]">→</span>
+        </a>
       </nav>
 
       <VideoModerationSection
