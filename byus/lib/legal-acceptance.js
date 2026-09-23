@@ -4,6 +4,7 @@ import {
   CREATOR_AGREEMENT_VERSION,
   CONTENT_POLICY_VERSION,
 } from '@/lib/legal';
+import { getClientIp } from '@/lib/rate-limit';
 
 export function signupDocuments(role) {
   const documents = {
@@ -18,9 +19,10 @@ export function signupDocuments(role) {
 }
 
 export function requestAcceptanceEvidence(request) {
-  const forwarded = request.headers.get('x-forwarded-for') || '';
+  // Reuses the same IP-extraction logic the rate limiter already relies on elsewhere,
+  // rather than a second, slightly different implementation of the same thing.
   return {
-    ipAddress: forwarded.split(',')[0].trim() || request.headers.get('x-real-ip') || null,
+    ipAddress: getClientIp(request),
     userAgent: request.headers.get('user-agent')?.slice(0, 1000) || null,
   };
 }
