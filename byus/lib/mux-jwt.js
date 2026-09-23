@@ -21,3 +21,17 @@ export function signPlaybackToken(playbackId, { expiresIn = '4h' } = {}) {
     { algorithm: 'RS256', keyid: keyId, expiresIn }
   );
 }
+
+// Downloadable MP4s (static renditions) of a signed-policy asset also need a signed
+// token appended to the URL, the same way normal playback does. Mux's docs don't
+// spell out a distinct audience claim for static-rendition/MP4 URLs the way they do
+// for playback ("v"), thumbnails ("t"), and gifs ("g") -- their guide for enabling
+// static MP4 renditions says only to "sign requests made for MP4 URLs" the same way
+// as the playback guide, and their own SDK's audience enum has no separate value for
+// it either. aud: "v" (via signPlaybackToken) is therefore reused rather than a
+// distinct value -- if Mux ever rejects these tokens, this assumption is the first
+// thing to check with Mux support. A longer default expiry than playback's 4h since
+// a creator downloading their whole catalog may be sitting on a slow connection.
+export function signDownloadToken(playbackId, { expiresIn = '6h' } = {}) {
+  return signPlaybackToken(playbackId, { expiresIn });
+}

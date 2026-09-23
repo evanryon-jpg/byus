@@ -114,6 +114,20 @@ const limiters = {
     limiter: Ratelimit.slidingWindow(15, '1 h'),
     prefix: 'rl:video-upload',
   }),
+  // Guards POST /api/creator/video-export (kick off downloadable copies of a
+  // creator's whole video catalog). Unlike video-upload above, this isn't sized to
+  // protect against a runaway Mux bill -- the "standard" static rendition it
+  // requests is free to generate, and delivering the resulting MP4s costs the same
+  // per-minute rate as ordinary streaming playback, so even a large catalog is a few
+  // dollars at most. This exists purely to stop a compromised session from
+  // re-triggering rendition generation across the same catalog over and over; the
+  // GET on the same route that checks status isn't rate-limited at all, since
+  // that's just a read.
+  'video-export': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(1, '24 h'),
+    prefix: 'rl:video-export',
+  }),
   // Guards saving a creator's social/external links — cheap to run, but still an
   // authenticated write with no other cost to automating against.
   'creator-links': new Ratelimit({

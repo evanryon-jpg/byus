@@ -97,6 +97,22 @@ export async function createModerationJob(assetId, { dense = false } = {}) {
   });
 }
 
+// Requests a downloadable MP4 for an existing asset -- the "standard" static
+// rendition (source resolution, resolution: 'highest') is free to generate on Mux's
+// pricing model; only the "advanced" tier (forcing a specific output resolution)
+// costs extra, and this app never asks for that. Used by the creator video-export
+// feature (app/api/creator/video-export) so a creator can pull down their own
+// catalog, e.g. before leaving the platform. Mux errors on a duplicate request for
+// a rendition that already exists or is in progress, so callers should check the
+// asset's existing static_renditions first and only call this for assets missing
+// one -- see findStandardRendition in the video-export route.
+export async function requestStaticRendition(assetId) {
+  return muxFetch(`/video/v1/assets/${assetId}/static-renditions`, {
+    method: 'POST',
+    body: JSON.stringify({ resolution: 'highest' }),
+  });
+}
+
 // Best-effort cleanup when a video post is deleted -- an orphaned Mux asset costs
 // storage/minutes, not correctness, so callers swallow this rather than let a Mux
 // hiccup block the deletion the creator actually asked for (same pattern as the Blob
