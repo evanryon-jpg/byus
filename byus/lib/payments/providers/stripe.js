@@ -202,6 +202,44 @@ export async function updateSubscriptionFeePercent({ subscriptionId, feePercent 
   await stripe.subscriptions.update(subscriptionId, { application_fee_percent: feePercent });
 }
 
+// Suspending a creator (app/api/admin/users/[id]/route.js) pauses billing on every one
+// of their active subscriptions rather than canceling them outright -- cancellation is
+// permanent and throws away the fan's billing relationship even if the suspension turns
+// out to be temporary or contested. `behavior: 'void'` means Stripe still advances the
+// billing period and generates invoices on schedule, it just voids each one instead of
+// charging it, so nothing is ever collected while paused and nothing is left half-billed
+// to clean up on reinstatement.
+export async function pauseSubscriptionCollection({ subscriptionId }) {
+  await stripe.subscriptions.update(subscriptionId, { pause_collection: { behavior: 'void' } });
+}
+
+// Per Stripe's docs, an empty value unsets a param -- there's no dedicated "clear" call,
+// this *is* the documented way to remove pause_collection and let billing resume on the
+// subscription's normal schedule.
+export async function resumeSubscriptionCollection({ subscriptionId }) {
+  await stripe.subscriptions.update(subscriptionId, { pause_collection: '' });
+}
+
+// ---- Connected-account payouts -----------------------------------------------------
+
+// Suspending a creator also pauses payouts from their Connect account: switching to a
+// manual schedule stops Stripe from automatically sending their available balance to
+// their bank, without touching the account itself (no capability changes, nothing
+// disconnected) -- reversible the moment the suspension is lifted, and funds already
+// held keep accumulating rather than being seized or returned.
+export async function pauseConnectedAccountPayouts({ accountId }) {
+  await stripe.accounts.update(accountId, { settings: { payouts: { schedule: { interval: 'manual' } } } });
+}
+
+// Restores ByUs's own default payout cadence. This can't recover whatever custom
+// schedule a creator may have set for themselves before being suspended -- Stripe has
+// no "previous schedule" to read back -- so a creator who'd customized their payout
+// timing needs to reset it again after reinstatement. A one-time loss of a preference,
+// not of funds, and worth the simplicity of not having to snapshot/restore schedules.
+export async function resumeConnectedAccountPayouts({ accountId }) {
+  await stripe.accounts.update(accountId, { settings: { payouts: { schedule: { interval: 'daily' } } } });
+}
+
 // ---- Refunds & connected-account fund recovery ------------------------------------------
 
 export async function createDestinationChargeRefund({
