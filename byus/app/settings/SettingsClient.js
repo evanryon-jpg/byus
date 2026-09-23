@@ -40,6 +40,7 @@ function SettingsClientInner({ initialUser, initialReferral, initialSuggestions 
       <ConnectPlatformsCard user={user} />
       <CreatorIntegrationsCard user={user} />
       <RssImportCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
+      <VideoExportCard user={user} />
       <ReferralCard role={user.role} initialData={initialReferral} />
       <SuggestionBoxCard initialSuggestions={initialSuggestions} />
       <PasswordCard />
@@ -990,6 +991,142 @@ function RssImportCard({ user, onChanged }) {
       )}
       {status && (
         <p className={`mt-3 text-sm ${status.type === 'ok' ? 'text-green-700' : 'text-red-600'}`}>{status.text}</p>
+      )}
+    </section>
+  );
+}
+
+// Lets a creator pull down a full-quality copy of everything they've posted --
+// handy as a personal backup, or before leaving the platform. Every status comes
+// straight from a fresh Mux lookup (app/api/creator/video-export) rather than
+// being cached here, so refreshing always reflects Mux's real encoding progress,
+// not something that could drift stale in this component's state.
+function VideoExportCard({ user }) {
+  const [videos, setVideos] = useState(null); // null = still loading
+  const [loadError, setLoadError] = useState('');
+  const [starting, setStarting] = useState(false);
+  const [status, setStatus] = useState(null); // { type: 'ok' | 'error', text }
+
+  useEffect(() => {
+    if (user.role !== 'creator') return;
+    refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user.role]);
+
+  async function refresh() {
+    setLoadError('');
+    try {
+      const res = await fetch('/api/creator/video-export');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not load export status.');
+      setVideos(data.videos);
+    } catch (err) {
+      setLoadError(err.message || 'Could not load export status.');
+    }
+  }
+
+  async function handleStart() {
+    setStarting(true);
+    setStatus(null);
+    try {
+      const res = await fetch('/api/creator/video-export', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not start export.');
+      setStatus({
+        type: 'ok',
+        text:
+          data.requested > 0
+            ? `Preparing ${data.requested} video${data.requested === 1 ? '' : 's'} for download. This can take a few minutes -- use "Refresh status" below to check.`
+            : 'Everything is already prepared or in progress.',
+      });
+      await refresh();
+    } catch (err) {
+      setStatus({ type: 'error', text: err.message || 'Could not start export. Try again.' });
+    } finally {
+      setStarting(false);
+    }
+  }
+
+  if (user.role !== 'creator') return null;
+
+  const readyCount = videos ? videos.filter((v) => v.status === 'ready').length : 0;
+
+  return (
+    <section className="mt-6 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
+      <h2 className="font-semibold">Export your videos</h2>
+      <p className="mt-1 text-sm text-brand-ink/65">
+        Get a full-quality download link for every video you've posted -- handy as a backup, or if
+        you ever move on from ByUs. Preparing a video for download takes a few minutes; once ready,
+        the link stays good for several hours.
+      </p>
+
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          onClick={handleStart}
+          disabled={starting || !videos || videos.length === 0}
+          className="rounded-full bg-[#0F766E] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+        >
+          {starting ? 'Starting…' : 'Prepare my videos'}
+        </button>
+        <button
+          type="button"
+          onClick={refresh}
+          className="rounded-full border border-brand-ink/15 px-5 py-2.5 text-sm font-semibold text-brand-ink/70"
+        >
+          Refresh status
+        </button>
+        {videos && videos.length > 0 && (
+          <span className="text-xs text-brand-ink/55">
+            {readyCount} of {videos.length} ready
+          </span>
+        )}
+      </div>
+
+      {status && (
+        <p className={`mt-3 text-sm ${status.type === 'ok' ? 'text-green-700' : 'text-red-600'}`}>{status.text}</p>
+      )}
+      {loadError && <p className="mt-3 text-sm text-red-600">{loadError}</p>}
+
+      {videos === null && !loadError && (
+        <p className="mt-4 text-sm text-brand-ink/55">Loading your videos…</p>
+      )}
+      {videos && videos.length === 0 && (
+        <p className="mt-4 text-sm text-brand-ink/55">You haven't posted any videos yet.</p>
+      )}
+      {videos && videos.length > 0 && (
+        <ul className="mt-4 max-h-80 divide-y divide-brand-ink/10 overflow-y-auto rounded-xl border border-brand-ink/10">
+          {videos.map((v) => (
+            <li key={v.postId} className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
+              <span className="truncate text-[#172033]">{v.title || 'Untitled video'}</span>
+              {v.status === 'ready' && (
+                <a
+                  href={v.downloadUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0 rounded-full bg-[#0F766E]/10 px-3 py-1 text-xs font-semibold text-[#0F766E]"
+                >
+                  Download
+                </a>
+              )}
+              {v.status === 'preparing' && (
+                <span className="shrink-0 rounded-full bg-brand-gold/15 px-3 py-1 text-xs font-semibold text-[#6b5325]">
+                  Preparing…
+                </span>
+              )}
+              {v.status === 'not_requested' && (
+                <span className="shrink-0 rounded-full bg-brand-ink/5 px-3 py-1 text-xs font-semibold text-brand-ink/50">
+                  Not started
+                </span>
+              )}
+              {v.status === 'errored' && (
+                <span className="shrink-0 rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-600">
+                  Error
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
       )}
     </section>
   );
