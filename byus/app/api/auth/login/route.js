@@ -54,8 +54,10 @@ export async function POST(request) {
   // Someone who doesn't know the password learns nothing extra; someone who does gets a
   // clear, specific reason they can't get in rather than a session that silently never works.
   if (user.is_suspended) {
+    // `code: 'suspended'` lets the login page render a real link to /appeal instead of
+    // just the plain error text — see app/login/page.js.
     return NextResponse.json(
-      { error: 'This account has been suspended. Contact support@byusapp.com if you believe this is a mistake.' },
+      { error: 'This account has been suspended. Visit the appeal page if you believe this is a mistake.', code: 'suspended' },
       { status: 403 }
     );
   }
