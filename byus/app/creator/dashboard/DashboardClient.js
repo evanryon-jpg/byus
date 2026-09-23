@@ -334,9 +334,11 @@ export default function DashboardClient({
                     className="mt-0.5 h-4 w-4 shrink-0 rounded border-brand-ink/30 text-[#0F766E] focus:ring-[#0F766E]"
                   />
                   <span>
-                    I agree that everything I publish on ByUs follows the{' '}
-                    <a href="/terms" target="_blank" className="text-[#0F766E] underline">content guidelines</a>
-                    {' '}— no adult content, ever, and nothing that endangers minors.
+                    I have read and agree to the{' '}
+                    <a href="/creator-terms" target="_blank" className="text-[#0F766E] underline">Creator Agreement</a>
+                    {' '}and{' '}
+                    <a href="/content-policy" target="_blank" className="text-[#0F766E] underline">Content Policy</a>,
+                    including the rules on ownership, consent, prohibited content, and creator responsibility.
                   </span>
                 </label>
                 <button
