@@ -11,10 +11,23 @@ export const dynamic = 'force-dynamic';
 //   - hides a suspended creator's public profile page (app/api/creators/[creatorId]/route.js
 //     returns the same "not found" a nonexistent slug would) and drops them from Browse
 //     and the homepage's featured list (app/api/creators/route.js)
-// It deliberately does NOT touch Stripe -- it doesn't cancel subscriptions, pause payouts,
-// or disconnect their Express account. Forcibly canceling a creator's subscriptions affects
-// fan billing and refunds, which is a judgment call worth making per-case in the Stripe
-// dashboard, not something to automate silently as a side effect of a triage click here.
+//   - pauses payouts on their Stripe Connect account and pauses billing on every one of
+//     their active subscriptions (see the Stripe calls below) -- this used to be a
+//     deliberate gap ("suspending doesn't touch Stripe, do that by hand in the
+//     dashboard"), closed as of Sept 2026 per Stripe's own compliance review, which
+//     specifically asked for evidence that a moderation action actually blocks money
+//     moving, automatically, not as a manual follow-up step someone might forget.
+// Reinstating (is_suspended: false) reverses both: payouts resume on ByUs's default
+// schedule and subscription billing resumes on its normal cycle. Neither pause cancels
+// anything -- a subscription stays active and billing resumes exactly where it left off,
+// a Connect account keeps accumulating balance while paused -- reinstatement is meant to
+// put a wrongly- or provisionally-suspended creator back to normal with nothing to clean
+// up, not to make suspension something ByUs is reluctant to use because undoing it is messy.
+//
+// The Stripe side is best-effort: if it fails after the database write already succeeded,
+// the suspension itself still holds (login is blocked, the profile is hidden) and the
+// failure is reported via alertOps rather than rolled back -- a Stripe outage should never
+// be the reason a moderation action doesn't take effect at all.
 //
 // Gated by lib/admin.js's email allowlist, same as the rest of /api/admin.
 //
@@ -30,8 +43,70 @@ import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { isAdmin, getAdminEmails } from '@/lib/admin';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { paymentProvider } from '@/lib/payments';
+import { alertOps } from '@/lib/alerts';
 
 const REASON_MAX = 500;
+
+// Pauses or resumes the Stripe side of a suspension for one creator: their Connect
+// payout schedule, plus billing on every one of their currently-active subscriptions.
+// Never throws -- each Stripe call is wrapped individually so one failure (a bad account
+// id, a subscription Stripe already canceled on its own) can't stop the rest from being
+// attempted, and every failure is alerted rather than silently swallowed.
+async function applyStripeSuspensionState(userId, suspended) {
+  const userResult = await query(
+    `SELECT role, stripe_connect_account_id FROM users WHERE id = $1`,
+    [userId]
+  );
+  const target = userResult.rows[0];
+  if (!target || target.role !== 'creator') {
+    return { payoutsUpdated: false, subscriptionsUpdated: 0, subscriptionsFailed: 0 };
+  }
+
+  let payoutsUpdated = false;
+  if (target.stripe_connect_account_id) {
+    try {
+      if (suspended) {
+        await paymentProvider.pauseConnectedAccountPayouts({ accountId: target.stripe_connect_account_id });
+      } else {
+        await paymentProvider.resumeConnectedAccountPayouts({ accountId: target.stripe_connect_account_id });
+      }
+      payoutsUpdated = true;
+    } catch (err) {
+      console.error(`admin/users: failed to ${suspended ? 'pause' : 'resume'} payouts for`, userId, err);
+      await alertOps(`admin-suspend-payouts-${suspended ? 'pause' : 'resume'}`, err);
+    }
+  }
+
+  const subsResult = await query(
+    `SELECT stripe_subscription_id FROM subscriptions
+     WHERE creator_id = $1 AND status = 'active' AND stripe_subscription_id IS NOT NULL`,
+    [userId]
+  );
+
+  let subscriptionsUpdated = 0;
+  let subscriptionsFailed = 0;
+  for (const row of subsResult.rows) {
+    try {
+      if (suspended) {
+        await paymentProvider.pauseSubscriptionCollection({ subscriptionId: row.stripe_subscription_id });
+      } else {
+        await paymentProvider.resumeSubscriptionCollection({ subscriptionId: row.stripe_subscription_id });
+      }
+      subscriptionsUpdated += 1;
+    } catch (err) {
+      console.error(`admin/users: failed to ${suspended ? 'pause' : 'resume'} subscription`, row.stripe_subscription_id, err);
+      subscriptionsFailed += 1;
+    }
+  }
+  if (subscriptionsFailed > 0) {
+    await alertOps(`admin-suspend-subscriptions-${suspended ? 'pause' : 'resume'}`, new Error(
+      `${subscriptionsFailed} of ${subsResult.rows.length} subscription(s) failed to ${suspended ? 'pause' : 'resume'} for creator ${userId}`
+    ));
+  }
+
+  return { payoutsUpdated, subscriptionsUpdated, subscriptionsFailed };
+}
 
 export async function PATCH(request, { params }) {
   const session = await getCurrentUser();
@@ -96,7 +171,13 @@ export async function PATCH(request, { params }) {
     if (result.rows.length === 0) {
       return NextResponse.json({ error: 'Account not found.' }, { status: 404 });
     }
-    return NextResponse.json({ user: result.rows[0] });
+
+    // Runs after the suspension itself is already committed -- see the file header
+    // comment on why the Stripe side is best-effort rather than part of the same
+    // all-or-nothing operation.
+    const stripeResult = await applyStripeSuspensionState(params.id, is_suspended);
+
+    return NextResponse.json({ user: result.rows[0], stripe: stripeResult });
   } catch (err) {
     console.error('admin/users PATCH failed:', err);
     return NextResponse.json({ error: 'Could not save this change.' }, { status: 500 });
