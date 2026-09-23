@@ -173,7 +173,7 @@ export async function POST(request) {
           if (checkoutSession.mode === 'payment') {
             if (!tipPaymentIntent) break;
             const metadata = tipPaymentIntent.metadata || {};
-            const { type, fan_id, creator_id, message, product_id } = metadata;
+            const { type, fan_id, creator_id, message, product_id, post_id } = metadata;
             if (!fan_id || !creator_id) break;
 
             const grossCents = tipPaymentIntent.amount;
@@ -235,11 +235,18 @@ export async function POST(request) {
 
             if (type !== 'tip') break;
 
+            // post_id is the tip's link to specific content (see the tip route's own
+            // header comment) -- written through to our own ledger, not just left in
+            // Stripe's metadata, so ByUs has its own audit trail of what each tip was
+            // for. Stored as-is with no re-validation here: the checkout API already
+            // confirmed the post belonged to this creator before the session was ever
+            // created, and re-checking it now would only fail closed on a post the
+            // creator deleted in between, which shouldn't also swallow the payment.
             await client.query(
               `INSERT INTO transactions
-                 (fan_id, creator_id, gross_amount_cents, platform_fee_cents, creator_net_cents, stripe_charge_id, status, message)
-               VALUES ($1, $2, $3, $4, $5, $6, 'succeeded', $7)`,
-              [fan_id, creator_id, grossCents, feeCents, netCents, chargeId, message || null]
+                 (fan_id, creator_id, gross_amount_cents, platform_fee_cents, creator_net_cents, stripe_charge_id, status, message, post_id)
+               VALUES ($1, $2, $3, $4, $5, $6, 'succeeded', $7, $8)`,
+              [fan_id, creator_id, grossCents, feeCents, netCents, chargeId, message || null, post_id || null]
             );
 
             // Same earnings ledger + monthly fee-tier recheck a subscription invoice
