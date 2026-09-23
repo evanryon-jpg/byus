@@ -205,7 +205,7 @@ export const HELP_CATEGORIES = [
       },
       {
         q: 'Is there a link I can share just for tips?',
-        a: 'Yes — every creator gets a standalone tip page at their page URL plus "/tip" (for example, byusapp.com/creator/yourname/tip). It’s a stripped-down page with just the coffee-buying flow, meant for dropping into a video description or stream panel. Copy it from the "Copy tip link" button on your dashboard.',
+        a: 'Tips are tied to a specific post rather than a standalone page — every post on your profile has its own "Tip this post" action, so share the post itself (or your regular profile link) rather than a separate tip-only URL.',
       },
     ],
   },
@@ -261,11 +261,15 @@ export const HELP_CATEGORIES = [
       },
       {
         q: 'How do I report a problem or abusive content?',
-        a: 'Email support@byusapp.com with a link to the page or post and a short description — reports are handled directly rather than through an automated system, given ByUs’s size today.',
+        a: 'Use the Report control on the relevant creator page or post, or email support@byusapp.com with a link to the page or post and a short description. Every report is reviewed directly by the ByUs team.',
+      },
+      {
+        q: 'My account was suspended — how do I appeal?',
+        a: 'Visit byusapp.com/appeal and enter the email on your account along with why you believe it was a mistake. You’ll get an email confirming it was received, and again once it’s been reviewed — no need to also email support separately.',
       },
       {
         q: 'Where can I read the Terms of Service and Privacy Policy?',
-        a: 'Both are linked in the footer of every page — Terms of Service and Privacy Policy — and cover how accounts, payments, and your data are handled in full.',
+        a: 'All of ByUs’s legal documents are linked in the footer of every page — Terms of Service, Creator Agreement, Content Policy, and Privacy Policy — and cover how accounts, content, payments, and your data are handled in full.',
       },
     ],
   },
