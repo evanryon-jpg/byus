@@ -1,7 +1,15 @@
 export const dynamic = 'force-dynamic';
 
-// POST /api/creators/:creatorId/tip
+// POST /api/creators/:creatorId/tip -> { amountCents, postId, message?, returnTo? }
 // A one-time "buy a coffee" payment — no tier, no subscription, no commitment.
+//
+// Requires a postId as of Sept 2026: Stripe's compliance review flagged the previous
+// content-free version of this endpoint (any fan could tip any creator with nothing
+// describing what the money was for) as an undescribed payment rather than a purchase
+// of goods/services. Every tip is now attached to a specific, existing post — validated
+// belongs-to-creator the same way app/api/reports/route.js validates a reported post —
+// and that post's id and title travel with the Stripe Checkout line item and metadata,
+// so the record of what the tip was for lives in Stripe's own data, not just ByUs's.
 
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
@@ -15,7 +23,7 @@ import { TERMS_VERSION, TIP_REFUND_POLICY_VERSION, tipCheckoutDisclosure } from 
 const MAX_TIP_MESSAGE_LENGTH = 300;
 
 function safeReturnPath(candidate, creatorId) {
-  if (typeof candidate === 'string' && /^\/creator\/[A-Za-z0-9_-]+(\/tip)?$/.test(candidate)) {
+  if (typeof candidate === 'string' && /^\/creator\/[A-Za-z0-9_-]+$/.test(candidate)) {
     return candidate;
   }
   if (candidate === '/support') {
@@ -49,7 +57,10 @@ export async function POST(request, { params }) {
   }
 
   const { creatorId } = params;
-  const { amountCents, message, returnTo } = await request.json();
+  const { amountCents, message, returnTo, postId } = await request.json();
+  if (typeof postId !== 'string' || !postId) {
+    return NextResponse.json({ error: 'A tip must be attached to a specific post.' }, { status: 400 });
+  }
   if (!Number.isInteger(amountCents) || amountCents < MIN_TIP_CENTS) {
     return NextResponse.json(
       { error: `A tip must be at least $${(MIN_TIP_CENTS / 100).toFixed(2)}.` },
@@ -94,6 +105,19 @@ export async function POST(request, { params }) {
       );
     }
 
+    // Confirm the post actually belongs to this creator and isn't still sitting in the
+    // moderation queue -- same belongs-to-creator check app/api/reports/route.js runs
+    // for a reported post, plus a pending_review guard since a tip is money changing
+    // hands and a not-yet-visible post is a thinner thing to attach that to.
+    const postResult = await query(
+      `SELECT id, title FROM posts WHERE id = $1 AND creator_id = $2 AND pending_review = false`,
+      [postId, creatorId]
+    );
+    const post = postResult.rows[0];
+    if (!post) {
+      return NextResponse.json({ error: 'Post not found.' }, { status: 404 });
+    }
+
     let customerId = fan.stripe_customer_id;
     if (!customerId) {
       const customer = await paymentProvider.createCustomer({ email: session.email, userId: session.userId });
@@ -108,10 +132,11 @@ export async function POST(request, { params }) {
     const origin = request.headers.get('origin') || process.env.APP_URL;
     const returnPath = safeReturnPath(returnTo, creator.id);
 
+    const postLabel = post.title ? `"${post.title}"` : 'this post';
     const { url } = await paymentProvider.createOneTimePaymentCheckoutSession({
       customerId,
       amountCents,
-      productName: `Tip for ${creator.display_name || 'this creator'}`,
+      productName: `Tip for ${creator.display_name || 'this creator'}'s post ${postLabel}`,
       applicationFeeCents,
       connectedAccountId: creator.stripe_connect_account_id,
       successUrl: `${origin}${returnPath}?tipped=true`,
@@ -121,6 +146,7 @@ export async function POST(request, { params }) {
         type: 'tip',
         fan_id: session.userId,
         creator_id: creator.id,
+        post_id: post.id,
         purchase_price_cents: String(amountCents),
         terms_version: TERMS_VERSION,
         refund_policy_version: TIP_REFUND_POLICY_VERSION,
