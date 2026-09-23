@@ -194,10 +194,6 @@ export default function ProfileClient({ data, justSubscribed, subscribedTierId, 
 
       {goal && <SupportGoalBar goal={goal} />}
 
-      {creator.stripe_connect_onboarded && (
-        <TipWidget creatorId={creator.id} creatorName={creator.display_name} />
-      )}
-
       <TopSupporters supporters={topSupporters} hasTiers={tiers.length > 0} />
 
       <DigitalProductShop creatorId={creator.slug || creator.id} />
@@ -378,6 +374,14 @@ export default function ProfileClient({ data, justSubscribed, subscribedTierId, 
                 creatorId={creatorId}
                 router={router}
               />
+              {creator.stripe_connect_onboarded && !data.isOwnPage && (
+                <TipButton
+                  creatorId={creator.id}
+                  postId={p.id}
+                  creatorName={creator.display_name}
+                  router={router}
+                />
+              )}
               <ReportButton creatorId={creator.id} postId={p.id} />
             </div>
           </li>
@@ -714,10 +718,20 @@ function SupportGoalBar({ goal }) {
 // One-time "buy a coffee" payment — no tier, no commitment, just a thank-you. Presets
 // cover the common cases; the custom field takes anything from $5 up to MAX_TIP_CENTS
 // (enforced server-side in /api/creators/:creatorId/tip).
+//
+// Tipping used to be creator-level and content-free (a bare "buy me a coffee" widget
+// on the profile, plus a standalone /creator/[creatorId]/tip page — see that route's
+// own comment). Stripe's compliance review flagged that a tip with nothing described
+// on the other side of it reads as an undescribed payment, not a purchase of goods or
+// services. So a tip is now always attached to a specific post — this button lives in
+// each post's action row instead of once at the top of the profile, and the checkout
+// line item and Stripe metadata both carry that post's id and title (see
+// app/api/creators/[creatorId]/tip/route.js). Collapsed by default like ReportButton
+// right next to it, since most visitors reading a post aren't about to tip it.
 const TIP_PRESETS_CENTS = [500, 1000, 2000];
 
-function TipWidget({ creatorId, creatorName }) {
-  const router = useRouter();
+function TipButton({ creatorId, postId, creatorName, router }) {
+  const [open, setOpen] = useState(false);
   const [custom, setCustom] = useState('');
   const [message, setMessage] = useState('');
   const [showMessage, setShowMessage] = useState(false);
@@ -731,7 +745,7 @@ function TipWidget({ creatorId, creatorName }) {
       const res = await fetch(`/api/creators/${creatorId}/tip`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amountCents: cents, message }),
+        body: JSON.stringify({ amountCents: cents, message, postId, returnTo: `/creator/${creatorId}` }),
       });
       const result = await res.json();
       if (result.url) {
@@ -739,7 +753,7 @@ function TipWidget({ creatorId, creatorName }) {
         return;
       }
       if (res.status === 401) {
-        router.push(`/login?next=${encodeURIComponent(window.location.pathname)}`);
+        router.push(`/login?next=${encodeURIComponent(`/creator/${creatorId}`)}`);
         return;
       }
       setError(result.error || 'Could not start checkout. Try again.');
@@ -760,60 +774,78 @@ function TipWidget({ creatorId, creatorName }) {
     sendTip(cents);
   }
 
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="text-xs font-medium text-brand-ink/40 hover:text-brand-ink/70 hover:underline"
+      >
+        ☕ Tip this post
+      </button>
+    );
+  }
+
   return (
-    <div className="mt-6 rounded-2xl border border-[#0F766E]/25 bg-[#0F766E]/5 p-4">
-      <p className="text-sm font-semibold text-[#172033]">☕ Buy {creatorName} a coffee</p>
-      <p className="mt-1 text-xs text-brand-ink/65">A one-time thank-you — no subscription, no commitment.</p>
-      <div className="mt-3 flex flex-wrap items-center gap-2">
+    <div className="mt-1 max-w-xs rounded-xl border border-[#0F766E]/25 bg-[#0F766E]/5 p-3 text-left shadow-sm">
+      <p className="text-xs font-semibold text-[#172033]">☕ Tip {creatorName} for this post</p>
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
         {TIP_PRESETS_CENTS.map((cents) => (
           <button
             key={cents}
             type="button"
             onClick={() => sendTip(cents)}
             disabled={sending}
-            className="rounded-full bg-[#0F766E] px-4 py-1.5 text-sm font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
+            className="rounded-full bg-[#0F766E] px-3 py-1 text-xs font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
           >
             ${(cents / 100).toFixed(0)}
           </button>
         ))}
-        <form onSubmit={handleCustomSubmit} className="flex items-center gap-1.5">
-          <span className="text-sm text-brand-ink/60">$</span>
-          <input
-            type="number"
-            min="5"
-            step="1"
-            placeholder="Other"
-            value={custom}
-            onChange={(e) => setCustom(e.target.value)}
-            className="w-16 rounded-lg border border-brand-ink/10 px-2 py-1 text-sm"
-          />
-          <button
-            type="submit"
-            disabled={sending}
-            className="text-sm font-semibold text-[#0F766E] hover:underline disabled:opacity-50"
-          >
-            {sending ? 'Sending…' : 'Send'}
-          </button>
-        </form>
       </div>
+      <form onSubmit={handleCustomSubmit} className="mt-2 flex items-center gap-1.5">
+        <span className="text-xs text-brand-ink/60">$</span>
+        <input
+          type="number"
+          min="5"
+          step="1"
+          placeholder="Other"
+          value={custom}
+          onChange={(e) => setCustom(e.target.value)}
+          className="w-16 rounded-lg border border-brand-ink/10 px-2 py-1 text-xs"
+        />
+        <button
+          type="submit"
+          disabled={sending}
+          className="text-xs font-semibold text-[#0F766E] hover:underline disabled:opacity-50"
+        >
+          {sending ? 'Sending…' : 'Send'}
+        </button>
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="text-xs text-brand-ink/50 hover:text-brand-ink/70"
+        >
+          Cancel
+        </button>
+      </form>
       {showMessage ? (
         <textarea
           value={message}
           onChange={(e) => setMessage(e.target.value.slice(0, 300))}
           placeholder={`Say something to ${creatorName} (optional, only they'll see it)`}
           rows={2}
-          className="mt-3 w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
+          className="mt-2 w-full rounded-lg border border-brand-ink/10 px-2 py-1.5 text-xs"
         />
       ) : (
         <button
           type="button"
           onClick={() => setShowMessage(true)}
-          className="mt-3 text-xs font-medium text-[#0F766E] hover:underline"
+          className="mt-2 text-[11px] font-medium text-[#0F766E] hover:underline"
         >
           + Add a message
         </button>
       )}
-      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+      {error && <p className="mt-1.5 text-xs text-red-600">{error}</p>}
     </div>
   );
 }
