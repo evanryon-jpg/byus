@@ -334,11 +334,9 @@ export default function DashboardClient({
                     className="mt-0.5 h-4 w-4 shrink-0 rounded border-brand-ink/30 text-[#0F766E] focus:ring-[#0F766E]"
                   />
                   <span>
-                    I have read and agree to the{' '}
-                    <a href="/creator-terms" target="_blank" className="text-[#0F766E] underline">Creator Agreement</a>
-                    {' '}and{' '}
-                    <a href="/content-policy" target="_blank" className="text-[#0F766E] underline">Content Policy</a>,
-                    including the rules on ownership, consent, prohibited content, and creator responsibility.
+                    I agree that everything I publish on ByUs follows the{' '}
+                    <a href="/terms" target="_blank" className="text-[#0F766E] underline">content guidelines</a>
+                    {' '}— no adult content, ever, and nothing that endangers minors.
                   </span>
                 </label>
                 <button
@@ -374,7 +372,7 @@ function PageUrlCard() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [copied, setCopied] = useState(''); // '' | 'profile' | 'tip' -- which button last showed "Copied!"
+  const [copied, setCopied] = useState(''); // '' | 'profile' -- which button last showed "Copied!"
 
   useEffect(() => {
     load();
@@ -452,13 +450,6 @@ function PageUrlCard() {
             className="text-sm font-medium text-[#0F766E] hover:text-[#115E59]"
           >
             Change
-          </button>
-          <button
-            type="button"
-            onClick={() => handleCopy(`${data.profileUrl}/tip`, 'tip')}
-            className="rounded-full border border-[#0F766E]/40 bg-[#0F766E]/10 px-4 py-2 text-sm font-semibold text-[#0F766E] hover:bg-[#0F766E]/20"
-          >
-            {copied === 'tip' ? 'Copied!' : '☕ Copy tip link'}
           </button>
         </div>
       ) : (
