@@ -12,6 +12,7 @@ import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { getReferralDiscount } from '@/lib/referrals';
 import { getPlatformMilestoneReductionPoints, applyPlatformMilestoneReduction } from '@/lib/fees';
 import { trackServerEvent } from '@/lib/analytics';
+import { scoreCheckout, riskMetadata } from '@/lib/risk-score';
 import { MIN_ANNUAL_BILLING_MONTHS, MIN_MEMBERSHIP_PRICE_CENTS } from '@/lib/pricing';
 import {
   TERMS_VERSION,
@@ -123,6 +124,17 @@ export async function POST(request) {
       trialDays: tier.trial_days,
     });
 
+    // Advisory risk score (see lib/risk-score.js): recorded for the admin risk page
+    // and stamped onto the Stripe session's metadata. Never blocks the checkout.
+    const risk = await scoreCheckout({
+      request,
+      userId: session.userId,
+      email: session.email,
+      creatorId: tier.creator_id,
+      kind: 'subscription',
+      amountCents: purchasePriceCents,
+    });
+
     const { url } = await paymentProvider.createSubscriptionCheckoutSession({
       customerId,
       priceId: stripePriceId,
@@ -143,6 +155,7 @@ export async function POST(request) {
         terms_version: TERMS_VERSION,
         refund_policy_version: MEMBERSHIP_REFUND_POLICY_VERSION,
         purchase_disclosure_shown: 'true',
+        ...riskMetadata(risk),
       },
     });
 
