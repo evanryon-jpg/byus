@@ -30,6 +30,12 @@ async function countAutoApprovedVideosLast24h() {
   return rows[0]?.n || 0;
 }
 
+async function countOpenSupportRequests() {
+  // Filed by the fan help assistant (app/api/fan/assistant) -- see app/admin/support.
+  const { rows } = await query(`SELECT COUNT(*)::int AS n FROM support_requests WHERE status = 'open'`);
+  return rows[0]?.n || 0;
+}
+
 export async function GET(request) {
   const expected = process.env.CRON_SECRET;
   if (!expected) {
@@ -41,13 +47,14 @@ export async function GET(request) {
   }
 
   try {
-    const [snapshot, smsHolds, autoApprovedVideosLast24h, risk24h] = await Promise.all([
+    const [snapshot, smsHolds, autoApprovedVideosLast24h, risk24h, openSupportRequests] = await Promise.all([
       loadComplianceSnapshot(),
       listPendingSmsBroadcastHolds(),
       countAutoApprovedVideosLast24h(),
       // Tolerate the table not existing yet (migration not applied) -- the rest of the
       // digest is still worth sending.
       countRiskEvents({ hours: 24 }).catch(() => ({ total: 0, high: 0, medium: 0 })),
+      countOpenSupportRequests().catch(() => 0),
     ]);
 
     await sendOpsDigestEmail(getAdminEmails(), {
@@ -56,6 +63,7 @@ export async function GET(request) {
       openAppeals: snapshot.openAppeals,
       openPaymentDisputes: snapshot.openPaymentDisputes,
       pendingSmsHolds: smsHolds.length,
+      openSupportRequests,
       highRiskCheckoutsLast24h: risk24h.high,
       suspensionsLast30d: snapshot.suspensionsLast30d,
       currentlySuspended: snapshot.currentlySuspended,
