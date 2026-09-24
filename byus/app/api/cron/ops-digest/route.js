@@ -15,6 +15,7 @@ import { loadComplianceSnapshot } from '@/lib/admin-data';
 import { listPendingSmsBroadcastHolds } from '@/lib/sms-holds';
 import { getAdminEmails } from '@/lib/admin';
 import { sendOpsDigestEmail } from '@/lib/email';
+import { countRiskEvents } from '@/lib/risk-score';
 
 async function countAutoApprovedVideosLast24h() {
   // "approved" (vs. "approved_creator_pending") is only ever set by the moderation
@@ -40,10 +41,13 @@ export async function GET(request) {
   }
 
   try {
-    const [snapshot, smsHolds, autoApprovedVideosLast24h] = await Promise.all([
+    const [snapshot, smsHolds, autoApprovedVideosLast24h, risk24h] = await Promise.all([
       loadComplianceSnapshot(),
       listPendingSmsBroadcastHolds(),
       countAutoApprovedVideosLast24h(),
+      // Tolerate the table not existing yet (migration not applied) -- the rest of the
+      // digest is still worth sending.
+      countRiskEvents({ hours: 24 }).catch(() => ({ total: 0, high: 0, medium: 0 })),
     ]);
 
     await sendOpsDigestEmail(getAdminEmails(), {
@@ -52,9 +56,11 @@ export async function GET(request) {
       openAppeals: snapshot.openAppeals,
       openPaymentDisputes: snapshot.openPaymentDisputes,
       pendingSmsHolds: smsHolds.length,
+      highRiskCheckoutsLast24h: risk24h.high,
       suspensionsLast30d: snapshot.suspensionsLast30d,
       currentlySuspended: snapshot.currentlySuspended,
       autoApprovedVideosLast24h,
+      checkoutsLast24h: risk24h.total,
       adminUrl: `${process.env.APP_URL}/admin`,
     });
 
