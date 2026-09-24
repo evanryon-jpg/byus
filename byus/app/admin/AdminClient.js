@@ -109,6 +109,16 @@ export default function AdminClient({
           </span>
           <span aria-hidden="true" className="text-[#0F766E]">→</span>
         </a>
+        <a
+          href="/admin/risk"
+          className="flex items-center justify-between rounded-xl border border-brand-ink/10 bg-brand-paper px-4 py-3 transition hover:bg-brand-ink/5"
+        >
+          <span>
+            <span className="block font-semibold text-[#172033]">Checkout risk review</span>
+            <span className="block text-xs text-brand-ink/65">Fans whose checkouts scored risky on account signals Stripe can't see</span>
+          </span>
+          <span aria-hidden="true" className="text-[#0F766E]">→</span>
+        </a>
       </nav>
 
       <VideoModerationSection
