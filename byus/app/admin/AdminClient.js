@@ -119,6 +119,16 @@ export default function AdminClient({
           </span>
           <span aria-hidden="true" className="text-[#0F766E]">→</span>
         </a>
+        <a
+          href="/admin/support"
+          className="flex items-center justify-between rounded-xl border border-brand-ink/10 bg-brand-paper px-4 py-3 transition hover:bg-brand-ink/5"
+        >
+          <span>
+            <span className="block font-semibold text-[#172033]">Fan support requests</span>
+            <span className="block text-xs text-brand-ink/65">Refunds and billing questions the help assistant passed to you</span>
+          </span>
+          <span aria-hidden="true" className="text-[#0F766E]">→</span>
+        </a>
       </nav>
 
       <VideoModerationSection
