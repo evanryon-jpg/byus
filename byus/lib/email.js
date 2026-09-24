@@ -308,9 +308,11 @@ export async function sendOpsDigestEmail(to, {
   openAppeals,
   openPaymentDisputes,
   pendingSmsHolds,
+  highRiskCheckoutsLast24h,
   suspensionsLast30d,
   currentlySuspended,
   autoApprovedVideosLast24h,
+  checkoutsLast24h,
   adminUrl,
 }) {
   const resend = getClient();
@@ -323,6 +325,7 @@ export async function sendOpsDigestEmail(to, {
     { label: 'Open suspension appeals', value: openAppeals, href: `${adminUrl}/appeals` },
     { label: 'Open payment disputes', value: openPaymentDisputes, href: `${adminUrl}/disputes` },
     { label: 'SMS broadcasts held for approval', value: pendingSmsHolds, href: adminUrl },
+    { label: 'High-risk checkouts, last 24h', value: highRiskCheckoutsLast24h, href: `${adminUrl}/risk` },
   ];
   const needsAttention = actionable.filter((row) => Number(row.value) > 0);
   const subject = needsAttention.length > 0
@@ -352,6 +355,7 @@ export async function sendOpsDigestEmail(to, {
         </table>
         <table style="border-collapse:collapse;width:100%;margin:16px 0;font-size:13px;color:#666;">
           <tr><td style="padding:4px 0;">Videos auto-approved by AI moderation, last 24h</td><td style="padding:4px 0;text-align:right;">${escapeHtml(String(autoApprovedVideosLast24h ?? 0))}</td></tr>
+          <tr><td style="padding:4px 0;">Checkouts started, last 24h</td><td style="padding:4px 0;text-align:right;">${escapeHtml(String(checkoutsLast24h ?? 0))}</td></tr>
           <tr><td style="padding:4px 0;">New suspensions, last 30 days</td><td style="padding:4px 0;text-align:right;">${escapeHtml(String(suspensionsLast30d ?? 0))}</td></tr>
           <tr><td style="padding:4px 0;">Currently suspended accounts</td><td style="padding:4px 0;text-align:right;">${escapeHtml(String(currentlySuspended ?? 0))}</td></tr>
         </table>
