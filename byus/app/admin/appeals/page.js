@@ -166,6 +166,14 @@ function AppealCard({ appeal, compact = false, onResolved }) {
         {appeal.message}
       </p>
 
+      {appeal.ai_recommendation && (
+        <AiTriagePanel
+          appeal={appeal}
+          showDraftButton={appeal.status === 'open' && !compact}
+          onUseDraft={() => setResolution(appeal.ai_draft_resolution || '')}
+        />
+      )}
+
       {appeal.status === 'resolved' ? (
         <p className="mt-3 text-xs text-brand-ink/65">
           {appeal.reinstated ? 'Reinstated' : 'Denied'} {formatDate(appeal.resolved_at)} — {appeal.resolution}
@@ -201,6 +209,50 @@ function AppealCard({ appeal, compact = false, onResolved }) {
           </div>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+// The model's read of the appeal (see lib/appeal-triage.js). Framed as a suggestion
+// with its reasoning shown in full, so the admin can disagree with a specific point
+// rather than a bare verdict; the draft note only ever fills the resolution textarea,
+// where it can still be edited before anything is submitted.
+const TRIAGE_STYLES = {
+  reinstate: { label: 'Suggests reinstating', cls: 'bg-green-100 text-green-700' },
+  uphold: { label: 'Suggests upholding', cls: 'bg-red-100 text-red-700' },
+  needs_human: { label: 'Needs your judgment', cls: 'bg-amber-100 text-amber-800' },
+};
+
+function AiTriagePanel({ appeal, showDraftButton, onUseDraft }) {
+  const style = TRIAGE_STYLES[appeal.ai_recommendation] || TRIAGE_STYLES.needs_human;
+  return (
+    <div className="mt-3 rounded-lg border border-[#0F766E]/20 bg-[#0F766E]/5 p-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-semibold uppercase tracking-wide text-[#0F766E]">AI triage</span>
+        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${style.cls}`}>{style.label}</span>
+        {appeal.ai_confidence && (
+          <span className="text-xs text-brand-ink/60">{appeal.ai_confidence} confidence</span>
+        )}
+      </div>
+      {appeal.ai_reasoning && (
+        <p className="mt-2 text-sm text-brand-ink/80">{appeal.ai_reasoning}</p>
+      )}
+      {appeal.ai_draft_resolution && (
+        <div className="mt-2 rounded-md bg-white/70 p-2">
+          <p className="text-xs font-medium text-brand-ink/60">Drafted note to the account holder</p>
+          <p className="mt-1 whitespace-pre-wrap text-sm text-brand-ink/80">{appeal.ai_draft_resolution}</p>
+          {showDraftButton && (
+            <button
+              type="button"
+              onClick={onUseDraft}
+              className="mt-2 text-xs font-semibold text-[#0F766E] hover:underline"
+            >
+              Use this draft (you can edit it below)
+            </button>
+          )}
+        </div>
+      )}
+      <p className="mt-2 text-xs text-brand-ink/55">A suggestion, not a decision — nothing happens until you resolve it below.</p>
     </div>
   );
 }
