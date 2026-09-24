@@ -18,6 +18,12 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { checkRateLimit, rateLimitResponse, getClientIp } from '@/lib/rate-limit';
 import { sendAppealReceivedEmail } from '@/lib/email';
+import { triageAppeal } from '@/lib/appeal-triage';
+
+// The AI triage step below adds a few seconds of model latency on top of the
+// default budget -- give it room rather than risk the appeal's confirmation email
+// getting cut off by a function timeout.
+export const maxDuration = 30;
 
 const MESSAGE_MAX = 2000;
 const GENERIC_RESPONSE = {
@@ -57,10 +63,11 @@ export async function POST(request) {
         [user.id, user.suspended_at]
       );
       if (existingOpen.rows.length === 0) {
-        await query(
+        const inserted = await query(
           `INSERT INTO suspension_appeals
              (user_id, suspended_at, suspension_reason, message, ip_address)
-           VALUES ($1, $2, $3, $4, $5)`,
+           VALUES ($1, $2, $3, $4, $5)
+           RETURNING id`,
           [user.id, user.suspended_at, user.suspension_reason, trimmedMessage, ip]
         );
         try {
@@ -70,6 +77,10 @@ export async function POST(request) {
           // /admin/appeals even if the confirmation email fails to send.
           console.error('appeal: confirmation email failed to send:', err);
         }
+        // Best-effort as well (triageAppeal swallows its own errors): reads the appeal
+        // plus account context and leaves a recommendation + draft note on the row for
+        // the admin. The admin still makes the call -- see lib/appeal-triage.js.
+        await triageAppeal(inserted.rows[0].id);
       }
       // An existing open appeal just gets treated as already-received rather than
       // duplicated or erroring — the caller sees the same generic success either way.
