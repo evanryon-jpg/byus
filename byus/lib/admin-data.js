@@ -453,6 +453,8 @@ export async function loadSuspensionAppeals() {
     `SELECT suspension_appeals.id, suspension_appeals.suspended_at, suspension_appeals.suspension_reason,
             suspension_appeals.message, suspension_appeals.status, suspension_appeals.resolution,
             suspension_appeals.reinstated, suspension_appeals.resolved_at, suspension_appeals.created_at,
+            suspension_appeals.ai_recommendation, suspension_appeals.ai_confidence,
+            suspension_appeals.ai_reasoning, suspension_appeals.ai_draft_resolution,
             u.id AS user_id, u.display_name AS user_name, u.email AS user_email, u.role AS user_role,
             u.is_suspended AS user_currently_suspended, u.suspended_at AS user_current_suspended_at
      FROM suspension_appeals

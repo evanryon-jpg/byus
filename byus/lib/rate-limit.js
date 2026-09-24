@@ -149,6 +149,14 @@ const limiters = {
     limiter: Ratelimit.slidingWindow(30, '24 h'),
     prefix: 'rl:page-coach',
   }),
+  // Fan help assistant (app/api/fan/assistant): same shape as page-coach -- every turn
+  // is a paid model call -- but fans outnumber creators, and a billing question is
+  // usually answered in a few turns, so the per-account cap is tighter.
+  'fan-assistant': new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(20, '24 h'),
+    prefix: 'rl:fan-assistant',
+  }),
   // Guards starting a one-time tip checkout — same shape of risk as subscribe (a paid
   // Stripe API call per attempt), so it gets the same allowance.
   tip: new Ratelimit({

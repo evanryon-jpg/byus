@@ -308,6 +308,7 @@ export async function sendOpsDigestEmail(to, {
   openAppeals,
   openPaymentDisputes,
   pendingSmsHolds,
+  openSupportRequests,
   highRiskCheckoutsLast24h,
   suspensionsLast30d,
   currentlySuspended,
@@ -325,6 +326,7 @@ export async function sendOpsDigestEmail(to, {
     { label: 'Open suspension appeals', value: openAppeals, href: `${adminUrl}/appeals` },
     { label: 'Open payment disputes', value: openPaymentDisputes, href: `${adminUrl}/disputes` },
     { label: 'SMS broadcasts held for approval', value: pendingSmsHolds, href: adminUrl },
+    { label: 'Fan support requests waiting on a reply', value: openSupportRequests, href: `${adminUrl}/support` },
     { label: 'High-risk checkouts, last 24h', value: highRiskCheckoutsLast24h, href: `${adminUrl}/risk` },
   ];
   const needsAttention = actionable.filter((row) => Number(row.value) > 0);
