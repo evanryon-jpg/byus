@@ -18,6 +18,7 @@ import { paymentProvider } from '@/lib/payments';
 import { MIN_TIP_CENTS, MAX_TIP_CENTS } from '@/lib/pricing';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { getPlatformMilestoneReductionPoints, applyPlatformMilestoneReduction } from '@/lib/fees';
+import { scoreCheckout, riskMetadata } from '@/lib/risk-score';
 import { TERMS_VERSION, TIP_REFUND_POLICY_VERSION, tipCheckoutDisclosure } from '@/lib/legal';
 
 const MAX_TIP_MESSAGE_LENGTH = 300;
@@ -132,6 +133,17 @@ export async function POST(request, { params }) {
     const origin = request.headers.get('origin') || process.env.APP_URL;
     const returnPath = safeReturnPath(returnTo, creator.id);
 
+    // Advisory risk score (see lib/risk-score.js) -- recorded and stamped onto the
+    // Stripe session's metadata; never blocks the tip.
+    const risk = await scoreCheckout({
+      request,
+      userId: session.userId,
+      email: session.email,
+      creatorId: creator.id,
+      kind: 'tip',
+      amountCents,
+    });
+
     const postLabel = post.title ? `"${post.title}"` : 'this post';
     const { url } = await paymentProvider.createOneTimePaymentCheckoutSession({
       customerId,
@@ -151,6 +163,7 @@ export async function POST(request, { params }) {
         terms_version: TERMS_VERSION,
         refund_policy_version: TIP_REFUND_POLICY_VERSION,
         purchase_disclosure_shown: 'true',
+        ...riskMetadata(risk),
         ...(trimmedMessage ? { message: trimmedMessage } : {}),
       },
     });
