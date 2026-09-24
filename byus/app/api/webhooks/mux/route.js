@@ -8,6 +8,7 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { query } from '@/lib/db';
 import { createModerationJob } from '@/lib/mux';
+import { alertReviewQueue } from '@/lib/alerts';
 
 const BORDERLINE_MARGIN = 0.2;
 
@@ -33,14 +34,18 @@ async function handleModerationCompleted(job) {
   });
 
   if (outputs.exceeds_threshold) {
-    await query(
+    const flagged = await query(
       `UPDATE posts
        SET video_moderation_status = 'flagged', video_moderation_scores = $2::jsonb,
            video_moderated_at = now(), pending_review = true
        WHERE mux_asset_id = $1
-         AND video_moderation_status IN ('queued', 'scanning', 'rescanning')`,
+         AND video_moderation_status IN ('queued', 'scanning', 'rescanning')
+       RETURNING id`,
       [assetId, scoreRecord]
     );
+    if (flagged.rows[0]) {
+      await alertReviewQueue('flagged-content');
+    }
     return;
   }
 
@@ -76,7 +81,7 @@ async function handleModerationCompleted(job) {
 
   // A clean scan may publish only after the creator's separate account review has
   // cleared. Otherwise it remains hidden and the account-review action releases it.
-  await query(
+  const updated = await query(
     `UPDATE posts p
      SET video_moderation_status = CASE
            WHEN u.review_cleared_at IS NOT NULL THEN 'approved'
@@ -87,9 +92,16 @@ async function handleModerationCompleted(job) {
          pending_review = (u.review_cleared_at IS NULL)
      FROM users u
      WHERE p.creator_id = u.id AND p.mux_asset_id = $1
-       AND p.video_moderation_status IN ('queued', 'scanning', 'rescanning')`,
+       AND p.video_moderation_status IN ('queued', 'scanning', 'rescanning')
+     RETURNING p.pending_review`,
     [assetId, scoreRecord]
   );
+  // pending_review only comes back true here when the creator hasn't been cleared yet
+  // -- i.e. this clean scan is still stuck behind a one-time manual account review, not
+  // because the video itself needs a second look.
+  if (updated.rows[0]?.pending_review) {
+    await alertReviewQueue('first-video-review');
+  }
 }
 
 // Mux signs each webhook with a "Mux-Signature: t=<timestamp>,v1=<hex hmac>" header,
