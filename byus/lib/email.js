@@ -293,6 +293,82 @@ export async function sendOpsAlertEmail(to, { context, message, stack }) {
   }
 }
 
+// A once-a-day rollup so a single operator doesn't have to keep re-checking /admin's
+// separate queues by hand to know whether anything needs them -- see
+// app/api/cron/ops-digest/route.js, which gathers these counts from the same loaders
+// /admin's own pages already use (lib/admin-data.js's loadComplianceSnapshot,
+// lib/sms-holds.js's listPendingSmsBroadcastHolds) so the numbers here never drift from
+// what clicking into /admin shows. Deliberately quiet on a fully-clear day rather than
+// skipped entirely -- a digest that only shows up when something's wrong is easy to
+// start ignoring the one day it matters, so this always sends, and the subject line
+// itself says whether anything needs attention.
+export async function sendOpsDigestEmail(to, {
+  pendingVideoReviews,
+  openContentReports,
+  openAppeals,
+  openPaymentDisputes,
+  pendingSmsHolds,
+  suspensionsLast30d,
+  currentlySuspended,
+  autoApprovedVideosLast24h,
+  adminUrl,
+}) {
+  const resend = getClient();
+  // Video moderation, content reports, and SMS holds are all sections on the single
+  // /admin page (see app/admin/AdminClient.js) rather than dedicated routes -- only
+  // appeals and disputes get their own sub-page, so only those two links go deeper.
+  const actionable = [
+    { label: 'Videos waiting on your review', value: pendingVideoReviews, href: adminUrl },
+    { label: 'Open content reports', value: openContentReports, href: adminUrl },
+    { label: 'Open suspension appeals', value: openAppeals, href: `${adminUrl}/appeals` },
+    { label: 'Open payment disputes', value: openPaymentDisputes, href: `${adminUrl}/disputes` },
+    { label: 'SMS broadcasts held for approval', value: pendingSmsHolds, href: adminUrl },
+  ];
+  const needsAttention = actionable.filter((row) => Number(row.value) > 0);
+  const subject = needsAttention.length > 0
+    ? `ByUs daily digest: ${needsAttention.length} thing${needsAttention.length === 1 ? '' : 's'} need${needsAttention.length === 1 ? 's' : ''} you`
+    : 'ByUs daily digest: all clear';
+
+  const rowHtml = (row) => `
+    <tr>
+      <td style="padding:10px 0;border-bottom:1px solid #EEE;color:${Number(row.value) > 0 ? '#1A1A1A' : '#999'};">
+        ${row.href ? `<a href="${row.href}" style="color:inherit;text-decoration:none;">${escapeHtml(row.label)}</a>` : escapeHtml(row.label)}
+      </td>
+      <td style="padding:10px 0;border-bottom:1px solid #EEE;text-align:right;font-weight:700;color:${Number(row.value) > 0 ? '#b42318' : '#999'};">
+        ${escapeHtml(String(row.value ?? 0))}
+      </td>
+    </tr>`;
+
+  const { error } = await resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject,
+    html: `
+      <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; color: #1A1A1A;">
+        <h2 style="margin-bottom:4px;">${needsAttention.length > 0 ? 'A few things need you today' : 'All clear today'}</h2>
+        <p style="color:#666;font-size:13px;margin-top:0;">Automated daily summary of everything sitting in a queue on ByUs.</p>
+        <table style="border-collapse:collapse;width:100%;margin:16px 0;font-size:14px;">
+          ${actionable.map(rowHtml).join('')}
+        </table>
+        <table style="border-collapse:collapse;width:100%;margin:16px 0;font-size:13px;color:#666;">
+          <tr><td style="padding:4px 0;">Videos auto-approved by AI moderation, last 24h</td><td style="padding:4px 0;text-align:right;">${escapeHtml(String(autoApprovedVideosLast24h ?? 0))}</td></tr>
+          <tr><td style="padding:4px 0;">New suspensions, last 30 days</td><td style="padding:4px 0;text-align:right;">${escapeHtml(String(suspensionsLast30d ?? 0))}</td></tr>
+          <tr><td style="padding:4px 0;">Currently suspended accounts</td><td style="padding:4px 0;text-align:right;">${escapeHtml(String(currentlySuspended ?? 0))}</td></tr>
+        </table>
+        <p style="margin:24px 0;">
+          <a href="${adminUrl}" style="background:#146359;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;">Open ByUs admin</a>
+        </p>
+        <p style="color:#999;font-size:12px;">Sent once a day. Anything time-sensitive (a flagged video, a new creator's first upload) already texted you separately.</p>
+      </div>
+    `,
+  });
+
+  if (error) {
+    console.error('Resend ops digest failed:', error);
+    throw new Error(error.message || 'Could not send the ops digest email.');
+  }
+}
+
 // Emails a creator's active subscribers when they publish a new post — one individual
 // email per recipient (never one email with everyone in "to"), sent via the batch
 // endpoint like the creator-update broadcast below. Only sent to subscribers who haven't

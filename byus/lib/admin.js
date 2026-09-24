@@ -18,3 +18,18 @@ export function isAdmin(session) {
 export function getAdminEmails() {
   return Array.from(ADMIN_EMAILS);
 }
+
+// Phone numbers for time-sensitive SMS alerts (see lib/alerts.js's alertReviewQueue) --
+// e.g. a brand-new creator's first video sitting in the review queue, which blocks every
+// upload they make until it's cleared. Deliberately an env var rather than a hardcoded
+// list like ADMIN_EMAILS above: a personal cell number doesn't belong committed to the
+// repo the way a fixed platform-owner email does. Comma-separated E.164 numbers
+// (e.g. "+15551234567,+15557654321"); unset means this alert channel is just off, which
+// callers treat as a no-op rather than an error.
+export function getAdminAlertPhones() {
+  const raw = process.env.ADMIN_ALERT_PHONES || '';
+  return raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
