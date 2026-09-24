@@ -6,6 +6,7 @@ import { getCurrentUser } from '@/lib/session';
 import { paymentProvider } from '@/lib/payments';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { getPlatformMilestoneReductionPoints, applyPlatformMilestoneReduction } from '@/lib/fees';
+import { scoreCheckout, riskMetadata } from '@/lib/risk-score';
 import { MIN_DIGITAL_PRODUCT_PRICE_CENTS } from '@/lib/pricing';
 
 export async function POST(request, { params }) {
@@ -71,6 +72,17 @@ export async function POST(request, { params }) {
     const applicationFeeCents = Math.round((product.price_cents * feePercent) / 100);
     const origin = request.headers.get('origin') || process.env.APP_URL;
 
+    // Advisory risk score (see lib/risk-score.js) -- recorded and stamped onto the
+    // Stripe session's metadata; never blocks the purchase.
+    const risk = await scoreCheckout({
+      request,
+      userId: session.userId,
+      email: session.email,
+      creatorId: product.creator_id,
+      kind: 'product',
+      amountCents: product.price_cents,
+    });
+
     const { url } = await paymentProvider.createOneTimePaymentCheckoutSession({
       customerId,
       amountCents: product.price_cents,
@@ -86,6 +98,7 @@ export async function POST(request, { params }) {
         fan_id: session.userId,
         creator_id: product.creator_id,
         purchase_price_cents: String(product.price_cents),
+        ...riskMetadata(risk),
       },
     });
     return NextResponse.json({ url });
