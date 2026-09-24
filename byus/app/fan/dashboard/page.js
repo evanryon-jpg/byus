@@ -5,6 +5,7 @@ import Image from 'next/image';
 import VerifyEmailBanner from '../../components/VerifyEmailBanner';
 import FanDownloads from '../../components/FanDownloads';
 import FeedLinkButton from '../../components/FeedLinkButton';
+import FanAssistant from '../../components/FanAssistant';
 
 export default function FanDashboard() {
   const [user, setUser] = useState(null);
@@ -273,6 +274,8 @@ export default function FanDashboard() {
           </p>
         )}
       </ul>
+
+      <FanAssistant />
     </div>
   );
 }
