@@ -13,6 +13,7 @@ import { getReferralDiscount } from '@/lib/referrals';
 import { chargeableFeePercent } from '@/lib/fees';
 import { trackServerEvent } from '@/lib/analytics';
 import { scoreCheckout, riskMetadata } from '@/lib/risk-score';
+import { supporterSourceMetadata } from '@/lib/supporter-source';
 import { MIN_ANNUAL_BILLING_MONTHS, MIN_MEMBERSHIP_PRICE_CENTS } from '@/lib/pricing';
 import {
   TERMS_VERSION,
@@ -159,6 +160,9 @@ export async function POST(request) {
         refund_policy_version: MEMBERSHIP_REFUND_POLICY_VERSION,
         purchase_disclosure_shown: 'true',
         ...riskMetadata(risk),
+        // How this fan first found the creator -- written onto the subscriptions row by the
+        // Stripe webhook (lib/supporter-source.js).
+        ...supporterSourceMetadata(request, tier.creator_id),
       },
     });
 
