@@ -314,6 +314,8 @@ export async function sendOpsDigestEmail(to, {
   currentlySuspended,
   autoApprovedVideosLast24h,
   checkoutsLast24h,
+  newWaitlistSignups = [],
+  foundingStats = null,
   adminUrl,
 }) {
   const resend = getClient();
@@ -330,9 +332,32 @@ export async function sendOpsDigestEmail(to, {
     { label: 'High-risk checkouts, last 24h', value: highRiskCheckoutsLast24h, href: `${adminUrl}/risk` },
   ];
   const needsAttention = actionable.filter((row) => Number(row.value) > 0);
-  const subject = needsAttention.length > 0
+  const baseSubject = needsAttention.length > 0
     ? `ByUs daily digest: ${needsAttention.length} thing${needsAttention.length === 1 ? '' : 's'} need${needsAttention.length === 1 ? 's' : ''} you`
     : 'ByUs daily digest: all clear';
+  // New waitlist signups are good news, not a queue -- they never count toward "needs
+  // you", but they ride in the subject line so they're seen without opening the email.
+  const signupCount = newWaitlistSignups.length;
+  const subject = signupCount > 0
+    ? `${baseSubject} · ${signupCount} new waitlist signup${signupCount === 1 ? '' : 's'}`
+    : baseSubject;
+
+  const signupsHtml = signupCount > 0
+    ? `
+        <h3 style="margin:24px 0 4px;font-size:16px;color:#146359;">New on the founding waitlist (last 24h)</h3>
+        <table style="border-collapse:collapse;width:100%;margin:8px 0 4px;font-size:14px;">
+          ${newWaitlistSignups.map((signup) => `
+            <tr>
+              <td style="padding:8px 0;border-bottom:1px solid #EEE;">
+                ${escapeHtml(signup.email)}${signup.displayName ? ` <span style="color:#666;">(${escapeHtml(signup.displayName)})</span>` : ''}
+              </td>
+              <td style="padding:8px 0;border-bottom:1px solid #EEE;text-align:right;font-weight:700;color:#146359;">
+                ${signup.foundingSpot ? `Spot #${escapeHtml(String(signup.foundingSpot))}` : 'Standard pricing'}
+              </td>
+            </tr>`).join('')}
+        </table>
+        ${foundingStats ? `<p style="color:#666;font-size:13px;margin:4px 0 0;">${escapeHtml(String(foundingStats.claimed))} of ${escapeHtml(String(foundingStats.limit))} founding spots reserved · ${escapeHtml(String(foundingStats.remaining))} remaining</p>` : ''}`
+    : '';
 
   const rowHtml = (row) => `
     <tr>
@@ -355,6 +380,7 @@ export async function sendOpsDigestEmail(to, {
         <table style="border-collapse:collapse;width:100%;margin:16px 0;font-size:14px;">
           ${actionable.map(rowHtml).join('')}
         </table>
+        ${signupsHtml}
         <table style="border-collapse:collapse;width:100%;margin:16px 0;font-size:13px;color:#666;">
           <tr><td style="padding:4px 0;">Videos auto-approved by AI moderation, last 24h</td><td style="padding:4px 0;text-align:right;">${escapeHtml(String(autoApprovedVideosLast24h ?? 0))}</td></tr>
           <tr><td style="padding:4px 0;">Checkouts started, last 24h</td><td style="padding:4px 0;text-align:right;">${escapeHtml(String(checkoutsLast24h ?? 0))}</td></tr>
