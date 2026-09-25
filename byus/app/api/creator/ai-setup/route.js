@@ -80,12 +80,12 @@ Suggest a starter profile for them. Reply with ONLY a JSON object, no other text
   "bio": "a warm, specific 1-2 sentence bio under 280 characters, written in the creator's voice (first person)",
   "tags": ["2 to 5 short lowercase category words, e.g. cooking, fitness, photography"],
   "tiers": [
-    { "name": "short tier name", "priceCents": 500, "description": "one short sentence of what this tier gets a fan" },
+    { "name": "short tier name", "priceCents": 800, "description": "one short sentence of what this tier gets a fan" },
     { "name": "short tier name", "priceCents": 1000, "description": "one short sentence" },
     { "name": "short tier name", "priceCents": 2500, "description": "one short sentence" }
   ]
 }
-The three tiers should be a sensible low/mid/high ladder for this specific creator, priced in whole-dollar cents (e.g. 500 = $5.00).`;
+The three tiers should be a sensible low/mid/high ladder for this specific creator, priced in whole-dollar cents (e.g. 800 = $8.00). The lowest tier must be at least 800.`;
 
   let aiResponse;
   try {
