@@ -4,7 +4,7 @@
 // redirect fires (e.g. for link previews / crawlers that don't follow it).
 export const metadata = {
   title: 'Join the Founding Creator Waitlist — ByUs',
-  description: 'Creator signup is temporarily paused. Join the waitlist to lock in our lowest fee (10%, forever) as one of the first 50 founding creators.',
+  description: 'Founding creator spots are open. Reserve one to lock in our lowest fee (10%, forever) as one of the first 50 founding creators.',
   alternates: { canonical: '/waitlist' },
 };
 
