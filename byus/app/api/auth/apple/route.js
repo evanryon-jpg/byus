@@ -11,6 +11,7 @@ import crypto from 'crypto';
 import { checkRateLimit, rateLimitResponse, getClientIp } from '@/lib/rate-limit';
 import { CREATOR_SIGNUP_PAUSED } from '@/lib/creator-signup';
 import { signupDocuments } from '@/lib/legal-acceptance';
+import { safeNextPath } from '@/lib/safe-next';
 
 const STATE_COOKIE_NAME = 'byus_oauth_state';
 const STATE_MAX_AGE_SECONDS = 60 * 10; // 10 minutes — plenty of time to pick an Apple ID
@@ -40,7 +41,7 @@ export async function GET(request) {
   // to the one in app/login/page.js and app/signup/page.js, so an open-redirect link
   // can't be smuggled in through ?next=.
   const rawNext = searchParams.get('next') || '';
-  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '';
+  const next = safeNextPath(rawNext);
 
   // Only matters if this turns into a brand-new signup in the callback — an existing
   // account always logs in under whatever role it already has. While creator signup is
