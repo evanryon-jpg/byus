@@ -52,6 +52,18 @@ async function listNewWaitlistSignups() {
   }));
 }
 
+// Straight from the users table -- the reliable count, since Vercel's analytics never
+// recorded the server-side funnel_account_created events.
+async function countNewAccountsLast24h() {
+  const { rows } = await query(
+    `SELECT
+       COUNT(*) FILTER (WHERE role = 'fan')::int AS fans,
+       COUNT(*) FILTER (WHERE role = 'creator')::int AS creators
+     FROM users WHERE created_at >= now() - interval '24 hours'`
+  );
+  return { fans: rows[0]?.fans || 0, creators: rows[0]?.creators || 0 };
+}
+
 async function countOpenSupportRequests() {
   // Filed by the fan help assistant (app/api/fan/assistant) -- see app/admin/support.
   const { rows } = await query(`SELECT COUNT(*)::int AS n FROM support_requests WHERE status = 'open'`);
@@ -69,7 +81,7 @@ export async function GET(request) {
   }
 
   try {
-    const [snapshot, smsHolds, autoApprovedVideosLast24h, risk24h, openSupportRequests, newWaitlistSignups, foundingStats] = await Promise.all([
+    const [snapshot, smsHolds, autoApprovedVideosLast24h, risk24h, openSupportRequests, newWaitlistSignups, foundingStats, newAccounts] = await Promise.all([
       loadComplianceSnapshot(),
       listPendingSmsBroadcastHolds(),
       countAutoApprovedVideosLast24h(),
@@ -79,6 +91,7 @@ export async function GET(request) {
       countOpenSupportRequests().catch(() => 0),
       listNewWaitlistSignups().catch(() => []),
       getFoundingPromoStats(query).catch(() => null),
+      countNewAccountsLast24h().catch(() => ({ fans: 0, creators: 0 })),
     ]);
 
     await sendOpsDigestEmail(getAdminEmails(), {
@@ -95,6 +108,8 @@ export async function GET(request) {
       checkoutsLast24h: risk24h.total,
       newWaitlistSignups,
       foundingStats,
+      newFanAccountsLast24h: newAccounts.fans,
+      newCreatorAccountsLast24h: newAccounts.creators,
       adminUrl: `${process.env.APP_URL}/admin`,
     });
 
