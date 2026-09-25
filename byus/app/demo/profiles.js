@@ -6,7 +6,7 @@ export const DEMO_PROFILES = {
   'maya-sinclair': {
     name: 'Maya Sinclair', handle: '@mayasinclair', craft: 'Outdoor Photographer', image: '/creators/maya-sinclair/hero.jpg', members: 684, posts: 47, monthly: 4760,
     bio: 'Field notes, editing breakdowns, and quiet photographs from wild places. I share the planning and patience behind every frame.',
-    tiers: [['Field Notes', 6, 'Weekly photo stories and location notes'], ['Darkroom', 14, 'Editing walkthroughs and full-resolution downloads']],
+    tiers: [['Field Notes', 8, 'Weekly photo stories and location notes'], ['Darkroom', 14, 'Editing walkthroughs and full-resolution downloads']],
     samples: [
       { title: 'Before sunrise in the Olympic rainforest', views: 905, likes: 96 },
       { title: 'How I edit for natural color', views: 648, likes: 71 },
@@ -16,7 +16,7 @@ export const DEMO_PROFILES = {
   'liam-carter': {
     name: 'Liam Carter', handle: '@liamcarter', craft: 'Independent Musician', image: '/creators/liam-carter/hero.jpg', members: 932, posts: 63, monthly: 7215,
     bio: 'Songs in progress, studio sessions, and the stories behind the lyrics. Members hear every release before it reaches the rest of the world.',
-    tiers: [['Backstage', 5, 'Early demos and monthly listening notes'], ['Studio Pass', 15, 'Livestreams, stems, and member song requests']],
+    tiers: [['Backstage', 8, 'Early demos and monthly listening notes'], ['Studio Pass', 15, 'Livestreams, stems, and member song requests']],
     samples: [
       { title: 'A first listen to Northbound', views: 1150, likes: 140 },
       { title: 'Building the chorus one layer at a time', views: 887, likes: 118 },
@@ -26,7 +26,7 @@ export const DEMO_PROFILES = {
   'elena-park': {
     name: 'Elena Park', handle: '@signwithelena', craft: 'ASL Educator', image: '/creators/elena-park/hero.jpg', members: 511, posts: 76, monthly: 3890,
     bio: 'Practical American Sign Language lessons built around real conversations, Deaf culture, and confident everyday communication.',
-    tiers: [['Practice Partner', 7, 'Weekly vocabulary lessons and practice prompts'], ['Conversation Club', 18, 'Full lessons, live practice, and feedback']],
+    tiers: [['Practice Partner', 9, 'Weekly vocabulary lessons and practice prompts'], ['Conversation Club', 18, 'Full lessons, live practice, and feedback']],
     samples: [
       { title: 'Ten signs for meeting someone new', views: 724, likes: 64 },
       { title: 'Facial grammar: the part beginners miss', views: 539, likes: 52 },
@@ -38,7 +38,7 @@ export const DEMO_PROFILES = {
     // appears in the homepage film (a still from that footage is her photo now).
     name: 'Sophie Lane', handle: '@sophiemakes', craft: 'Ceramic Artist', image: '/creators/sophie-lane/hero-potter.jpg', members: 408, posts: 54, monthly: 3060,
     bio: 'Slow, useful pottery made by hand. I share throwing techniques, glaze tests, mistakes, and the small habits that make handmade work last.',
-    tiers: [['Studio Circle', 5, 'Studio notes, glaze recipes, and process videos'], ['Maker Circle', 12, 'Full tutorials, monthly projects, and Q&A']],
+    tiers: [['Studio Circle', 8, 'Studio notes, glaze recipes, and process videos'], ['Maker Circle', 12, 'Full tutorials, monthly projects, and Q&A']],
     samples: [
       { title: 'From clay to your first bowl', views: 562, likes: 48 },
       { title: 'Choosing glazes that age well', views: 413, likes: 37 },

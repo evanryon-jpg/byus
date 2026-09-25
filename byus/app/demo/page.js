@@ -25,7 +25,7 @@ const TIERS = [
   {
     id: 'sketchbook',
     name: 'The Sketchbook',
-    price: 5,
+    price: 8,
     perks: ['Weekly digital sketches', 'Community polls'],
   },
   {
