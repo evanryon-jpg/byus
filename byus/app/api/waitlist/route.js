@@ -23,6 +23,22 @@ const DISPLAY_NAME_MAX = 100;
 const SOURCE_MAX = 60;
 const REFERRAL_MAX = 60;
 
+// GET /api/waitlist -> { limit, claimed, remaining, nextSpot }
+// Same numbers the homepage grid shows (lib/fees.js getFoundingPromoStats); the creator
+// waitlist form on /signup uses nextSpot to say "Reserve founding spot #N of 50".
+export async function GET() {
+  try {
+    const stats = await getFoundingPromoStats(query);
+    return NextResponse.json(
+      { ...stats, nextSpot: stats.remaining > 0 ? stats.claimed + 1 : null },
+      { headers: { 'Cache-Control': 'no-store' } }
+    );
+  } catch (err) {
+    console.error('waitlist GET failed:', err);
+    return NextResponse.json({ error: 'Unavailable.' }, { status: 500 });
+  }
+}
+
 export async function POST(request) {
   const { email, displayName, source, referralCode, website } = await request.json().catch(() => ({}));
 
