@@ -11,7 +11,7 @@ import {
 } from '@/lib/fees';
 import { FOUNDING_CREATOR_LIMIT, DISCOUNTED_FEE_PERCENT } from '@/lib/pricing';
 import { isAdmin } from '@/lib/admin';
-import { publicAvatarUrl } from '@/lib/avatar-url';
+import { publicAvatarUrl, publicCoverUrl } from '@/lib/avatar-url';
 
 // phone itself is deliberately left out of this shared select -- the client never
 // needs the full number once it's verified (see PhoneNotificationsCard in
@@ -26,14 +26,18 @@ export const USER_SELECT_FIELDS = `id, email, role, display_name, bio, profile_i
        rss_feed_url, rss_last_synced_at, rss_last_sync_error,
        (phone_verified_at IS NOT NULL) AS phone_verified,
        CASE WHEN phone_verified_at IS NOT NULL THEN right(phone, 4) ELSE NULL END AS phone_last4,
-       notify_new_posts_sms`;
+       notify_new_posts_sms, cover_image_url, pinned_post_id`;
 
 // profile_image_url in the DB is a private Blob pathname (or a `preset:<id>`
 // marker), never exposed directly — point the client at our own public proxy
 // route instead, versioned so switching photos actually changes the URL
 // (see lib/avatar-url.js).
 export function withAvatarUrl(user) {
-  return { ...user, profile_image_url: publicAvatarUrl(user.id, user.profile_image_url) };
+  return {
+    ...user,
+    profile_image_url: publicAvatarUrl(user.id, user.profile_image_url),
+    cover_image_url: publicCoverUrl(user.id, user.cover_image_url),
+  };
 }
 
 // Adds the fee this user is actually being charged right now: their personal tier minus

@@ -10,7 +10,7 @@
 import { query } from '@/lib/db';
 import { signPlaybackToken } from '@/lib/mux-jwt';
 import { getPollVoteCounts, getMyPollVotes, buildPollPayload } from '@/lib/polls';
-import { publicAvatarUrl } from '@/lib/avatar-url';
+import { publicAvatarUrl, publicCoverUrl } from '@/lib/avatar-url';
 import { getFoundingCreatorRank } from '@/lib/fees';
 import { FOUNDING_CREATOR_LIMIT } from '@/lib/pricing';
 import { recordPaymentEvidenceBestEffort } from '@/lib/payment-evidence';
@@ -32,10 +32,10 @@ export async function loadCreatorProfile(creatorId, session) {
   const creatorResult = await query(
     isUuid
       ? `SELECT id, display_name, bio, profile_image_url, social_links, slug, is_live, mux_playback_id,
-                stripe_connect_onboarded, support_goal_cents
+                stripe_connect_onboarded, support_goal_cents, cover_image_url, pinned_post_id
          FROM users WHERE id = $1 AND role = 'creator' AND is_suspended = false`
       : `SELECT id, display_name, bio, profile_image_url, social_links, slug, is_live, mux_playback_id,
-                stripe_connect_onboarded, support_goal_cents
+                stripe_connect_onboarded, support_goal_cents, cover_image_url, pinned_post_id
          FROM users WHERE slug = $1 AND role = 'creator' AND is_suspended = false`,
     [creatorId]
   );
@@ -53,7 +53,8 @@ export async function loadCreatorProfile(creatorId, session) {
   if (!creatorRow && !isUuid) {
     const historyResult = await query(
       `SELECT u.id, u.display_name, u.bio, u.profile_image_url, u.social_links, u.slug, u.is_live,
-              u.mux_playback_id, u.stripe_connect_onboarded, u.support_goal_cents
+              u.mux_playback_id, u.stripe_connect_onboarded, u.support_goal_cents,
+              u.cover_image_url, u.pinned_post_id
        FROM creator_slug_history h
        JOIN users u ON u.id = h.user_id
        WHERE h.old_slug = $1 AND u.role = 'creator' AND u.is_suspended = false`,
@@ -82,6 +83,8 @@ export async function loadCreatorProfile(creatorId, session) {
     display_name: creatorRow.display_name,
     bio: creatorRow.bio,
     profile_image_url: publicAvatarUrl(creatorRow.id, creatorRow.profile_image_url),
+    // Optional banner across the top of the page (app/api/me/cover/route.js).
+    cover_image_url: publicCoverUrl(creatorRow.id, creatorRow.cover_image_url),
     social_links: creatorRow.social_links || [],
     slug: creatorRow.slug,
     // Whether tipping/subscribing is actually possible right now — both need a
@@ -299,8 +302,16 @@ export async function loadCreatorProfile(creatorId, session) {
     isFollowing = Boolean(followingResult.rows[0]);
   }
 
+  // The creator's pinned "Start here" post (app/api/creator/pinned-post/route.js).
+  // Only honored while it's visible and unlocked for this viewer -- if the creator later
+  // made it subscribers-only it just drops back into the feed like any other post.
+  const pinnedPost = creatorRow.pinned_post_id
+    ? posts.find((p) => p.id === creatorRow.pinned_post_id && !p.locked) || null
+    : null;
+
   return {
     creator,
+    pinnedPostId: pinnedPost ? pinnedPost.id : null,
     tiers: tiersResult.rows,
     hasActiveSubscription,
     followerCount: followerResult.rows[0].count,

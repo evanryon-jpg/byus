@@ -19,3 +19,11 @@ export function publicAvatarUrl(userId, rawValue) {
   const version = crypto.createHash('sha1').update(rawValue).digest('hex').slice(0, 8);
   return `/api/avatar/${userId}?v=${version}`;
 }
+
+// Same idea for a creator's cover banner (users.cover_image_url, always a Blob
+// pathname -- there are no preset covers). Served by /api/cover/[userId].
+export function publicCoverUrl(userId, rawValue) {
+  if (!rawValue) return null;
+  const version = crypto.createHash('sha1').update(rawValue).digest('hex').slice(0, 8);
+  return `/api/cover/${userId}?v=${version}`;
+}
