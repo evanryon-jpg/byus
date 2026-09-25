@@ -8,6 +8,7 @@ import EarningsCalculator from './components/EarningsCalculator';
 import FeedbackWidget from './components/FeedbackWidget';
 import LiveActivityTicker from './components/LiveActivityTicker';
 import CreatorWalkthrough from './components/CreatorWalkthrough';
+import CreatorHeroVideo from './components/CreatorHeroVideo';
 
 // Server component so the hero and closing CTAs can tell whether someone is already
 // logged in -- an existing creator or fan should never be invited to sign up again,
@@ -321,7 +322,8 @@ function HeroCreatorExamples() {
         className="absolute -inset-8 rounded-[3rem] bg-cyan-300/10 blur-3xl"
       />
       <div className="relative">
-        <p className="mb-4 text-center text-[10px] font-bold uppercase tracking-[0.3em] text-[#7fd9ce] sm:text-xs lg:text-left">
+        <CreatorHeroVideo />
+        <p className="mb-4 mt-7 text-center text-[10px] font-bold uppercase tracking-[0.3em] text-[#7fd9ce] sm:text-xs lg:text-left">
           Example creator pages
         </p>
         <div className="grid grid-cols-2 gap-3 sm:gap-4">
@@ -336,28 +338,15 @@ function HeroCreatorExamples() {
 
 function HeroCreatorCard({ creator }) {
   return (
-    <a
-      href={creator.href}
-      aria-label={`View ${creator.name}'s example creator page`}
-      className="group relative block aspect-[4/5] overflow-hidden rounded-2xl border border-white/20 bg-[#0b2037] shadow-[0_24px_55px_-28px_rgba(0,0,0,0.9)] outline-none transition duration-300 hover:-translate-y-1 hover:border-white/40 hover:shadow-[0_30px_65px_-28px_rgba(0,0,0,0.95)] focus-visible:ring-2 focus-visible:ring-[#67d8dc] focus-visible:ring-offset-4 focus-visible:ring-offset-[#08182d] sm:aspect-[5/4] lg:aspect-[4/5] xl:aspect-[5/4]"
-    >
-      <Image
-        src={creator.image}
-        alt={`${creator.name}, ${creator.craft.toLowerCase()} — example ByUs creator page`}
-        fill
-        sizes="(min-width: 1280px) 24vw, (min-width: 1024px) 27vw, (min-width: 640px) 45vw, 44vw"
-        className="object-cover transition duration-500 group-hover:scale-[1.035]"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-[#061321]/95 via-[#061321]/20 to-transparent" aria-hidden="true" />
-      <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4 xl:p-5">
-        <h2 className="font-display text-lg font-semibold leading-tight text-white sm:text-2xl">{creator.name}</h2>
-        <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.18em] text-brand-gold sm:text-[11px]">
-          {creator.craft}
-        </p>
-        <span className="mt-2 inline-flex items-center text-[10px] font-semibold text-white/80 transition group-hover:text-white sm:text-xs">
-          View example →
-        </span>
-      </div>
+    <a href={creator.href} aria-label={`View ${creator.name}'s example creator page`}
+      className="group flex items-center gap-3 rounded-xl border border-white/15 bg-white/[0.04] p-3 transition hover:border-white/40 hover:bg-white/[0.08] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#67d8dc]">
+      <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full">
+        <Image src={creator.image} alt="" fill sizes="44px" className="object-cover" />
+      </span>
+      <span>
+        <span className="block text-sm font-semibold text-white">{creator.name}</span>
+        <span className="mt-0.5 block text-[10px] text-[#7fd9ce]">{creator.craft} <span aria-hidden="true">→</span></span>
+      </span>
     </a>
   );
 }
