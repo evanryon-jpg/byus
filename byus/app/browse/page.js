@@ -91,7 +91,7 @@ export default function BrowsePage({ searchParams }) {
           <h1 className="font-display text-3xl font-bold text-[#172033]">Browse creators</h1>
           <p className="mt-2 max-w-xl text-brand-ink/70">
             {marketplaceEmpty
-              ? 'Creator signups are temporarily paused. Join the waitlist to hear when they reopen; this directory will grow as pages go live.'
+              ? 'Founding creator spots are open now, and creator accounts open soon. This directory will grow as pages go live.'
               : foundingDirectory
                 ? 'Meet ByUs creator #1. New founding creator pages will appear here as they go live.'
                 : 'Find someone whose work you already love, or discover your next favorite.'}
@@ -260,9 +260,9 @@ export default function BrowsePage({ searchParams }) {
             Creator #2 could be you.
           </h2>
           <p className="mx-auto mt-3 max-w-xl leading-relaxed text-brand-ink/70">
-            New creator accounts are temporarily paused. Join Evan at the beginning by signing up
-            for an email when creator registration reopens. Joining the waitlist reserves an available founding spot and locks in the 10% rate.
-            Use the same email when you create your account.
+            Founding spots are open now. Reserve one to lock in the 10% rate for good, and join Evan at
+            the beginning. Creator accounts open soon; we&rsquo;ll email you a link, and you sign up with the same
+            email to claim your spot.
           </p>
           <div className="mt-6 flex justify-center">
             <a
