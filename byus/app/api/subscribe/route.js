@@ -10,7 +10,7 @@ import { getCurrentUser } from '@/lib/session';
 import { paymentProvider } from '@/lib/payments';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { getReferralDiscount } from '@/lib/referrals';
-import { getPlatformMilestoneReductionPoints, applyPlatformMilestoneReduction } from '@/lib/fees';
+import { chargeableFeePercent } from '@/lib/fees';
 import { trackServerEvent } from '@/lib/analytics';
 import { scoreCheckout, riskMetadata } from '@/lib/risk-score';
 import { MIN_ANNUAL_BILLING_MONTHS, MIN_MEMBERSHIP_PRICE_CENTS } from '@/lib/pricing';
@@ -54,11 +54,11 @@ export async function POST(request) {
     const tierResult = await query(
       `SELECT t.id, t.name, t.price_cents, t.stripe_price_id, t.annual_price_cents,
               t.stripe_annual_price_id, t.creator_id, t.trial_days,
-              u.stripe_connect_account_id, u.stripe_connect_onboarded, u.platform_fee_percent,
+              u.stripe_connect_account_id, u.stripe_connect_onboarded, u.platform_fee_percent, u.zero_fee_promo_expires_at,
               u.review_cleared_at
        FROM subscription_tiers t
        JOIN users u ON u.id = t.creator_id
-       WHERE t.id = $1 AND t.active = true`,
+       WHERE t.id = $1 AND t.active = true AND u.is_suspended = false`,
       [tierId]
     );
     const tier = tierResult.rows[0];
@@ -115,8 +115,11 @@ export async function POST(request) {
 
     const origin = request.headers.get('origin') || process.env.APP_URL;
     const discounts = await getReferralDiscount(session.userId);
-    const reductionPoints = await getPlatformMilestoneReductionPoints(query);
-    const effectiveFeePercent = applyPlatformMilestoneReduction(tier.platform_fee_percent, reductionPoints);
+    const effectiveFeePercent = await chargeableFeePercent({
+      creatorId: tier.creator_id,
+      platformFeePercent: tier.platform_fee_percent,
+      zeroFeePromoExpiresAt: tier.zero_fee_promo_expires_at,
+    });
 
     const disclosure = membershipCheckoutDisclosure({
       amountCents: purchasePriceCents,
