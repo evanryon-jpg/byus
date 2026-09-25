@@ -33,6 +33,9 @@ function SettingsClientInner({ initialUser, initialReferral, initialSuggestions 
       <p className="mt-1 text-sm text-brand-ink/65">{user.email}</p>
 
       <AvatarCard user={user} onChanged={(profile_image_url) => setUser({ ...user, profile_image_url })} />
+      {user.role === 'creator' && (
+        <CoverCard user={user} onChanged={(cover_image_url) => setUser({ ...user, cover_image_url })} />
+      )}
       <ProfileCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
       <NotificationsCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
       <TextNotificationsCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
@@ -201,6 +204,102 @@ function AvatarCard({ user, onChanged }) {
           </div>
         </div>
       )}
+    </section>
+  );
+}
+
+// The banner across the top of a creator's public page (app/api/me/cover/route.js).
+// Shown at 3:1 there, so the preview here uses the same shape.
+function CoverCard({ user, onChanged }) {
+  const fileRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
+  const [removing, setRemoving] = useState(false);
+  const [error, setError] = useState('');
+
+  async function handleFileChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setError('');
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch('/api/me/cover', { method: 'POST', body: form });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Upload failed.');
+      onChanged(result.cover_image_url);
+    } catch (err) {
+      setError(err.message || 'Could not upload this image. Try again.');
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  }
+
+  async function handleRemove() {
+    setRemoving(true);
+    setError('');
+    try {
+      const res = await fetch('/api/me/cover', { method: 'DELETE' });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Could not remove this image.');
+      onChanged(null);
+    } catch (err) {
+      setError(err.message || 'Could not remove this image. Try again.');
+    } finally {
+      setRemoving(false);
+    }
+  }
+
+  const busy = uploading || removing;
+
+  return (
+    <section className="mt-6 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
+      <h2 className="font-semibold">Cover image</h2>
+      <p className="mt-1 text-sm text-brand-ink/65">
+        A wide photo across the top of your page, like your workspace, your work, or you in action.
+      </p>
+      <div className="relative mt-4 aspect-[3/1] w-full overflow-hidden rounded-xl bg-brand-ink/5">
+        {user.cover_image_url ? (
+          // Plain <img>: a small preview of the creator's own upload, nothing for the optimizer to add.
+          <img src={user.cover_image_url} alt="Your cover image" className="h-full w-full object-cover" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-sm text-brand-ink/50">
+            No cover image yet
+          </div>
+        )}
+      </div>
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={busy}
+          className="rounded-full border border-[#0F766E] px-4 py-2 text-sm font-medium text-[#0F766E] hover:bg-[#0F766E]/5 disabled:opacity-50"
+        >
+          {uploading ? 'Uploading…' : user.cover_image_url ? 'Replace cover' : 'Upload cover'}
+        </button>
+        {user.cover_image_url && (
+          <button
+            type="button"
+            onClick={handleRemove}
+            disabled={busy}
+            className="text-sm font-medium text-brand-ink/60 hover:text-brand-ink disabled:opacity-50"
+          >
+            {removing ? 'Removing…' : 'Remove cover'}
+          </button>
+        )}
+      </div>
+      <p className="mt-2 text-xs text-brand-ink/60">
+        Best at 1500 × 500 or wider. PNG, JPEG, or WEBP, max 8MB.
+      </p>
+      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        onChange={handleFileChange}
+        className="hidden"
+      />
     </section>
   );
 }
