@@ -75,9 +75,9 @@ export default function CreatorHeroVideo() {
   return (
     <figure className="relative" aria-label="Creators at work and a ByUs example page">
       <div ref={containerRef} className="relative aspect-video overflow-hidden rounded-2xl border border-white/20 bg-[#0b2037] shadow-[0_24px_55px_-28px_rgba(0,0,0,0.9)]">
-        <Image src="/images/byus-creator-hero-v1.webp" alt="Two podcast hosts sharing a moment in their recording studio" fill sizes="(min-width: 1280px) 620px, (min-width: 1024px) 50vw, 100vw" className="object-cover" priority />
+        <Image src="/images/byus-creator-hero-v1.webp" alt="A ceramic artist shaping a bowl in a sunlit pottery studio" fill sizes="(min-width: 1280px) 620px, (min-width: 1024px) 50vw, 100vw" className="object-cover" priority />
         <video ref={videoRef} muted playsInline loop preload="none"
-          aria-label="Silent 12-second film of podcasters, a potter, and an example ByUs membership page"
+          aria-label="Silent 12-second film of pottery, a podcast studio, and an example ByUs membership page"
           className={`absolute inset-0 h-full w-full object-cover motion-safe:transition-opacity motion-safe:duration-500 ${revealed ? 'opacity-100' : 'opacity-0'}`}
           onPlaying={() => { setPlaying(true); setRevealed(true); setLoading(false); }}
           onPause={() => { setPlaying(false); setLoading(false); }}
