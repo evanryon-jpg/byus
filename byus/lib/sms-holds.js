@@ -70,14 +70,25 @@ async function loadHoldContext(holdId) {
 // notifySubscribersOfNewPost uses (active subscription, SMS opted in, verified phone)
 // rather than trusting anything captured when the hold was created.
 export async function approveSmsBroadcastHold(holdId, adminUserId) {
-  const hold = await loadHoldContext(holdId);
-  if (!hold || hold.status !== 'pending') {
+  // Claim the hold before sending anything. The earlier check-then-send-then-mark order
+  // let two admin tabs (or a retried request after a slow send) both see 'pending' and
+  // text every subscriber twice. Whichever request wins this UPDATE is the only one that
+  // sends; the other gets "already resolved".
+  const claimed = await query(
+    `UPDATE sms_broadcast_holds SET status = 'approved', resolved_by = $1, resolved_at = now()
+     WHERE id = $2 AND status = 'pending'
+     RETURNING id`,
+    [adminUserId, holdId]
+  );
+  if (claimed.rows.length === 0) {
     return { ok: false, error: 'This hold has already been resolved.' };
   }
 
+  const hold = await loadHoldContext(holdId);
+
   // The post it was for got deleted in the meantime -- nothing sensible to send
-  // anymore. Resolve it as rejected rather than leaving it stuck pending forever.
-  if (!hold.post_id) {
+  // anymore. Resolve it as rejected rather than leaving it recorded as sent.
+  if (!hold?.post_id) {
     await query(
       `UPDATE sms_broadcast_holds SET status = 'rejected', resolved_by = $1, resolved_at = now()
        WHERE id = $2`,
@@ -108,11 +119,6 @@ export async function approveSmsBroadcastHold(holdId, adminUserId) {
     if (result.ok) sent += batch.length;
   }
 
-  await query(
-    `UPDATE sms_broadcast_holds SET status = 'approved', resolved_by = $1, resolved_at = now()
-     WHERE id = $2`,
-    [adminUserId, holdId]
-  );
   return { ok: true, sent, eligible: phones.length };
 }
 

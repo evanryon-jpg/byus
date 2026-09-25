@@ -199,8 +199,13 @@ export async function rewardCreatorReferrerLaunch(client, referredCreatorId) {
   );
   if (claimed.rows.length === 0) return null;
 
+  // platform_fee_percent drops to 0 now, not on the referrer's next earning -- the webhook
+  // re-points their live Stripe subscriptions to 0% right after this commits, and new
+  // checkouts read this column. The monthly reset cron skips creators with an active
+  // promo, and the next earning after it lapses moves them back to their normal tier.
   await client.query(
-    `UPDATE users SET zero_fee_promo_expires_at = now() + interval '30 days' WHERE id = $1`,
+    `UPDATE users SET zero_fee_promo_expires_at = now() + interval '30 days', platform_fee_percent = 0
+     WHERE id = $1`,
     [referral.referrer_id]
   );
 

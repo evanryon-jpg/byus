@@ -76,9 +76,32 @@ export async function getPlatformMilestoneReductionPoints(queryFn) {
 }
 
 // A creator's actual, chargeable fee: their personal-tier rate minus the platform's
-// current milestone bonus, floored at MIN_FEE_PERCENT.
+// current milestone bonus, floored at MIN_FEE_PERCENT. A base of 0 is the creator-referral
+// "0% fee month" (lib/referrals.js rewardCreatorReferrerLaunch) and passes through as 0 --
+// the floor exists to stop stacked discounts eroding the standard tiers, not to cancel a
+// promo that is deliberately 0. Flooring it used to charge promo creators 10% while their
+// dashboard showed 0%.
 export function applyPlatformMilestoneReduction(basePercent, reductionPoints) {
+  if (Number(basePercent) === 0) return 0;
   return Math.max(MIN_FEE_PERCENT, basePercent - reductionPoints);
+}
+
+// The fee to put on a NEW checkout (subscribe, tip, product). Same as the stored
+// platform_fee_percent except for one case: a 0 left over from a referral 0%-fee month
+// that has since lapsed. The column only moves off 0 on the creator's next earning (or the
+// monthly reset), so without this check the first checkouts after the promo ended would
+// still carry no platform fee. Falls back to the rate the monthly reset would assign
+// (founding -> discounted, otherwise standard); the next earning re-evaluates properly.
+export async function chargeableFeePercent({ creatorId, platformFeePercent, zeroFeePromoExpiresAt }) {
+  let base = Number(platformFeePercent);
+  if (base === 0) {
+    const promoActive = Boolean(zeroFeePromoExpiresAt) && new Date(zeroFeePromoExpiresAt) > new Date();
+    if (!promoActive) {
+      base = (await isFoundingCreator(query, creatorId)) ? DISCOUNTED_FEE_PERCENT : STANDARD_FEE_PERCENT;
+    }
+  }
+  const reductionPoints = await getPlatformMilestoneReductionPoints(query);
+  return applyPlatformMilestoneReduction(base, reductionPoints);
 }
 
 // Runs inside the webhook's DB transaction (`client` is that transaction's connection).
