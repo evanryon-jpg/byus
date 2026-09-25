@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { safeNextPath } from '@/lib/safe-next';
 
 export default function SignupPage() {
   return (
@@ -17,7 +18,7 @@ function SignupForm() {
   const defaultRole = searchParams.get('role') === 'creator' ? 'creator' : 'fan';
   // Same-site-only guard as the login page — see the comment there.
   const rawNext = searchParams.get('next') || '';
-  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '';
+  const next = safeNextPath(rawNext);
 
   // A referral link looks like /signup?ref=CODE — carried through to the signup POST
   // body (for email signup) and appended to the OAuth hrefs below (for Google/Apple
