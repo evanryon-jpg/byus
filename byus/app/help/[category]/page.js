@@ -1,30 +1,42 @@
-'use client';
-
 // A single Help Center category — see app/help/page.js for the index/search and
-// app/help/data.js for the content itself. Same expand/collapse accordion pattern as the
-// homepage FAQ (app/components/FAQSection.jsx) so the interaction feels familiar rather
-// than inventing a new one for this page alone.
+// app/help/data.js for the content itself.
+//
+// A server component prerendered at build time, one static page per category. This used
+// to be a 'use client' page with no generateStaticParams, which made Next.js render it
+// on demand for every single visit (Vercel served it "private, no-store", x-vercel-cache
+// MISS, ~650ms TTFB on a cold function) even though its content only ever changes with a
+// deploy — Speed Insights flagged it at 87. Now it's served straight from the CDN like
+// /help itself, and only the accordion (HelpArticleList.jsx) hydrates on the client.
 
-import { useState } from 'react';
-import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { getCategoryBySlug } from '../data';
+import { notFound } from 'next/navigation';
+import { HELP_CATEGORIES, getCategoryBySlug } from '../data';
+import HelpArticleList from './HelpArticleList';
 
-export default function HelpCategoryPage() {
-  const { category: slug } = useParams();
-  const category = getCategoryBySlug(slug);
-  const [openIndex, setOpenIndex] = useState(0);
+// Every category is known at build time; any other slug is a plain 404 rather than an
+// on-demand render.
+export const dynamicParams = false;
 
-  if (!category) {
-    return (
-      <div className="mx-auto max-w-xl px-6 py-24 text-center">
-        <p className="text-brand-ink/70">We couldn't find that help topic.</p>
-        <Link href="/help" className="mt-4 inline-block font-semibold text-[#0F766E] hover:underline">
-          ← Back to the Help Center
-        </Link>
-      </div>
-    );
-  }
+export function generateStaticParams() {
+  return HELP_CATEGORIES.map((category) => ({ category: category.slug }));
+}
+
+// Per-category title/description/canonical. Without this, every category page inherited
+// app/help/layout.js's canonical of /help, telling search engines they were all
+// duplicates of the index page.
+export function generateMetadata({ params }) {
+  const category = getCategoryBySlug(params.category);
+  if (!category) return {};
+  return {
+    title: `${category.title} — ByUs Help Center`,
+    description: category.description,
+    alternates: { canonical: `/help/${category.slug}` },
+  };
+}
+
+export default function HelpCategoryPage({ params }) {
+  const category = getCategoryBySlug(params.category);
+  if (!category) notFound();
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-16">
@@ -47,35 +59,7 @@ export default function HelpCategoryPage() {
         </div>
       </div>
 
-      <div className="mt-10 divide-y divide-brand-ink/10 border-y border-brand-ink/10">
-        {category.articles.map((article, i) => {
-          const open = openIndex === i;
-          return (
-            <div key={article.q}>
-              <button
-                type="button"
-                onClick={() => setOpenIndex(open ? -1 : i)}
-                aria-expanded={open}
-                className="flex w-full items-center justify-between gap-4 py-5 text-left"
-              >
-                <span className="font-semibold text-[#172033]">{article.q}</span>
-                <span
-                  className={`shrink-0 text-brand-teal transition-transform ${open ? 'rotate-45' : ''}`}
-                  aria-hidden="true"
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <path d="M12 5v14" />
-                    <path d="M5 12h14" />
-                  </svg>
-                </span>
-              </button>
-              {open && (
-                <p className="pb-5 pr-8 text-sm leading-relaxed text-brand-ink/70">{article.a}</p>
-              )}
-            </div>
-          );
-        })}
-      </div>
+      <HelpArticleList articles={category.articles} />
 
       <p className="mt-10 rounded-2xl bg-[#0F766E]/5 px-5 py-4 text-center text-sm text-brand-ink/70">
         Didn't find your answer?{' '}
