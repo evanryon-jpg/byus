@@ -150,8 +150,8 @@ function FoundingCreatorProgram({ stats }) {
                 Reserve your founding spot →
               </a>
               <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-brand-paper/85">
-                Creator signups are temporarily paused. Joining the waitlist reserves an available
-                founding spot and the 10% rate for good. Use the same email to create your account when signups reopen.
+                Founding spots are open now. Reserving one locks in the 10% rate for good, and creator
+                accounts open soon: we&rsquo;ll email you a link, and you sign up with the same email to claim your spot.
               </p>
             </>
           )}
@@ -272,7 +272,7 @@ function Hero({ user, stats }) {
               </div>
             </div>
 
-            {!user && <p className="mt-7 text-sm text-[#dce8eb]/60">$0 to reserve · No payment information required · Creator onboarding is temporarily paused.</p>}
+            {!user && <p className="mt-7 text-sm text-[#dce8eb]/60">$0 to reserve · No payment information required · Creator accounts open soon</p>}
 
             <p className="mt-7 max-w-sm font-script text-[2.5rem] font-medium leading-[0.88] text-[#67d8dc] sm:text-[3rem]">
               A more human<br />internet for creators.
@@ -442,7 +442,7 @@ function PayoutDemo() {
 
 function TiersDemo() {
   const tiers = [
-    { name: 'Supporter', price: 5 },
+    { name: 'Supporter', price: 8 },
     { name: 'Insider', price: 10, popular: true },
     { name: 'VIP', price: 25 },
   ];
@@ -591,9 +591,10 @@ function VideoUploadDemo() {
         </span>
       </div>
       <p className="mt-3 text-xs text-brand-ink/55">
-        Up to 30 minutes and 2 GB per video, with resolutions up to 4K. Every video is
-        checked before fans can see it. ByUs cannot pull from a TikTok or YouTube link or
-        bulk-import a channel or library.
+        Up to 30 minutes and 2 GB per video, with resolutions up to 4K. Every video gets an
+        automatic safety scan before fans see it, usually within minutes; a new creator&rsquo;s
+        first video also gets a quick human review. ByUs cannot pull from a TikTok or YouTube
+        link or bulk-import a channel or library.
       </p>
     </div>
   );
@@ -733,7 +734,7 @@ function WhyWeBuiltByUs({ user }) {
             href={user ? dashboardHref : '/signup?role=creator'}
             className="mt-7 inline-flex rounded-full bg-brand-paper px-7 py-3 font-semibold text-brand-teal shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
           >
-            {user ? 'Go to your dashboard' : 'Join the creator waitlist'} →
+            {user ? 'Go to your dashboard' : 'Reserve a founding spot'} →
           </a>
           {!user && (
             <p className="mt-4 text-xs text-white/60">
