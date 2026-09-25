@@ -262,6 +262,40 @@ export async function sendDisputeAlertEmail(to, {
   }
 }
 
+// Instant heads-up to the ByUs admin(s) when someone joins the founding creator waitlist --
+// called best-effort from app/api/waitlist/route.js right after the joiner's own
+// confirmation email. Early on every signup is worth knowing about the moment it happens,
+// not the next morning; the daily digest (sendOpsDigestEmail below) still lists them too.
+// Email rather than SMS on purpose: good news can wait until you look, texts are kept for
+// things that need action.
+export async function sendNewWaitlistSignupEmail(to, { email, displayName, foundingSpot, foundingStats, adminUrl }) {
+  const resend = getClient();
+  const { error } = await resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: foundingSpot
+      ? `New ByUs waitlist signup: founding spot #${foundingSpot} reserved`
+      : 'New ByUs waitlist signup',
+    html: `
+      <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; color: #1A1A1A;">
+        <h2 style="color:#146359;margin-bottom:4px;">Someone just joined the creator waitlist</h2>
+        <table style="border-collapse:collapse;width:100%;margin:16px 0;font-size:14px;">
+          <tr><td style="padding:6px 0;color:#666;">Email</td><td style="padding:6px 0;font-weight:600;">${escapeHtml(email)}</td></tr>
+          ${displayName ? `<tr><td style="padding:6px 0;color:#666;">Name</td><td style="padding:6px 0;">${escapeHtml(displayName)}</td></tr>` : ''}
+          <tr><td style="padding:6px 0;color:#666;">Founding spot</td><td style="padding:6px 0;">${foundingSpot ? `#${escapeHtml(String(foundingSpot))}` : 'None left (standard pricing)'}</td></tr>
+        </table>
+        ${foundingStats ? `<p style="color:#666;font-size:13px;">${escapeHtml(String(foundingStats.claimed))} of ${escapeHtml(String(foundingStats.limit))} founding spots reserved · ${escapeHtml(String(foundingStats.remaining))} remaining</p>` : ''}
+        ${adminUrl ? `<p style="margin:24px 0;"><a href="${adminUrl}" style="background:#146359;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;">Open ByUs admin</a></p>` : ''}
+        <p style="color:#999;font-size:12px;">They were already sent their own confirmation email. Nothing for you to do unless you want to say hello.</p>
+      </div>
+    `,
+  });
+  if (error) {
+    console.error('Resend new-waitlist-signup email failed:', error);
+    throw new Error(error.message || 'Could not send the new waitlist signup email.');
+  }
+}
+
 // General-purpose ops alert for a production error worth someone's immediate attention --
 // see lib/alerts.js, which is what actually decides *when* to call this (throttled, so a
 // repeating failure sends one email rather than one per occurrence). Kept separate from
