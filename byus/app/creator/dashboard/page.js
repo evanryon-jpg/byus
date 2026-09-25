@@ -56,7 +56,7 @@ export default async function CreatorDashboardPage() {
   // any one of them shouldn't take down the whole dashboard, so each degrades to an
   // empty list instead of throwing, same as the old client-side load() silently kept
   // whatever array was already there on a non-ok response.
-  const [tiers, posts, links, audienceStats, audienceMonthly] = await Promise.all([
+  const [tiers, posts, links, audienceStats, audienceMonthly, supporterSources] = await Promise.all([
     loadCreatorTiers(session.userId).catch((err) => {
       console.error('creator/dashboard: tiers load failed:', err);
       return [];
@@ -157,6 +157,31 @@ export default async function CreatorDashboardPage() {
         console.error('creator/dashboard: audience trend load failed:', err);
         return [];
       }),
+    // Where supporters came from (lib/supporter-source.js). One row per kind + source;
+    // grouped into ByUs / your links / other / before-tracking on the client.
+    query(
+      `SELECT 'followers' AS kind, supporter_source AS source, COUNT(*)::int AS n
+         FROM creator_follows WHERE creator_id = $1
+         GROUP BY supporter_source
+       UNION ALL
+       SELECT 'members', supporter_source, COUNT(DISTINCT fan_id)::int
+         FROM subscriptions
+         WHERE creator_id = $1 AND status = 'active'
+           AND (current_period_end IS NULL OR current_period_end > now())
+         GROUP BY supporter_source
+       UNION ALL
+       SELECT 'one_time', supporter_source, COUNT(DISTINCT fan_id)::int
+         FROM transactions
+         WHERE creator_id = $1 AND status = 'succeeded'
+           AND (post_id IS NOT NULL OR message LIKE 'Digital product purchase:%')
+         GROUP BY supporter_source`,
+      [session.userId]
+    )
+      .then((result) => result.rows)
+      .catch((err) => {
+        console.error('creator/dashboard: supporter sources load failed:', err);
+        return [];
+      }),
   ]);
 
   return (
@@ -170,6 +195,7 @@ export default async function CreatorDashboardPage() {
       initialConvertedFollowerCount={audienceStats.convertedFollowerCount}
       initialRecentConvertedFollowerCount={audienceStats.recentConvertedFollowerCount}
       initialAudienceMonthly={audienceMonthly}
+      initialSupporterSources={supporterSources}
     />
   );
 }

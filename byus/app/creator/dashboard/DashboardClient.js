@@ -14,6 +14,7 @@ import PostVideoPlayer from '../../components/PostVideoPlayer';
 import { TRIAL_DAY_OPTIONS } from '@/lib/trials';
 import { MIN_DISCOUNT_PERCENT, MAX_DISCOUNT_PERCENT } from '@/lib/discounts';
 import { STANDARD_FEE_PERCENT } from '@/lib/pricing';
+import { supporterSourceBucket } from '@/lib/supporter-source';
 import {
   MAX_VIDEO_DURATION_SECONDS,
   MAX_VIDEO_SIZE_BYTES,
@@ -54,6 +55,69 @@ async function validateVideoFile(file) {
 // refresh path only, used after creating a tier/post (onCreated) and by the "Try
 // again" retry button, both of which are genuinely user-triggered and have nothing to
 // do with first paint.
+// "Brought by ByUs" vs. "brought by you" -- how each follower, paying member and one-time
+// supporter first found this page (lib/supporter-source.js). Each count comes from a
+// source recorded at the moment they followed or paid, so it can be checked row by row.
+const SUPPORTER_KINDS = [
+  { key: 'followers', label: 'Free followers' },
+  { key: 'members', label: 'Paying members' },
+  { key: 'one_time', label: 'Tips & purchases' },
+];
+
+function SupporterSourcesCard({ rows }) {
+  const totals = {};
+  for (const kind of SUPPORTER_KINDS) totals[kind.key] = { byus: 0, creator: 0, other: 0, untracked: 0, all: 0 };
+  for (const row of rows || []) {
+    const bucket = supporterSourceBucket(row.source);
+    if (!totals[row.kind]) continue;
+    totals[row.kind][bucket] += Number(row.n) || 0;
+    totals[row.kind].all += Number(row.n) || 0;
+  }
+  const anyone = SUPPORTER_KINDS.some((k) => totals[k.key].all > 0);
+
+  return (
+    <div className="mt-4 rounded-xl bg-white/70 p-4">
+      <p className="text-sm font-semibold text-brand-ink">Where your supporters came from</p>
+      {!anyone ? (
+        <p className="mt-1 text-sm text-brand-ink/60">
+          Once people follow or support you, you&rsquo;ll see here how many found you through ByUs and how many came
+          from your own links.
+        </p>
+      ) : (
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full min-w-[420px] border-collapse text-sm">
+            <thead>
+              <tr className="text-left text-xs text-brand-ink/55">
+                <th className="py-1.5 pr-3 font-medium" />
+                <th className="py-1.5 pr-3 text-right font-semibold text-[#0F766E]">Found you on ByUs</th>
+                <th className="py-1.5 pr-3 text-right font-medium">Your own links</th>
+                <th className="py-1.5 pr-3 text-right font-medium">Search &amp; ads</th>
+                <th className="py-1.5 text-right font-medium">Before tracking</th>
+              </tr>
+            </thead>
+            <tbody className="tabular-nums">
+              {SUPPORTER_KINDS.map((kind) => (
+                <tr key={kind.key} className="border-t border-brand-ink/5">
+                  <td className="py-2 pr-3 text-brand-ink/75">{kind.label}</td>
+                  <td className="py-2 pr-3 text-right text-base font-bold text-[#0F766E]">{totals[kind.key].byus.toLocaleString()}</td>
+                  <td className="py-2 pr-3 text-right text-brand-ink/80">{totals[kind.key].creator.toLocaleString()}</td>
+                  <td className="py-2 pr-3 text-right text-brand-ink/80">{totals[kind.key].other.toLocaleString()}</td>
+                  <td className="py-2 text-right text-brand-ink/45">{totals[kind.key].untracked.toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <p className="mt-2 text-xs leading-relaxed text-brand-ink/55">
+        &ldquo;Found you on ByUs&rdquo; means their first visit to your page came from ByUs Discover, Browse, the
+        homepage or another ByUs page. &ldquo;Your own links&rdquo; means they arrived from a link you shared, or typed
+        your address. Counted from each person&rsquo;s first visit, starting September 25, 2026.
+      </p>
+    </div>
+  );
+}
+
 export default function DashboardClient({
   initialUser,
   initialTiers,
@@ -64,6 +128,7 @@ export default function DashboardClient({
   initialConvertedFollowerCount = 0,
   initialRecentConvertedFollowerCount = 0,
   initialAudienceMonthly = [],
+  initialSupporterSources = [],
 }) {
   const [user, setUser] = useState(initialUser);
   const [tiers, setTiers] = useState(initialTiers);
@@ -246,6 +311,7 @@ export default function DashboardClient({
             </div>
           </div>
         )}
+        <SupporterSourcesCard rows={initialSupporterSources} />
         <a href={`/creator/${user?.slug || user?.id}`} className="mt-3 inline-block text-sm font-semibold text-[#0F766E] hover:underline">
           View your public page
         </a>
