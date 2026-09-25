@@ -19,6 +19,7 @@ import { MIN_TIP_CENTS, MAX_TIP_CENTS } from '@/lib/pricing';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { chargeableFeePercent } from '@/lib/fees';
 import { scoreCheckout, riskMetadata } from '@/lib/risk-score';
+import { supporterSourceMetadata } from '@/lib/supporter-source';
 import { TERMS_VERSION, TIP_REFUND_POLICY_VERSION, tipCheckoutDisclosure } from '@/lib/legal';
 
 const MAX_TIP_MESSAGE_LENGTH = 300;
@@ -167,6 +168,7 @@ export async function POST(request, { params }) {
         refund_policy_version: TIP_REFUND_POLICY_VERSION,
         purchase_disclosure_shown: 'true',
         ...riskMetadata(risk),
+        ...supporterSourceMetadata(request, creator.id),
         ...(trimmedMessage ? { message: trimmedMessage } : {}),
       },
     });
