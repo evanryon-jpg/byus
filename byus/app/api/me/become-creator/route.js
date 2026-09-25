@@ -15,6 +15,7 @@ import {
   FOUNDING_CREATOR_LIMIT,
 } from '@/lib/pricing';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { CREATOR_SIGNUP_PAUSED, CREATOR_SIGNUP_PAUSED_MESSAGE } from '@/lib/creator-signup';
 
 // Upgrades a fan-only account to a creator account. Because the current schema stores one
 // role per account, protect fans with subscription history from losing billing access.
@@ -26,6 +27,13 @@ export async function POST(request) {
 
   const rateCheck = await checkRateLimit('become-creator', `user:${session.userId}`);
   if (!rateCheck.success) return rateLimitResponse(rateCheck);
+
+  // Same gate as creator signup (app/api/auth/signup and the OAuth start routes): while
+  // new creator accounts are paused, a fan can't upgrade into one either. Without this, any
+  // fan could become a creator -- and claim a founding spot -- during the pause.
+  if (CREATOR_SIGNUP_PAUSED && session.role !== 'creator') {
+    return NextResponse.json({ error: CREATOR_SIGNUP_PAUSED_MESSAGE }, { status: 403 });
+  }
 
   try {
     let upgraded = false;
