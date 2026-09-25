@@ -5,7 +5,7 @@ import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { paymentProvider } from '@/lib/payments';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
-import { getPlatformMilestoneReductionPoints, applyPlatformMilestoneReduction } from '@/lib/fees';
+import { chargeableFeePercent } from '@/lib/fees';
 import { scoreCheckout, riskMetadata } from '@/lib/risk-score';
 import { MIN_DIGITAL_PRODUCT_PRICE_CENTS } from '@/lib/pricing';
 
@@ -21,12 +21,12 @@ export async function POST(request, { params }) {
     const result = await query(
       `SELECT p.id, p.title, p.price_cents, p.creator_id, p.access_type,
               u.display_name, u.stripe_connect_account_id, u.stripe_connect_onboarded,
-              u.platform_fee_percent, u.review_cleared_at,
+              u.platform_fee_percent, u.zero_fee_promo_expires_at, u.review_cleared_at,
               f.email_verified, f.stripe_customer_id
        FROM digital_products p
        JOIN users u ON u.id = p.creator_id
        JOIN users f ON f.id = $2
-       WHERE p.id = $1 AND p.active = true`,
+       WHERE p.id = $1 AND p.active = true AND u.is_suspended = false`,
       [params.productId, session.userId]
     );
     const product = result.rows[0];
@@ -67,8 +67,11 @@ export async function POST(request, { params }) {
       await query('UPDATE users SET stripe_customer_id = $1 WHERE id = $2', [customerId, session.userId]);
     }
 
-    const reduction = await getPlatformMilestoneReductionPoints(query);
-    const feePercent = applyPlatformMilestoneReduction(product.platform_fee_percent, reduction);
+    const feePercent = await chargeableFeePercent({
+      creatorId: product.creator_id,
+      platformFeePercent: product.platform_fee_percent,
+      zeroFeePromoExpiresAt: product.zero_fee_promo_expires_at,
+    });
     const applicationFeeCents = Math.round((product.price_cents * feePercent) / 100);
     const origin = request.headers.get('origin') || process.env.APP_URL;
 
