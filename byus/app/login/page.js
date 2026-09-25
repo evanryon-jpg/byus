@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { safeNextPath } from '@/lib/safe-next';
 
 export default function LoginPage() {
   return (
@@ -17,7 +18,7 @@ function LoginForm() {
   // Only ever follow a same-site path (starts with a single "/") — an open redirect
   // target could otherwise be used to bounce someone off ByUs right after they log in.
   const rawNext = searchParams.get('next') || '';
-  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '';
+  const next = safeNextPath(rawNext);
   const googleHref = `/api/auth/google${next ? `?next=${encodeURIComponent(next)}` : ''}`;
   const appleHref = `/api/auth/apple${next ? `?next=${encodeURIComponent(next)}` : ''}`;
 
