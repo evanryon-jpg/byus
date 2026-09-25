@@ -89,7 +89,7 @@ export const HELP_CATEGORIES = [
       },
       {
         q: 'When do creators get paid?',
-        a: "Directly and on Stripe's own schedule. Every creator connects their own Stripe Express account once, and both tips and subscription payments go straight there — there's no separate ByUs payout process, holding period, or minimum balance to reach first. The exact payout timing for your account is visible in your own Stripe dashboard.",
+        a: "Every Monday, straight to your bank. Every creator connects their own Stripe Express account once, and your share of each tip and subscription payment lands in your Stripe balance the moment a fan pays. Stripe then pays that balance out to your bank weekly, on Mondays. There's no separate ByUs payout process, holding period or minimum balance. Stripe holds a brand-new account's first payout for about 7 to 14 days while it verifies you, and your exact payout dates are always visible in your Stripe dashboard.",
       },
       {
         q: 'What payment methods can fans use?',
