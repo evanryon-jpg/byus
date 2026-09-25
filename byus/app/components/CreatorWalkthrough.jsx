@@ -3,7 +3,7 @@
 import { useRef } from 'react';
 
 // Timestamps below are pulled straight from the walkthrough's own caption track
-// (public/videos/byus-creator-walkthrough-final-20260921-en.vtt) -- each one is the
+// (public/videos/byus-creator-walkthrough-final-20260925-en.vtt) -- each one is the
 // start of the caption cue where that step's narration begins, so "Get paid, with
 // guidance" jumps to 1:24, right where the video actually starts talking about Stripe
 // payouts. If the video is ever re-cut, re-check these against the new .vtt rather
@@ -94,10 +94,10 @@ export default function CreatorWalkthrough() {
             poster="/images/byus-video-poster-v2.jpg"
             aria-label="A step-by-step demonstration of building a ByUs creator page"
           >
-            <source src="/videos/byus-creator-walkthrough-final-20260921.mp4" type="video/mp4" />
+            <source src="/videos/byus-creator-walkthrough-final-20260925.mp4" type="video/mp4" />
             <track
               kind="captions"
-              src="/videos/byus-creator-walkthrough-final-20260921-en.vtt"
+              src="/videos/byus-creator-walkthrough-final-20260925-en.vtt"
               srcLang="en"
               label="English"
             />
