@@ -23,7 +23,8 @@ const STATIC_ROUTES = [
   { path: '/instagram', changeFrequency: 'monthly', priority: 0.5 },
   { path: '/demo', changeFrequency: 'monthly', priority: 0.5 },
   { path: '/help', changeFrequency: 'weekly', priority: 0.6 },
-  { path: '/support', changeFrequency: 'monthly', priority: 0.4 },
+  // /support is left out while SUPPORT_PAYMENTS_ENABLED is false in app/support/page.js --
+  // the page 404s until then, and a sitemap URL that 404s gets flagged in Search Console.
   { path: '/privacy', changeFrequency: 'yearly', priority: 0.2 },
   { path: '/terms', changeFrequency: 'yearly', priority: 0.2 },
   { path: '/creator-terms', changeFrequency: 'yearly', priority: 0.2 },
