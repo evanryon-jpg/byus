@@ -10,6 +10,7 @@ import { useState } from 'react';
 import MonthlyBarChart from '../components/charts/MonthlyBarChart';
 import PostVideoPlayer from '../components/PostVideoPlayer';
 import { formatUSD, formatCompactUSD } from '@/lib/format';
+import { CREATOR_SIGNUP_PAUSED } from '@/lib/creator-signup';
 
 export default function AdminClient({
   data,
@@ -1079,12 +1080,12 @@ function OpinionInvitationRow({ contact, onUpdate, onDelete, pending }) {
 // new/reviewed toggle for triage.
 const FEEDBACK_REACTION_LABELS = { up: '👍 Liked it', down: '👎 Didn’t like it' };
 
-// Read-only list of everyone who's joined the creator waitlist (see
-// lib/admin-data.js's loadCreatorWaitlist and the comment there for how this differs
-// from the frozen "Instagram waitlist applications (historical)" stat above). No
-// mutations here on purpose — there's no status to track yet, just "reopen creator
-// signup" (flip CREATOR_SIGNUP_PAUSED in lib/creator-signup.js back to false), at which
-// point everyone below can be emailed at the addresses they gave.
+// Everyone who's joined the creator waitlist (see lib/admin-data.js's loadCreatorWaitlist
+// and the comment there for how this differs from the frozen "Instagram waitlist
+// applications (historical)" stat above). The one action here is reopening day's
+// "Email the waitlist" button (app/api/admin/waitlist/notify-reopen), which stays
+// disabled until CREATOR_SIGNUP_PAUSED in lib/creator-signup.js is flipped to false and
+// emails each person at most once.
 const WAITLIST_SOURCE_LABELS = {
   instagram: 'Instagram',
   instagram_campaign: 'Instagram (legacy)',
@@ -1092,27 +1093,78 @@ const WAITLIST_SOURCE_LABELS = {
 };
 
 function CreatorWaitlistSection({ initialWaitlist, initialError }) {
+  const [waitlist, setWaitlist] = useState(initialWaitlist);
+  const [sending, setSending] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [sendError, setSendError] = useState('');
+  const notYetEmailed = (waitlist || []).filter((w) => !w.reopenNotifiedAt).length;
+
+  async function emailWaitlist() {
+    if (!window.confirm(`Email ${notYetEmailed} ${notYetEmailed === 1 ? 'person' : 'people'} that creator signups are open?`)) return;
+    setSending(true);
+    setSendError('');
+    setNotice('');
+    try {
+      const res = await fetch('/api/admin/waitlist/notify-reopen', { method: 'POST' });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error || '');
+      setNotice(
+        `Sent ${body.sent.toLocaleString()}.` +
+          (body.failed ? ` ${body.failed} failed and can be retried.` : '') +
+          (body.remaining ? ` ${body.remaining} still to email; press again.` : '')
+      );
+      if (body.sent > 0 && body.remaining === 0 && !body.failed) {
+        const now = new Date().toISOString();
+        setWaitlist((current) => (current || []).map((w) => (w.reopenNotifiedAt ? w : { ...w, reopenNotifiedAt: now })));
+      }
+    } catch (err) {
+      setSendError(err.message || 'Could not send the emails. Try again.');
+    } finally {
+      setSending(false);
+    }
+  }
+
   return (
     <section className="mt-8 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="font-semibold text-[#172033]">Creator waitlist</h2>
-        {initialWaitlist && initialWaitlist.length > 0 && (
+        {waitlist && waitlist.length > 0 && (
           <span className="rounded-full bg-brand-ink/5 px-2.5 py-1 text-xs font-medium text-brand-ink/60">
-            {initialWaitlist.length.toLocaleString()} total
+            {waitlist.length.toLocaleString()} total
           </span>
         )}
       </div>
       <p className="mt-1 text-sm text-brand-ink/65">
         Everyone who's asked to be notified when creator signup reopens (see the "I'm a creator" tab on{' '}
-        <code className="text-xs">/signup</code>). Nothing to do here yet — once signup reopens, this is the
-        list to email.
+        <code className="text-xs">/signup</code>). When signup reopens, one button emails each of them a link
+        to claim their spot.
       </p>
+
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          onClick={emailWaitlist}
+          disabled={CREATOR_SIGNUP_PAUSED || sending || notYetEmailed === 0}
+          className="rounded-full bg-[#0F766E] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#115E59] disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {sending ? 'Sending…' : 'Email the waitlist: signups are open'}
+        </button>
+        <span className="text-xs text-brand-ink/60">
+          {CREATOR_SIGNUP_PAUSED
+            ? 'Available once creator signup reopens.'
+            : notYetEmailed === 0
+              ? 'Everyone on the list has been emailed.'
+              : `${notYetEmailed.toLocaleString()} not emailed yet.`}
+        </span>
+      </div>
+      {notice && <p className="mt-2 text-xs text-[#0F766E]">{notice}</p>}
+      {sendError && <p className="mt-2 text-xs text-red-600">{sendError}</p>}
 
       {initialError && <p className="mt-3 text-xs text-red-600">{initialError}</p>}
 
-      {initialWaitlist === null ? (
+      {waitlist === null ? (
         <p className="mt-4 text-sm text-brand-ink/60">Could not load the creator waitlist.</p>
-      ) : initialWaitlist.length === 0 ? (
+      ) : waitlist.length === 0 ? (
         <p className="mt-4 text-sm text-brand-ink/60">Nobody's joined the waitlist yet.</p>
       ) : (
         <div className="mt-4 overflow-x-auto">
@@ -1123,10 +1175,11 @@ function CreatorWaitlistSection({ initialWaitlist, initialError }) {
                 <th className="py-2 pr-4">Source</th>
                 <th className="py-2 pr-4">Referral</th>
                 <th className="py-2 pr-4">Joined</th>
+                <th className="py-2 pr-4">Reopening email</th>
               </tr>
             </thead>
             <tbody>
-              {initialWaitlist.map((w) => (
+              {waitlist.map((w) => (
                 <tr key={w.id} className="border-b border-brand-ink/5">
                   <td className="py-2.5 pr-4">
                     <div className="font-medium text-[#172033]">{w.displayName || 'No name given'}</div>
@@ -1144,6 +1197,11 @@ function CreatorWaitlistSection({ initialWaitlist, initialError }) {
                       month: 'short',
                       day: 'numeric',
                     })}
+                  </td>
+                  <td className="py-2.5 pr-4 text-brand-ink/70">
+                    {w.reopenNotifiedAt
+                      ? new Date(w.reopenNotifiedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+                      : '—'}
                   </td>
                 </tr>
               ))}
