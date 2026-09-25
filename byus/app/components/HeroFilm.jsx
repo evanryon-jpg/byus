@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 
 // The short homepage film (a potter at work, then her example ByUs page) that sits at the
-// top of the hero's right column. 8 seconds, silent, ~490 KB. Plays once, then holds on
-// its end card (the example creator page) with a replay button.
+// top of the hero's right column. ~7 seconds, silent, ~480 KB. Plays once, then stops on
+// its last frame (the example creator page) with a replay button.
 //
 // The <video> is server-rendered with only a poster and NO src, so the first paint is a
 // 44 KB still no matter what. The film itself is attached after hydration, and only when
@@ -15,16 +15,13 @@ import { useEffect, useRef, useState } from 'react';
 // a visible pause/play button because anything that moves on its own for more than five
 // seconds needs one (WCAG 2.2.2).
 //
-// The file fades in from black over its first half-second and out to black over its last
-// half-second (it was cut to loop). It no longer loops: looping forever was distracting on
-// desktop, and on some phones the loop never restarted, leaving the black last frame on
-// screen. So every play starts at 0.5s (where the frame matches the poster), and when it
-// ends we step back to END_HOLD_FROM_END seconds before the end -- the fully lit end card --
-// and stay there, paused, with a replay button.
-const FILM_SRC = '/videos/byus-homepage-film-20260925b.mp4';
+// The file (…-20260925c) has no fade at either end: it opens on exactly the poster frame
+// and ends on the fully lit end card. The earlier cut faded in/out of black so it could
+// loop; phones stopped on that black last frame, and seeking back after 'ended' isn't
+// reliable on iOS. Ending on the end card in the file itself means every browser simply
+// stops there -- no seeking needed.
+const FILM_SRC = '/videos/byus-homepage-film-20260925c.mp4';
 const POSTER_SRC = '/images/byus-homepage-film-poster.webp';
-const FIRST_PLAY_OFFSET = 0.5;
-const END_HOLD_FROM_END = 0.7; // the fade to black starts ~0.5s before the end
 
 function shouldSkipMotion() {
   if (typeof window === 'undefined') return true;
@@ -57,12 +54,6 @@ export default function HeroFilm() {
     // play() call, and browsers only allow autoplay for muted video -- set it directly.
     video.muted = true;
 
-    const seekPastFade = () => {
-      if (video.currentTime < FIRST_PLAY_OFFSET) video.currentTime = FIRST_PLAY_OFFSET;
-    };
-    if (video.readyState >= 1) seekPastFade();
-    else video.addEventListener('loadedmetadata', seekPastFade, { once: true });
-
     const tryPlay = () => {
       const attempt = video.play();
       if (attempt && typeof attempt.catch === 'function') {
@@ -91,12 +82,8 @@ export default function HeroFilm() {
   }, [enabled]);
 
   const handleEnded = () => {
-    const video = videoRef.current;
     finishedRef.current = true;
     setFinished(true);
-    if (video && Number.isFinite(video.duration)) {
-      video.currentTime = Math.max(0, video.duration - END_HOLD_FROM_END);
-    }
   };
 
   const togglePlayback = () => {
@@ -106,7 +93,7 @@ export default function HeroFilm() {
       finishedRef.current = false;
       setFinished(false);
       userPausedRef.current = false;
-      video.currentTime = FIRST_PLAY_OFFSET;
+      video.currentTime = 0;
       const attempt = video.play();
       if (attempt && typeof attempt.catch === 'function') attempt.catch(() => {});
       return;
