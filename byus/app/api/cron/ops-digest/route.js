@@ -16,6 +16,7 @@ import { listPendingSmsBroadcastHolds } from '@/lib/sms-holds';
 import { getAdminEmails } from '@/lib/admin';
 import { sendOpsDigestEmail } from '@/lib/email';
 import { countRiskEvents } from '@/lib/risk-score';
+import { getFoundingPromoStats } from '@/lib/fees';
 
 async function countAutoApprovedVideosLast24h() {
   // "approved" (vs. "approved_creator_pending") is only ever set by the moderation
@@ -28,6 +29,27 @@ async function countAutoApprovedVideosLast24h() {
        AND video_moderated_at >= now() - interval '24 hours'`
   );
   return rows[0]?.n || 0;
+}
+
+// Good news rather than a queue: creators who joined the founding waitlist since the last
+// digest, each with the founding spot the join reserved for them (spot is null if the
+// program was already full). Listed by email because there are few enough that each one
+// is worth seeing; capped so a sudden rush can't turn the digest into a wall of addresses.
+async function listNewWaitlistSignups() {
+  const { rows } = await query(
+    `SELECT w.email, w.display_name, w.created_at, fr.spot_number
+     FROM founding_waitlist w
+     LEFT JOIN founding_reservations fr ON lower(fr.email) = lower(w.email)
+     WHERE w.created_at >= now() - interval '24 hours'
+     ORDER BY w.created_at ASC
+     LIMIT 50`
+  );
+  return rows.map((row) => ({
+    email: row.email,
+    displayName: row.display_name,
+    createdAt: row.created_at,
+    foundingSpot: row.spot_number,
+  }));
 }
 
 async function countOpenSupportRequests() {
@@ -47,7 +69,7 @@ export async function GET(request) {
   }
 
   try {
-    const [snapshot, smsHolds, autoApprovedVideosLast24h, risk24h, openSupportRequests] = await Promise.all([
+    const [snapshot, smsHolds, autoApprovedVideosLast24h, risk24h, openSupportRequests, newWaitlistSignups, foundingStats] = await Promise.all([
       loadComplianceSnapshot(),
       listPendingSmsBroadcastHolds(),
       countAutoApprovedVideosLast24h(),
@@ -55,6 +77,8 @@ export async function GET(request) {
       // digest is still worth sending.
       countRiskEvents({ hours: 24 }).catch(() => ({ total: 0, high: 0, medium: 0 })),
       countOpenSupportRequests().catch(() => 0),
+      listNewWaitlistSignups().catch(() => []),
+      getFoundingPromoStats(query).catch(() => null),
     ]);
 
     await sendOpsDigestEmail(getAdminEmails(), {
@@ -69,6 +93,8 @@ export async function GET(request) {
       currentlySuspended: snapshot.currentlySuspended,
       autoApprovedVideosLast24h,
       checkoutsLast24h: risk24h.total,
+      newWaitlistSignups,
+      foundingStats,
       adminUrl: `${process.env.APP_URL}/admin`,
     });
 
