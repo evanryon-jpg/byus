@@ -34,13 +34,15 @@ export const DEMO_PROFILES = {
     ],
   },
   'sophie-lane': {
-    name: 'Sophie Lane', handle: '@sophiemakes', craft: 'Maker & Craft Artist', image: '/creators/sophie-lane/hero.jpg', members: 408, posts: 54, monthly: 3060,
-    bio: 'Slow, useful projects made by hand. I share patterns, materials, mistakes, and the small techniques that make handmade work last.',
-    tiers: [['Worktable', 5, 'Project notes, patterns, and material lists'], ['Maker Circle', 12, 'Full tutorials, monthly projects, and Q&A']],
+    // Photo and copy switched to pottery on Sept 25 so this page matches Sophie as she
+    // appears in the homepage film (a still from that footage is her photo now).
+    name: 'Sophie Lane', handle: '@sophiemakes', craft: 'Ceramic Artist', image: '/creators/sophie-lane/hero-potter.jpg', members: 408, posts: 54, monthly: 3060,
+    bio: 'Slow, useful pottery made by hand. I share throwing techniques, glaze tests, mistakes, and the small habits that make handmade work last.',
+    tiers: [['Studio Circle', 5, 'Studio notes, glaze recipes, and process videos'], ['Maker Circle', 12, 'Full tutorials, monthly projects, and Q&A']],
     samples: [
-      { title: 'A weekend basket from start to finish', views: 562, likes: 48 },
-      { title: 'Choosing natural finishes that age well', views: 413, likes: 37 },
-      { title: 'October member pattern preview', views: 296, likes: 29 },
+      { title: 'From clay to your first bowl', views: 562, likes: 48 },
+      { title: 'Choosing glazes that age well', views: 413, likes: 37 },
+      { title: 'October member glaze preview', views: 296, likes: 29 },
     ],
   },
   'noah-blake': {
