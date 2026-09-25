@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { query } from '@/lib/db';
+import { query, withTransaction } from '@/lib/db';
 import { hashPassword } from '@/lib/auth';
 import { checkRateLimit, rateLimitResponse, getClientIp } from '@/lib/rate-limit';
 
@@ -54,14 +54,37 @@ export async function POST(request) {
 
     const newHash = await hashPassword(password);
 
-    // Bumping session_version here invalidates every session token issued before this
-    // reset — including on other devices, and including whoever's cookie prompted the
-    // reset in the first place — the moment it's used, not up to 30 days later.
-    await query(
-      'UPDATE users SET password_hash = $1, session_version = session_version + 1, updated_at = now() WHERE id = $2',
-      [newHash, resetToken.user_id]
-    );
-    await query('UPDATE password_reset_tokens SET used_at = now() WHERE id = $1', [resetToken.id]);
+    // One transaction: atomically claim the token (the `used_at IS NULL` guard is what
+    // makes it single-use even if two requests race -- the earlier read-then-mark let both
+    // succeed), set the password, and retire every other outstanding reset link for this
+    // user so an older emailed link can't be used after a successful reset.
+    // Bumping session_version invalidates every session token issued before this reset —
+    // including on other devices, and including whoever's cookie prompted the reset in the
+    // first place — the moment it's used, not up to 30 days later.
+    const applied = await withTransaction(async (client) => {
+      const claim = await client.query(
+        `UPDATE password_reset_tokens SET used_at = now()
+         WHERE id = $1 AND used_at IS NULL AND expires_at > now()
+         RETURNING user_id`,
+        [resetToken.id]
+      );
+      if (claim.rows.length === 0) return false;
+      await client.query(
+        'UPDATE users SET password_hash = $1, session_version = session_version + 1, updated_at = now() WHERE id = $2',
+        [newHash, resetToken.user_id]
+      );
+      await client.query(
+        'UPDATE password_reset_tokens SET used_at = now() WHERE user_id = $1 AND used_at IS NULL',
+        [resetToken.user_id]
+      );
+      return true;
+    });
+    if (!applied) {
+      return NextResponse.json(
+        { error: 'This reset link is invalid or has expired. Request a new one.' },
+        { status: 400 }
+      );
+    }
 
     return NextResponse.json({ message: 'Your password has been reset. You can now log in.' });
   } catch (err) {
