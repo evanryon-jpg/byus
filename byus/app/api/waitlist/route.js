@@ -10,7 +10,9 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { query, withTransaction } from '@/lib/db';
 import { checkRateLimit, rateLimitResponse, getClientIp } from '@/lib/rate-limit';
-import { sendWaitlistConfirmationEmail } from '@/lib/email';
+import { sendWaitlistConfirmationEmail, sendNewWaitlistSignupEmail } from '@/lib/email';
+import { getAdminEmails } from '@/lib/admin';
+import { getFoundingPromoStats } from '@/lib/fees';
 import { trackServerEvent } from '@/lib/analytics';
 import { getWaitlistCount } from '@/lib/waitlist';
 
@@ -68,6 +70,19 @@ export async function POST(request) {
         await sendWaitlistConfirmationEmail(trimmedEmail, { displayName: trimmedName, foundingSpot });
       } catch (err) {
         console.error('Waitlist confirmation email failed (continuing):', err);
+      }
+      // Tell the admin right away. Same best-effort rule: never fail the join over it.
+      try {
+        const foundingStats = await getFoundingPromoStats(query).catch(() => null);
+        await sendNewWaitlistSignupEmail(getAdminEmails(), {
+          email: trimmedEmail,
+          displayName: trimmedName,
+          foundingSpot,
+          foundingStats,
+          adminUrl: process.env.APP_URL ? `${process.env.APP_URL}/admin` : null,
+        });
+      } catch (err) {
+        console.error('New waitlist signup admin email failed (continuing):', err);
       }
     }
 
