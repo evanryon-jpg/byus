@@ -24,6 +24,21 @@ export default function ConversionAnalytics() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  // Remembers the previous page in this tab so a creator page can tell whether the visitor
+  // arrived from Discover, Browse, the homepage or another ByUs page (see
+  // app/components/SupporterSourceCapture.jsx).
+  useEffect(() => {
+    try {
+      const current = sessionStorage.getItem('byus_cur_path');
+      if (current !== pathname) {
+        sessionStorage.setItem('byus_prev_path', current || '');
+        sessionStorage.setItem('byus_cur_path', pathname);
+      }
+    } catch {
+      // storage blocked -- the creator page falls back to the referrer
+    }
+  }, [pathname]);
+
   useEffect(() => {
     if (pathname === '/signup') {
       track('funnel_signup_viewed', { role: searchParams.get('role') === 'creator' ? 'creator' : 'fan' });
