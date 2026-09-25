@@ -58,6 +58,14 @@ export async function PATCH(request) {
     if (!user) {
       return NextResponse.json({ error: 'User not found.' }, { status: 404 });
     }
+    // Accounts created through Google/Apple have no password to check against (bcrypt
+    // throws on a null hash, which surfaced as a generic 500).
+    if (!user.password_hash) {
+      return NextResponse.json(
+        { error: "This account signs in with Google or Apple and doesn't have a password yet. Use \"Forgot password\" on the login page to set one." },
+        { status: 400 }
+      );
+    }
 
     const matches = await verifyPassword(currentPassword, user.password_hash);
     if (!matches) {
