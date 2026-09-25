@@ -11,6 +11,7 @@ import { checkRateLimit, rateLimitResponse, getClientIp } from '@/lib/rate-limit
 import { sendVerificationEmail } from '@/lib/email';
 import { attributeReferral } from '@/lib/referrals';
 import { trackServerEvent } from '@/lib/analytics';
+import { sendCreatorWelcomeOnce } from '@/lib/creator-welcome';
 import {
   STANDARD_FEE_PERCENT,
   DISCOUNTED_FEE_PERCENT,
@@ -155,6 +156,7 @@ export async function POST(request) {
   } catch (err) {
     console.error('Verification email send failed (continuing signup):', err);
   }
+  if (user.role === 'creator') await sendCreatorWelcomeOnce(user.id);
 
   // --- Log them in immediately by setting a session cookie ---
   const token = createSessionToken(user);
