@@ -434,6 +434,8 @@ export async function sendOpsDigestEmail(to, {
   checkoutsLast24h,
   newWaitlistSignups = [],
   foundingStats = null,
+  newFanAccountsLast24h = 0,
+  newCreatorAccountsLast24h = 0,
   adminUrl,
 }) {
   const resend = getClient();
@@ -501,6 +503,8 @@ export async function sendOpsDigestEmail(to, {
         ${signupsHtml}
         <table style="border-collapse:collapse;width:100%;margin:16px 0;font-size:13px;color:#666;">
           <tr><td style="padding:4px 0;">Videos auto-approved by AI moderation, last 24h</td><td style="padding:4px 0;text-align:right;">${escapeHtml(String(autoApprovedVideosLast24h ?? 0))}</td></tr>
+          <tr><td style="padding:4px 0;">New fan accounts, last 24h</td><td style="padding:4px 0;text-align:right;">${escapeHtml(String(newFanAccountsLast24h ?? 0))}</td></tr>
+          <tr><td style="padding:4px 0;">New creator accounts, last 24h</td><td style="padding:4px 0;text-align:right;">${escapeHtml(String(newCreatorAccountsLast24h ?? 0))}</td></tr>
           <tr><td style="padding:4px 0;">Checkouts started, last 24h</td><td style="padding:4px 0;text-align:right;">${escapeHtml(String(checkoutsLast24h ?? 0))}</td></tr>
           <tr><td style="padding:4px 0;">New suspensions, last 30 days</td><td style="padding:4px 0;text-align:right;">${escapeHtml(String(suspensionsLast30d ?? 0))}</td></tr>
           <tr><td style="padding:4px 0;">Currently suspended accounts</td><td style="padding:4px 0;text-align:right;">${escapeHtml(String(currentlySuspended ?? 0))}</td></tr>
