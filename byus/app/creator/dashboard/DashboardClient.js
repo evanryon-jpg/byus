@@ -343,7 +343,7 @@ export default function DashboardClient({
       {tiers.length > 0 && <DiscountSection tiers={tiers} />}
 
       {/* Posts */}
-      <PostSection posts={posts} onCreated={load} />
+      <PostSection posts={posts} pinnedPostId={user?.pinned_post_id || null} onCreated={load} />
 
       {/* Secure paid and member-only digital downloads */}
       <DigitalProductManager userId={user?.id} />
@@ -2178,7 +2178,7 @@ function BatchVideoImporter({ onCreated }) {
   );
 }
 
-function PostSection({ posts, onCreated }) {
+function PostSection({ posts, pinnedPostId, onCreated }) {
   // A brand-new creator with zero posts lands on an empty section and a "+ New post"
   // button they have to know to click. Opening the composer by default the first time
   // turns that into "here's where you write your first thing" instead of a blank page —
@@ -2374,7 +2374,7 @@ function PostSection({ posts, onCreated }) {
 
       <ul className="mt-4 space-y-2">
         {posts.map((p) => (
-          <PostRow key={p.id} post={p} onChanged={onCreated} />
+          <PostRow key={p.id} post={p} isPinned={p.id === pinnedPostId} onChanged={onCreated} />
         ))}
       </ul>
 
@@ -2501,8 +2501,32 @@ function PostSection({ posts, onCreated }) {
   );
 }
 
-function PostRow({ post, onChanged }) {
+function PostRow({ post, isPinned, onChanged }) {
   const [editing, setEditing] = useState(false);
+  const [pinning, setPinning] = useState(false);
+  const [pinError, setPinError] = useState('');
+
+  // Pin this post to the top of the public page as a "Start here" intro (or unpin it).
+  // Only one post can be pinned; pinning another replaces it. See
+  // app/api/creator/pinned-post/route.js.
+  async function handleTogglePin() {
+    setPinning(true);
+    setPinError('');
+    try {
+      const res = await fetch('/api/creator/pinned-post', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId: isPinned ? null : post.id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Could not update your pinned post.');
+      onChanged();
+    } catch (err) {
+      setPinError(err.message || 'Could not update your pinned post.');
+    } finally {
+      setPinning(false);
+    }
+  }
   const [title, setTitle] = useState(post.title || '');
   const [body, setBody] = useState(post.body);
   const [visibility, setVisibility] = useState(post.visibility);
@@ -2579,6 +2603,11 @@ function PostRow({ post, onChanged }) {
               Poll
             </span>
           )}
+          {isPinned && (
+            <span className="ml-2 rounded-full bg-[#0F766E]/10 px-2 py-0.5 text-xs font-medium text-[#0F766E]">
+              Pinned
+            </span>
+          )}
           {post.pending_review && post.hasVideo && (
             <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
               Pending video review
@@ -2628,7 +2657,18 @@ function PostRow({ post, onChanged }) {
         <button onClick={handleDelete} disabled={deleting} className="text-brand-ink/65 hover:text-red-600 disabled:opacity-50">
           {deleting ? 'Deleting…' : 'Delete'}
         </button>
+        {(isPinned || post.visibility === 'public') && (
+          <button
+            onClick={handleTogglePin}
+            disabled={pinning}
+            title={isPinned ? undefined : 'Show this post at the top of your page as a "Start here" intro'}
+            className="text-brand-ink/65 hover:text-[#0F766E] disabled:opacity-50"
+          >
+            {pinning ? 'Saving…' : isPinned ? 'Unpin' : 'Pin to top of page'}
+          </button>
+        )}
       </div>
+      {pinError && <p className="mt-1 text-xs text-red-600">{pinError}</p>}
     </li>
   );
 }
