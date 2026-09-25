@@ -25,7 +25,12 @@ export default function ProfileClient({ data, justSubscribed, subscribedTierId, 
   const [followerCount, setFollowerCount] = useState(Number(data.followerCount || 0));
   const [followBusy, setFollowBusy] = useState(false);
   const [followError, setFollowError] = useState('');
-  const [billingInterval, setBillingInterval] = useState('month'); // 'month' | 'year'
+  // Yearly is shown first whenever any tier offers it: fans save, and a yearly member costs
+  // one card fee a year instead of twelve (Stripe's 30-cent fixed fee is most of the cost on
+  // an $8 membership). Monthly is always one tap away.
+  const [billingInterval, setBillingInterval] = useState(() =>
+    (data.tiers || []).some((t) => Number.isInteger(t.annual_price_cents) && t.annual_price_cents > 0) ? 'year' : 'month'
+  ); // 'month' | 'year'
   // Ko-fi's "Posts" tab is really just this feed with a type filter, an access filter,
   // and a search box layered on top — see PostFilters below. All three are client-side
   // over the posts this response already included, so there's no extra request per
@@ -235,22 +240,26 @@ export default function ProfileClient({ data, justSubscribed, subscribedTierId, 
         {!hasActiveSubscription && tiers.length > 0 && (
           <div className="mt-8">
             {tiers.some((t) => t.annual_price_cents) && (
-              <div className="mb-4 flex items-center justify-center gap-3 text-sm">
-                <button
-                  type="button"
-                  onClick={() => setBillingInterval('month')}
-                  className={billingInterval === 'month' ? 'font-semibold text-[#0F766E]' : 'text-brand-ink/60'}
-                >
-                  Monthly
-                </button>
-                <span className="text-brand-ink/40">/</span>
-                <button
-                  type="button"
-                  onClick={() => setBillingInterval('year')}
-                  className={billingInterval === 'year' ? 'font-semibold text-[#0F766E]' : 'text-brand-ink/60'}
-                >
-                  Annually
-                </button>
+              <div className="mb-4 flex justify-center">
+                <div className="inline-flex rounded-full bg-brand-ink/5 p-1 text-sm" role="group" aria-label="Billing period">
+                  <button
+                    type="button"
+                    onClick={() => setBillingInterval('year')}
+                    aria-pressed={billingInterval === 'year'}
+                    className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 ${billingInterval === 'year' ? 'bg-white font-semibold text-[#0F766E] shadow-sm' : 'text-brand-ink/60'}`}
+                  >
+                    Yearly
+                    <span className="rounded-full bg-[#0F766E]/10 px-2 py-0.5 text-[11px] font-bold text-[#0F766E]">Best value</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBillingInterval('month')}
+                    aria-pressed={billingInterval === 'month'}
+                    className={`rounded-full px-4 py-1.5 ${billingInterval === 'month' ? 'bg-white font-semibold text-[#0F766E] shadow-sm' : 'text-brand-ink/60'}`}
+                  >
+                    Monthly
+                  </button>
+                </div>
               </div>
             )}
             <div className="grid gap-4 sm:grid-cols-2">
@@ -272,10 +281,22 @@ export default function ProfileClient({ data, justSubscribed, subscribedTierId, 
                       ${(displayCents / 100).toFixed(2)}
                       <span className="text-sm font-normal text-brand-ink/60">{useAnnual ? '/yr' : '/mo'}</span>
                     </p>
-                    {useAnnual && savingsCents > 0 && (
-                      <p className="mt-1 text-xs text-[#0F766E]">
-                        Save ${(savingsCents / 100).toFixed(2)}/yr vs. paying monthly
+                    {useAnnual && (
+                      <p className="mt-1 text-xs text-brand-ink/60">
+                        Works out to ${(t.annual_price_cents / 1200).toFixed(2)}/mo
+                        {savingsCents > 0 && (
+                          <span className="font-semibold text-[#0F766E]"> · save ${(savingsCents / 100).toFixed(2)} a year</span>
+                        )}
                       </p>
+                    )}
+                    {!useAnnual && hasAnnual && savingsCents > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setBillingInterval('year')}
+                        className="mt-1 text-left text-xs font-semibold text-[#0F766E] hover:underline"
+                      >
+                        Or pay yearly and save ${(savingsCents / 100).toFixed(2)}
+                      </button>
                     )}
                     <button
                       onClick={() => handleSubscribe(t.id, useAnnual ? 'year' : 'month')}
