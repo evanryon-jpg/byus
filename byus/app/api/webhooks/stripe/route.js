@@ -57,6 +57,31 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 // Statuses we accept from Stripe, mapped 1:1 onto our own vocabulary.
 const KNOWN_STATUSES = ['active', 'past_due', 'canceled'];
 
+// Stripe's status vocabulary -> ours. 'trialing' counts as active (see the
+// customer.subscription.updated case below for why); anything unrecognized is 'incomplete'.
+function mapSubscriptionStatus(stripeStatus) {
+  if (stripeStatus === 'trialing') return 'active';
+  return KNOWN_STATUSES.includes(stripeStatus) ? stripeStatus : 'incomplete';
+}
+
+// Webhook payloads arrive in the API version the *endpoint* was created with
+// (2026-08-26.dahlia for ours), not the version lib/payments/stripe-client.js pins for
+// SDK calls (2024-04-10). Stripe's 2025-03-31 "basil" release moved two fields this file
+// reads, so each helper accepts both shapes:
+//   - Invoice.subscription -> Invoice.parent.subscription_details.subscription
+//   - Subscription.current_period_end -> Subscription.items.data[].current_period_end
+// Without these, invoice.payment_succeeded/failed silently did nothing (no earnings
+// ledger, no fee-tier drop, no past_due/recovery) and customer.subscription.updated
+// wrote a NULL current_period_end.
+function invoiceSubscriptionId(invoice) {
+  const sub = invoice?.subscription ?? invoice?.parent?.subscription_details?.subscription ?? null;
+  return typeof sub === 'string' ? sub : sub?.id || null;
+}
+
+function subscriptionPeriodEnd(sub) {
+  return sub?.current_period_end ?? sub?.items?.data?.[0]?.current_period_end ?? null;
+}
+
 export async function POST(request) {
   const body = await request.text(); // raw body — required for signature verification
   const signature = request.headers.get('stripe-signature');
@@ -96,9 +121,11 @@ export async function POST(request) {
     // `subscriptions` row already existing yet — Stripe doesn't guarantee this event arrives
     // after checkout.session.completed has been processed on our side.
     let invoiceCreatorId = null;
-    if (event.type === 'invoice.payment_succeeded' && event.data.object.subscription) {
+    const eventInvoiceSubscriptionId =
+      event.type.startsWith('invoice.') ? invoiceSubscriptionId(event.data.object) : null;
+    if (event.type === 'invoice.payment_succeeded' && eventInvoiceSubscriptionId) {
       const invoiceSubscription = await paymentProvider.retrieveSubscription({
-        subscriptionId: event.data.object.subscription,
+        subscriptionId: eventInvoiceSubscriptionId,
       });
       invoiceCreatorId = invoiceSubscription.metadata?.creator_id || null;
     }
@@ -115,7 +142,7 @@ export async function POST(request) {
         const charge = await paymentProvider.retrieveCharge({ id: event.data.object.charge });
         if (charge.invoice) {
           const invoice = await paymentProvider.retrieveInvoice({ id: charge.invoice });
-          disputeSubscriptionStripeId = invoice.subscription || null;
+          disputeSubscriptionStripeId = invoiceSubscriptionId(invoice);
         }
       } catch (err) {
         console.error('Could not resolve subscription for disputed charge:', err);
@@ -141,6 +168,13 @@ export async function POST(request) {
     let newSubscriptionWelcome = null;
     let subscriptionActivated = null;
     let subscriptionPayment = null;
+    // Set inside the transaction when a referred fan's first subscription was just written;
+    // the reward runs after commit. It has to: rewardReferrer uses its own pool connection
+    // and writes referrals.reward_subscription_id, a foreign key to the subscriptions row
+    // this transaction just inserted -- invisible to any other connection until commit, so
+    // running it inside the transaction always failed the FK check, left the referral
+    // 'pending' forever, and re-applied the 100%-off coupon to every later checkout.
+    let pendingReferralReward = null;
     // Discord role / Telegram group membership follows the same active/not-active
     // status this file already tracks for content gating (see lib/platform-sync.js) --
     // collected here and applied after commit for the same reason as everything else
@@ -190,27 +224,51 @@ export async function POST(request) {
               // Re-read the product in our database instead of trusting Stripe metadata
               // for its price or creator. The signed webhook proves payment; this lookup
               // proves the purchased item still belongs to the expected creator.
+              // The price check compares against the price this checkout was created at
+              // (metadata.purchase_price_cents, set server-side by the checkout route), not
+              // the product's current price: a creator editing the price while a fan is
+              // mid-checkout used to make the fan pay and silently receive nothing. `>=`
+              // rather than `===` so any tax Stripe adds on top can't fail it either.
               const productResult = await client.query(
                 `SELECT creator_id, price_cents, access_type
                  FROM digital_products WHERE id = $1`,
                 [product_id]
               );
               const product = productResult.rows[0];
+              const checkoutPriceCents = Number(metadata.purchase_price_cents || product?.price_cents);
               if (!product || product.access_type !== 'purchase' ||
-                  product.creator_id !== creator_id || product.price_cents !== grossCents) {
-                console.error('Digital product checkout metadata did not match the product', product_id);
+                  product.creator_id !== creator_id || !(grossCents >= checkoutPriceCents)) {
+                // The fan was charged but gets nothing -- that needs a human, not just a log.
+                await alertOps('stripe-webhook:product-fulfillment-mismatch', new Error(
+                  `Paid digital-product checkout could not be fulfilled: product ${product_id}, ` +
+                  `payment ${tipPaymentIntent.id}, fan ${fan_id}. Review and refund or grant access by hand.`
+                ));
                 break;
               }
 
-              await client.query(
+              // No conflict target: the table has two unique keys (the payment intent, and
+              // one purchase per product+fan). Naming only the first let a fan who paid two
+              // open checkout tabs for the same product throw on the second, roll back the
+              // whole event, and send Stripe into a 3-day retry loop.
+              const purchaseInsert = await client.query(
                 `INSERT INTO digital_purchases
                    (product_id, fan_id, creator_id, gross_amount_cents, platform_fee_cents,
                     creator_net_cents, stripe_payment_intent_id, stripe_charge_id, status)
                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'succeeded')
-                 ON CONFLICT (stripe_payment_intent_id) DO NOTHING`,
+                 ON CONFLICT DO NOTHING
+                 RETURNING id`,
                 [product_id, fan_id, creator_id, grossCents, feeCents, netCents,
                  tipPaymentIntent.id, chargeId]
               );
+              // Redeliveries of this event never get here (the event claim above stops
+              // them), so a skipped insert means the fan genuinely paid twice for a product
+              // they already own. The money is still recorded below; flag it for a refund.
+              if (purchaseInsert.rows.length === 0) {
+                await alertOps('stripe-webhook:duplicate-product-purchase', new Error(
+                  `Fan ${fan_id} paid again for product ${product_id} they already own ` +
+                  `(payment ${tipPaymentIntent.id}, charge ${chargeId}). Refund the duplicate from /admin.`
+                ));
+              }
 
               await client.query(
                 `INSERT INTO transactions
@@ -278,44 +336,42 @@ export async function POST(request) {
 
           // The WHERE on the conflict branch is the ordering guard: if a newer event already
           // updated this row (e.g. a later status change beat this one to the database), this
-          // write loses and the newer state is left standing.
+          // write loses and the newer state is left standing. The status comes from the
+          // Subscription just fetched from Stripe rather than a hard-coded 'active', so a
+          // checkout event arriving after the subscription was already canceled can't
+          // resurrect it.
           const upserted = await client.query(
             `INSERT INTO subscriptions
                (fan_id, creator_id, tier_id, stripe_subscription_id, status, current_period_end, stripe_event_created_at)
-             VALUES ($1, $2, $3, $4, 'active', to_timestamp($5), to_timestamp($6))
+             VALUES ($1, $2, $3, $4, $7, to_timestamp($5), to_timestamp($6))
              ON CONFLICT (stripe_subscription_id) DO UPDATE
-               SET status = 'active',
-                   current_period_end = to_timestamp($5),
+               SET status = $7,
+                   current_period_end = COALESCE(to_timestamp($5), subscriptions.current_period_end),
                    stripe_event_created_at = to_timestamp($6)
                WHERE subscriptions.stripe_event_created_at IS NULL
                   OR subscriptions.stripe_event_created_at <= to_timestamp($6)
-             RETURNING id`,
+             RETURNING id, status`,
             [
               fan_id,
               creator_id,
               tier_id,
               checkoutSession.subscription,
-              stripeSubscription.current_period_end,
+              subscriptionPeriodEnd(stripeSubscription),
               event.created,
+              mapSubscriptionStatus(stripeSubscription.status),
             ]
           );
 
           // If this fan subscribed through a friend's referral link, this is their first
-          // real payment going through — grant the referrer their free-month credit now.
-          // Runs on its own connection (rewardReferrer talks to Stripe, which shouldn't
-          // happen inside an open DB transaction) and is wrapped so a hiccup here — a
-          // Stripe API error, say — can't fail the whole webhook and put the fan's own
-          // subscription activation into a retry loop. rewardReferrer's own 'pending' ->
-          // 'rewarded' guard means a retry of this event can never double-credit.
+          // real payment going through — the referrer's free-month credit is granted after
+          // this transaction commits (see pendingReferralReward above for why it can't run
+          // in here). rewardReferrer's own 'pending' -> 'rewarded' guard means a retry of
+          // this event can never double-credit.
           const subscriptionRowId = upserted.rows[0]?.id;
-          if (subscriptionRowId) {
-            try {
-              const priceCents = stripeSubscription.items?.data?.[0]?.price?.unit_amount;
-              if (typeof priceCents === 'number') {
-                await rewardReferrer({ fanUserId: fan_id, subscriptionRowId, priceCents });
-              }
-            } catch (err) {
-              console.error('Referral reward failed (subscription still activated):', err);
+          if (subscriptionRowId && upserted.rows[0].status === 'active') {
+            const priceCents = stripeSubscription.items?.data?.[0]?.price?.unit_amount;
+            if (typeof priceCents === 'number') {
+              pendingReferralReward = { fanUserId: fan_id, subscriptionRowId, priceCents };
             }
             newSubscriptionWelcome = { fanId: fan_id, creatorId: creator_id };
             platformSyncEvents.push({ fanId: fan_id, creatorId: creator_id, grant: true });
@@ -334,21 +390,21 @@ export async function POST(request) {
           // checkout.session.completed above already marks a brand-new trial subscription
           // 'active' so the fan gets immediate access, and Stripe reliably sends this same
           // event again while still trialing (e.g. attaching the default payment method
-          // right after checkout) -- falling through to the 'incomplete' default below for
-          // that status would silently revoke access mid-trial for something Stripe hasn't
+          // right after checkout) -- falling through to the 'incomplete' default for that
+          // status would silently revoke access mid-trial for something Stripe hasn't
           // actually flagged as a problem. Anything else unrecognized still falls back to
           // 'incomplete'.
-          const status = sub.status === 'trialing'
-            ? 'active'
-            : KNOWN_STATUSES.includes(sub.status)
-            ? sub.status
-            : 'incomplete';
+          const status = mapSubscriptionStatus(sub.status);
+          // COALESCE keeps the last known period end if a payload ever omits it, rather
+          // than writing NULL -- every access check treats a NULL period as "no expiry".
           const updateResult = await client.query(
             `UPDATE subscriptions
-             SET status = $1, current_period_end = to_timestamp($2), stripe_event_created_at = to_timestamp($3)
+             SET status = $1,
+                 current_period_end = COALESCE(to_timestamp($2), current_period_end),
+                 stripe_event_created_at = to_timestamp($3)
              WHERE stripe_subscription_id = $4
                AND (stripe_event_created_at IS NULL OR stripe_event_created_at <= to_timestamp($3))`,
-            [status, sub.current_period_end, event.created, sub.id]
+            [status, subscriptionPeriodEnd(sub), event.created, sub.id]
           );
           // Only sync Discord/Telegram if this write actually applied (the ordering
           // guard above can no-op a stale/out-of-order event) and the subscription
@@ -384,14 +440,13 @@ export async function POST(request) {
         }
 
         case 'invoice.payment_failed': {
-          const invoice = event.data.object;
-          if (invoice.subscription) {
+          if (eventInvoiceSubscriptionId) {
             await client.query(
               `UPDATE subscriptions
                SET status = 'past_due', stripe_event_created_at = to_timestamp($1)
-               WHERE stripe_subscription_id = $2
+               WHERE stripe_subscription_id = $2 AND status <> 'canceled'
                  AND (stripe_event_created_at IS NULL OR stripe_event_created_at <= to_timestamp($1))`,
-              [event.created, invoice.subscription]
+              [event.created, eventInvoiceSubscriptionId]
             );
           }
           break;
@@ -403,14 +458,17 @@ export async function POST(request) {
           // after a failure, or Stripe's automatic retry finally landing. Without this, a fan
           // who fixes their card stays locked out of subscriber-only content indefinitely,
           // since nothing else flips the status back to 'active'.
+          // Never reopens a canceled subscription: a final invoice's payment event can share
+          // a timestamp with customer.subscription.deleted, and the <= ordering guard alone
+          // would let it flip the row back to active.
           const invoice = event.data.object;
-          if (invoice.subscription) {
+          if (eventInvoiceSubscriptionId) {
             await client.query(
               `UPDATE subscriptions
                SET status = 'active', stripe_event_created_at = to_timestamp($1)
-               WHERE stripe_subscription_id = $2
+               WHERE stripe_subscription_id = $2 AND status <> 'canceled'
                  AND (stripe_event_created_at IS NULL OR stripe_event_created_at <= to_timestamp($1))`,
-              [event.created, invoice.subscription]
+              [event.created, eventInvoiceSubscriptionId]
             );
           }
 
@@ -605,6 +663,18 @@ export async function POST(request) {
            WHERE stripe_dispute_id = $1 AND alert_sent_at IS NULL`,
           [disputeRow.stripe_dispute_id]
         );
+      }
+    }
+
+    // After commit, so the subscriptions row the referral points at is visible to
+    // rewardReferrer's connection. Wrapped so a Stripe hiccup crediting the referrer can't
+    // fail the webhook and put the fan's own (already committed) activation into a retry loop.
+    if (pendingReferralReward) {
+      try {
+        await rewardReferrer(pendingReferralReward);
+      } catch (err) {
+        console.error('Referral reward failed (subscription still activated):', err);
+        await alertOps('stripe-webhook:referral-reward', err);
       }
     }
 
