@@ -7,6 +7,7 @@ import { paymentProvider } from '@/lib/payments';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { chargeableFeePercent } from '@/lib/fees';
 import { scoreCheckout, riskMetadata } from '@/lib/risk-score';
+import { supporterSourceMetadata } from '@/lib/supporter-source';
 import { MIN_DIGITAL_PRODUCT_PRICE_CENTS } from '@/lib/pricing';
 
 export async function POST(request, { params }) {
@@ -102,6 +103,7 @@ export async function POST(request, { params }) {
         creator_id: product.creator_id,
         purchase_price_cents: String(product.price_cents),
         ...riskMetadata(risk),
+        ...supporterSourceMetadata(request, product.creator_id),
       },
     });
     return NextResponse.json({ url });
