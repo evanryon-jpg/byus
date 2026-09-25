@@ -97,6 +97,12 @@ export async function POST(request) {
       if (!url || !url.startsWith('https://') || !name) {
         return NextResponse.json({ error: 'One of the uploaded files is missing required information.' }, { status: 400 });
       }
+      // Only this creator's own uploads (app/api/creator/products/upload-token scopes every
+      // pathname to products/{userId}/) -- same rule post images already follow. Otherwise
+      // any https URL, including another creator's product file, could be sold as a download.
+      if (!isOwnProductFileUrl(url, session.userId)) {
+        return NextResponse.json({ error: 'Invalid file reference.' }, { status: 400 });
+      }
       const check = classifyFile(contentType, size);
       if (!check.ok) {
         return NextResponse.json({ error: check.error }, { status: 400 });
@@ -144,5 +150,16 @@ export async function POST(request) {
   } catch (err) {
     console.error('creator/products POST failed:', err);
     return NextResponse.json({ error: 'Could not create this product. Try again.' }, { status: 500 });
+  }
+}
+
+function isOwnProductFileUrl(url, userId) {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:'
+      && parsed.hostname.endsWith('.blob.vercel-storage.com')
+      && parsed.pathname.startsWith(`/products/${userId}/`);
+  } catch {
+    return false;
   }
 }
