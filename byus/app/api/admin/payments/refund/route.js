@@ -105,6 +105,19 @@ export async function POST(request) {
       },
     });
 
+    // A full refund of a digital-download purchase also takes the download back: the
+    // file routes only serve purchases with status 'succeeded'. Partial refunds (an
+    // explicit amountCents below the charge) leave access alone. Refunds issued from the
+    // Stripe Dashboard don't pass through here -- that needs a charge.refunded webhook.
+    const isFullRefund = amountCents === undefined || amountCents >= Number(localPayment.gross_amount_cents || 0);
+    if (isFullRefund) {
+      await query(
+        `UPDATE digital_purchases SET status = 'refunded'
+         WHERE stripe_charge_id = $1 AND status = 'succeeded'`,
+        [chargeId]
+      );
+    }
+
     return NextResponse.json({
       refund: {
         ...refund,
