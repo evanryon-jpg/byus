@@ -27,7 +27,7 @@ export const FAQS = [
   },
   {
     q: 'When and how do creators get paid?',
-    a: "Straight to you, no detours. Connect your own Stripe Express account once, and every payout lands there on Stripe's normal schedule — no separate ByUs payout process, no holding period, no minimum you have to hit first.",
+    a: "Straight to you, no detours. Connect your own Stripe Express account once. Your share of every payment lands in your Stripe balance the moment a fan pays, and Stripe sends it to your bank every Monday. ByUs never holds your money, and there's no minimum to hit first. Stripe holds a brand-new account's very first payout for about 7 to 14 days while it verifies you; after that it's every week.",
   },
   {
     q: 'Is it easy for a fan to cancel?',
