@@ -19,7 +19,10 @@ export const FEE_DISCOUNT_THRESHOLD_CENTS = 200000;
 
 // Sustainable floors for new paid checkouts. Existing subscriptions below this amount
 // may renew unchanged, but no new supporter can start a below-floor checkout.
-export const MIN_MEMBERSHIP_PRICE_CENTS = 500; // $5.00
+// Raised from $5 to $8 on Sept 25, 2026: with Stripe's 30-cent fixed fee per payment, a $5
+// membership at the 10% founding rate left ByUs about 2 cents, and lost money on international
+// cards. Tiers already at $5 keep renewing for existing members; new joins need $8+.
+export const MIN_MEMBERSHIP_PRICE_CENTS = 800; // $8.00
 export const MIN_DIGITAL_PRODUCT_PRICE_CENTS = 500; // $5.00
 // Annual plans may discount two months at most (10 monthly payments for 12 months).
 export const MIN_ANNUAL_BILLING_MONTHS = 10;

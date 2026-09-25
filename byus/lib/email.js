@@ -217,7 +217,7 @@ export async function sendCreatorWelcomeEmail(to, { displayName, foundingSpot, d
         <p>Three steps to launch your page:</p>
         <ol style="padding-left:20px;">
           <li style="margin-bottom:6px;">Add your photo and a short bio.</li>
-          <li style="margin-bottom:6px;">Create your first membership tier (tiers start at $5).</li>
+          <li style="margin-bottom:6px;">Create your first membership tier (tiers start at $8).</li>
           <li>Publish a first post so new members have something waiting for them.</li>
         </ol>
         <p style="margin: 24px 0;">
