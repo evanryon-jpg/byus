@@ -49,6 +49,12 @@ export async function createCustomer({ email, userId }) {
 
 // ---- Connected accounts (creator payout destinations) ----------------------------------
 
+// Creators are paid out weekly, every Monday (decided Sept 25, 2026). Their share still lands
+// in their own Stripe balance the moment a fan pays -- this only sets how often Stripe sweeps
+// that balance to their bank. ByUs pays Stripe 0.25% + 25 cents per payout, so daily payouts
+// made small creators cost more than their fees brought in. Stated up front in the FAQ.
+export const CREATOR_PAYOUT_SCHEDULE = { interval: 'weekly', weekly_anchor: 'monday' };
+
 export async function createConnectedAccount({ email, url }) {
   const account = await stripe.accounts.create({
     type: 'express',
@@ -58,6 +64,7 @@ export async function createConnectedAccount({ email, url }) {
       transfers: { requested: true },
     },
     business_profile: { url },
+    settings: { payouts: { schedule: CREATOR_PAYOUT_SCHEDULE } },
   });
   return { accountId: account.id };
 }
@@ -231,13 +238,10 @@ export async function pauseConnectedAccountPayouts({ accountId }) {
   await stripe.accounts.update(accountId, { settings: { payouts: { schedule: { interval: 'manual' } } } });
 }
 
-// Restores ByUs's own default payout cadence. This can't recover whatever custom
-// schedule a creator may have set for themselves before being suspended -- Stripe has
-// no "previous schedule" to read back -- so a creator who'd customized their payout
-// timing needs to reset it again after reinstatement. A one-time loss of a preference,
-// not of funds, and worth the simplicity of not having to snapshot/restore schedules.
+// Restores ByUs's standard payout cadence (weekly, Mondays -- CREATOR_PAYOUT_SCHEDULE above)
+// after a suspension is lifted.
 export async function resumeConnectedAccountPayouts({ accountId }) {
-  await stripe.accounts.update(accountId, { settings: { payouts: { schedule: { interval: 'daily' } } } });
+  await stripe.accounts.update(accountId, { settings: { payouts: { schedule: CREATOR_PAYOUT_SCHEDULE } } });
 }
 
 // ---- Refunds & connected-account fund recovery ------------------------------------------
