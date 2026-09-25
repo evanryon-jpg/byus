@@ -19,7 +19,7 @@ export const FAQS = [
   },
   {
     q: 'Can creators sign up and connect Stripe now?',
-    a: "New creator accounts are temporarily paused. Join the free waitlist and we'll email you when signups reopen. Joining reserves an available founding spot and locks in the 10% rate for good. Your confirmation shows your spot number. Use the same email when creating your creator account. If all 50 spots are reserved, you can still join for updates at standard pricing. Fans, you're all set: sign up and subscribe as normal in the meantime. Creating a ByUs account is free either way; Stripe separately reviews every connected account and may ask for verification info before it'll turn on payments or payouts.",
+    a: "Founding spots are open now, and creator accounts open soon. Reserving a spot is free and locks in the 10% rate for good; your confirmation shows your spot number. When accounts open, we'll email you a link, and you create your creator account with the same email to claim it. If all 50 spots are reserved, you can still join for updates at standard pricing. Fans, you're all set: sign up and subscribe as normal in the meantime. Creating a ByUs account is free either way; Stripe separately reviews every connected account and may ask for verification info before it'll turn on payments or payouts.",
   },
   {
     q: 'How does the platform fee work?',
@@ -48,6 +48,10 @@ export const FAQS = [
   {
     q: 'Is my payment information safe?',
     a: "Yes, and we mean that literally: every payment and payout runs through Stripe, and ByUs never sees or stores a single card number — not what a fan pays with, not what a creator gets paid out to.",
+  },
+  {
+    q: 'Can I take my content with me if I leave?',
+    a: "Your work stays yours. From your dashboard you can download every video you've uploaded as an MP4, and export your full earnings history as a spreadsheet at any time. Your payouts go straight to your own Stripe account, so your payment records live there too. We're working on exports for written posts and your member list next.",
   },
   {
     q: 'Can creators connect Discord or Telegram?',

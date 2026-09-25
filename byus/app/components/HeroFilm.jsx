@@ -18,7 +18,7 @@ import { useEffect, useRef, useState } from 'react';
 // That fade is wrong for the very first play, though -- it would flash from the bright
 // poster down to black -- so the first play starts at 0.5s, where the frame matches the
 // poster exactly. Every later loop starts from 0 and gets the fade.
-const FILM_SRC = '/videos/byus-homepage-film-20260925.mp4';
+const FILM_SRC = '/videos/byus-homepage-film-20260925b.mp4';
 const POSTER_SRC = '/images/byus-homepage-film-poster.webp';
 const FIRST_PLAY_OFFSET = 0.5;
 
@@ -111,7 +111,7 @@ export default function HeroFilm() {
         onPlay={() => setPaused(false)}
         onPause={() => setPaused(true)}
         onError={() => setEnabled(false)} // can't decode it here: fall back to the poster, drop the button
-        aria-label="Short film: a ceramic artist shaping a bowl on a pottery wheel, then her example ByUs creator page offering a $5 a month membership"
+        aria-label="Short film: a ceramic artist shaping a bowl on a pottery wheel, then her example ByUs creator page offering an $8 a month membership"
       />
       {enabled && (
         <button

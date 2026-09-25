@@ -10,7 +10,7 @@ import { useRef } from 'react';
 // than guessing -- a wrong jump point is worse than no jump point at all.
 const STEPS = [
   ['01', 'Add your profile', 'Photo, name, bio, social links, and page details', 3],
-  ['02', 'Build membership tiers', 'Pricing from $5, benefits, and a live fan preview', 16],
+  ['02', 'Build membership tiers', 'Pricing from $8, benefits, and a live fan preview', 16],
   ['03', 'Publish and sell', 'Posts, imports, tips, downloads, and live streaming', 35],
   ['04', 'Grow your community', 'Discord and Telegram sync, notifications, and analytics', 60],
   ['05', 'Get paid, with guidance', 'Stripe payouts, yearly reporting, and the Page Coach', 84],
