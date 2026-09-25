@@ -17,7 +17,7 @@ import { getCurrentUser } from '@/lib/session';
 import { paymentProvider } from '@/lib/payments';
 import { MIN_TIP_CENTS, MAX_TIP_CENTS } from '@/lib/pricing';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
-import { getPlatformMilestoneReductionPoints, applyPlatformMilestoneReduction } from '@/lib/fees';
+import { chargeableFeePercent } from '@/lib/fees';
 import { scoreCheckout, riskMetadata } from '@/lib/risk-score';
 import { TERMS_VERSION, TIP_REFUND_POLICY_VERSION, tipCheckoutDisclosure } from '@/lib/legal';
 
@@ -87,9 +87,9 @@ export async function POST(request, { params }) {
 
   try {
     const creatorResult = await query(
-      `SELECT id, display_name, stripe_connect_account_id, stripe_connect_onboarded, platform_fee_percent,
+      `SELECT id, display_name, stripe_connect_account_id, stripe_connect_onboarded, platform_fee_percent, zero_fee_promo_expires_at,
               review_cleared_at
-       FROM users WHERE id = $1 AND role = 'creator'`,
+       FROM users WHERE id = $1 AND role = 'creator' AND is_suspended = false`,
       [creatorId]
     );
     const creator = creatorResult.rows[0];
@@ -126,8 +126,11 @@ export async function POST(request, { params }) {
       await query('UPDATE users SET stripe_customer_id = $1 WHERE id = $2', [customerId, session.userId]);
     }
 
-    const reductionPoints = await getPlatformMilestoneReductionPoints(query);
-    const effectiveFeePercent = applyPlatformMilestoneReduction(creator.platform_fee_percent, reductionPoints);
+    const effectiveFeePercent = await chargeableFeePercent({
+      creatorId: creator.id,
+      platformFeePercent: creator.platform_fee_percent,
+      zeroFeePromoExpiresAt: creator.zero_fee_promo_expires_at,
+    });
     const applicationFeeCents = Math.round((amountCents * effectiveFeePercent) / 100);
 
     const origin = request.headers.get('origin') || process.env.APP_URL;
