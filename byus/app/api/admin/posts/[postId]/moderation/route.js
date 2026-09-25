@@ -1,4 +1,6 @@
 export const dynamic = 'force-dynamic';
+// Approving now also notifies the creator's subscribers (lib/post-notifications.js).
+export const maxDuration = 30;
 
 // POST /api/admin/posts/:postId/moderation
 // Approves or rejects one pending video. This is deliberately per-post: clearing a
@@ -9,6 +11,7 @@ import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { isAdmin } from '@/lib/admin';
 import { deleteAsset } from '@/lib/mux';
+import { notifySubscribersOfNewPost } from '@/lib/post-notifications';
 
 export async function POST(request, { params }) {
   const session = await getCurrentUser();
@@ -47,13 +50,24 @@ export async function POST(request, { params }) {
           { status: 409 }
         );
       }
-      await query(
+      // `AND pending_review = true` + RETURNING makes this the single transition to
+      // visible, so a double-click or a second admin tab can't announce the post twice.
+      const released = await query(
         `UPDATE posts
          SET pending_review = false, video_moderation_status = 'manual_approved',
              video_moderated_at = now()
-         WHERE id = $1`,
+         WHERE id = $1 AND pending_review = true
+         RETURNING id, creator_id, title, body`,
         [postId]
       );
+      const releasedPost = released.rows[0];
+      if (releasedPost) {
+        try {
+          await notifySubscribersOfNewPost(releasedPost.creator_id, releasedPost);
+        } catch (err) {
+          console.error(`New-post notification failed for approved video post ${postId}:`, err);
+        }
+      }
       return NextResponse.json({ approved: true });
     }
 
