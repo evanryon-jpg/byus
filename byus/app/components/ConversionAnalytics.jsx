@@ -2,7 +2,23 @@
 
 import { useEffect } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { track } from '@vercel/analytics';
+import { track as vercelTrack } from '@vercel/analytics';
+
+// <Analytics /> (app/layout.js) sets up window.va in its own effect, which runs AFTER this
+// component's effects -- so an event fired during the first render of a page (the
+// funnel_signup_viewed below, on a direct load of /signup) hit an undefined window.va and
+// was silently dropped: 9 visitors loaded /signup and 0 views were ever recorded. This
+// installs the same queue @vercel/analytics installs itself (window.vaq), so an early event
+// waits in line and is sent once the script loads.
+function track(name, properties) {
+  if (typeof window !== 'undefined' && !window.va) {
+    window.va = function queueAnalyticsCall(...params) {
+      if (!window.vaq) window.vaq = [];
+      window.vaq.push(params);
+    };
+  }
+  vercelTrack(name, properties);
+}
 
 export default function ConversionAnalytics() {
   const pathname = usePathname();
