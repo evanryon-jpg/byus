@@ -89,7 +89,12 @@ export default function ProfileClient({ data, justSubscribed, subscribedTierId, 
 
   const { creator, tiers, posts, hasActiveSubscription, live, topSupporters, goal } = data;
   const subscribedTier = subscribedTierId ? tiers.find((t) => t.id === subscribedTierId) : null;
-  const filteredPosts = posts.filter((p) => {
+  // The pinned "Start here" post shows up top on its own (see PinnedPost below), so it's
+  // left out of the feed rather than shown twice. The loader only sets pinnedPostId when
+  // that post is unlocked for this viewer.
+  const pinnedPost = data.pinnedPostId ? posts.find((p) => p.id === data.pinnedPostId) || null : null;
+  const feedPosts = pinnedPost ? posts.filter((p) => p.id !== pinnedPost.id) : posts;
+  const filteredPosts = feedPosts.filter((p) => {
     if (postTypeFilter !== 'all' && getPostType(p) !== postTypeFilter) return false;
     if (postAccessFilter === 'public' && p.locked) return false;
     if (postAccessFilter === 'locked' && !p.locked) return false;
@@ -115,6 +120,21 @@ export default function ProfileClient({ data, justSubscribed, subscribedTierId, 
         <p className="mb-6 rounded-xl bg-[#0F766E]/15 px-4 py-3 text-sm text-[#0F766E]">
           ☕ Thanks for the coffee! {creator.display_name} really appreciates the support.
         </p>
+      )}
+      {creator.cover_image_url && (
+        // Optional banner (uploaded in Settings). 3:1 keeps it a strip rather than a
+        // hero that shoves the tiers below the fold. Served through our own versioned
+        // proxy route, so Next's optimizer can resize and cache it like the avatar.
+        <div className="relative mb-6 aspect-[3/1] w-full overflow-hidden rounded-2xl bg-brand-ink/5">
+          <Image
+            src={creator.cover_image_url}
+            alt=""
+            fill
+            priority
+            sizes="(max-width: 768px) 100vw, 768px"
+            className="object-cover"
+          />
+        </div>
       )}
       <div className="flex items-center gap-4">
         {creator.profile_image_url ? (
@@ -179,7 +199,8 @@ export default function ProfileClient({ data, justSubscribed, subscribedTierId, 
           {followError && <p className="mt-2 text-xs text-red-700">{followError}</p>}
         </div>
       </div>
-      {creator.bio && <p className="mt-2 text-brand-ink/70">{creator.bio}</p>}
+      {/* whitespace-pre-line keeps the paragraph breaks the creator typed in Settings. */}
+      {creator.bio && <p className="mt-3 whitespace-pre-line text-brand-ink/70">{creator.bio}</p>}
 
       {creator.social_links?.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-2">
@@ -197,9 +218,22 @@ export default function ProfileClient({ data, justSubscribed, subscribedTierId, 
         </div>
       )}
 
-      {goal && <SupportGoalBar goal={goal} />}
+      {pinnedPost && (
+        <PinnedPost
+          post={pinnedPost}
+          creator={creator}
+          creatorId={creatorId}
+          isOwnPage={data.isOwnPage}
+          router={router}
+        />
+      )}
 
-      <TopSupporters supporters={topSupporters} hasTiers={tiers.length > 0} />
+      {/* The goal bar and Top supporters only appear once there's real support to show.
+          "$0 of $100" and an empty supporters slot near the top of a brand-new page read
+          as "nobody's here" -- the opposite of what a first visitor should feel. */}
+      {goal && goal.progressCents > 0 && <SupportGoalBar goal={goal} />}
+
+      {topSupporters?.length > 0 && <TopSupporters supporters={topSupporters} hasTiers={tiers.length > 0} />}
 
       <DigitalProductShop creatorId={creator.slug || creator.id} />
 
@@ -332,10 +366,13 @@ export default function ProfileClient({ data, justSubscribed, subscribedTierId, 
       )}
 
       {/* Feed */}
+      {/* A page whose only post is the pinned intro doesn't need an empty "Posts" section under it. */}
+      {(feedPosts.length > 0 || !pinnedPost) && (
+      <>
       <h2 className="mt-12 font-semibold">Posts</h2>
       {/* Filters only earn their keep once there's actually something to sift through —
           a brand-new creator with one or two posts doesn't need a search box. */}
-      {posts.length > 3 && (
+      {feedPosts.length > 3 && (
         <PostFilters
           typeFilter={postTypeFilter}
           onTypeFilter={setPostTypeFilter}
@@ -358,61 +395,97 @@ export default function ProfileClient({ data, justSubscribed, subscribedTierId, 
             {p.locked ? (
               <LockedPostPreview hasTiers={tiers.length > 0} isVideo={p.hasVideo} />
             ) : (
-              <>
-                {p.video && (
-                  <div className="mt-3">
-                    <PostVideoPlayer playbackId={p.video.playbackId} playbackToken={p.video.playbackToken} />
-                  </div>
-                )}
-                {p.media_url && (
-                  // Post photos have no stored width/height (uploads of arbitrary size), and
-                  // this route (`/api/posts/:id/media`) checks the *viewer's own* session to
-                  // decide whether they're allowed to see it, then serves it as private/no-cache.
-                  // Next's built-in image optimizer runs its own server-side fetch that carries
-                  // no cookies and caches by URL alone — wrong on both counts for a gated,
-                  // per-viewer image — so this stays unoptimized: the browser fetches it exactly
-                  // as before, and next/image just adds the reserved box (no layout jump) and
-                  // native lazy-loading on top.
-                  <div className="relative mt-3 aspect-[16/10] w-full overflow-hidden rounded-xl">
-                    <Image
-                      src={p.media_url}
-                      alt={p.title ? `Photo for "${p.title}"` : 'Post photo'}
-                      fill
-                      unoptimized
-                      className="object-cover"
-                    />
-                  </div>
-                )}
-                <p className="mt-2 text-sm text-brand-ink/80">{p.body}</p>
-                {p.poll && <PollBlock postId={p.id} poll={p.poll} />}
-              </>
+              <PostContent post={p} />
             )}
-            <div className="mt-3 flex items-center gap-4">
-              <LikeButton
-                postId={p.id}
-                initialLikeCount={p.likeCount}
-                initialLikedByMe={p.likedByMe}
-                creatorId={creatorId}
-                router={router}
-              />
-              {creator.stripe_connect_onboarded && !data.isOwnPage && (
-                <TipButton
-                  creatorId={creator.id}
-                  postId={p.id}
-                  creatorName={creator.display_name}
-                  router={router}
-                />
-              )}
-              <ReportButton creatorId={creator.id} postId={p.id} />
-            </div>
+            <PostActions post={p} creator={creator} creatorId={creatorId} isOwnPage={data.isOwnPage} router={router} />
           </li>
         ))}
-        {posts.length === 0 && <p className="text-sm text-brand-ink/60">No posts yet.</p>}
-        {posts.length > 0 && filteredPosts.length === 0 && (
+        {feedPosts.length === 0 && <p className="text-sm text-brand-ink/60">No posts yet.</p>}
+        {feedPosts.length > 0 && filteredPosts.length === 0 && (
           <p className="text-sm text-brand-ink/60">No posts match your filters.</p>
         )}
       </ul>
+      </>
+      )}
     </div>
+  );
+}
+
+// An unlocked post's media + text + poll. Shared by the feed and the pinned intro so
+// the two can't drift apart.
+function PostContent({ post: p }) {
+  return (
+    <>
+      {p.video && (
+        <div className="mt-3">
+          <PostVideoPlayer playbackId={p.video.playbackId} playbackToken={p.video.playbackToken} />
+        </div>
+      )}
+      {p.media_url && (
+        // Post photos have no stored width/height (uploads of arbitrary size), and
+        // this route (`/api/posts/:id/media`) checks the *viewer's own* session to
+        // decide whether they're allowed to see it, then serves it as private/no-cache.
+        // Next's built-in image optimizer runs its own server-side fetch that carries
+        // no cookies and caches by URL alone — wrong on both counts for a gated,
+        // per-viewer image — so this stays unoptimized: the browser fetches it exactly
+        // as before, and next/image just adds the reserved box (no layout jump) and
+        // native lazy-loading on top.
+        <div className="relative mt-3 aspect-[16/10] w-full overflow-hidden rounded-xl">
+          <Image
+            src={p.media_url}
+            alt={p.title ? `Photo for "${p.title}"` : 'Post photo'}
+            fill
+            unoptimized
+            className="object-cover"
+          />
+        </div>
+      )}
+      {p.body && <p className="mt-2 whitespace-pre-line text-sm text-brand-ink/80">{p.body}</p>}
+      {p.poll && <PollBlock postId={p.id} poll={p.poll} />}
+    </>
+  );
+}
+
+// Like / tip / report row under a post.
+function PostActions({ post: p, creator, creatorId, isOwnPage, router }) {
+  return (
+    <div className="mt-3 flex items-center gap-4">
+      <LikeButton
+        postId={p.id}
+        initialLikeCount={p.likeCount}
+        initialLikedByMe={p.likedByMe}
+        creatorId={creatorId}
+        router={router}
+      />
+      {creator.stripe_connect_onboarded && !isOwnPage && (
+        <TipButton
+          creatorId={creator.id}
+          postId={p.id}
+          creatorName={creator.display_name}
+          router={router}
+        />
+      )}
+      <ReportButton creatorId={creator.id} postId={p.id} />
+    </div>
+  );
+}
+
+// The creator's pinned "Start here" post -- usually a short welcome video -- shown right
+// under their bio so it's the first thing a new visitor sees. Pinned from the Posts list
+// in the creator dashboard (app/api/creator/pinned-post/route.js).
+function PinnedPost({ post, creator, creatorId, isOwnPage, router }) {
+  return (
+    <section
+      aria-labelledby="pinned-post-title"
+      className="mt-8 rounded-2xl border border-[#0F766E]/20 bg-brand-paper p-6"
+    >
+      <p className="text-[11px] font-bold uppercase tracking-wider text-[#0F766E]">Start here</p>
+      <h2 id="pinned-post-title" className="mt-1 text-lg font-semibold text-[#172033]">
+        {post.title || `A note from ${creator.display_name}`}
+      </h2>
+      <PostContent post={post} />
+      <PostActions post={post} creator={creator} creatorId={creatorId} isOwnPage={isOwnPage} router={router} />
+    </section>
   );
 }
 
@@ -654,12 +727,9 @@ function FilterChip({ active, onClick, children }) {
 // Top supporters: the longest-tenured active subscribers who've chosen to be shown here
 // (show_support_publicly, off by default -- see Settings). Ranked by how long they've
 // supported this creator, not by how much they've paid -- a founding-member feel rather
-// than a spending leaderboard. When nobody has opted in yet -- whether because there are
-// no subscribers at all, or there are but none have turned this on -- this shows an open
-// invite slot instead of just disappearing, so a brand-new creator's page still has
-// somewhere for their first supporter to show up. The invite copy deliberately doesn't
-// claim "no one has subscribed yet" (that could be false); it only ever claims the slot
-// itself is open.
+// than a spending leaderboard. Since Sept 25, 2026 the page only renders this once at
+// least one supporter has opted in (an empty slot near the top made new pages look
+// deserted); the open-slot branch below is kept in case that's ever reversed.
 function TopSupporters({ supporters, hasTiers }) {
   const hasSupporters = supporters && supporters.length > 0;
 
