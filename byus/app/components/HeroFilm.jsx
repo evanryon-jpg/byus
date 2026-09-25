@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 
 // The short homepage film (a potter at work, then her example ByUs page) that sits at the
-// top of the hero's right column. 8 seconds, silent, ~490 KB, loops.
+// top of the hero's right column. 8 seconds, silent, ~490 KB. Plays once, then holds on
+// its end card (the example creator page) with a replay button.
 //
 // The <video> is server-rendered with only a poster and NO src, so the first paint is a
 // 44 KB still no matter what. The film itself is attached after hydration, and only when
@@ -14,13 +15,16 @@ import { useEffect, useRef, useState } from 'react';
 // a visible pause/play button because anything that moves on its own for more than five
 // seconds needs one (WCAG 2.2.2).
 //
-// The file fades in from dark over its first half-second so the loop point is seamless.
-// That fade is wrong for the very first play, though -- it would flash from the bright
-// poster down to black -- so the first play starts at 0.5s, where the frame matches the
-// poster exactly. Every later loop starts from 0 and gets the fade.
+// The file fades in from black over its first half-second and out to black over its last
+// half-second (it was cut to loop). It no longer loops: looping forever was distracting on
+// desktop, and on some phones the loop never restarted, leaving the black last frame on
+// screen. So every play starts at 0.5s (where the frame matches the poster), and when it
+// ends we step back to END_HOLD_FROM_END seconds before the end -- the fully lit end card --
+// and stay there, paused, with a replay button.
 const FILM_SRC = '/videos/byus-homepage-film-20260925b.mp4';
 const POSTER_SRC = '/images/byus-homepage-film-poster.webp';
 const FIRST_PLAY_OFFSET = 0.5;
+const END_HOLD_FROM_END = 0.7; // the fade to black starts ~0.5s before the end
 
 function shouldSkipMotion() {
   if (typeof window === 'undefined') return true;
@@ -35,7 +39,9 @@ export default function HeroFilm() {
   const videoRef = useRef(null);
   const [enabled, setEnabled] = useState(false);
   const [paused, setPaused] = useState(false);
+  const [finished, setFinished] = useState(false);
   const userPausedRef = useRef(false);
+  const finishedRef = useRef(false);
 
   useEffect(() => {
     if (shouldSkipMotion()) return undefined;
@@ -72,7 +78,8 @@ export default function HeroFilm() {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          if (!userPausedRef.current) tryPlay();
+          // Once it has played through, it stays on the end card until someone taps replay.
+          if (!userPausedRef.current && !finishedRef.current) tryPlay();
         } else {
           video.pause();
         }
@@ -83,9 +90,27 @@ export default function HeroFilm() {
     return () => observer.disconnect();
   }, [enabled]);
 
+  const handleEnded = () => {
+    const video = videoRef.current;
+    finishedRef.current = true;
+    setFinished(true);
+    if (video && Number.isFinite(video.duration)) {
+      video.currentTime = Math.max(0, video.duration - END_HOLD_FROM_END);
+    }
+  };
+
   const togglePlayback = () => {
     const video = videoRef.current;
     if (!video) return;
+    if (finishedRef.current) {
+      finishedRef.current = false;
+      setFinished(false);
+      userPausedRef.current = false;
+      video.currentTime = FIRST_PLAY_OFFSET;
+      const attempt = video.play();
+      if (attempt && typeof attempt.catch === 'function') attempt.catch(() => {});
+      return;
+    }
     if (video.paused) {
       userPausedRef.current = false;
       const attempt = video.play();
@@ -104,12 +129,12 @@ export default function HeroFilm() {
         poster={POSTER_SRC}
         src={enabled ? FILM_SRC : undefined}
         muted
-        loop
         playsInline
         preload={enabled ? 'auto' : 'none'}
         disablePictureInPicture
         onPlay={() => setPaused(false)}
         onPause={() => setPaused(true)}
+        onEnded={handleEnded}
         onError={() => setEnabled(false)} // can't decode it here: fall back to the poster, drop the button
         aria-label="Short film: a ceramic artist shaping a bowl on a pottery wheel, then her example ByUs creator page offering an $8 a month membership"
       />
@@ -117,10 +142,15 @@ export default function HeroFilm() {
         <button
           type="button"
           onClick={togglePlayback}
-          aria-label={paused ? 'Play the film' : 'Pause the film'}
+          aria-label={finished ? 'Replay the film' : paused ? 'Play the film' : 'Pause the film'}
           className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-[#061321]/70 text-white backdrop-blur-sm transition hover:bg-[#061321]/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#67d8dc]"
         >
-          {paused ? (
+          {finished ? (
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M2.5 8a5.5 5.5 0 1 0 1.7-3.97" />
+              <path d="M2.5 2.5v3h3" />
+            </svg>
+          ) : paused ? (
             <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">
               <path d="M3 1.5v11l9-5.5-9-5.5z" />
             </svg>
