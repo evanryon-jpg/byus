@@ -9,6 +9,7 @@ import {
   SESSION_COOKIE_NAME,
 } from '@/lib/auth';
 import { trackServerEvent } from '@/lib/analytics';
+import { sendCreatorWelcomeOnce } from '@/lib/creator-welcome';
 import {
   STANDARD_FEE_PERCENT,
   DISCOUNTED_FEE_PERCENT,
@@ -84,6 +85,7 @@ export async function POST(request) {
     response.cookies.set(SESSION_COOKIE_NAME, createSessionToken(user), getSessionCookieOptions());
     if (upgraded) {
       await trackServerEvent('funnel_fan_became_creator', { role: 'creator' }, request);
+      await sendCreatorWelcomeOnce(user.id);
     }
     return response;
   } catch (error) {
