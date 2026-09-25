@@ -15,6 +15,7 @@ import { checkRateLimit, rateLimitResponse, getClientIp } from '@/lib/rate-limit
 import { generateAppleClientSecret, verifyAppleIdToken } from '@/lib/apple-auth';
 import { attributeReferral } from '@/lib/referrals';
 import { trackServerEvent } from '@/lib/analytics';
+import { sendCreatorWelcomeOnce } from '@/lib/creator-welcome';
 import { safeNextPath } from '@/lib/safe-next';
 import { recordLegalAcceptance } from '@/lib/legal-acceptance';
 import {
@@ -245,6 +246,7 @@ export async function POST(request) {
         });
         accountCreated = true;
         await attributeReferral(referralCode, user.id);
+        if (user.role === 'creator') await sendCreatorWelcomeOnce(user.id);
       }
     }
   } catch (err) {
