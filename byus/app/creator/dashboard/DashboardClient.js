@@ -1110,10 +1110,16 @@ function GettingStartedChecklist({ hasProfile, stripeConnected, hasTier, hasPost
 // one of these anyway. Clicking one just pre-fills the form; nothing is saved until
 // they hit "Create tier", so it's still easy to tweak the name, price, or description.
 const TIER_PRESETS = [
-  { label: 'Supporter', name: 'Supporter', price: '5.00', description: 'Support my work and get a warm thank-you.' },
+  { label: 'Supporter', name: 'Supporter', price: '8.00', description: 'Support my work and get a warm thank-you.' },
   { label: 'Fan club', name: 'Fan club', price: '10.00', description: 'Access to subscriber-only posts and updates.' },
   { label: 'VIP', name: 'VIP', price: '25.00', description: 'Everything in Fan club, plus first access to new work.' },
 ];
+
+// 10x the monthly price as a string ("80.00"), or '' if the monthly price isn't a number yet.
+function defaultAnnualPrice(monthly) {
+  const n = parseFloat(monthly);
+  return Number.isFinite(n) && n > 0 ? (Math.round(n * 100) * 10 / 100).toFixed(2) : '';
+}
 
 function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent, zeroFeePromoActive }) {
   const [open, setOpen] = useState(false);
@@ -1121,6 +1127,9 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent, ze
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [annualPrice, setAnnualPrice] = useState('');
+  // The yearly price follows the monthly one (10x = two months free) until the creator
+  // types their own; after that it's theirs. Clearing it offers monthly only.
+  const [annualTouched, setAnnualTouched] = useState(false);
   const [welcomeMessage, setWelcomeMessage] = useState('');
   const [trialDays, setTrialDays] = useState(0);
   const [error, setError] = useState('');
@@ -1132,7 +1141,14 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent, ze
     setName(preset.name);
     setDescription(preset.description);
     setPrice(preset.price);
+    setAnnualPrice(defaultAnnualPrice(preset.price));
+    setAnnualTouched(false);
     setOpen(true);
+  }
+
+  function handleMonthlyChange(value) {
+    setPrice(value);
+    if (!annualTouched) setAnnualPrice(defaultAnnualPrice(value));
   }
 
   async function handleCreate(e) {
@@ -1152,7 +1168,7 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent, ze
       setError(data.error);
       return;
     }
-    setName(''); setDescription(''); setPrice(''); setAnnualPrice(''); setWelcomeMessage(''); setTrialDays(0); setOpen(false);
+    setName(''); setDescription(''); setPrice(''); setAnnualPrice(''); setAnnualTouched(false); setWelcomeMessage(''); setTrialDays(0); setOpen(false);
     onCreated();
   }
 
@@ -1171,6 +1187,7 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent, ze
           name: preset.name,
           description: preset.description,
           priceCents: Math.round(parseFloat(preset.price) * 100),
+          annualPriceCents: Math.round(parseFloat(preset.price) * 100) * 10,
         }),
       });
       if (!res.ok) {
@@ -1264,7 +1281,7 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent, ze
                 className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm" />
               <div>
                 <input placeholder="Price per month (minimum 8.00)" type="number" step="0.01" min="8" value={price}
-                  onChange={(e) => setPrice(e.target.value)} required
+                  onChange={(e) => handleMonthlyChange(e.target.value)} required
                   className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm" />
                 {previewPriceCents > 0 && (
                   <p className="mt-1 text-xs text-brand-ink/60">
@@ -1279,12 +1296,13 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent, ze
                   step="0.01"
                   min={annualMinimumDollars}
                   value={annualPrice}
-                  onChange={(e) => setAnnualPrice(e.target.value)}
+                  onChange={(e) => { setAnnualPrice(e.target.value); setAnnualTouched(true); }}
                   className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
                 />
                 <p className="mt-1 text-xs text-brand-ink/60">
-                  Lets fans pay yearly with up to two months free. The annual price must equal at least
-                  10 monthly payments. Leave blank to offer monthly billing only.
+                  Filled in for you at 10 times the monthly price, so fans who pay yearly get two months free.
+                  Your page shows the yearly option first. Change it if you like (it must be at least 10 monthly
+                  payments), or clear it to offer monthly only.
                 </p>
               </div>
               <div>
