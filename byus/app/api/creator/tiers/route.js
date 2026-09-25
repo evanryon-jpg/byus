@@ -59,7 +59,7 @@ export async function POST(request) {
 
   if (!name || !Number.isInteger(priceCents) || priceCents < MIN_MEMBERSHIP_PRICE_CENTS) {
     return NextResponse.json(
-      { error: 'A tier needs a name and a price of at least $5.00.' },
+      { error: 'A tier needs a name and a price of at least $8.00.' },
       { status: 400 }
     );
   }
@@ -84,7 +84,7 @@ export async function POST(request) {
   const hasAnnual = annualPriceCents !== undefined && annualPriceCents !== null;
   if (hasAnnual && (!Number.isInteger(annualPriceCents) || annualPriceCents < MIN_MEMBERSHIP_PRICE_CENTS)) {
     return NextResponse.json(
-      { error: 'Annual price must be at least $5.00, or left blank.' },
+      { error: 'Annual price must be at least $8.00, or left blank.' },
       { status: 400 }
     );
   }
