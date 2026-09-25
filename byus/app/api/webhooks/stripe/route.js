@@ -50,6 +50,7 @@ import { getAdminEmails } from '@/lib/admin';
 import { trackServerEvent } from '@/lib/analytics';
 import { recordEarningAndCheckFeeTier, syncActiveSubscriptionsToFeePercent } from '@/lib/fees';
 import { syncPlatformAccess } from '@/lib/platform-sync';
+import { isSupporterSource } from '@/lib/supporter-source';
 import { alertOps } from '@/lib/alerts';
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -208,6 +209,8 @@ export async function POST(request) {
             if (!tipPaymentIntent) break;
             const metadata = tipPaymentIntent.metadata || {};
             const { type, fan_id, creator_id, message, product_id, post_id } = metadata;
+            // How this fan first found the creator (lib/supporter-source.js); only known values stored.
+            const supporterSource = isSupporterSource(metadata.supporter_source) ? metadata.supporter_source : null;
             if (!fan_id || !creator_id) break;
 
             const grossCents = tipPaymentIntent.amount;
@@ -273,10 +276,10 @@ export async function POST(request) {
               await client.query(
                 `INSERT INTO transactions
                    (fan_id, creator_id, gross_amount_cents, platform_fee_cents,
-                    creator_net_cents, stripe_charge_id, status, message)
-                 VALUES ($1, $2, $3, $4, $5, $6, 'succeeded', $7)`,
+                    creator_net_cents, stripe_charge_id, status, message, supporter_source)
+                 VALUES ($1, $2, $3, $4, $5, $6, 'succeeded', $7, $8)`,
                 [fan_id, creator_id, grossCents, feeCents, netCents, chargeId,
-                 `Digital product purchase: ${product_id}`]
+                 `Digital product purchase: ${product_id}`, supporterSource]
               );
 
               const result = await recordEarningAndCheckFeeTier(client, {
@@ -302,9 +305,9 @@ export async function POST(request) {
             // creator deleted in between, which shouldn't also swallow the payment.
             await client.query(
               `INSERT INTO transactions
-                 (fan_id, creator_id, gross_amount_cents, platform_fee_cents, creator_net_cents, stripe_charge_id, status, message, post_id)
-               VALUES ($1, $2, $3, $4, $5, $6, 'succeeded', $7, $8)`,
-              [fan_id, creator_id, grossCents, feeCents, netCents, chargeId, message || null, post_id || null]
+                 (fan_id, creator_id, gross_amount_cents, platform_fee_cents, creator_net_cents, stripe_charge_id, status, message, post_id, supporter_source)
+               VALUES ($1, $2, $3, $4, $5, $6, 'succeeded', $7, $8, $9)`,
+              [fan_id, creator_id, grossCents, feeCents, netCents, chargeId, message || null, post_id || null, supporterSource]
             );
 
             // Same earnings ledger + monthly fee-tier recheck a subscription invoice
@@ -342,8 +345,8 @@ export async function POST(request) {
           // resurrect it.
           const upserted = await client.query(
             `INSERT INTO subscriptions
-               (fan_id, creator_id, tier_id, stripe_subscription_id, status, current_period_end, stripe_event_created_at)
-             VALUES ($1, $2, $3, $4, $7, to_timestamp($5), to_timestamp($6))
+               (fan_id, creator_id, tier_id, stripe_subscription_id, status, current_period_end, stripe_event_created_at, supporter_source)
+             VALUES ($1, $2, $3, $4, $7, to_timestamp($5), to_timestamp($6), $8)
              ON CONFLICT (stripe_subscription_id) DO UPDATE
                SET status = $7,
                    current_period_end = COALESCE(to_timestamp($5), subscriptions.current_period_end),
@@ -359,6 +362,10 @@ export async function POST(request) {
               subscriptionPeriodEnd(stripeSubscription),
               event.created,
               mapSubscriptionStatus(stripeSubscription.status),
+              // How this fan first found the creator (lib/supporter-source.js); set on insert only.
+              isSupporterSource(stripeSubscription.metadata?.supporter_source)
+                ? stripeSubscription.metadata.supporter_source
+                : null,
             ]
           );
 
