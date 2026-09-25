@@ -8,6 +8,7 @@ import EarningsCalculator from './components/EarningsCalculator';
 import FeedbackWidget from './components/FeedbackWidget';
 import LiveActivityTicker from './components/LiveActivityTicker';
 import CreatorWalkthrough from './components/CreatorWalkthrough';
+import HeroFilm from './components/HeroFilm';
 
 // Server component so the hero and closing CTAs can tell whether someone is already
 // logged in -- an existing creator or fan should never be invited to sign up again,
@@ -308,7 +309,7 @@ const HERO_CREATOR_EXAMPLES = [
   {
     name: 'Sophie Lane',
     craft: 'Ceramic artist',
-    image: '/creators/sophie-lane/hero.jpg',
+    image: '/creators/sophie-lane/hero-potter.jpg',
     href: '/demo/sophie-lane',
   },
 ];
@@ -321,10 +322,13 @@ function HeroCreatorExamples() {
         className="absolute -inset-8 rounded-[3rem] bg-cyan-300/10 blur-3xl"
       />
       <div className="relative">
-        <p className="mb-4 text-center text-[10px] font-bold uppercase tracking-[0.3em] text-[#7fd9ce] sm:text-xs lg:text-left">
+        {/* The film leads the column; the four example pages drop to one compact row
+            under it (two by two on phones), so the hero doesn't grow much taller. */}
+        <HeroFilm />
+        <p className="mb-3 mt-6 text-center text-[10px] font-bold uppercase tracking-[0.3em] text-[#7fd9ce] sm:text-xs lg:text-left">
           Example creator pages
         </p>
-        <div className="grid grid-cols-2 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {HERO_CREATOR_EXAMPLES.map((creator) => (
             <HeroCreatorCard key={creator.name} creator={creator} />
           ))}
@@ -339,24 +343,21 @@ function HeroCreatorCard({ creator }) {
     <a
       href={creator.href}
       aria-label={`View ${creator.name}'s example creator page`}
-      className="group relative block aspect-[4/5] overflow-hidden rounded-2xl border border-white/20 bg-[#0b2037] shadow-[0_24px_55px_-28px_rgba(0,0,0,0.9)] outline-none transition duration-300 hover:-translate-y-1 hover:border-white/40 hover:shadow-[0_30px_65px_-28px_rgba(0,0,0,0.95)] focus-visible:ring-2 focus-visible:ring-[#67d8dc] focus-visible:ring-offset-4 focus-visible:ring-offset-[#08182d] sm:aspect-[5/4] lg:aspect-[4/5] xl:aspect-[5/4]"
+      className="group relative block aspect-[5/4] overflow-hidden rounded-xl border border-white/20 bg-[#0b2037] shadow-[0_18px_40px_-24px_rgba(0,0,0,0.9)] outline-none transition duration-300 hover:-translate-y-1 hover:border-white/40 focus-visible:ring-2 focus-visible:ring-[#67d8dc] focus-visible:ring-offset-4 focus-visible:ring-offset-[#08182d] sm:aspect-[4/5]"
     >
       <Image
         src={creator.image}
         alt={`${creator.name}, ${creator.craft.toLowerCase()} — example ByUs creator page`}
         fill
-        sizes="(min-width: 1280px) 24vw, (min-width: 1024px) 27vw, (min-width: 640px) 45vw, 44vw"
+        sizes="(min-width: 1280px) 160px, (min-width: 1024px) 14vw, (min-width: 640px) 24vw, 46vw"
         className="object-cover transition duration-500 group-hover:scale-[1.035]"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-[#061321]/95 via-[#061321]/20 to-transparent" aria-hidden="true" />
-      <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4 xl:p-5">
-        <h2 className="font-display text-lg font-semibold leading-tight text-white sm:text-2xl">{creator.name}</h2>
-        <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.18em] text-brand-gold sm:text-[11px]">
+      <div className="absolute inset-0 bg-gradient-to-t from-[#061321]/95 via-[#061321]/25 to-transparent" aria-hidden="true" />
+      <div className="absolute inset-x-0 bottom-0 p-2.5 sm:p-3">
+        <h2 className="font-display text-base font-semibold leading-tight text-white">{creator.name}</h2>
+        <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-brand-gold xl:text-[10px]">
           {creator.craft}
         </p>
-        <span className="mt-2 inline-flex items-center text-[10px] font-semibold text-white/80 transition group-hover:text-white sm:text-xs">
-          View example →
-        </span>
       </div>
     </a>
   );
