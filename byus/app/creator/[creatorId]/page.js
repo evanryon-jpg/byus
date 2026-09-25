@@ -15,6 +15,7 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/session';
 import { loadCreatorProfile } from '@/lib/creator-profile-data';
 import ProfileClient from './ProfileClient';
+import SupporterSourceCapture from '@/app/components/SupporterSourceCapture';
 
 export const dynamic = 'force-dynamic';
 
@@ -62,12 +63,15 @@ export default async function CreatorProfilePage({ params, searchParams }) {
   }
 
   return (
-    <ProfileClient
-      data={data}
-      justSubscribed={searchParams.subscribed === 'true'}
-      subscribedTierId={searchParams.tier || null}
-      justTipped={searchParams.tipped === 'true'}
-      creatorId={creatorId}
-    />
+    <>
+      <SupporterSourceCapture creatorId={data.creator.id} />
+      <ProfileClient
+        data={data}
+        justSubscribed={searchParams.subscribed === 'true'}
+        subscribedTierId={searchParams.tier || null}
+        justTipped={searchParams.tipped === 'true'}
+        creatorId={creatorId}
+      />
+    </>
   );
 }
