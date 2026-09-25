@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic';
-// Headroom for the video-upload verification (a Mux round trip) plus NEW_POST_INLINE_BUDGET_MS
-// below -- see the comment there for why this route now has an email budget in it at all.
+// Headroom for the video-upload verification (a Mux round trip) plus the inline email
+// budget in lib/post-notifications.js (NEW_POST_INLINE_BUDGET_MS) -- see the comment there.
 export const maxDuration = 30;
 
 // GET  /api/creator/posts   -> list the logged-in creator's own posts (all of them, own view)
@@ -10,23 +10,12 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { buildPollPayload } from '@/lib/polls';
-import { createBroadcastJob, processBroadcastJobChunk } from '@/lib/broadcast-jobs';
 import { containsBlockedContent } from '@/lib/content-policy';
 import { loadCreatorPosts } from '@/lib/creator-dashboard-data';
 import { createModerationJob, getUpload, getAsset } from '@/lib/mux';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
-import { sendSms, isSmsConfigured, SMS_BATCH_SIZE } from '@/lib/sms';
-import { createSmsBroadcastHold, SMS_HOLD_THRESHOLD } from '@/lib/sms-holds';
-import { alertOps } from '@/lib/alerts';
 import { MAX_VIDEO_DURATION_SECONDS } from '@/lib/video-limits';
-
-// This request already has to wait on the post INSERT and (for a video post) a Mux
-// lookup before it gets anywhere near this -- so unlike the broadcast route's deliberate
-// 8s budget, this stays short. Nothing in the UI shows new-post send progress the way
-// the dashboard's broadcast section does, so there's nothing gained by waiting longer;
-// this is purely a head start for typical-sized subscriber counts before the cron
-// worker (app/api/cron/process-broadcasts/route.js) picks up whatever's left.
-const NEW_POST_INLINE_BUDGET_MS = 3000;
+import { notifySubscribersOfNewPost } from '@/lib/post-notifications';
 
 const TITLE_MAX = 200;
 const BODY_MAX = 20000;
@@ -249,89 +238,16 @@ export async function POST(request) {
       },
     });
   } catch (err) {
+    // One uploaded video can back only one post (unique index posts_mux_asset_id_key). A
+    // double-submit used to create two posts sharing one Mux asset, so deleting either
+    // post deleted the other's video too.
+    if (err?.code === '23505' && err?.constraint === 'posts_mux_asset_id_key') {
+      return NextResponse.json({ error: 'This video has already been posted.' }, { status: 409 });
+    }
     console.error('creator/posts POST failed:', err);
     return NextResponse.json(
       { error: 'Could not create this post. Try again.' },
       { status: 500 }
     );
-  }
-}
-
-async function notifySubscribersOfNewPost(creatorId, post) {
-  const [creatorResult, subscribersResult] = await Promise.all([
-    query('SELECT display_name, slug FROM users WHERE id = $1', [creatorId]),
-    query(
-      `SELECT CASE WHEN u.notify_new_posts = true THEN u.email ELSE NULL END AS email,
-              CASE WHEN u.notify_new_posts_sms = true THEN u.phone ELSE NULL END AS sms_phone
-       FROM subscriptions s
-       JOIN users u ON u.id = s.fan_id
-       WHERE s.creator_id = $1 AND s.status = 'active'
-         AND (s.current_period_end IS NULL OR s.current_period_end > now())
-         AND (u.notify_new_posts = true OR (u.notify_new_posts_sms = true AND u.phone_verified_at IS NOT NULL))`,
-      [creatorId]
-    ),
-  ]);
-
-  const creator = creatorResult.rows[0];
-  const creatorName = creator?.display_name || 'Your creator';
-  const creatorUrl = `${process.env.APP_URL}/creator/${creator?.slug || creatorId}`;
-
-  const recipients = subscribersResult.rows.map((row) => row.email).filter(Boolean);
-  if (recipients.length > 0) {
-    // Queues every recipient the same way the "message your subscribers" broadcast does
-    // (see lib/broadcast-jobs.js) instead of sending to all of them inline here -- this
-    // route fires on every single post a creator publishes, automatically, with no
-    // creator action to gate it the way a deliberate broadcast send has. Any creator whose
-    // active subscriber count got large enough to blow a request timeout would otherwise
-    // hit this on every post, not just occasionally.
-    const jobId = await createBroadcastJob({
-      creatorId,
-      creatorName,
-      kind: 'new_post',
-      metadata: { creatorUrl, postTitle: post.title, postExcerpt: post.body },
-      recipients,
-    });
-    await processBroadcastJobChunk(jobId, { budgetMs: NEW_POST_INLINE_BUDGET_MS });
-  }
-
-  await notifySubscribersOfNewPostBySms(subscribersResult.rows, { creatorId, creatorName, creatorUrl, post });
-}
-
-// Separate from the email path above on purpose: sent.dm accepts up to SMS_BATCH_SIZE
-// (1000) recipients per call for one message, so a send at or under SMS_HOLD_THRESHOLD
-// still finishes in a handful of synchronous calls here, well inside
-// NEW_POST_INLINE_BUDGET_MS-scale time -- no job/worker machinery needed for that case.
-// Above the threshold, this is a real, unbounded dollar amount (sent.dm bills per
-// contact per month plus per-text carrier cost) that nothing here used to cap, so it's
-// held for a human instead of firing automatically -- see lib/sms-holds.js and
-// app/api/admin/sms-holds/route.js. Never throws either way: a texting failure
-// (misconfigured provider, sent.dm outage) should never take down post creation or the
-// email notifications above, which is why the caller already wraps this whole function
-// in its own try/catch.
-async function notifySubscribersOfNewPostBySms(subscriberRows, { creatorId, creatorName, creatorUrl, post }) {
-  if (!isSmsConfigured()) return;
-
-  const phones = subscriberRows.map((row) => row.sms_phone).filter(Boolean);
-  if (phones.length === 0) return;
-
-  if (phones.length > SMS_HOLD_THRESHOLD) {
-    const hold = await createSmsBroadcastHold({ creatorId, postId: post.id, recipientCount: phones.length });
-    await alertOps(`sms-broadcast-hold:${hold.id}`, {
-      message: `${creatorName} just published a post that would text ${phones.length.toLocaleString()} subscribers ` +
-        `(over the ${SMS_HOLD_THRESHOLD.toLocaleString()} auto-send limit). Held for review -- approve or reject it ` +
-        `from the "Pending SMS sends" section of /admin.`,
-    });
-    return;
-  }
-
-  const title = post.title ? `"${post.title}"` : 'a new post';
-  const text = `${creatorName} just posted ${title} on ByUs: ${creatorUrl}`;
-
-  for (let i = 0; i < phones.length; i += SMS_BATCH_SIZE) {
-    const batch = phones.slice(i, i + SMS_BATCH_SIZE);
-    const result = await sendSms(batch, text);
-    if (!result.ok) {
-      console.error(`New-post SMS: batch of ${batch.length} failed:`, result.error);
-    }
   }
 }
