@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { safeNextPath } from '@/lib/safe-next';
 
@@ -101,7 +101,7 @@ function SignupForm() {
 
   return (
     <div className="mx-auto max-w-md px-6 py-16">
-      <h1 className="text-2xl font-bold">{role === 'creator' ? 'Join the creator waitlist' : 'Create your account'}</h1>
+      <h1 className="text-2xl font-bold">{role === 'creator' ? 'Reserve your founding spot' : 'Create your account'}</h1>
 
       <div className="mt-6 flex gap-2 rounded-full bg-brand-ink/5 p-1">
         <RoleTab label="I'm a fan" active={role === 'fan'} onClick={() => setRole('fan')} />
@@ -251,6 +251,20 @@ function CreatorWaitlistPanel({ acquisitionSource, referralCode }) {
   const [waitlistError, setWaitlistError] = useState('');
   const [waitlistLoading, setWaitlistLoading] = useState(false);
   const [waitlistResult, setWaitlistResult] = useState(null); // { alreadyApplied } once submitted
+  // Live founding-spot numbers (GET /api/waitlist) so the offer reads "spot #3 of 50"
+  // instead of a generic waitlist. Null until loaded -- the copy has a neutral fallback.
+  const [spots, setSpots] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/waitlist', { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => { if (!cancelled && data && typeof data.limit === 'number') setSpots(data); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  const spotsFull = spots ? spots.remaining <= 0 : false;
 
   async function handleWaitlistSubmit(e) {
     e.preventDefault();
@@ -311,12 +325,29 @@ function CreatorWaitlistPanel({ acquisitionSource, referralCode }) {
 
   return (
     <div className="mt-6">
-      <p className="text-sm text-brand-ink/70">
-        New creator accounts are temporarily paused. Leave your email and we'll notify you when
-        signups reopen. Joining is free and reserves a founding spot with the 10% rate for good while spots
-        remain. Your confirmation will show your spot number. If all spots are reserved,
-        you can still join for updates at standard pricing. No creator account is created yet.
-      </p>
+      {spotsFull ? (
+        <div className="rounded-xl border border-brand-ink/10 bg-white/60 p-4">
+          <p className="font-semibold text-[#172033]">All {spots.limit} founding spots are reserved</p>
+          <p className="mt-1 text-sm text-brand-ink/70">
+            Join the creator waitlist and we'll email you the moment creator signups open. Standard pricing
+            applies: 13%, dropping to 10% for the rest of any month you earn $2,000.
+          </p>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-[#0F766E]/25 bg-[#0F766E]/5 p-4">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#0F766E]">
+            {spots ? `${spots.remaining} of ${spots.limit} founding spots left` : 'Founding creator spots'}
+          </p>
+          <p className="mt-1.5 text-lg font-semibold text-[#172033]">
+            {spots?.nextSpot ? `Reserve founding spot #${spots.nextSpot}` : 'Reserve a founding spot'}
+          </p>
+          <ul className="mt-2 space-y-1 text-sm text-brand-ink/75">
+            <li>10% platform fee for good, standard domestic processing included</li>
+            <li>No follower minimum</li>
+            <li>Free to reserve, no payment details needed</li>
+          </ul>
+        </div>
+      )}
 
       <form onSubmit={handleWaitlistSubmit} noValidate className="mt-5 space-y-4">
         <Field label="Display name (optional)">
@@ -359,9 +390,14 @@ function CreatorWaitlistPanel({ acquisitionSource, referralCode }) {
           disabled={waitlistLoading}
           className="w-full rounded-full bg-[#0F766E] py-3 font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
         >
-          {waitlistLoading ? 'Joining…' : 'Join the waitlist'}
+          {waitlistLoading ? (spotsFull ? 'Joining…' : 'Reserving…') : spotsFull ? 'Join the waitlist' : 'Reserve my spot'}
         </button>
       </form>
+
+      <p className="mt-4 text-xs leading-relaxed text-brand-ink/55">
+        Creator accounts open soon. We'll email you a link to create your page; sign up with this same email
+        {spotsFull ? '' : ' and your spot is yours'}. No account is created yet.
+      </p>
     </div>
   );
 }
