@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { supporterSourceFromRequest } from '@/lib/supporter-source';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,9 +62,10 @@ export async function POST(request) {
   if (!creator.rows[0]) return NextResponse.json({ error: 'Creator not found.' }, { status: 404 });
 
   if (shouldFollow) {
+    // supporter_source: how this fan first found the creator (lib/supporter-source.js).
     await query(
-      'INSERT INTO creator_follows (fan_id, creator_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
-      [session.userId, creatorId]
+      'INSERT INTO creator_follows (fan_id, creator_id, supporter_source) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING',
+      [session.userId, creatorId, supporterSourceFromRequest(request, creatorId)]
     );
   } else {
     await query('DELETE FROM creator_follows WHERE fan_id = $1 AND creator_id = $2', [
