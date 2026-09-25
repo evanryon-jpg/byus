@@ -84,7 +84,7 @@ export async function POST(request) {
 
     if (!Number.isInteger(purchasePriceCents) || purchasePriceCents < MIN_MEMBERSHIP_PRICE_CENTS) {
       return NextResponse.json(
-        { error: 'This tier is below ByUs’s $5 minimum for new subscriptions. Please choose another tier.' },
+        { error: 'This tier is below ByUs’s $8 minimum for new memberships. Please choose another tier.' },
         { status: 400 }
       );
     }
