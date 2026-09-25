@@ -1,4 +1,7 @@
 export const dynamic = 'force-dynamic';
+// A clean scan that publishes a video now also emails/texts the creator's subscribers
+// (lib/post-notifications.js), which gets a short inline budget of its own.
+export const maxDuration = 30;
 
 // Mux calls this for live-stream state changes and completed Robots moderation jobs.
 // Live events update users.is_live; moderation results decide whether a hidden video
@@ -9,13 +12,20 @@ import crypto from 'crypto';
 import { query } from '@/lib/db';
 import { createModerationJob } from '@/lib/mux';
 import { alertReviewQueue } from '@/lib/alerts';
+import { notifySubscribersOfNewPost } from '@/lib/post-notifications';
 
 const BORDERLINE_MARGIN = 0.2;
 
 async function handleModerationCompleted(job) {
   const assetId = job.parameters?.asset_id;
   const outputs = job.outputs;
-  if (!assetId || !outputs?.max_scores) return;
+  if (!assetId) return;
+  if (!outputs?.max_scores) {
+    // A "completed" job with no scores can't be judged either way. Leaving the post in
+    // 'scanning' hid it indefinitely with nothing telling anyone; mark it for a human.
+    await markScanFailed(assetId);
+    return;
+  }
 
   const sexual = Number(outputs.max_scores.sexual || 0);
   const violence = Number(outputs.max_scores.violence || 0);
@@ -39,7 +49,7 @@ async function handleModerationCompleted(job) {
        SET video_moderation_status = 'flagged', video_moderation_scores = $2::jsonb,
            video_moderated_at = now(), pending_review = true
        WHERE mux_asset_id = $1
-         AND video_moderation_status IN ('queued', 'scanning', 'rescanning')
+         AND video_moderation_status IN ('queued', 'scanning', 'rescan_starting', 'rescanning')
        RETURNING id`,
       [assetId, scoreRecord]
     );
@@ -92,15 +102,39 @@ async function handleModerationCompleted(job) {
          pending_review = (u.review_cleared_at IS NULL)
      FROM users u
      WHERE p.creator_id = u.id AND p.mux_asset_id = $1
-       AND p.video_moderation_status IN ('queued', 'scanning', 'rescanning')
-     RETURNING p.pending_review`,
+       AND p.video_moderation_status IN ('queued', 'scanning', 'rescan_starting', 'rescanning')
+     RETURNING p.id, p.creator_id, p.title, p.body, p.pending_review`,
     [assetId, scoreRecord]
   );
   // pending_review only comes back true here when the creator hasn't been cleared yet
   // -- i.e. this clean scan is still stuck behind a one-time manual account review, not
   // because the video itself needs a second look.
-  if (updated.rows[0]?.pending_review) {
-    await alertReviewQueue('first-video-review');
+  for (const post of updated.rows) {
+    if (post.pending_review) {
+      await alertReviewQueue('first-video-review');
+      continue;
+    }
+    // The video just went public on this exact write (the status guard above only matches
+    // once), so this is the one and only time subscribers hear about it. Best-effort: a
+    // notification hiccup must not fail the moderation result Mux is delivering.
+    try {
+      await notifySubscribersOfNewPost(post.creator_id, post);
+    } catch (err) {
+      console.error(`New-post notification failed for auto-approved video post ${post.id}:`, err);
+    }
+  }
+}
+
+async function markScanFailed(assetId) {
+  const failed = await query(
+    `UPDATE posts SET video_moderation_status = 'scan_failed', pending_review = true
+     WHERE mux_asset_id = $1
+       AND video_moderation_status IN ('queued', 'scanning', 'rescan_starting', 'rescanning')
+     RETURNING id`,
+    [assetId]
+  );
+  if (failed.rows[0]) {
+    await alertReviewQueue('flagged-content');
   }
 }
 
@@ -152,6 +186,11 @@ export async function POST(request) {
       await query('UPDATE users SET is_live = false WHERE mux_live_stream_id = $1', [liveStreamId]);
     } else if (event.type === 'robots.job.moderate.completed') {
       await handleModerationCompleted(event.data || {});
+    } else if (event.type?.startsWith('robots.job.moderate.') && /error|fail/.test(event.type)) {
+      // The scan itself failed on Mux's side. Without this the post sat in 'scanning' --
+      // hidden, with no alert -- until someone happened to look at the admin queue.
+      const assetId = event.data?.parameters?.asset_id;
+      if (assetId) await markScanFailed(assetId);
     }
   } catch (err) {
     console.error('mux webhook handling failed:', err);
