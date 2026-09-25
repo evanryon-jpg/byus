@@ -13,6 +13,7 @@ import { checkRateLimit, rateLimitResponse, getClientIp } from '@/lib/rate-limit
 import { attributeReferral } from '@/lib/referrals';
 import { recordPaymentEvidenceBestEffort } from '@/lib/payment-evidence';
 import { trackServerEvent } from '@/lib/analytics';
+import { safeNextPath } from '@/lib/safe-next';
 import { recordLegalAcceptance } from '@/lib/legal-acceptance';
 import {
   STANDARD_FEE_PERCENT,
@@ -69,10 +70,7 @@ export async function GET(request) {
   }
 
   const role = saved.role === 'creator' ? 'creator' : 'fan';
-  const next =
-    typeof saved.next === 'string' && saved.next.startsWith('/') && !saved.next.startsWith('//')
-      ? saved.next
-      : '';
+  const next = safeNextPath(saved.next);
   const referralCode = typeof saved.referralCode === 'string' ? saved.referralCode : '';
   const acquisitionSource = saved.acquisitionSource === 'instagram' ? 'instagram' : null;
 
@@ -143,14 +141,22 @@ export async function GET(request) {
       // already proven this person owns the address, so it's safe to attach
       // google_sub to that account instead of erroring out or duplicating it.
       const byEmail = await query(
-        'SELECT id, email, role, display_name, session_version, is_suspended FROM users WHERE email = $1',
+        'SELECT id, email, role, display_name, session_version, is_suspended, email_verified FROM users WHERE email = $1',
         [email]
       );
       if (byEmail.rows[0]) {
+      // If the existing account never verified its email, whoever created it never proved
+      // they own the address -- anyone can sign up with someone else's email. Linking it to
+      // the real owner's Google/Apple identity must not let that earlier registrant keep a
+      // way in, so the password is cleared and every existing session revoked
+      // (session_version bump). A verified account keeps its password: its owner already
+      // proved the address.
         const updated = await query(
           `UPDATE users
            SET google_sub = $1, email_verified = true,
                profile_image_url = COALESCE(profile_image_url, $2),
+               password_hash = CASE WHEN email_verified THEN password_hash ELSE NULL END,
+               session_version = CASE WHEN email_verified THEN session_version ELSE session_version + 1 END,
                updated_at = now()
            WHERE id = $3
            RETURNING id, email, role, display_name, session_version, is_suspended`,
