@@ -8,11 +8,25 @@ const FROM_ADDRESS = 'ByUs <noreply@byusapp.com>';
 // more calls, chunked into groups this size.
 const BATCH_CHUNK_SIZE = 100;
 
+// Every email goes out from noreply@, but replies land somewhere real: support@byusapp.com
+// forwards (ImprovMX) straight to the owner's inbox. Several emails below tell people to
+// "just reply" -- before this, those replies went to noreply@ and were lost.
+const REPLY_TO = 'support@byusapp.com';
+
+const withReplyTo = (payload) => ({ replyTo: REPLY_TO, ...payload });
+
+// A thin wrapper so every send -- single or batch, from this file or lib/broadcast-jobs.js
+// -- gets the reply-to without each call site having to remember it. A payload that sets
+// its own replyTo still wins.
 function getClient() {
   if (!process.env.RESEND_API_KEY) {
     throw new Error('Email is not configured (missing RESEND_API_KEY).');
   }
-  return new Resend(process.env.RESEND_API_KEY);
+  const client = new Resend(process.env.RESEND_API_KEY);
+  return {
+    emails: { send: (payload, options) => client.emails.send(withReplyTo(payload), options) },
+    batch: { send: (payloads, options) => client.batch.send(payloads.map(withReplyTo), options) },
+  };
 }
 
 // Exposed for lib/broadcast-jobs.js, which sends its own chunks directly (a resumable
@@ -158,27 +172,97 @@ export async function sendWelcomeSubscriptionEmail(to, { creatorName, creatorUrl
 export async function sendWaitlistConfirmationEmail(to, { displayName, foundingSpot }) {
   const resend = getClient();
   const greeting = displayName ? escapeHtml(displayName) : 'there';
+  const spot = foundingSpot ? Number(foundingSpot) : null;
   const { error } = await resend.emails.send({
     from: FROM_ADDRESS,
     to,
-    subject: foundingSpot ? `Your ByUs founding spot #${foundingSpot} is reserved` : "You're on the ByUs creator waitlist",
+    subject: spot ? `Thank you — founding spot #${spot} is yours` : 'Thank you for joining the ByUs creator waitlist',
     html: `
-      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; color: #1A1A1A;">
-        <h2 style="color:#146359;">You're on the list, ${greeting}.</h2>
-        <p>Thanks for joining the ByUs creator waitlist. New creator signups are temporarily paused; we'll email you when they reopen.</p>
-        <p>${foundingSpot
-          ? `Your founding spot #${Number(foundingSpot)} is reserved, with a 10% platform fee for good, including standard domestic processing. Create your creator account with this same email address when signups reopen to claim it.`
-          : 'All 50 founding spots are reserved. You are on the general creator waitlist; the standard 13% platform fee will apply.'}</p>
-        <p style="margin: 24px 0;">
-          <a href="https://byusapp.com" style="background:#146359;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;">Visit ByUs</a>
-        </p>
-        <p style="color:#666;font-size:13px;">Questions? Just reply to this email or reach us at support@byusapp.com.</p>
+      <div style="font-family: sans-serif; max-width: 520px; margin: 0 auto; color: #1A1A1A; line-height: 1.55;">
+        <p>Hi ${greeting},</p>
+        <p>Thank you for joining ByUs. ${spot ? "You're one of the very first creators to back what we're building, and that means a lot." : "It means a lot that you want to build your page here."}</p>
+        <p>${spot
+          ? `<strong>Your founding spot #${spot} of 50 is reserved.</strong> It locks in a 10% platform fee for good, standard domestic processing included.`
+          : 'All 50 founding spots have been reserved, so you’re on the creator waitlist at standard pricing: a 13% platform fee, dropping to 10% for the rest of any month you earn $2,000 on ByUs.'}</p>
+        <p><strong>What happens next:</strong> creator signups are paused for a short while. As soon as they reopen, I'll email you a link to ${spot ? 'claim your spot' : 'create your page'}. Just sign up with this same email address.</p>
+        <p>In the meantime, take a look at the <a href="https://byusapp.com/demo" style="color:#146359;">example creator pages</a> to see what yours could look like. And if you'd like, reply and tell me what you create. I read every reply.</p>
+        <p style="margin-top:28px;">Evan Ryon<br /><span style="color:#666;">Founder, ByUs</span></p>
       </div>
     `,
   });
   if (error) {
     console.error('Resend send failed:', error);
     throw new Error(error.message || 'Could not send the waitlist confirmation email.');
+  }
+}
+
+// Sent once, the moment a brand-new creator account exists (email signup, Google, Apple,
+// or a fan upgrading) -- see lib/creator-welcome.js, which guarantees the "once". A
+// founding creator gets their spot number; anyone after the first 50 gets the same
+// three steps without the founding line.
+export async function sendCreatorWelcomeEmail(to, { displayName, foundingSpot, dashboardUrl }) {
+  const resend = getClient();
+  const greeting = displayName ? escapeHtml(displayName) : 'there';
+  const spot = foundingSpot ? Number(foundingSpot) : null;
+  const { error } = await resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: spot ? `Welcome to ByUs, founding creator #${spot}` : 'Welcome to ByUs',
+    html: `
+      <div style="font-family: sans-serif; max-width: 520px; margin: 0 auto; color: #1A1A1A; line-height: 1.55;">
+        <p>Hi ${greeting},</p>
+        <p>${spot
+          ? `Your account is set up and <strong>founding spot #${spot} is officially yours</strong>, with a 10% platform fee for good.`
+          : 'Your creator account is set up. Welcome to ByUs.'}</p>
+        <p>Three steps to launch your page:</p>
+        <ol style="padding-left:20px;">
+          <li style="margin-bottom:6px;">Add your photo and a short bio.</li>
+          <li style="margin-bottom:6px;">Create your first membership tier (tiers start at $5).</li>
+          <li>Publish a first post so new members have something waiting for them.</li>
+        </ol>
+        <p style="margin: 24px 0;">
+          <a href="${dashboardUrl}" style="background:#146359;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;">Go to your dashboard</a>
+        </p>
+        <p>If anything is confusing or doesn't work, just reply. It comes straight to me.</p>
+        <p style="margin-top:28px;">Evan<br /><span style="color:#666;">Founder, ByUs</span></p>
+      </div>
+    `,
+  });
+  if (error) {
+    console.error('Resend send failed:', error);
+    throw new Error(error.message || 'Could not send the creator welcome email.');
+  }
+}
+
+// Reopening day: one email per waitlist entry, sent from the admin page's "Email the
+// waitlist" button (app/api/admin/waitlist/notify-reopen). Only ever sent while creator
+// signup is actually open -- that route refuses otherwise -- so the link always works.
+export async function sendSignupsReopenedEmail(to, { displayName, foundingSpot, signupUrl }) {
+  const resend = getClient();
+  const greeting = displayName ? escapeHtml(displayName) : 'there';
+  const spot = foundingSpot ? Number(foundingSpot) : null;
+  const { error } = await resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: spot ? `Your ByUs founding spot #${spot} is ready to claim` : 'ByUs creator signups are open',
+    html: `
+      <div style="font-family: sans-serif; max-width: 520px; margin: 0 auto; color: #1A1A1A; line-height: 1.55;">
+        <p>Hi ${greeting},</p>
+        <p>Good news: creator signups on ByUs are open again, and you're one of the first to know.</p>
+        <p>${spot
+          ? `<strong>Founding spot #${spot} is waiting for you.</strong> Create your creator account with this same email address and it's yours, with a 10% platform fee for good.`
+          : 'Create your creator account with this same email address to get started.'}</p>
+        <p style="margin: 24px 0;">
+          <a href="${signupUrl}" style="background:#146359;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;">${spot ? 'Claim your spot' : 'Create your page'}</a>
+        </p>
+        <p>Thank you for waiting. If you have any questions, just reply.</p>
+        <p style="margin-top:28px;">Evan<br /><span style="color:#666;">Founder, ByUs</span></p>
+      </div>
+    `,
+  });
+  if (error) {
+    console.error('Resend send failed:', error);
+    throw new Error(error.message || 'Could not send the signups-reopened email.');
   }
 }
 

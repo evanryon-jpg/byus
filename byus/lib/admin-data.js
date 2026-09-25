@@ -599,7 +599,7 @@ export async function loadOutreachContacts() {
 // /signup?role=creator visit), newest first, capped at 500 like the other admin lists.
 export async function loadCreatorWaitlist() {
   const result = await query(
-    `SELECT id, email, display_name, source, referral_code, created_at
+    `SELECT id, email, display_name, source, referral_code, created_at, reopen_notified_at
      FROM founding_waitlist
      ORDER BY created_at DESC
      LIMIT 500`
@@ -611,6 +611,7 @@ export async function loadCreatorWaitlist() {
     source: row.source,
     referralCode: row.referral_code,
     createdAt: row.created_at,
+    reopenNotifiedAt: row.reopen_notified_at,
   }));
 }
 
