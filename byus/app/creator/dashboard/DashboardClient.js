@@ -1185,7 +1185,7 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent, ze
 
   const previewPriceCents = Math.round((parseFloat(price) || 0) * 100);
   const previewKeptCents = Math.round(previewPriceCents * (1 - platformFeePercent / 100));
-  const annualMinimumDollars = Math.max(5, (parseFloat(price) || 0) * 10);
+  const annualMinimumDollars = Math.max(8, (parseFloat(price) || 0) * 10);
 
   return (
     <div className="mt-8 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
@@ -1263,7 +1263,7 @@ function TierSection({ tiers, onCreated, stripeConnected, platformFeePercent, ze
               <input placeholder="Description (optional)" value={description} onChange={(e) => setDescription(e.target.value)}
                 className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm" />
               <div>
-                <input placeholder="Price per month (minimum 5.00)" type="number" step="0.01" min="5" value={price}
+                <input placeholder="Price per month (minimum 8.00)" type="number" step="0.01" min="8" value={price}
                   onChange={(e) => setPrice(e.target.value)} required
                   className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm" />
                 {previewPriceCents > 0 && (
