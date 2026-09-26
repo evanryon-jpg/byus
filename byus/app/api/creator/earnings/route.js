@@ -15,7 +15,13 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
-import { STANDARD_FEE_PERCENT, DISCOUNTED_FEE_PERCENT, FEE_DISCOUNT_THRESHOLD_CENTS } from '@/lib/pricing';
+import {
+  STANDARD_FEE_PERCENT,
+  DISCOUNTED_FEE_PERCENT,
+  FEE_DISCOUNT_THRESHOLD_CENTS,
+  BIG_CREATOR_FEE_PERCENT,
+  BIG_CREATOR_THRESHOLD_CENTS,
+} from '@/lib/pricing';
 import { getPlatformMilestoneReductionPoints, applyPlatformMilestoneReduction } from '@/lib/fees';
 
 const MONTHS_OF_HISTORY = 12;
@@ -124,6 +130,8 @@ export async function GET() {
       platformReductionPoints: reductionPoints,
       discountedFeePercent: DISCOUNTED_FEE_PERCENT,
       thresholdCents: FEE_DISCOUNT_THRESHOLD_CENTS,
+      bigCreatorFeePercent: BIG_CREATOR_FEE_PERCENT,
+      bigCreatorThresholdCents: BIG_CREATOR_THRESHOLD_CENTS,
       monthToDateGrossCents,
       lifetimeGrossCents: Number(lifetimeResult.rows[0].gross_cents),
       lifetimeNetCents: Number(lifetimeResult.rows[0].net_cents),
