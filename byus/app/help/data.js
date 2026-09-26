@@ -40,6 +40,10 @@ export const HELP_CATEGORIES = [
         a: "No. One-time tips work independently of subscription tiers — as soon as Stripe is connected, both your profile page and your standalone tip link can accept them, tiers or not.",
       },
       {
+        q: 'How do I bring my fans over from Patreon or another platform?',
+        a: 'On your dashboard, find "Bring fans from another platform" and create a switching link. Pick the date of their first ByUs charge (when what they already paid elsewhere runs out; Patreon usually bills on the 1st) and how many fans you’re bringing. Send the link to your members. They join right away and get full access, and nobody pays twice. Make a second link with a later date for yearly members. A link stops working 3 days before its charge date, and each fan can use one switching link with you once.',
+      },
+      {
         q: 'How do I claim a custom page URL?',
         a: 'In the "Your page URL" card on your dashboard, click Change and enter a short, lowercase handle (letters, numbers, and hyphens only, 3–30 characters). Your existing link keeps working if you’ve already shared it — visitors are just quietly redirected to the new one.',
       },
@@ -51,6 +55,10 @@ export const HELP_CATEGORIES = [
     title: 'Getting started as a fan',
     description: 'What ByUs is, and how to support a creator.',
     articles: [
+      {
+        q: 'I already paid for this creator on another platform. Will I be charged twice?',
+        a: 'Not if you join through the switching link your creator sends you. You get in right away, the page shows the date of your first ByUs charge (when what you already paid elsewhere runs out), and nothing is charged before then. Cancel before that date and you’re never charged. Remember to cancel your old membership too, so it doesn’t renew.',
+      },
       {
         q: 'What is ByUs?',
         a: 'ByUs is a place for creators to earn direct support from their audience — through paid monthly (or annual) memberships, one-time tips, or both. In exchange, creators post updates, photos, videos, and members-only content straight to their ByUs page.',
