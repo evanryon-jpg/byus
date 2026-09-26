@@ -8,6 +8,7 @@ import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { chargeableFeePercent } from '@/lib/fees';
 import { scoreCheckout, riskMetadata } from '@/lib/risk-score';
 import { supporterSourceMetadata } from '@/lib/supporter-source';
+import { locationEvidenceMetadata } from '@/lib/tax-location-evidence';
 import { MIN_DIGITAL_PRODUCT_PRICE_CENTS } from '@/lib/pricing';
 
 export async function POST(request, { params }) {
@@ -104,6 +105,9 @@ export async function POST(request, { params }) {
         purchase_price_cents: String(product.price_cents),
         ...riskMetadata(risk),
         ...supporterSourceMetadata(request, product.creator_id),
+        // Fan's IP and its country: the third piece of location evidence for UK/EU VAT
+        // (lib/tax-location-evidence.js), recorded by the Stripe webhook after payment.
+        ...locationEvidenceMetadata(request),
       },
     });
     return NextResponse.json({ url });
