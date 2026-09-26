@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import FoundingBadge from './FoundingBadge';
 
-// Real creators only, sorted by popularity -- the same /api/creators?sort=popular the
-// browse page already uses. Nothing here is placeholder or mock data: see the
+// Real creators only, in the daily shuffle from /api/creators?sort=shuffle, so every
+// creator gets the same chance to be seen here, not just the biggest. Nothing here is placeholder or mock data: see the
 // AvatarCluster comment in page.js for why -- implying an ecosystem that doesn't exist
 // yet erodes exactly the trust this page is trying to build with a fan who's about to
 // hand over a card number. Below MIN_CREATORS this section hides itself entirely rather
@@ -17,7 +17,7 @@ export default function FeaturedCreators() {
   const [creators, setCreators] = useState(null);
 
   useEffect(() => {
-    fetch('/api/creators?sort=popular')
+    fetch('/api/creators?sort=shuffle&limit=6')
       .then((res) => (res.ok ? res.json() : Promise.reject()))
       .then((data) => setCreators(data.creators || []))
       .catch(() => setCreators([]));
@@ -32,7 +32,7 @@ export default function FeaturedCreators() {
       <div className="text-center">
         <h2 className="font-display text-2xl font-semibold text-[#172033]">Creators on ByUs right now</h2>
         <p className="mx-auto mt-2 max-w-xl text-sm text-brand-ink/70">
-          A few of the people already building a membership here.
+          A different mix every day, so every creator gets the same chance to be seen.
         </p>
       </div>
       <div className="mt-8 grid gap-4 sm:grid-cols-3">

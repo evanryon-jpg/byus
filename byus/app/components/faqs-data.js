@@ -58,6 +58,10 @@ export const FAQS = [
     a: "Yes, and nobody pays twice. From your dashboard, make a switching link and send it to your members. They join right away and get full access, but their first ByUs charge waits until the date you pick — when what they already paid on the other platform runs out. If they cancel before then, they're never charged. Make one link for monthly members and another with a later date for yearly members.",
   },
   {
+    q: 'How will new fans find me on ByUs?',
+    a: "Four ways, and the rules are the same for every creator. Discover is a feed of public posts from every creator, newest first, with up to 2 posts per creator a day so nobody crowds everyone else out. Browse lets fans search by name or category and sort by newest, trending (new members in the last 30 days, so small creators can climb), or most popular. New on ByUs gives creators who started posting in the last 30 days their own spot, in a fresh random order every day. And every creator page suggests similar creators in the same categories. There are no paid boosts and no algorithm deciding who gets seen. Fans can also follow you for free before they join.",
+  },
+  {
     q: 'Can I take my content with me if I leave?',
     a: "Your work stays yours. From your dashboard you can download every video you've uploaded as an MP4, and export your full earnings history as a spreadsheet at any time. You can also download your written posts and your current member list (names and emails) from Settings. Your payouts go straight to your own Stripe account, so your payment records live there too.",
   },

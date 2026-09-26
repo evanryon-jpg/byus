@@ -66,6 +66,13 @@ export default function NavBar() {
       >
         Browse creators
       </a>
+      <a
+        href="/discover"
+        className={`block rounded-lg px-3 py-2 ${linkTone}`}
+        onClick={() => setMenuOpen(false)}
+      >
+        Discover
+      </a>
 
       {isHome && (
         <>
