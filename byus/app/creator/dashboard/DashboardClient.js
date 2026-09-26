@@ -1686,7 +1686,7 @@ function SwitchLinksSection() {
   const [links, setLinks] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [open, setOpen] = useState(false);
-  const [label, setLabel] = useState('Patreon members');
+  const [label, setLabel] = useState('Monthly members');
   const [firstChargeDate, setFirstChargeDate] = useState(() => {
     const d = new Date();
     const next = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1));
@@ -1755,9 +1755,9 @@ function SwitchLinksSection() {
         </button>
       </div>
       <p className="mt-2 text-sm text-brand-ink/60">
-        Moving from Patreon, Ko-fi or somewhere else? Send your members a switching link. They join
+        Moving from another membership platform? Send your members a switching link. They join
         today and get in right away, and their first ByUs charge waits until the date you pick (when
-        what they already paid there runs out), so nobody pays twice. Patreon usually bills on the
+        what they already paid there runs out), so nobody pays twice. Many platforms bill on the
         1st, so the 1st of next month is a good date for monthly members. Make a separate link with a
         later date for yearly members.
       </p>
