@@ -117,7 +117,7 @@ function FoundingCreatorProgram({ stats }) {
         </p>
         <p className="mx-auto mt-4 max-w-lg text-brand-paper/70">
           The first {stats.limit} founding spots lock in our lowest fee for good.
-          No follower minimum or earnings requirement.
+          No follower minimum or earnings requirement. For creators in the US.
         </p>
         <p className="mx-auto mt-2 max-w-xl text-sm text-brand-paper/55">
           After the founding spots, creators start at 13% and move to 10% for the rest of
@@ -150,7 +150,7 @@ function FoundingCreatorProgram({ stats }) {
                 Reserve your founding spot →
               </a>
               <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-brand-paper/85">
-                Founding spots are open now. Reserving one locks in the 10% rate for good, and creator
+                Founding spots are open now for US creators. Reserving one locks in the 10% rate for good, and creator
                 accounts open soon: we&rsquo;ll email you a link, and you sign up with the same email to claim your spot.
               </p>
             </>
@@ -267,7 +267,7 @@ function Hero({ user, stats }) {
               <div>
                 <p className="text-base font-semibold text-white">Keep 90% for good</p>
                 <p className="mt-1 text-sm leading-relaxed text-[#dce8eb]/65">
-                  10% founding rate with standard domestic processing included.
+                  10% founding rate for US creators, standard domestic processing included.
                 </p>
               </div>
             </div>
