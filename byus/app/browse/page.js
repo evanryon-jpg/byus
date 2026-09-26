@@ -260,7 +260,7 @@ export default function BrowsePage({ searchParams }) {
             Creator #2 could be you.
           </h2>
           <p className="mx-auto mt-3 max-w-xl leading-relaxed text-brand-ink/70">
-            Founding spots are open now. Reserve one to lock in the 10% rate for good, and join Evan at
+            Founding spots are open now for US creators. Reserve one to lock in the 10% rate for good, and join Evan at
             the beginning. Creator accounts open soon; we&rsquo;ll email you a link, and you sign up with the same
             email to claim your spot.
           </p>
