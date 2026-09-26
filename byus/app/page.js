@@ -272,6 +272,18 @@ function Hero({ user, stats }) {
               </div>
             </div>
 
+            <div className="mt-5 flex items-start gap-4">
+              <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center text-[#58d4c3]" aria-hidden="true">
+                <SwitchArrowsIcon />
+              </span>
+              <div>
+                <p className="text-base font-semibold text-white">Bring your fans. Nobody pays twice.</p>
+                <p className="mt-1 text-sm leading-relaxed text-[#dce8eb]/65">
+                  Moving from Patreon or Ko-fi? Fans join right away and their first ByUs charge waits until what they already paid runs out.
+                </p>
+              </div>
+            </div>
+
             {!user && <p className="mt-7 text-sm text-[#dce8eb]/60">$0 to reserve · No payment information required · Creator accounts open soon</p>}
 
             <p className="mt-7 max-w-sm font-script text-[2.5rem] font-medium leading-[0.88] text-[#67d8dc] sm:text-[3rem]">
@@ -363,6 +375,15 @@ function HeroCreatorCard({ creator }) {
   );
 }
 
+function SwitchArrowsIcon() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M6 11h18l-4.5-4.5" />
+      <path d="M26 21H8l4.5 4.5" />
+    </svg>
+  );
+}
+
 function ShieldCheckIcon() {
   return (
     <svg width="30" height="30" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
@@ -382,9 +403,8 @@ function ShieldCheckIcon() {
 // instead of reading an icon standing in for the idea. Six cards: five plain
 // single-column ones plus SmsNotificationsDemo, which spans both columns as the
 // most recently shipped feature (see its own comment for why it gets the wide,
-// "New"-pilled slot). Five singles is an odd count against a two-column grid, so
-// one row is always left with a single card and an empty cell beside it --
-// accepted rather than forcing a sixth single-column card just to balance the grid.
+// "New"-pilled slot). SwitchingDemo (Sept 26, 2026) is the sixth single card, which
+// also fills the empty cell five singles used to leave in the two-column grid.
 function Features() {
   return (
     <section id="features" className="mx-auto max-w-5xl scroll-mt-24 px-6 py-16">
@@ -404,9 +424,40 @@ function Features() {
         <ContentImportDemo />
         <VideoUploadDemo />
         <EngagementDemo />
+        <SwitchingDemo />
         <SmsNotificationsDemo />
       </div>
     </section>
+  );
+}
+
+// Switching links (lib/switch-links.js): a creator's existing fans join now and their
+// first ByUs charge waits until what they paid on the old platform runs out. The dates
+// are an example, relative to nothing real.
+function SwitchingDemo() {
+  const steps = [
+    { when: 'Today', what: 'Fan joins ByUs through your switching link', amount: '$0.00', tone: 'text-[#0F766E]' },
+    { when: 'Oct 31', what: 'Their paid month on the old platform ends', amount: '—', tone: 'text-brand-ink/40' },
+    { when: 'Nov 1', what: 'First ByUs charge', amount: '$10.00', tone: 'text-[#172033]' },
+  ];
+  return (
+    <div className="rounded-2xl border border-brand-ink/15 bg-brand-paper p-6 shadow-sm">
+      <span className="text-xs font-extrabold uppercase tracking-wide text-[#0F766E]">Switching over</span>
+      <h3 className="mt-2 font-display text-lg font-bold text-[#172033]">Bring your fans. Nobody pays twice.</h3>
+      <p className="mt-2 text-sm leading-relaxed text-brand-ink/70">
+        Send your Patreon or Ko-fi members a switching link. They get in right away, and their first
+        ByUs charge waits until what they already paid there runs out.
+      </p>
+      <ol className="mt-4 space-y-2">
+        {steps.map((s) => (
+          <li key={s.when} className="flex items-center justify-between gap-3 rounded-lg border border-brand-ink/15 px-3.5 py-2.5 text-sm">
+            <span className="w-14 shrink-0 font-semibold text-brand-ink/60">{s.when}</span>
+            <span className="flex-1 text-[#172033]">{s.what}</span>
+            <span className={`font-bold tabular-nums ${s.tone}`}>{s.amount}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }
 
