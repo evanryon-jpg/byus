@@ -334,8 +334,8 @@ function CreatorWaitlistPanel({ acquisitionSource, referralCode }) {
             ? `You're on the list. ByUs can't pay creators in your country yet, so we can't hold a founding spot, but we'll email ${waitlistResult.email} if that changes.`
             : creatorCountryStatus(waitlistResult.country) === 'soon'
             ? waitlistResult.foundingSpot
-              ? `Founding spot #${waitlistResult.foundingSpot} is held for ${waitlistResult.email}, with the 10% rate for good. Creator accounts open in the US first; we'll email you the day they open in ${creatorCountryName(waitlistResult.country)}.`
-              : `We'll email ${waitlistResult.email} the day creator accounts open in ${creatorCountryName(waitlistResult.country)}. All founding spots are reserved; standard pricing will apply.`
+              ? `Founding spot #${waitlistResult.foundingSpot} is already reserved for ${waitlistResult.email}. We'll email you the day creator accounts open in ${creatorCountryName(waitlistResult.country)}.`
+              : `You're on the list. We'll email ${waitlistResult.email} the day creator accounts open in ${creatorCountryName(waitlistResult.country)}, at standard pricing: 13%, dropping to 10% for any month you earn $2,000.`
             : waitlistResult.foundingSpot
             ? `Founding spot #${waitlistResult.foundingSpot} is reserved for ${waitlistResult.email}, with the 10% rate for good. Use this same email to create your creator account when signups reopen.`
             : `We'll email ${waitlistResult.email} when creator signups reopen. All founding spots are reserved; standard pricing will apply to your new account.`}
@@ -367,6 +367,7 @@ function CreatorWaitlistPanel({ acquisitionSource, referralCode }) {
           </p>
           <ul className="mt-2 space-y-1 text-sm text-brand-ink/75">
             <li>10% platform fee for good, standard domestic processing included</li>
+            <li>For creators in the US</li>
             <li>No follower minimum</li>
             <li>Free to reserve, no payment details needed</li>
           </ul>
@@ -405,8 +406,9 @@ function CreatorWaitlistPanel({ acquisitionSource, referralCode }) {
         </Field>
         {creatorCountryStatus(waitlistCountry) === 'soon' && waitlistCountry && (
           <p className="-mt-2 rounded-lg bg-[#C9A961]/15 px-3 py-2 text-xs leading-relaxed text-[#5B4718]">
-            Creator accounts open in the US first, with {creatorCountryName(waitlistCountry)} coming after. You can
-            still reserve now: your spot is held and we&rsquo;ll email you the day {creatorCountryName(waitlistCountry)} opens.
+            Creator accounts open in the US first, with the UK, Europe and Canada coming after. Founding spots and the
+            10% founding rate are for US creators, so you&rsquo;ll join at standard pricing: 13%, dropping to 10% for any
+            month you earn $2,000. Join the list and we&rsquo;ll email you the day {creatorCountryName(waitlistCountry)} opens.
           </p>
         )}
         {creatorCountryStatus(waitlistCountry) === 'unsupported' && (
@@ -448,8 +450,8 @@ function CreatorWaitlistPanel({ acquisitionSource, referralCode }) {
           className="w-full rounded-full bg-[#0F766E] py-3 font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
         >
           {waitlistLoading
-            ? spotsFull || creatorCountryStatus(waitlistCountry) === 'unsupported' ? 'Joining…' : 'Reserving…'
-            : spotsFull || creatorCountryStatus(waitlistCountry) === 'unsupported' ? 'Join the waitlist' : 'Reserve my spot'}
+            ? spotsFull || (waitlistCountry && creatorCountryStatus(waitlistCountry) !== 'launch') ? 'Joining…' : 'Reserving…'
+            : spotsFull || (waitlistCountry && creatorCountryStatus(waitlistCountry) !== 'launch') ? 'Join the list' : 'Reserve my spot'}
         </button>
       </form>
 
