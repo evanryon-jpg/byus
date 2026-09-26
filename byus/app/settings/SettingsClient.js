@@ -43,6 +43,7 @@ function SettingsClientInner({ initialUser, initialReferral, initialSuggestions 
       <ConnectPlatformsCard user={user} />
       <CreatorIntegrationsCard user={user} />
       <RssImportCard user={user} onChanged={(u) => setUser({ ...user, ...u })} />
+      <ExportDataCard user={user} />
       <VideoExportCard user={user} />
       <ReferralCard role={user.role} initialData={initialReferral} />
       <SuggestionBoxCard initialSuggestions={initialSuggestions} />
@@ -1100,6 +1101,42 @@ function RssImportCard({ user, onChanged }) {
 // straight from a fresh Mux lookup (app/api/creator/video-export) rather than
 // being cached here, so refreshing always reflects Mux's real encoding progress,
 // not something that could drift stale in this component's state.
+function ExportDataCard({ user }) {
+  if (user.role !== 'creator') return null;
+
+  return (
+    <section className="mt-6 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
+      <h2 className="font-semibold">Download your members and posts</h2>
+      <p className="mt-1 text-sm text-brand-ink/65">
+        Spreadsheet files you can open in Excel, Numbers, or Google Sheets. Your member list has the
+        name, email, tier, and join date of everyone with a membership right now. Your posts file has
+        the date, title, and full text of everything you've written.
+      </p>
+      <p className="mt-2 text-xs text-brand-ink/55">
+        Member emails are for keeping in touch about your own work. Don't sell or share them, and
+        stop emailing anyone who asks you to.
+      </p>
+
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <a
+          href="/api/creator/export/members"
+          download
+          className="rounded-full bg-[#0F766E] px-5 py-2.5 text-sm font-semibold text-white"
+        >
+          Download member list
+        </a>
+        <a
+          href="/api/creator/export/posts"
+          download
+          className="rounded-full border border-brand-ink/15 px-5 py-2.5 text-sm font-semibold text-brand-ink/70"
+        >
+          Download posts
+        </a>
+      </div>
+    </section>
+  );
+}
+
 function VideoExportCard({ user }) {
   const [videos, setVideos] = useState(null); // null = still loading
   const [loadError, setLoadError] = useState('');
