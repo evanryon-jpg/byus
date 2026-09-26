@@ -150,6 +150,18 @@ export default function EarningsCalculator({ foundingSpotsLeft = 0 }) {
   }
   const feeLabel = ratesUsed.map((r) => `${r}%`).join(' → ');
   const feeCents = Math.round(feeExact);
+
+  const ladder = tier === 'founding'
+    ? [
+        { label: 'Up to $10,000 a month', fromCents: 0, percent: DISCOUNTED_FEE_PERCENT },
+        { label: 'Over $10,000', fromCents: BIG_CREATOR_THRESHOLD_CENTS, percent: BIG_CREATOR_FEE_PERCENT },
+      ]
+    : [
+        { label: 'First $2,000 a month', fromCents: 0, percent: STANDARD_FEE_PERCENT },
+        { label: '$2,000 to $10,000', fromCents: FEE_DISCOUNT_THRESHOLD_CENTS, percent: DISCOUNTED_FEE_PERCENT },
+        { label: 'Over $10,000', fromCents: BIG_CREATOR_THRESHOLD_CENTS, percent: BIG_CREATOR_FEE_PERCENT },
+      ];
+  const currentRung = ladder.reduce((acc, row, i) => (i === 0 || grossCents > row.fromCents ? i : acc), 0);
   const netCents = grossCents - feeCents;
 
   const typicalFee = typicalAllInPercent(price);
@@ -223,20 +235,40 @@ export default function EarningsCalculator({ foundingSpotsLeft = 0 }) {
               <p className="mb-2.5 text-[11px] font-bold uppercase tracking-wide text-brand-ink/60">
                 Your fee tier
               </p>
-              <div className="grid grid-cols-1 gap-1 rounded-2xl border border-brand-ink/15 bg-brand-cream p-1 text-xs font-bold sm:grid-cols-2">
+              <div className="grid grid-cols-2 gap-1 rounded-full border border-brand-ink/15 bg-brand-cream p-1 text-xs font-bold">
                 <TierButton active={tier === 'standard'} onClick={() => setTier('standard')}>
-                  Standard — {STANDARD_FEE_PERCENT}% → {DISCOUNTED_FEE_PERCENT}% → {BIG_CREATOR_FEE_PERCENT}%
+                  Standard
                 </TierButton>
                 <TierButton active={tier === 'founding'} onClick={() => setTier('founding')}>
-                  Founding creator — {DISCOUNTED_FEE_PERCENT}% → {BIG_CREATOR_FEE_PERCENT}%
+                  Founding creator
                 </TierButton>
               </div>
-              <p className="mt-3 text-xs leading-relaxed text-brand-ink/75">
-                Standard pricing starts at {STANDARD_FEE_PERCENT}%. After a non-founding creator reaches $2,000 in gross
-                ByUs earnings during a calendar month, the rate becomes {DISCOUNTED_FEE_PERCENT}% for the rest of that month.
-                US creators with one of the {FOUNDING_CREATOR_LIMIT} founding spots keep {DISCOUNTED_FEE_PERCENT}% for good,
-                with no earnings requirement. Every creator who reaches $10,000 in a month pays {BIG_CREATOR_FEE_PERCENT}% for the
-                rest of that month. All rates include standard domestic payment processing.
+              {/* Rate ladder for the selected tier. Rows the monthly gross reaches are shown
+                  in full; the highest one reached is highlighted, so moving the sliders shows
+                  the rate stepping down. */}
+              <ol className="mt-3 overflow-hidden rounded-xl border border-brand-ink/10 text-[13px]" aria-label="Fee by monthly earnings">
+                {ladder.map((row, i) => {
+                  const reached = i === 0 || grossCents > row.fromCents;
+                  const current = i === currentRung;
+                  return (
+                    <li
+                      key={row.label}
+                      aria-current={current ? 'true' : undefined}
+                      className={`flex items-center justify-between gap-3 px-3.5 py-2 transition-colors ${
+                        i > 0 ? 'border-t border-brand-ink/10' : ''
+                      } ${current ? 'bg-brand-teal/10 font-bold text-[#172033]' : reached ? 'text-brand-ink/75' : 'text-brand-ink/40'}`}
+                    >
+                      <span>{row.label}</span>
+                      <span className="tabular-nums">{row.percent}%</span>
+                    </li>
+                  );
+                })}
+              </ol>
+              <p className="mt-2 text-xs leading-relaxed text-brand-ink/60">
+                {tier === 'founding'
+                  ? `For the first ${FOUNDING_CREATOR_LIMIT} US creators, for good. `
+                  : ''}
+                Rates reset at the start of each month and include card processing.
               </p>
             </div>
 
@@ -448,7 +480,7 @@ function TierButton({ active, onClick, children }) {
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`min-w-0 rounded-xl px-3 py-2 transition sm:rounded-full ${
+      className={`min-w-0 rounded-full px-3 py-2 transition ${
         active
           ? 'bg-brand-teal text-brand-paper shadow-[0_4px_10px_-4px_rgba(20,99,89,0.5)]'
           : 'text-brand-ink/70 hover:text-brand-ink/85'
