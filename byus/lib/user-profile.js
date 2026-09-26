@@ -77,7 +77,7 @@ export async function withEffectiveFee(user) {
     effective_fee_percent: zeroFeePromoActive
       ? 0
       : isFounding
-      ? DISCOUNTED_FEE_PERCENT
+      ? Math.min(DISCOUNTED_FEE_PERCENT, Number(user.platform_fee_percent) || DISCOUNTED_FEE_PERCENT)
       : applyPlatformMilestoneReduction(user.platform_fee_percent, reductionPoints),
   };
 }

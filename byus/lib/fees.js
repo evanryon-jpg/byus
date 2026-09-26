@@ -31,6 +31,8 @@ import {
   STANDARD_FEE_PERCENT,
   DISCOUNTED_FEE_PERCENT,
   FEE_DISCOUNT_THRESHOLD_CENTS,
+  BIG_CREATOR_FEE_PERCENT,
+  BIG_CREATOR_THRESHOLD_CENTS,
   MIN_FEE_PERCENT,
   FOUNDING_CREATOR_LIMIT,
 } from './pricing';
@@ -181,8 +183,11 @@ export async function recordEarningAndCheckFeeTier(client, { creatorId, stripeIn
     ),
   ]);
   const monthToDateCents = Number(monthToDateResult.rows[0].gross_cents);
+  // Big-creator rate first: $10K+ this month means 9% for everyone, founding included.
   const targetFeePercent = zeroFeePromoActive
     ? 0
+    : monthToDateCents >= BIG_CREATOR_THRESHOLD_CENTS
+    ? BIG_CREATOR_FEE_PERCENT
     : founding || monthToDateCents >= FEE_DISCOUNT_THRESHOLD_CENTS
     ? DISCOUNTED_FEE_PERCENT
     : STANDARD_FEE_PERCENT;
@@ -268,7 +273,8 @@ export async function syncActiveSubscriptionsToFeePercent(creatorId, personalTie
 
 // Runs at the start of each UTC calendar month. Founding creators return to their
 // permanent 10% rate, while non-founding creators return to 13% until they reach the
-// monthly earnings threshold again. Active referral promos remain at 0%. Updating Stripe
+// monthly earnings threshold again. Anyone on the 9% big-creator rate returns to their
+// base rate too, and earns 9% again once they pass $10,000 that month. Active referral promos remain at 0%. Updating Stripe
 // after the database write keeps existing recurring subscriptions aligned with the rate
 // shown in ByUs; failures are already isolated per subscription by the sync helper.
 export async function resetMonthlyEarnedFeeTiers() {

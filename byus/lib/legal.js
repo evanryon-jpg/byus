@@ -1,7 +1,7 @@
 // Version identifiers stored with Stripe purchase metadata so a later dispute can prove
 // which terms/refund disclosure applied to the transaction. Bump these whenever the
 // corresponding language materially changes.
-export const TERMS_VERSION = '2026-09-23';
+export const TERMS_VERSION = '2026-09-26';
 export const PRIVACY_VERSION = '2026-09-26';
 export const CREATOR_AGREEMENT_VERSION = '2026-09-26';
 export const CONTENT_POLICY_VERSION = '2026-09-23';

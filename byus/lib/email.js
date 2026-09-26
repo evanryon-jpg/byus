@@ -200,7 +200,7 @@ export async function sendWaitlistConfirmationEmail(to, { displayName, foundingS
           ? `<p><strong>You’re first in line for an international founding spot.</strong> When creator accounts open in ${place}, ${INTERNATIONAL_FOUNDING_LIMIT} international founding spots open with a ${INTERNATIONAL_FOUNDING_FEE_PERCENT}% platform fee for good, offered in the order people joined the list.</p>`
           : `<p>${spot
           ? `<strong>Your founding spot #${spot} of 50 is reserved.</strong> It locks in a 10% platform fee for good, standard domestic processing included.`
-          : 'All 50 founding spots have been reserved, so you’re on the creator waitlist at standard pricing: a 13% platform fee, dropping to 10% for the rest of any month you earn $2,000 on ByUs.'}</p>`}
+          : 'All 50 founding spots have been reserved, so you’re on the creator waitlist at standard pricing: a 13% platform fee, dropping to 10% for the rest of any month you earn $2,000 on ByUs, and 9% once you pass $10,000.'}</p>`}
         ${nextStep}
         <p>In the meantime, take a look at the <a href="https://byusapp.com/demo" style="color:#146359;">example creator pages</a> to see what yours could look like. And if you'd like, reply and tell me what you create. I read every reply.</p>
         <p style="margin-top:28px;">Evan Ryon<br /><span style="color:#666;">Founder, ByUs</span></p>
