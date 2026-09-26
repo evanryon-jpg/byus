@@ -455,6 +455,7 @@ export async function sendOpsDigestEmail(to, {
   newFanAccountsLast24h = 0,
   newCreatorAccountsLast24h = 0,
   fanRegions = null,
+  locationConflicts = 0,
   adminUrl,
 }) {
   const resend = getClient();
@@ -512,6 +513,7 @@ export async function sendOpsDigestEmail(to, {
     { label: 'SMS broadcasts held for approval', value: pendingSmsHolds, href: adminUrl },
     { label: 'Fan support requests waiting on a reply', value: openSupportRequests, href: `${adminUrl}/support` },
     { label: 'High-risk checkouts, last 24h', value: highRiskCheckoutsLast24h, href: `${adminUrl}/risk` },
+    { label: 'Fan locations to confirm (VAT evidence)', value: locationConflicts, href: `${adminUrl}/tax-evidence` },
   ];
   const needsAttention = actionable.filter((row) => Number(row.value) > 0);
   const baseSubject = needsAttention.length > 0
