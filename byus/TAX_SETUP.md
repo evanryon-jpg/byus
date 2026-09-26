@@ -12,6 +12,27 @@ tax collection on, jurisdiction by jurisdiction.
 required to register" question — that's a legal/business call this checklist
 doesn't make for you.
 
+## Decided: tax is added on top (exclusive)
+
+Sept 26, 2026: sales tax/VAT is added on top of the creator's price, never taken
+out of it. Every price the code creates sets `tax_behavior: 'exclusive'`
+(`PRICE_TAX_BEHAVIOR` in `lib/payments/providers/stripe.js`), and older tier
+prices are switched to exclusive the first time someone checks out on them. The
+creator's cut is always worked out from the price they set.
+
+**Withholding.** A destination charge sends the whole charge, tax included, to
+the creator's account, and a subscription's fee percent is taken from the total
+including tax. So after each payment that collected tax, the webhook
+(`app/api/webhooks/stripe/route.js`) reverses the right amount from the
+creator's transfer (`withholdTaxFromDestinationCharge`) so that ByUs holds the
+tax and the creator keeps exactly price minus fee. Reversals are tagged
+`metadata.byus_purpose = tax_withholding`. Refunds on those charges reverse the
+remaining transfer by hand (`createDestinationChargeRefund`). The earnings
+ledger and the $2,000 fee-tier threshold use pre-tax amounts.
+
+Nothing here does anything until a registration exists (step 3): no
+registration means $0 tax, which means no withholding.
+
 ## 1. Confirm the plan tier
 
 Registrations, filing, and remittance are gated behind Stripe's paid "Tax
@@ -23,7 +44,8 @@ in the Dashboard to see what ByUs is currently on and what upgrading costs.
 **Tax → Settings** (`dashboard.stripe.com/settings/tax`):
 - Head office address (this is the address Stripe Tax calculates *from* for
   ByUs's own tax residency).
-- A preset product tax code and default tax behavior (exclusive vs. inclusive).
+- A preset product tax code and default tax behavior. Set the default to
+  **exclusive** to match the code (see above).
   ByUs sells access to a creator's gated content/community — that's generally
   an electronically-supplied/digital service, but the exact code affects the
   rate in some jurisdictions, so pick deliberately rather than defaulting.
