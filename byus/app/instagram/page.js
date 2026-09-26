@@ -31,7 +31,7 @@ const PROMISES = [
   {
     stat: '90%',
     title: 'Keep 90%, for good',
-    body: `The first ${FOUNDING_CREATOR_LIMIT} US creators pay a 10% platform fee for as long as they're on ByUs, with standard domestic card processing included. After that, it's ${STANDARD_FEE_PERCENT}%, dropping to 10% for any month you earn $2,000, and 9% for everyone past $10,000.`,
+    body: `The first ${FOUNDING_CREATOR_LIMIT} US creators pay a 10% platform fee for as long as they're on ByUs, with standard domestic card processing included. After that, it's ${STANDARD_FEE_PERCENT}%, dropping to 10% for any month you earn $2,000.`,
   },
   {
     stat: 'Mon',
