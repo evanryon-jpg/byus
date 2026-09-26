@@ -15,10 +15,23 @@ import {
 // about these numbers (this component included) never has to depend on the payments
 // layer that holds the actual Stripe secret key. No more hand-duplicated constants to
 // keep in sync.
-// Starting value for the "What do you pay now?" field -- a common platform fee.
-// The creator changes it to whatever they pay today.
-const DEFAULT_CURRENT_FEE_PERCENT = 10;
+// "What do you pay now?" starts at the typical all-in cost on the big membership
+// platforms (checked Sept 2026): a 10% platform fee plus card processing of 2.9% + 30c
+// per payment. The 30c makes the real percentage depend on the price, so until the
+// creator moves the slider it follows the price (about 14.4% at $20, 16.7% at $8).
+// Once they set their own number, that number is used as their all-in rate.
+const TYPICAL_PLATFORM_FEE_PERCENT = 10;
 const MAX_CURRENT_FEE_PERCENT = 30;
+
+function typicalAllInPercent(priceDollars) {
+  const fixedPercent = priceDollars > 0 ? ESTIMATED_PROCESSING_FIXED_CENTS / priceDollars : 0;
+  return TYPICAL_PLATFORM_FEE_PERCENT + ESTIMATED_PROCESSING_PERCENT + fixedPercent;
+}
+
+function pct(n) {
+  const r = Math.round(n * 10) / 10;
+  return `${r % 1 === 0 ? r : r.toFixed(1)}%`;
+}
 const ESTIMATED_PROCESSING_PERCENT = 2.9;
 const ESTIMATED_PROCESSING_FIXED_CENTS = 30;
 
@@ -112,8 +125,7 @@ export default function EarningsCalculator() {
   const [subscribers, setSubscribers] = useState(300);
   const [price, setPrice] = useState(20);
   const [tier, setTier] = useState('standard'); // 'standard' | 'founding'
-  const [currentFee, setCurrentFee] = useState(DEFAULT_CURRENT_FEE_PERCENT);
-  const [processingOnTop, setProcessingOnTop] = useState(true);
+  const [customFee, setCustomFee] = useState(null); // null = follow the typical all-in rate
   const [revealRef, revealed] = useReveal();
 
   const grossCents = Math.round(subscribers * price * 100);
@@ -131,10 +143,9 @@ export default function EarningsCalculator() {
       );
   const netCents = grossCents - feeCents;
 
-  const competitorFeeCents = Math.round(
-    (grossCents * (currentFee + (processingOnTop ? ESTIMATED_PROCESSING_PERCENT : 0))) / 100 +
-      (processingOnTop ? subscribers * ESTIMATED_PROCESSING_FIXED_CENTS : 0)
-  );
+  const typicalFee = typicalAllInPercent(price);
+  const currentFee = customFee ?? typicalFee;
+  const competitorFeeCents = Math.round((grossCents * currentFee) / 100);
   const competitorNetCents = grossCents - competitorFeeCents;
   const extraKeptCents = netCents - competitorNetCents;
 
@@ -221,27 +232,34 @@ export default function EarningsCalculator() {
 
             <div className="mt-6 border-t border-brand-ink/10 pt-6">
               <SliderField
-                label="What do you pay now?"
-                value={currentFee}
+                label="What do you pay now? (all-in)"
+                value={Math.round(currentFee * 10) / 10}
                 min={0}
                 max={MAX_CURRENT_FEE_PERCENT}
-                step={0.5}
-                onChange={setCurrentFee}
-                display={`${currentFee % 1 === 0 ? currentFee : currentFee.toFixed(1)}%`}
+                step={0.1}
+                onChange={setCustomFee}
+                display={pct(currentFee)}
               />
-              <label htmlFor="calc-processing-on-top" className="-mt-3 flex cursor-pointer items-start gap-2 text-xs leading-relaxed text-brand-ink/75">
-                <input
-                  id="calc-processing-on-top"
-                  type="checkbox"
-                  checked={processingOnTop}
-                  onChange={(e) => setProcessingOnTop(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 shrink-0 accent-[#0F766E]"
-                />
-                <span>
-                  Card processing is charged on top of that fee (about {ESTIMATED_PROCESSING_PERCENT}% + {ESTIMATED_PROCESSING_FIXED_CENTS}&cent;
-                  per payment). Untick this if your current fee already includes it.
-                </span>
-              </label>
+              <p className="-mt-3 text-xs leading-relaxed text-brand-ink/75">
+                {customFee == null ? (
+                  <>
+                    Starts at what most membership platforms cost today: a {TYPICAL_PLATFORM_FEE_PERCENT}% platform fee plus
+                    card processing of {ESTIMATED_PROCESSING_PERCENT}% + {ESTIMATED_PROCESSING_FIXED_CENTS}&cent; per payment. At{' '}
+                    ${price.toFixed(2)} that adds up to about {pct(typicalFee)}. Slide it to what you actually pay.
+                  </>
+                ) : (
+                  <>
+                    Your total cost per payment, including card processing.{' '}
+                    <button
+                      type="button"
+                      onClick={() => setCustomFee(null)}
+                      className="font-semibold text-brand-teal underline underline-offset-2"
+                    >
+                      Reset to the typical {pct(typicalFee)}
+                    </button>
+                  </>
+                )}
+              </p>
             </div>
           </div>
 
@@ -274,7 +292,7 @@ export default function EarningsCalculator() {
 
             <div className="mt-3 flex flex-col items-start gap-1.5 rounded-xl border border-brand-ink/15 bg-brand-cream px-4 py-3 text-[12.5px] min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between min-[380px]:gap-2.5">
               <span className="text-brand-ink/70">
-                Where you are now ({currentFee % 1 === 0 ? currentFee : currentFee.toFixed(1)}%{processingOnTop ? ' + processing' : ''}) would leave you
+                Paying {pct(currentFee)} where you are now would leave you
               </span>
               <span className="self-end tabular-nums font-bold text-brand-ink/70 min-[380px]:self-auto">{fmt(competitorNetDisplay)}</span>
             </div>
