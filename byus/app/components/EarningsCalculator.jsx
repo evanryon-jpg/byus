@@ -214,7 +214,7 @@ export default function EarningsCalculator({ foundingSpotsLeft = 0 }) {
               label="Subscribers"
               value={subscribers}
               min={0}
-              max={2_000_000}
+              max={150_000}
               step={1}
               scale="log"
               editable
