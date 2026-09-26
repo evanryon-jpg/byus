@@ -16,6 +16,7 @@ import { scoreCheckout, riskMetadata } from '@/lib/risk-score';
 import { supporterSourceMetadata } from '@/lib/supporter-source';
 import { locationEvidenceMetadata } from '@/lib/tax-location-evidence';
 import { checkSwitchLinkForCheckout } from '@/lib/switch-links';
+import { DISCOUNT_CODES_ENABLED } from '@/lib/discounts';
 import { MIN_ANNUAL_BILLING_MONTHS, MIN_MEMBERSHIP_PRICE_CENTS } from '@/lib/pricing';
 import {
   TERMS_VERSION,
@@ -161,6 +162,7 @@ export async function POST(request) {
       trialDays: tier.trial_days,
       trialEnd: switchLink ? switchLink.firstChargeUnix : null,
       discounts,
+      allowPromotionCodes: DISCOUNT_CODES_ENABLED,
       checkoutDisclosure: disclosure,
       metadata: {
         fan_id: session.userId,
