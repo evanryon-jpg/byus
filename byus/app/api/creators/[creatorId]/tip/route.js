@@ -20,6 +20,7 @@ import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { chargeableFeePercent } from '@/lib/fees';
 import { scoreCheckout, riskMetadata } from '@/lib/risk-score';
 import { supporterSourceMetadata } from '@/lib/supporter-source';
+import { locationEvidenceMetadata } from '@/lib/tax-location-evidence';
 import { TERMS_VERSION, TIP_REFUND_POLICY_VERSION, tipCheckoutDisclosure } from '@/lib/legal';
 
 const MAX_TIP_MESSAGE_LENGTH = 300;
@@ -169,6 +170,9 @@ export async function POST(request, { params }) {
         purchase_disclosure_shown: 'true',
         ...riskMetadata(risk),
         ...supporterSourceMetadata(request, creator.id),
+        // Fan's IP and its country: the third piece of location evidence for UK/EU VAT
+        // (lib/tax-location-evidence.js), recorded by the Stripe webhook after payment.
+        ...locationEvidenceMetadata(request),
         ...(trimmedMessage ? { message: trimmedMessage } : {}),
       },
     });
