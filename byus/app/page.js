@@ -726,8 +726,8 @@ function WhyWeBuiltByUs({ user }) {
             <p>
               Creators do the work, build the communities, and create the value. They deserve to
               keep more of what they earn. ByUs gives fans a simpler, more transparent way to
-              support them through memberships or direct tips—without confusing coins or gift
-              conversions.
+              support them through memberships or tips on the posts they love—without confusing
+              coins or gift conversions.
             </p>
           </div>
           <a
