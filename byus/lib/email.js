@@ -429,6 +429,61 @@ export async function sendOpsAlertEmail(to, { context, message, stack }) {
   }
 }
 
+// Support desk alerts (Sept 26, 2026) for support staff (lib/admin.js getSupportEmails),
+// sent by lib/staff-alerts.js. Deliberately no fan, creator or content details in the
+// email itself -- just what kind of item is waiting and a link to the support desk, where
+// the details sit behind a login.
+const STAFF_ALERT_COPY = {
+  video: { subject: 'A video needs review', body: 'A video is waiting for a human review before it can go live.' },
+  report: { subject: 'New content report', body: 'Someone reported a creator page or post.' },
+  support: { subject: 'A fan needs help', body: 'The help assistant passed a fan’s question to a person.' },
+};
+
+export async function sendStaffAlertEmail(to, { kind, url }) {
+  const copy = STAFF_ALERT_COPY[kind] || { subject: 'Something needs attention', body: 'An item is waiting on the support desk.' };
+  const resend = getClient();
+  const { error } = await resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: `ByUs support desk: ${copy.subject}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 520px; margin: 0 auto; color: #1A1A1A;">
+        <h2 style="color:#146359;margin-bottom:8px;">${escapeHtml(copy.subject)}</h2>
+        <p style="font-size:15px;line-height:1.5;">${escapeHtml(copy.body)} Tap “I’m on it” when you pick it up so nobody else doubles up.</p>
+        <p style="margin:24px 0;"><a href="${escapeHtml(url)}" style="background:#0F766E;color:#fff;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:600;">Open the support desk</a></p>
+        <p style="color:#999;font-size:12px;">You get these because you’re on the ByUs support team. At most one of each kind every 10 minutes.</p>
+      </div>
+    `,
+  });
+  if (error) throw new Error(error.message || 'Could not send the staff alert email.');
+}
+
+// Daily summary for support staff: only what's waiting and who's on it. Sent by the
+// ops-digest cron when anything is waiting; skipped on a clear day.
+export async function sendSupportDigestEmail(to, { videos, reports, requests, claimed, url }) {
+  const resend = getClient();
+  const row = (label, n) => `<tr><td style="padding:8px 0;border-bottom:1px solid #EEE;">${label}</td><td style="padding:8px 0;border-bottom:1px solid #EEE;text-align:right;font-weight:700;">${n}</td></tr>`;
+  const total = videos + reports + requests;
+  const { error } = await resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: `ByUs support desk: ${total} waiting`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 520px; margin: 0 auto; color: #1A1A1A;">
+        <h2 style="color:#146359;margin-bottom:4px;">Today on the support desk</h2>
+        <table style="border-collapse:collapse;width:100%;margin:16px 0;font-size:15px;">
+          ${row('Videos waiting for review', videos)}
+          ${row('New content reports', reports)}
+          ${row('Fan requests waiting on a reply', requests)}
+        </table>
+        <p style="font-size:14px;color:#444;">${claimed > 0 ? `${claimed} of these already ${claimed === 1 ? 'has' : 'have'} someone on ${claimed === 1 ? 'it' : 'them'}.` : 'Nobody has picked any of these up yet.'}</p>
+        <p style="margin:24px 0;"><a href="${escapeHtml(url)}" style="background:#0F766E;color:#fff;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:600;">Open the support desk</a></p>
+      </div>
+    `,
+  });
+  if (error) throw new Error(error.message || 'Could not send the support digest.');
+}
+
 // A once-a-day rollup so a single operator doesn't have to keep re-checking /admin's
 // separate queues by hand to know whether anything needs them -- see
 // app/api/cron/ops-digest/route.js, which gathers these counts from the same loaders

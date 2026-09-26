@@ -17,6 +17,7 @@ import { Redis } from '@upstash/redis';
 import { getAdminEmails, getAdminAlertPhones } from '@/lib/admin';
 import { sendOpsAlertEmail } from '@/lib/email';
 import { sendSms, isSmsConfigured } from '@/lib/sms';
+import { notifyStaff } from '@/lib/staff-alerts';
 
 const redis = new Redis({
   url: process.env.KV_REST_API_URL,
@@ -82,6 +83,9 @@ const REVIEW_ALERT_MESSAGES = {
 };
 
 export async function alertReviewQueue(reason) {
+  // Support staff get an email for every kind of video review (lib/staff-alerts.js), on
+  // top of the admin text below.
+  await notifyStaff('video');
   try {
     if (!isSmsConfigured()) return;
     const phones = getAdminAlertPhones();

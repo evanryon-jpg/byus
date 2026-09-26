@@ -33,6 +33,11 @@ function supportEmails() {
   );
 }
 
+// Support staff addresses only (admins not included), for support desk alerts.
+export function getSupportEmails() {
+  return Array.from(supportEmails());
+}
+
 export function isSupportStaff(session) {
   if (isAdmin(session)) return true;
   return Boolean(session?.email && supportEmails().has(session.email.toLowerCase()));
