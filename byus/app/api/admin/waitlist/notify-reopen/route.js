@@ -15,6 +15,9 @@ export const maxDuration = 60;
 //     pressing the button twice (or again after a partial failure) only reaches the people
 //     who haven't been emailed yet.
 //   - Skips anyone who already has a creator account -- they don't need the nudge.
+//   - Only emails people in countries where creator accounts are open. At launch that's
+//     the US (plus entries from before the country field existed, which are US); UK /
+//     Europe / Canada reservations wait for their own email (lib/creator-countries.js).
 
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
@@ -22,6 +25,7 @@ import { getCurrentUser } from '@/lib/session';
 import { isAdmin } from '@/lib/admin';
 import { CREATOR_SIGNUP_PAUSED } from '@/lib/creator-signup';
 import { sendSignupsReopenedEmail } from '@/lib/email';
+import { LAUNCH_COUNTRIES } from '@/lib/creator-countries';
 
 const MAX_PER_REQUEST = 200;
 
@@ -42,12 +46,13 @@ export async function POST() {
      FROM founding_waitlist w
      LEFT JOIN founding_reservations fr ON lower(fr.email) = lower(w.email)
      WHERE w.reopen_notified_at IS NULL
+       AND (w.country IS NULL OR w.country = ANY($2))
        AND NOT EXISTS (
          SELECT 1 FROM users u WHERE lower(u.email) = lower(w.email) AND u.role = 'creator'
        )
      ORDER BY w.created_at ASC
      LIMIT $1`,
-    [MAX_PER_REQUEST]
+    [MAX_PER_REQUEST, LAUNCH_COUNTRIES]
   );
 
   const appUrl = process.env.APP_URL || 'https://byusapp.com';
@@ -80,9 +85,11 @@ export async function POST() {
   const remainingResult = await query(
     `SELECT COUNT(*)::int AS n FROM founding_waitlist w
      WHERE w.reopen_notified_at IS NULL
+       AND (w.country IS NULL OR w.country = ANY($1))
        AND NOT EXISTS (
          SELECT 1 FROM users u WHERE lower(u.email) = lower(w.email) AND u.role = 'creator'
-       )`
+       )`,
+    [LAUNCH_COUNTRIES]
   );
 
   return NextResponse.json({ sent, failed, remaining: remainingResult.rows[0]?.n || 0 });
