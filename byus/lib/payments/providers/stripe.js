@@ -90,14 +90,42 @@ export async function updateProductName({ productId, name }) {
   await stripe.products.update(productId, { name });
 }
 
+// Tax is added on top of the creator's price, never taken out of it (decided Sept 26,
+// 2026): a $10 membership is $10 to a US fan and $10 + VAT to a UK/EU fan, so the price a
+// creator sets is always the amount their cut is worked out from. 'exclusive' tells Stripe
+// Tax to add the tax as a separate line at checkout. The collected tax itself is pulled
+// back from the creator's transfer by withholdTaxFromDestinationCharge below.
+export const PRICE_TAX_BEHAVIOR = 'exclusive';
+
 export async function createRecurringPrice({ productId, amountCents, interval }) {
   const price = await stripe.prices.create({
     product: productId,
     unit_amount: amountCents,
     currency: 'usd',
     recurring: { interval },
+    tax_behavior: PRICE_TAX_BEHAVIOR,
   });
   return { priceId: price.id };
+}
+
+// Tier prices created before Sept 26, 2026 have no tax behavior set ('unspecified'), which
+// Stripe treats per the Dashboard default. Stripe allows setting it once on an existing
+// price, so each old price is switched to exclusive the first time a fan checks out on it.
+// Remembered per server instance so it's one extra Stripe call per price, not per checkout.
+// Never blocks a checkout: with no tax registrations yet, the setting changes nothing.
+const pricesKnownExclusive = new Set();
+
+async function ensurePriceTaxExclusive(priceId) {
+  if (!priceId || pricesKnownExclusive.has(priceId)) return;
+  try {
+    const price = await stripe.prices.retrieve(priceId);
+    if (!price.tax_behavior || price.tax_behavior === 'unspecified') {
+      await stripe.prices.update(priceId, { tax_behavior: PRICE_TAX_BEHAVIOR });
+    }
+    pricesKnownExclusive.add(priceId);
+  } catch (err) {
+    console.error(`Could not set tax behavior on price ${priceId} (checkout continues):`, err.message);
+  }
 }
 
 // ---- Checkout -----------------------------------------------------------------------------
@@ -114,6 +142,7 @@ export async function createSubscriptionCheckoutSession({
   metadata,
   checkoutDisclosure,
 }) {
+  await ensurePriceTaxExclusive(priceId);
   const checkoutSession = await stripe.checkout.sessions.create({
     mode: 'subscription',
     customer: customerId,
@@ -171,6 +200,7 @@ export async function createOneTimePaymentCheckoutSession({
           currency: 'usd',
           product_data: { name: productName },
           unit_amount: amountCents,
+          tax_behavior: PRICE_TAX_BEHAVIOR,
         },
         quantity: 1,
       },
@@ -246,6 +276,11 @@ export async function resumeConnectedAccountPayouts({ accountId }) {
 
 // ---- Refunds & connected-account fund recovery ------------------------------------------
 
+// Refunds pull the creator's share back with Stripe's reverse_transfer, which reverses the
+// transfer in proportion to the refund. That assumes the transfer is still whole. When part
+// of it was already reversed (the sales tax/VAT ByUs withheld, see
+// withholdTaxFromDestinationCharge), Stripe's proportional amount can exceed what's left,
+// so for those charges the same proportion is applied to the remaining transfer by hand.
 export async function createDestinationChargeRefund({
   chargeId,
   amountCents,
@@ -253,9 +288,13 @@ export async function createDestinationChargeRefund({
   metadata,
   refundApplicationFee = true,
 }) {
+  const charge = await stripe.charges.retrieve(chargeId, { expand: ['transfer'] });
+  const transfer = typeof charge.transfer === 'object' ? charge.transfer : null;
+  const partlyReversed = Boolean(transfer && transfer.amount_reversed > 0);
+
   const params = {
     charge: chargeId,
-    reverse_transfer: true,
+    reverse_transfer: !partlyReversed,
     refund_application_fee: refundApplicationFee,
     reason,
     ...(metadata ? { metadata } : {}),
@@ -263,16 +302,96 @@ export async function createDestinationChargeRefund({
   };
 
   const refund = await stripe.refunds.create(params);
+
+  let transferReversalId =
+    typeof refund.transfer_reversal === 'string'
+      ? refund.transfer_reversal
+      : refund.transfer_reversal?.id || null;
+
+  if (partlyReversed) {
+    const unrefundedBefore = charge.amount - (charge.amount_refunded || 0);
+    const remainingTransfer = transfer.amount - transfer.amount_reversed;
+    const share = unrefundedBefore > 0 ? refund.amount / unrefundedBefore : 1;
+    const reverseCents = Math.min(remainingTransfer, Math.round(remainingTransfer * share));
+    if (reverseCents > 0) {
+      const reversal = await stripe.transfers.createReversal(
+        transfer.id,
+        { amount: reverseCents, metadata: { byus_purpose: 'refund', refund_id: refund.id } },
+        { idempotencyKey: `byus-refund-reversal-${refund.id}` }
+      );
+      transferReversalId = reversal.id;
+    }
+  }
+
   return {
     refundId: refund.id,
     status: refund.status,
     amountCents: refund.amount,
     chargeId: typeof refund.charge === 'string' ? refund.charge : refund.charge?.id || chargeId,
-    transferReversalId:
-      typeof refund.transfer_reversal === 'string'
-        ? refund.transfer_reversal
-        : refund.transfer_reversal?.id || null,
+    transferReversalId,
   };
+}
+
+// ---- Sales tax / VAT withholding ---------------------------------------------------------
+//
+// ByUs is the seller of record on every fan payment (destination charges, no on_behalf_of),
+// so ByUs owes any sales tax/VAT Stripe Tax adds. But a destination charge transfers the
+// whole charge, tax included, to the creator's account, and a subscription's
+// application_fee_percent is taken from the invoice total, tax included. Stripe's own
+// "Tax for marketplaces" guide says the platform has to withhold the tax itself; for
+// Checkout it recommends a transfer reversal once the payment succeeds, which is this.
+//
+// The reversal leaves the creator with exactly what they'd have kept with no tax at all:
+// (price - ByUs's fee on the price). Worked through for a $10 UK membership at 10%:
+//   fan pays $12 ($10 + $2 VAT); Stripe transfers $12 and takes a $1.20 fee (10% of $12)
+//   creator would be left with $10.80; the target is $9.00 ($10 - $1.00)
+//   so $1.80 is reversed. ByUs ends with $1.20 + $1.80 = $3.00 = its $1 fee + the $2 VAT.
+//
+// feeIncludesTax: true for subscription invoices (percent of the total, tax included);
+// false for one-time Checkout payments, whose application_fee_amount is set in cents on
+// the pre-tax price. Safe to call more than once for the same charge: a reversal already
+// tagged byus_purpose=tax_withholding on the transfer makes it a no-op.
+export const TAX_WITHHOLDING_PURPOSE = 'tax_withholding';
+
+export async function withholdTaxFromDestinationCharge({ chargeId, taxCents, feeIncludesTax }) {
+  if (!chargeId || !(taxCents > 0)) return null;
+
+  const charge = await stripe.charges.retrieve(chargeId, { expand: ['transfer'] });
+  const transfer = typeof charge.transfer === 'object' ? charge.transfer : null;
+  if (!transfer) {
+    throw new Error(`Charge ${chargeId} collected ${taxCents} cents of tax but has no creator transfer to withhold it from.`);
+  }
+
+  let already = (transfer.reversals?.data || []).some(
+    (r) => r.metadata?.byus_purpose === TAX_WITHHOLDING_PURPOSE
+  );
+  if (!already && transfer.reversals?.has_more) {
+    for await (const r of stripe.transfers.listReversals(transfer.id, { limit: 100 })) {
+      if (r.metadata?.byus_purpose === TAX_WITHHOLDING_PURPOSE) { already = true; break; }
+    }
+  }
+  if (already) return { alreadyWithheld: true };
+
+  const feeCharged = charge.application_fee_amount || 0;
+  const preTaxCents = charge.amount - taxCents;
+  const feeOnPreTax = feeIncludesTax && charge.amount > 0
+    ? Math.round((feeCharged * preTaxCents) / charge.amount)
+    : feeCharged;
+  const creatorNow = transfer.amount - feeCharged;
+  const creatorTarget = preTaxCents - feeOnPreTax;
+  const reverseCents = Math.min(creatorNow - creatorTarget, transfer.amount - transfer.amount_reversed);
+  if (reverseCents <= 0) return null;
+
+  const reversal = await stripe.transfers.createReversal(
+    transfer.id,
+    {
+      amount: reverseCents,
+      description: 'Sales tax/VAT collected by ByUs as seller of record',
+      metadata: { byus_purpose: TAX_WITHHOLDING_PURPOSE, charge_id: chargeId, tax_cents: String(taxCents) },
+    },
+    { idempotencyKey: `byus-tax-withhold-${chargeId}` }
+  );
+  return { reversalId: reversal.id, amountCents: reversal.amount };
 }
 
 export async function reverseDestinationChargeTransfer({
