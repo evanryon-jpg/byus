@@ -14,6 +14,7 @@ import { chargeableFeePercent } from '@/lib/fees';
 import { trackServerEvent } from '@/lib/analytics';
 import { scoreCheckout, riskMetadata } from '@/lib/risk-score';
 import { supporterSourceMetadata } from '@/lib/supporter-source';
+import { locationEvidenceMetadata } from '@/lib/tax-location-evidence';
 import { MIN_ANNUAL_BILLING_MONTHS, MIN_MEMBERSHIP_PRICE_CENTS } from '@/lib/pricing';
 import {
   TERMS_VERSION,
@@ -163,6 +164,9 @@ export async function POST(request) {
         // How this fan first found the creator -- written onto the subscriptions row by the
         // Stripe webhook (lib/supporter-source.js).
         ...supporterSourceMetadata(request, tier.creator_id),
+        // Fan's IP and its country: the third piece of location evidence for UK/EU VAT
+        // (lib/tax-location-evidence.js), recorded by the Stripe webhook after payment.
+        ...locationEvidenceMetadata(request),
       },
     });
 
