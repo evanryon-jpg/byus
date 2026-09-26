@@ -1679,6 +1679,37 @@ function DiscountSection({ tiers }) {
   );
 }
 
+// Video storage allowance (lib/video-limits.js): 10 hours plus 1 per paying member, up
+// to 200. Shown wherever a video can be uploaded.
+function VideoStorageMeter() {
+  const [s, setS] = useState(null);
+  useEffect(() => {
+    fetch('/api/creator/video-storage')
+      .then((r) => (r.ok ? r.json() : null))
+      .then(setS)
+      .catch(() => {});
+  }, []);
+  if (!s) return null;
+  const hrs = (sec) => Math.round((sec / 3600) * 10) / 10;
+  const pct = Math.min(100, Math.round((s.usedSeconds / s.limitSeconds) * 100));
+  return (
+    <div className="mb-2 mt-2">
+      <div className="flex justify-between text-xs text-brand-ink/60">
+        <span>Video storage</span>
+        <span className="tabular-nums">{hrs(s.usedSeconds)} of {hrs(s.limitSeconds)} hours</span>
+      </div>
+      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-brand-ink/10">
+        <div className={`h-full rounded-full ${s.full ? 'bg-amber-500' : 'bg-[#0F766E]'}`} style={{ width: `${pct}%` }} />
+      </div>
+      <p className="mt-1 text-[11px] text-brand-ink/55">
+        {s.full
+          ? 'Full. Each paying member adds another hour, or delete an older video to make room.'
+          : '10 hours to start, plus 1 more hour for every paying member (up to 200).'}
+      </p>
+    </div>
+  );
+}
+
 // Switching links (lib/switch-links.js): a private link for fans the creator is bringing
 // over from Patreon or elsewhere. They join now and their first charge waits until the
 // date the creator picks, so nobody pays twice.
@@ -2283,6 +2314,7 @@ function BatchVideoImporter({ onCreated }) {
               {VIDEO_LIMITS_LABEL} Select up to five files you own or have permission to
               reuse. TikTok and YouTube links cannot be pasted here.
             </p>
+            <VideoStorageMeter />
           </div>
 
           {items.map((item) => (
@@ -2590,6 +2622,7 @@ function PostSection({ posts, pinnedPostId, onCreated }) {
           <div>
             <label className="mb-1 block text-sm text-brand-ink/70">Video (optional)</label>
             <p className="mb-2 text-xs text-brand-ink/55">{VIDEO_LIMITS_LABEL}</p>
+            <VideoStorageMeter />
             {videoFile && videoStatus !== 'idle' ? (
               <div className="flex items-center gap-2 rounded-lg border border-brand-ink/10 bg-brand-ink/[0.02] px-3 py-2 text-sm">
                 <span className="min-w-0 flex-1 truncate text-brand-ink/70">{videoFile.name}</span>
