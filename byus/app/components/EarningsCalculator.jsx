@@ -5,8 +5,6 @@ import {
   STANDARD_FEE_PERCENT,
   DISCOUNTED_FEE_PERCENT,
   FEE_DISCOUNT_THRESHOLD_CENTS,
-  BIG_CREATOR_FEE_PERCENT,
-  BIG_CREATOR_THRESHOLD_CENTS,
   FOUNDING_CREATOR_LIMIT,
   MIN_MEMBERSHIP_PRICE_CENTS,
 } from '@/lib/pricing';
@@ -130,14 +128,13 @@ export default function EarningsCalculator({ foundingSpotsLeft = 0 }) {
   const [revealRef, revealed] = useReveal();
 
   const grossCents = Math.round(subscribers * price * 100);
-  // Monthly fee bands, same order the real billing uses (lib/fees.js): standard is 13%
-  // up to $2K, 10% up to $10K, 9% after; founding is 10% up to $10K, 9% after.
+  // Monthly fee bands, same as real billing (lib/fees.js): standard is 13% on the first
+  // $2K of the month and 10% after; founding is 10% on everything.
   const bands = tier === 'founding'
-    ? [[BIG_CREATOR_THRESHOLD_CENTS, DISCOUNTED_FEE_PERCENT], [Infinity, BIG_CREATOR_FEE_PERCENT]]
+    ? [[Infinity, DISCOUNTED_FEE_PERCENT]]
     : [
         [FEE_DISCOUNT_THRESHOLD_CENTS, STANDARD_FEE_PERCENT],
-        [BIG_CREATOR_THRESHOLD_CENTS, DISCOUNTED_FEE_PERCENT],
-        [Infinity, BIG_CREATOR_FEE_PERCENT],
+        [Infinity, DISCOUNTED_FEE_PERCENT],
       ];
   let feeExact = 0;
   let bandStart = 0;
@@ -153,13 +150,11 @@ export default function EarningsCalculator({ foundingSpotsLeft = 0 }) {
 
   const ladder = tier === 'founding'
     ? [
-        { label: 'Up to $10,000 a month', fromCents: 0, percent: DISCOUNTED_FEE_PERCENT, exampleCents: 600000 },
-        { label: 'Over $10,000', fromCents: BIG_CREATOR_THRESHOLD_CENTS, percent: BIG_CREATOR_FEE_PERCENT, exampleCents: 2000000 },
+        { label: 'Everything you earn', fromCents: 0, percent: DISCOUNTED_FEE_PERCENT, exampleCents: 600000 },
       ]
     : [
         { label: 'First $2,000 a month', fromCents: 0, percent: STANDARD_FEE_PERCENT, exampleCents: 150000 },
-        { label: '$2,000 to $10,000', fromCents: FEE_DISCOUNT_THRESHOLD_CENTS, percent: DISCOUNTED_FEE_PERCENT, exampleCents: 600000 },
-        { label: 'Over $10,000', fromCents: BIG_CREATOR_THRESHOLD_CENTS, percent: BIG_CREATOR_FEE_PERCENT, exampleCents: 2000000 },
+        { label: 'After $2,000', fromCents: FEE_DISCOUNT_THRESHOLD_CENTS, percent: DISCOUNTED_FEE_PERCENT, exampleCents: 600000 },
       ];
   const currentRung = ladder.reduce((acc, row, i) => (i === 0 || grossCents > row.fromCents ? i : acc), 0);
   const netCents = grossCents - feeCents;
@@ -270,9 +265,8 @@ export default function EarningsCalculator({ foundingSpotsLeft = 0 }) {
               </ol>
               <p className="mt-2 text-xs leading-relaxed text-brand-ink/60">
                 {tier === 'founding'
-                  ? `${DISCOUNTED_FEE_PERCENT}% for good for the first ${FOUNDING_CREATOR_LIMIT} US creators. `
-                  : ''}
-                Rates reset at the start of each month and include card processing. Tap a row to see an example month at that rate.
+                  ? `${DISCOUNTED_FEE_PERCENT}% for good for the first ${FOUNDING_CREATOR_LIMIT} US creators, card processing included.`
+                  : 'Resets at the start of each month and includes card processing. Tap a row to see an example month at that rate.'}
               </p>
             </div>
 
@@ -363,8 +357,7 @@ export default function EarningsCalculator({ foundingSpotsLeft = 0 }) {
           Estimate only. Set &ldquo;What do you pay now?&rdquo; to the fee your current platform charges; plans and processing costs differ from place to place. ByUs includes standard domestic payment processing
           in its fee. Other charges may apply for refunds, international payments, currency
           conversion, or optional instant payouts. For standard pricing, the estimate applies 13%
-          through $2,000, 10% through $10,000, and 9% after that (founding: 10% through $10,000, then 9%);
-          the exact total can vary with payment timing.
+          through $2,000 and 10% after that; the exact total can vary with payment timing.
         </p>
       </div>
     </section>

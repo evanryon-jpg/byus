@@ -32,8 +32,6 @@ export default function EarningsSection() {
     effectiveFeePercent,
     discountedFeePercent,
     thresholdCents,
-    bigCreatorFeePercent,
-    bigCreatorThresholdCents,
     monthToDateGrossCents,
     lifetimeGrossCents,
     lifetimeNetCents,
@@ -45,15 +43,8 @@ export default function EarningsSection() {
 
   const thisMonth = monthly[monthly.length - 1];
   const netNewThisMonth = thisMonth?.netNewSubscribers ?? 0;
-  // The next lower rate this month: 10% at $2,000, then 9% at $10,000.
-  const nextRate =
-    effectiveFeePercent > discountedFeePercent && thresholdCents > 0
-      ? { cents: thresholdCents, percent: discountedFeePercent }
-      : bigCreatorFeePercent && effectiveFeePercent > bigCreatorFeePercent && bigCreatorThresholdCents > 0
-      ? { cents: bigCreatorThresholdCents, percent: bigCreatorFeePercent }
-      : null;
-  const thresholdProgress = nextRate
-    ? Math.min(100, Math.round((monthToDateGrossCents / nextRate.cents) * 100))
+  const thresholdProgress = thresholdCents > 0
+    ? Math.min(100, Math.round((monthToDateGrossCents / thresholdCents) * 100))
     : 0;
 
   const hasAnyActivity =
@@ -66,11 +57,11 @@ export default function EarningsSection() {
           Your current all-in platform fee is {effectiveFeePercent}%. Standard domestic payment
           processing is included, and your earnings go directly to your connected Stripe account.
         </p>
-        {nextRate && (
+        {effectiveFeePercent > discountedFeePercent && thresholdCents > 0 && (
           <div className="mt-3">
             <div className="flex items-center justify-between gap-3 text-xs text-brand-ink/60">
               <span>{formatUSD(monthToDateGrossCents)} earned this month</span>
-              <span>{formatUSD(nextRate.cents)} for the {nextRate.percent}% rate</span>
+              <span>{formatUSD(thresholdCents)} for the {discountedFeePercent}% rate</span>
             </div>
             <div className="mt-2 h-2 overflow-hidden rounded-full bg-brand-ink/10">
               <div
