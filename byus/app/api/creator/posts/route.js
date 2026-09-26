@@ -120,6 +120,7 @@ export async function POST(request) {
   // a made-up assetId/playbackId.
   let muxAssetId = null;
   let muxPlaybackId = null;
+  let videoDurationSeconds = null;
   if (videoUploadId) {
     const owned = await query(
       `SELECT 1 FROM video_uploads WHERE upload_id = $1 AND creator_id = $2`,
@@ -142,6 +143,7 @@ export async function POST(request) {
       }
       muxAssetId = asset.id;
       muxPlaybackId = asset.playback_ids?.[0]?.id || null;
+      videoDurationSeconds = Number.isFinite(Number(asset.duration)) ? Number(asset.duration) : null;
       if (!muxPlaybackId) {
         return NextResponse.json({ error: 'Video has no playable output yet. Try again.' }, { status: 400 });
       }
@@ -169,8 +171,8 @@ export async function POST(request) {
     // /api/creator/upload, stored as-is — it's only ever resolved back into
     // real file bytes through the gated /api/posts/:id/media route.
     const result = await query(
-      `INSERT INTO posts (creator_id, title, body, media_url, visibility, poll_options, pending_review, mux_asset_id, mux_playback_id, video_moderation_status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      `INSERT INTO posts (creator_id, title, body, media_url, visibility, poll_options, pending_review, mux_asset_id, mux_playback_id, video_moderation_status, video_duration_seconds)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        RETURNING id, title, body, media_url, visibility, poll_options, pending_review, created_at, mux_playback_id`,
       [
         session.userId,
@@ -183,6 +185,7 @@ export async function POST(request) {
         muxAssetId,
         muxPlaybackId,
         videoUploadId ? 'queued' : 'not_required',
+        videoDurationSeconds,
       ]
     );
 
