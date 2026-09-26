@@ -464,3 +464,24 @@ export async function retrieveBalanceSummary({ accountId } = {}) {
     (list || []).filter((b) => b.currency === 'usd').reduce((total, b) => total + b.amount, 0);
   return { availableCents: sum(balance.available), pendingCents: sum(balance.pending) };
 }
+
+// Successful fan payments on the platform account since `createdGte` (unix seconds),
+// reduced to { createdAt (unix s), country (ISO-2 or null), amountCents }. Country is the
+// billing address Checkout collected (what Stripe Tax uses), falling back to the card's
+// issuing country. Used by the daily digest to spot UK/EU fan payments -- the trigger for
+// registering for UK/EU VAT (see lib/fan-payment-regions.js). Stops after `max` charges so
+// a busy day can never make the digest time out.
+export async function listSucceededChargeCountries({ createdGte, max = 3000 }) {
+  const rows = [];
+  for await (const charge of stripe.charges.list({ created: { gte: createdGte }, limit: 100 })) {
+    if (charge.status === 'succeeded' && !charge.refunded) {
+      rows.push({
+        createdAt: charge.created,
+        country: charge.billing_details?.address?.country || charge.payment_method_details?.card?.country || null,
+        amountCents: charge.amount,
+      });
+    }
+    if (rows.length >= max) break;
+  }
+  return rows;
+}
