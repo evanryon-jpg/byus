@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
-import { isAdmin } from '@/lib/admin';
+import { staffFlags } from '@/lib/admin';
 import { containsBlockedContent } from '@/lib/content-policy';
 import { USER_SELECT_FIELDS, withAvatarUrl, withEffectiveFee } from '@/lib/user-profile';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
@@ -73,7 +73,7 @@ export async function GET() {
     }
 
     const enriched = await withEffectiveFee(withAvatarUrl(user));
-    return NextResponse.json({ user: { ...enriched, is_admin: isAdmin(session) } });
+    return NextResponse.json({ user: { ...enriched, ...staffFlags(session) } });
   } catch (err) {
     console.error('me GET failed:', err);
     return NextResponse.json(
@@ -169,7 +169,7 @@ export async function PATCH(request) {
     );
 
     const enriched = await withEffectiveFee(withAvatarUrl(result.rows[0]));
-    return NextResponse.json({ user: { ...enriched, is_admin: isAdmin(session) } });
+    return NextResponse.json({ user: { ...enriched, ...staffFlags(session) } });
   } catch (err) {
     console.error('me PATCH failed:', err);
     return NextResponse.json(
