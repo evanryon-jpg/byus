@@ -211,11 +211,10 @@ export default function AdminClient({
             {recentInstagramSignupCount.toLocaleString()} completed account {recentInstagramSignupCount === 1 ? 'signup' : 'signups'}
           </p>
         </div>
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <CampaignMetric label="Page visits" value={campaignRecent('view')} />
           <CampaignMetric label="Demo clicks" value={campaignRecent('demo_click')} />
           <CampaignMetric label="Browse clicks" value={campaignRecent('browse_click')} />
-          <CampaignMetric label="Opinion clicks" value={campaignRecent('feedback_click')} />
           <CampaignMetric label="Signup clicks" value={campaignRecent('signup_click')} />
         </div>
         <p className="mt-3 text-xs text-brand-ink/50">
