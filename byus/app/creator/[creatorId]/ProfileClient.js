@@ -16,6 +16,7 @@ import Image from 'next/image';
 import LivePlayer from '../../components/LivePlayer';
 import PostVideoPlayer from '../../components/PostVideoPlayer';
 import DigitalProductShop from '../../components/DigitalProductShop';
+import CreatorRow from '../../components/CreatorRow';
 
 export default function ProfileClient({ data, justSubscribed, subscribedTierId, justTipped, creatorId, switchOffer = null }) {
   const router = useRouter();
@@ -419,6 +420,19 @@ export default function ProfileClient({ data, justSubscribed, subscribedTierId, 
         )}
       </ul>
       </>
+      )}
+
+      {/* Similar creators: others sharing a category tag with this page, most shared
+          tags first, then a daily shuffle (see /api/creators). Hidden on your own page
+          and when nobody matches. */}
+      {!data.isOwnPage && (
+        <CreatorRow
+          title="Similar creators"
+          subtitle="Other creators on ByUs in the same categories."
+          params={`similarTo=${creator.id}&limit=3`}
+          max={3}
+          className="mt-12 border-t border-brand-ink/10 pt-8"
+        />
       )}
     </div>
   );
