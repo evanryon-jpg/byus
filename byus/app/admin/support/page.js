@@ -6,6 +6,7 @@
 // nobody has to ask the fan to repeat themselves. Same shape as the appeals page.
 
 import { useEffect, useState } from 'react';
+import StaffClaim from '../../components/StaffClaim';
 
 export default function AdminSupportPage() {
   const [status, setStatus] = useState('loading');
@@ -147,6 +148,7 @@ function RequestCard({ request, compact = false, onResolved }) {
         <span className="font-semibold text-[#172033]">{request.user_name || 'Unnamed fan'}</span>
         <a href={`mailto:${request.user_email}`} className="text-xs text-[#0F766E] hover:underline">{request.user_email}</a>
         <span className="text-xs text-brand-ink/60">· {formatDateTime(request.created_at)}</span>
+        {request.status === 'open' && <span className="ml-auto"><StaffClaim type="support" id={request.id} /></span>}
       </div>
       <p className="mt-2 text-sm text-brand-ink/85">{request.summary}</p>
 
