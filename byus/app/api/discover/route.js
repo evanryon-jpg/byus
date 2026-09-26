@@ -35,6 +35,7 @@ import { publicAvatarUrl } from '@/lib/avatar-url';
 import { signPlaybackToken } from '@/lib/mux-jwt';
 
 const PAGE_SIZE = 20;
+const MAX_PER_CREATOR_PER_DAY = 2;
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -49,14 +50,26 @@ export async function GET(request) {
   try {
     // LIMIT one extra row to know whether there's a next page, same trick
     // /api/creators already uses, instead of a separate COUNT(*) query.
+    //
+    // Fairness rule (Sept 26, 2026): at most MAX_PER_CREATOR_PER_DAY posts per creator per
+    // UTC day appear here -- that creator's newest ones that day. Someone posting ten
+    // times a day can't push everyone else off the feed; their other posts are still on
+    // their own page. It's a fixed filter before paging, so offsets stay stable.
     const postsResult = await query(
-      `SELECT p.id, p.title, p.body, p.media_url, p.created_at, p.mux_playback_id, p.view_count,
-              u.id AS creator_id, u.display_name, u.profile_image_url, u.slug
-       FROM posts p
-       JOIN users u ON u.id = p.creator_id
-       WHERE p.visibility = 'public' AND p.pending_review = false
-         AND u.role = 'creator' AND u.is_suspended = false
-       ORDER BY p.created_at DESC, p.id DESC
+      `SELECT * FROM (
+         SELECT p.id, p.title, p.body, p.media_url, p.created_at, p.mux_playback_id, p.view_count,
+                u.id AS creator_id, u.display_name, u.profile_image_url, u.slug,
+                ROW_NUMBER() OVER (
+                  PARTITION BY p.creator_id, (p.created_at AT TIME ZONE 'UTC')::date
+                  ORDER BY p.created_at DESC, p.id DESC
+                ) AS day_rank
+         FROM posts p
+         JOIN users u ON u.id = p.creator_id
+         WHERE p.visibility = 'public' AND p.pending_review = false
+           AND u.role = 'creator' AND u.is_suspended = false
+       ) ranked
+       WHERE day_rank <= ${MAX_PER_CREATOR_PER_DAY}
+       ORDER BY created_at DESC, id DESC
        LIMIT $1 OFFSET $2`,
       [PAGE_SIZE + 1, offset]
     );
