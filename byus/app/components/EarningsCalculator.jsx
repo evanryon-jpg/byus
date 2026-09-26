@@ -153,13 +153,13 @@ export default function EarningsCalculator({ foundingSpotsLeft = 0 }) {
 
   const ladder = tier === 'founding'
     ? [
-        { label: 'Up to $10,000 a month', fromCents: 0, percent: DISCOUNTED_FEE_PERCENT },
-        { label: 'Over $10,000', fromCents: BIG_CREATOR_THRESHOLD_CENTS, percent: BIG_CREATOR_FEE_PERCENT },
+        { label: 'Up to $10,000 a month', fromCents: 0, percent: DISCOUNTED_FEE_PERCENT, exampleCents: 600000 },
+        { label: 'Over $10,000', fromCents: BIG_CREATOR_THRESHOLD_CENTS, percent: BIG_CREATOR_FEE_PERCENT, exampleCents: 2000000 },
       ]
     : [
-        { label: 'First $2,000 a month', fromCents: 0, percent: STANDARD_FEE_PERCENT },
-        { label: '$2,000 to $10,000', fromCents: FEE_DISCOUNT_THRESHOLD_CENTS, percent: DISCOUNTED_FEE_PERCENT },
-        { label: 'Over $10,000', fromCents: BIG_CREATOR_THRESHOLD_CENTS, percent: BIG_CREATOR_FEE_PERCENT },
+        { label: 'First $2,000 a month', fromCents: 0, percent: STANDARD_FEE_PERCENT, exampleCents: 150000 },
+        { label: '$2,000 to $10,000', fromCents: FEE_DISCOUNT_THRESHOLD_CENTS, percent: DISCOUNTED_FEE_PERCENT, exampleCents: 600000 },
+        { label: 'Over $10,000', fromCents: BIG_CREATOR_THRESHOLD_CENTS, percent: BIG_CREATOR_FEE_PERCENT, exampleCents: 2000000 },
       ];
   const currentRung = ladder.reduce((acc, row, i) => (i === 0 || grossCents > row.fromCents ? i : acc), 0);
   const netCents = grossCents - feeCents;
@@ -244,22 +244,26 @@ export default function EarningsCalculator({ foundingSpotsLeft = 0 }) {
                 </TierButton>
               </div>
               {/* Rate ladder for the selected tier. Rows the monthly gross reaches are shown
-                  in full; the highest one reached is highlighted, so moving the sliders shows
-                  the rate stepping down. */}
+                  in full; the highest one reached is highlighted. Each row is a button: tapping
+                  it sets the member count to an example month in that range at the current
+                  price ($1,500, $6,000 or $20,000), so the numbers on the right update. */}
               <ol className="mt-3 overflow-hidden rounded-xl border border-brand-ink/10 text-[13px]" aria-label="Fee by monthly earnings">
                 {ladder.map((row, i) => {
                   const reached = i === 0 || grossCents > row.fromCents;
                   const current = i === currentRung;
                   return (
-                    <li
-                      key={row.label}
-                      aria-current={current ? 'true' : undefined}
-                      className={`flex items-center justify-between gap-3 px-3.5 py-2 transition-colors ${
-                        i > 0 ? 'border-t border-brand-ink/10' : ''
-                      } ${current ? 'bg-brand-teal/10 font-bold text-[#172033]' : reached ? 'text-brand-ink/75' : 'text-brand-ink/40'}`}
-                    >
-                      <span>{row.label}</span>
-                      <span className="tabular-nums">{row.percent}%</span>
+                    <li key={row.label} className={i > 0 ? 'border-t border-brand-ink/10' : ''}>
+                      <button
+                        type="button"
+                        aria-current={current ? 'true' : undefined}
+                        onClick={() => setSubscribers(Math.min(150000, Math.ceil(row.exampleCents / 100 / price)))}
+                        className={`flex w-full items-center justify-between gap-3 px-3.5 py-2 text-left transition-colors hover:bg-brand-gold/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-teal ${
+                          current ? 'bg-brand-teal/10 font-bold text-[#172033]' : reached ? 'text-brand-ink/75' : 'text-brand-ink/55'
+                        }`}
+                      >
+                        <span>{row.label}</span>
+                        <span className="tabular-nums">{row.percent}%</span>
+                      </button>
                     </li>
                   );
                 })}
@@ -268,7 +272,7 @@ export default function EarningsCalculator({ foundingSpotsLeft = 0 }) {
                 {tier === 'founding'
                   ? `For the first ${FOUNDING_CREATOR_LIMIT} US creators, for good. `
                   : ''}
-                Rates reset at the start of each month and include card processing.
+                Rates reset at the start of each month and include card processing. Tap a row to see an example month at that rate.
               </p>
             </div>
 
