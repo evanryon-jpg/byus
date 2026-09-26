@@ -103,6 +103,15 @@ export default function NavBar() {
               Admin
             </a>
           )}
+          {user?.is_support && (
+            <a
+              href="/support-desk"
+              className={`block rounded-lg px-3 py-2 ${linkTone}`}
+              onClick={() => setMenuOpen(false)}
+            >
+              Support desk
+            </a>
+          )}
           <button
             type="button"
             onClick={handleLogout}
