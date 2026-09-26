@@ -3,10 +3,14 @@
 // Creator payout accounts are US-only at launch (lib/payments/providers/stripe.js creates
 // every Express account in the platform's country). Stripe can pay creators in the UK, the
 // EEA, Canada and Switzerland from a US platform, so those are "soon": people there can
-// reserve a founding spot now and get emailed when their country opens. Anywhere else
-// isn't supported by Stripe's self-serve cross-border payouts, so those people join the
-// list without taking a founding spot (see the founding_waitlist trigger in
-// database/migrations/20260926_waitlist_country.sql).
+// join the list now and get emailed when their country opens. Anywhere else isn't
+// supported by Stripe's self-serve cross-border payouts.
+//
+// Founding spots (10% for good) are for US creators only -- cross-border payouts cost ByUs
+// about 1.25% more, which a 10% fee can't cover for smaller creators. Everyone outside the
+// US joins at standard pricing (13%, 10% for any month they earn $2,000) and never takes
+// one of the 50 spots (see the founding_waitlist trigger in
+// database/migrations/20260926b_founding_spots_us_only.sql).
 //
 // The founding-spot form stores the ISO code in founding_waitlist.country; 'OTHER' means
 // a country not listed here. NULL (entries from before Sept 26, 2026) is treated as US.

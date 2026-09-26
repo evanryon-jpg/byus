@@ -179,7 +179,7 @@ export async function sendWaitlistConfirmationEmail(to, { displayName, foundingS
   const place = escapeHtml(creatorCountryName(country));
   const nextStep =
     countryStatus === 'soon'
-      ? `<p><strong>What happens next:</strong> ByUs is opening creator accounts in the US first, and ${place} is on the list to follow, along with the rest of the UK, Europe and Canada. ${spot ? 'Your spot is held until then' : 'You’re on the list'}, and I'll email you the day creator accounts open in ${place}. Just sign up with this same email address.</p>`
+      ? `<p><strong>What happens next:</strong> ByUs is opening creator accounts in the US first, and ${place} is on the list to follow, along with the rest of the UK, Europe and Canada. I'll email you the day creator accounts open in ${place}. Just sign up with this same email address.</p>`
       : countryStatus === 'unsupported'
       ? '<p><strong>What happens next:</strong> ByUs can only pay creators in the US at launch, with the UK, Europe and Canada coming next. Our payment partner doesn’t support payouts to your country yet, so we can’t hold a founding spot for you, but you’re on the list and I’ll let you know if that changes.</p>'
       : `<p><strong>What happens next:</strong> creator signups are paused for a short while. As soon as they reopen, I'll email you a link to ${spot ? 'claim your spot' : 'create your page'}. Just sign up with this same email address.</p>`;
@@ -191,7 +191,9 @@ export async function sendWaitlistConfirmationEmail(to, { displayName, foundingS
       <div style="font-family: sans-serif; max-width: 520px; margin: 0 auto; color: #1A1A1A; line-height: 1.55;">
         <p>Hi ${greeting},</p>
         <p>Thank you for joining ByUs. ${spot ? "You're one of the very first creators to back what we're building, and that means a lot." : "It means a lot that you want to build your page here."}</p>
-        ${countryStatus === 'unsupported' && !spot ? '' : `<p>${spot
+        ${countryStatus === 'unsupported' && !spot ? '' : countryStatus === 'soon' && !spot
+          ? '<p>Founding spots are for creators in the US, so you’ll join at standard pricing: a 13% platform fee, dropping to 10% for the rest of any month you earn $2,000 on ByUs.</p>'
+          : `<p>${spot
           ? `<strong>Your founding spot #${spot} of 50 is reserved.</strong> It locks in a 10% platform fee for good, standard domestic processing included.`
           : 'All 50 founding spots have been reserved, so you’re on the creator waitlist at standard pricing: a 13% platform fee, dropping to 10% for the rest of any month you earn $2,000 on ByUs.'}</p>`}
         ${nextStep}
@@ -377,7 +379,7 @@ export async function sendNewWaitlistSignupEmail(to, { email, displayName, found
           <tr><td style="padding:6px 0;color:#666;">Email</td><td style="padding:6px 0;font-weight:600;">${escapeHtml(email)}</td></tr>
           ${displayName ? `<tr><td style="padding:6px 0;color:#666;">Name</td><td style="padding:6px 0;">${escapeHtml(displayName)}</td></tr>` : ''}
           ${country ? `<tr><td style="padding:6px 0;color:#666;">Country</td><td style="padding:6px 0;">${escapeHtml(country)}</td></tr>` : ''}
-          <tr><td style="padding:6px 0;color:#666;">Founding spot</td><td style="padding:6px 0;">${foundingSpot ? `#${escapeHtml(String(foundingSpot))}` : 'None left (standard pricing)'}</td></tr>
+          <tr><td style="padding:6px 0;color:#666;">Founding spot</td><td style="padding:6px 0;">${foundingSpot ? `#${escapeHtml(String(foundingSpot))}` : country && country !== 'United States' ? 'None: outside the US (standard pricing)' : 'None left (standard pricing)'}</td></tr>
         </table>
         ${foundingStats ? `<p style="color:#666;font-size:13px;">${escapeHtml(String(foundingStats.claimed))} of ${escapeHtml(String(foundingStats.limit))} founding spots reserved · ${escapeHtml(String(foundingStats.remaining))} remaining</p>` : ''}
         ${adminUrl ? `<p style="margin:24px 0;"><a href="${adminUrl}" style="background:#146359;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;">Open ByUs admin</a></p>` : ''}
