@@ -12,7 +12,7 @@ import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { verifyPhoneCode, isValidE164 } from '@/lib/phone-verification';
 import { USER_SELECT_FIELDS, withAvatarUrl, withEffectiveFee } from '@/lib/user-profile';
-import { isAdmin } from '@/lib/admin';
+import { staffFlags } from '@/lib/admin';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function POST(request) {
@@ -44,7 +44,7 @@ export async function POST(request) {
       [trimmedPhone, session.userId]
     );
     const enriched = await withEffectiveFee(withAvatarUrl(result.rows[0]));
-    return NextResponse.json({ user: { ...enriched, is_admin: isAdmin(session) } });
+    return NextResponse.json({ user: { ...enriched, ...staffFlags(session) } });
   } catch (err) {
     if (err?.code === '23505') {
       return NextResponse.json(
