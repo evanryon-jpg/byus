@@ -53,6 +53,7 @@ import { syncPlatformAccess } from '@/lib/platform-sync';
 import { isSupporterSource } from '@/lib/supporter-source';
 import { alertOps } from '@/lib/alerts';
 import { recordLocationEvidence } from '@/lib/tax-location-evidence';
+import { recordSwitchRedemption } from '@/lib/switch-links';
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -434,6 +435,17 @@ export async function POST(request) {
                 : null,
             ]
           );
+
+          // Joined through a creator's switching link (lib/switch-links.js): count the use and
+          // mark this fan as having used one for this creator.
+          if (stripeSubscription.metadata?.switch_link_id) {
+            await recordSwitchRedemption(client, {
+              linkId: stripeSubscription.metadata.switch_link_id,
+              creatorId: creator_id,
+              fanId: fan_id,
+              subscriptionId: checkoutSession.subscription,
+            });
+          }
 
           // If this fan subscribed through a friend's referral link, this is their first
           // real payment going through — the referrer's free-month credit is granted after
