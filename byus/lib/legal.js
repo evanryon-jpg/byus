@@ -2,8 +2,8 @@
 // which terms/refund disclosure applied to the transaction. Bump these whenever the
 // corresponding language materially changes.
 export const TERMS_VERSION = '2026-09-23';
-export const PRIVACY_VERSION = '2026-09-23';
-export const CREATOR_AGREEMENT_VERSION = '2026-09-23';
+export const PRIVACY_VERSION = '2026-09-26';
+export const CREATOR_AGREEMENT_VERSION = '2026-09-26';
 export const CONTENT_POLICY_VERSION = '2026-09-23';
 export const MEMBERSHIP_REFUND_POLICY_VERSION = '2026-09-12';
 export const TIP_REFUND_POLICY_VERSION = '2026-09-12';

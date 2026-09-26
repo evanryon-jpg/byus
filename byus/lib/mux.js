@@ -62,7 +62,10 @@ export async function createDirectUpload(corsOrigin) {
     method: 'POST',
     body: JSON.stringify({
       cors_origin: corsOrigin,
-      new_asset_settings: { playback_policy: ['signed'] },
+      // basic quality: no processing charge and cheaper storage/streaming; capped at
+      // 1080p so a 4K upload is stored and streamed as HD (lib/video-limits.js).
+      // Downloads (static renditions) still work on basic.
+      new_asset_settings: { playback_policy: ['signed'], video_quality: 'basic', max_resolution_tier: '1080p' },
     }),
   });
 }
