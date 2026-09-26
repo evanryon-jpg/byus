@@ -12,7 +12,7 @@ import PageCoach from '../../components/PageCoach';
 import MonthlyBarChart from '../../components/charts/MonthlyBarChart';
 import PostVideoPlayer from '../../components/PostVideoPlayer';
 import { TRIAL_DAY_OPTIONS } from '@/lib/trials';
-import { MIN_DISCOUNT_PERCENT, MAX_DISCOUNT_PERCENT } from '@/lib/discounts';
+import { MIN_DISCOUNT_PERCENT, MAX_DISCOUNT_PERCENT, DISCOUNT_CODES_ENABLED } from '@/lib/discounts';
 import { STANDARD_FEE_PERCENT } from '@/lib/pricing';
 import { supporterSourceBucket } from '@/lib/supporter-source';
 import {
@@ -340,7 +340,8 @@ export default function DashboardClient({
       {/* Discount codes — a fan enters one at checkout for a percentage off their first
           payment on a specific tier (or any tier). Only useful once there's at least one
           tier to attach a code to. */}
-      {tiers.length > 0 && <DiscountSection tiers={tiers} />}
+      {/* Off for launch -- see DISCOUNT_CODES_ENABLED in lib/discounts.js. */}
+      {DISCOUNT_CODES_ENABLED && tiers.length > 0 && <DiscountSection tiers={tiers} />}
 
       {/* Switching links -- bring existing fans over from another platform with their first
           ByUs charge delayed until what they already paid there runs out. */}
