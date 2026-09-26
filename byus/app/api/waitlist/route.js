@@ -83,10 +83,13 @@ export async function POST(request) {
          VALUES ($1, $2, $3, $4, $5) ON CONFLICT (email) DO NOTHING RETURNING id`,
         [trimmedEmail, trimmedName || null, trimmedSource, trimmedReferral, countryCode]
       );
-      // Countries ByUs can't pay creators in join the list without taking one of the 50
-      // spots (same rule as the insert trigger). Everyone else reserves -- or gets back the
-      // spot they already hold if this email was already on the list.
-      if (countryStatus === 'unsupported') {
+      // Founding spots (the 10%-for-good rate) are for US creators only. Creators outside
+      // the US join the list without taking one of the 50 spots -- UK / Europe / Canada are
+      // emailed when their country opens and join at standard pricing (13%, 10% for any
+      // month they earn $2,000), since cross-border payouts cost ByUs more. Same rule as the
+      // founding_waitlist insert trigger. If this email already holds a spot from an
+      // earlier US reservation, they keep it.
+      if (countryStatus !== 'launch') {
         const existing = await client.query(
           'SELECT spot_number FROM founding_reservations WHERE email = $1',
           [trimmedEmail]
