@@ -17,6 +17,7 @@ import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { askForJson, isAnthropicConfigured } from '@/lib/anthropic';
+import { notifyStaff } from '@/lib/staff-alerts';
 
 const MAX_MESSAGES = 12;
 const MAX_MESSAGE_CHARS = 1500;
@@ -128,6 +129,7 @@ Reply with ONLY valid JSON in this exact shape:
         [session.userId, req.kind, req.summary.trim().slice(0, 1000), JSON.stringify(messages)]
       );
       requestFiled = true;
+      await notifyStaff('support'); // support desk heads-up; never throws
     } catch (err) {
       console.error('fan-assistant: could not file support request:', err);
     }
