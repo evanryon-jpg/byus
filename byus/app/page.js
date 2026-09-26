@@ -279,7 +279,7 @@ function Hero({ user, stats }) {
               <div>
                 <p className="text-base font-semibold text-white">Bring your fans. Nobody pays twice.</p>
                 <p className="mt-1 text-sm leading-relaxed text-[#dce8eb]/65">
-                  Moving from Patreon or Ko-fi? Fans join right away and their first ByUs charge waits until what they already paid runs out.
+                  Coming from another platform? Fans join right away and their first ByUs charge waits until what they already paid runs out.
                 </p>
               </div>
             </div>
@@ -445,7 +445,7 @@ function SwitchingDemo() {
       <span className="text-xs font-extrabold uppercase tracking-wide text-[#0F766E]">Switching over</span>
       <h3 className="mt-2 font-display text-lg font-bold text-[#172033]">Bring your fans. Nobody pays twice.</h3>
       <p className="mt-2 text-sm leading-relaxed text-brand-ink/70">
-        Send your Patreon or Ko-fi members a switching link. They get in right away, and their first
+        Send your current members a switching link. They get in right away, and their first
         ByUs charge waits until what they already paid there runs out.
       </p>
       <ol className="mt-4 space-y-2">
