@@ -9,6 +9,7 @@ import FeedbackWidget from './components/FeedbackWidget';
 import LiveActivityTicker from './components/LiveActivityTicker';
 import CreatorWalkthrough from './components/CreatorWalkthrough';
 import HeroFilm from './components/HeroFilm';
+import FeaturedCreators from './components/FeaturedCreators';
 
 // Server component so the hero and closing CTAs can tell whether someone is already
 // logged in -- an existing creator or fan should never be invited to sign up again,
@@ -48,6 +49,8 @@ export default async function HomePage() {
       <Features />
       <FoundingCreatorProgram stats={foundingStats} />
       <HowItWorks />
+      <HowFansFindYou />
+      <FeaturedCreators />
       <FAQSection />
       <WhyWeBuiltByUs user={session} />
       {/* PlatformGoalGauge (app/components/PlatformGoalGauge.jsx) pulled for now -- with
@@ -85,8 +88,8 @@ function FoundingCreatorProgram({ stats }) {
   const perks = [
     {
       icon: <RankIcon />,
-      title: 'Priority placement',
-      body: `Automatically sorted first in Browse Creators when your page is live — before things get crowded.`,
+      title: 'Founding badge',
+      body: `A Founding Creator badge next to your name wherever fans browse creators on ByUs, for good.`,
     },
     {
       icon: <KeyIcon />,
@@ -95,7 +98,7 @@ function FoundingCreatorProgram({ stats }) {
     },
     {
       icon: <FastForwardIcon />,
-      title: 'Lowest rate from day one',
+      title: '10% from day one',
       body: `Founding creators lock in a 10% all-in platform fee from the beginning — and keep it for good.`,
     },
   ];
@@ -753,6 +756,55 @@ function HowItWorks() {
   );
 }
 
+// How fans find creators on ByUs. Every rule here is fixed and the same for everyone --
+// no paid boosts, no engagement algorithm. See /api/discover (2 posts per creator per
+// day, newest first) and /api/creators (sorts, New on ByUs, Similar creators).
+function HowFansFindYou() {
+  const ways = [
+    {
+      title: 'Discover',
+      body: 'A feed of public posts from every creator, newest first. Each creator can show up to 2 posts a day, so nobody crowds everyone else out.',
+      href: '/discover',
+      cta: 'Open Discover',
+    },
+    {
+      title: 'Browse and search',
+      body: 'Fans search by name or category and sort by newest, trending, or most popular. Trending counts new members in the last 30 days, so small creators can climb.',
+      href: '/browse',
+      cta: 'Browse creators',
+    },
+    {
+      title: 'New on ByUs',
+      body: 'Creators who started posting in the last 30 days get their own spot in Browse, in a fresh random order every day.',
+    },
+    {
+      title: 'Similar creators',
+      body: 'Every creator page suggests others in the same categories, so a fan who likes one creator finds the next.',
+    },
+  ];
+  return (
+    <section id="how-fans-find-you" className="mx-auto max-w-5xl px-6 py-16">
+      <h2 className="text-center font-display text-3xl font-semibold text-[#172033]">How fans find you</h2>
+      <p className="mx-auto mt-3 max-w-2xl text-center text-brand-ink/70">
+        Bring your own audience, and ByUs helps new fans find you too. The rules are the same for
+        every creator: no paid boosts and no algorithm deciding who gets seen.
+      </p>
+      <div className="mt-10 grid gap-4 sm:grid-cols-2">
+        {ways.map((w) => (
+          <div key={w.title} className="rounded-2xl border border-brand-ink/10 bg-brand-paper p-6">
+            <h3 className="font-semibold text-[#172033]">{w.title}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-brand-ink/70">{w.body}</p>
+            {w.href && (
+              <a href={w.href} className="mt-3 inline-block text-sm font-semibold text-brand-teal underline underline-offset-2">
+                {w.cta}
+              </a>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 function WhyWeBuiltByUs({ user }) {
   const dashboardHref = user?.role === 'creator' ? '/creator/dashboard' : '/fan/dashboard';
