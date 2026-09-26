@@ -18,6 +18,7 @@ import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { createDirectUpload } from '@/lib/mux';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { getVideoStorage } from '@/lib/video-storage';
 
 export async function POST(request) {
   const session = await getCurrentUser();
@@ -29,6 +30,19 @@ export async function POST(request) {
   if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
   try {
+    // Video storage allowance (lib/video-limits.js): 10 hours plus 1 per paying member.
+    const storage = await getVideoStorage(session.userId);
+    if (storage.full) {
+      const hrs = (s) => Math.round((s / 3600) * 10) / 10;
+      return NextResponse.json(
+        {
+          error: `You're using ${hrs(storage.usedSeconds)} of your ${hrs(storage.limitSeconds)} hours of video storage. Each paying member adds another hour, or delete an older video to make room.`,
+          storage,
+        },
+        { status: 403 }
+      );
+    }
+
     const origin = request.headers.get('origin') || process.env.APP_URL;
     const upload = await createDirectUpload(origin);
 
