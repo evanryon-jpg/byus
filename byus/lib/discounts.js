@@ -16,6 +16,13 @@
 // or more, which covers card costs at the standard 13% rate (and is within a few cents at
 // the founding 10%). So the deepest code depends on the tier's price: 50% on $8, 60% on
 // $10, the full 75% from $16 up. See maxDiscountPercentForPrice.
+// Turned off Sept 26, 2026 (Evan's call): fans already get yearly pricing with two months
+// free, optional free trials, and switching links, so launch without creator discount
+// codes. Off means: no Discount codes card on the creator dashboard, no new codes, and no
+// "Add promotion code" box at Stripe Checkout (it sent fans off hunting for codes).
+// Everything else here stays, so flipping this back to true restores the feature.
+export const DISCOUNT_CODES_ENABLED = false;
+
 export const MAX_DISCOUNT_PERCENT = 75;
 export const MIN_DISCOUNT_PERCENT = 5;
 export const MIN_FIRST_CHARGE_CENTS = 400;
