@@ -270,7 +270,7 @@ export default function EarningsCalculator({ foundingSpotsLeft = 0 }) {
               </ol>
               <p className="mt-2 text-xs leading-relaxed text-brand-ink/60">
                 {tier === 'founding'
-                  ? `For the first ${FOUNDING_CREATOR_LIMIT} US creators, for good. `
+                  ? `${DISCOUNTED_FEE_PERCENT}% for good for the first ${FOUNDING_CREATOR_LIMIT} US creators. `
                   : ''}
                 Rates reset at the start of each month and include card processing. Tap a row to see an example month at that rate.
               </p>
