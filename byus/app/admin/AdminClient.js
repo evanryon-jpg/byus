@@ -441,7 +441,7 @@ export default function AdminClient({
   );
 }
 
-function VideoModerationSection({ initialVideos, initialError }) {
+export function VideoModerationSection({ initialVideos, initialError }) {
   const [videos, setVideos] = useState(initialVideos || []);
   const [error, setError] = useState(initialError || '');
   const [pendingId, setPendingId] = useState(null);
@@ -1173,7 +1173,7 @@ const REPORT_REASON_LABELS = {
   other: 'Something else',
 };
 
-function ReportsSection({ initialReports, initialError }) {
+export function ReportsSection({ initialReports, initialError, canSuspend = true }) {
   const [reports, setReports] = useState(initialReports); // null = failed to load
   const [error, setError] = useState(initialError || '');
 
@@ -1221,7 +1221,7 @@ function ReportsSection({ initialReports, initialError }) {
       ) : (
         <div className="mt-4 space-y-4">
           {reports.map((r) => (
-            <ReportRow key={r.id} report={r} onUpdate={(patch) => updateReport(r.id, patch)} />
+            <ReportRow key={r.id} report={r} canSuspend={canSuspend} onUpdate={(patch) => updateReport(r.id, patch)} />
           ))}
         </div>
       )}
@@ -1229,7 +1229,7 @@ function ReportsSection({ initialReports, initialError }) {
   );
 }
 
-function ReportRow({ report, onUpdate }) {
+function ReportRow({ report, onUpdate, canSuspend = true }) {
   const [note, setNote] = useState(report.admin_note || '');
   const [savingNote, setSavingNote] = useState(false);
 
@@ -1255,11 +1255,17 @@ function ReportRow({ report, onUpdate }) {
             Reported by {report.reporter_name || 'someone'} ({report.reporter_email})
           </div>
           <div className="mt-2">
-            <SuspendControl
-              userId={report.creator_id}
-              initialSuspended={report.creator_is_suspended}
-              initialReason={report.creator_suspension_reason}
-            />
+            {canSuspend ? (
+              <SuspendControl
+                userId={report.creator_id}
+                initialSuspended={report.creator_is_suspended}
+                initialReason={report.creator_suspension_reason}
+              />
+            ) : (
+              <span className="text-xs text-brand-ink/60">
+                {report.creator_is_suspended ? 'Account suspended. ' : ''}If this needs a suspension, add a note for Evan and leave it as New.
+              </span>
+            )}
           </div>
         </div>
         <select

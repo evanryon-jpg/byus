@@ -4,7 +4,8 @@
 // client-side after hydration. See lib/admin-data.js for the shared query logic.
 
 import { getCurrentUser } from '@/lib/session';
-import { isAdmin } from '@/lib/admin';
+import { isAdmin, isSupportStaff } from '@/lib/admin';
+import { redirect } from 'next/navigation';
 import {
   loadAdminOverview,
   loadAdminReports,
@@ -26,6 +27,8 @@ export default async function AdminPage() {
   // /api/admin/overview's 403 always produced client-side, shown directly here
   // instead of round-tripping through a fetch to find out.
   const session = await getCurrentUser();
+  // Support staff get their own limited page (see isSupportStaff in lib/admin.js).
+  if (session && !isAdmin(session) && isSupportStaff(session)) redirect('/support-desk');
   if (!session || !isAdmin(session)) {
     return (
       <div className="mx-auto max-w-md px-6 py-24 text-center">
