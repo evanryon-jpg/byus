@@ -3,7 +3,13 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { safeNextPath } from '@/lib/safe-next';
-import { CREATOR_COUNTRY_OPTIONS, creatorCountryName, creatorCountryStatus } from '@/lib/creator-countries';
+import {
+  CREATOR_COUNTRY_OPTIONS,
+  creatorCountryName,
+  creatorCountryStatus,
+  INTERNATIONAL_FOUNDING_LIMIT,
+  INTERNATIONAL_FOUNDING_FEE_PERCENT,
+} from '@/lib/creator-countries';
 
 export default function SignupPage() {
   return (
@@ -335,7 +341,7 @@ function CreatorWaitlistPanel({ acquisitionSource, referralCode }) {
             : creatorCountryStatus(waitlistResult.country) === 'soon'
             ? waitlistResult.foundingSpot
               ? `Founding spot #${waitlistResult.foundingSpot} is already reserved for ${waitlistResult.email}. We'll email you the day creator accounts open in ${creatorCountryName(waitlistResult.country)}.`
-              : `You're on the list. We'll email ${waitlistResult.email} the day creator accounts open in ${creatorCountryName(waitlistResult.country)}, at standard pricing: 13%, dropping to 10% for any month you earn $2,000.`
+              : `You're on the list and first in line for one of ${INTERNATIONAL_FOUNDING_LIMIT} international founding spots at ${INTERNATIONAL_FOUNDING_FEE_PERCENT}% for good. We'll email ${waitlistResult.email} the day creator accounts open in ${creatorCountryName(waitlistResult.country)}.`
             : waitlistResult.foundingSpot
             ? `Founding spot #${waitlistResult.foundingSpot} is reserved for ${waitlistResult.email}, with the 10% rate for good. Use this same email to create your creator account when signups reopen.`
             : `We'll email ${waitlistResult.email} when creator signups reopen. All founding spots are reserved; standard pricing will apply to your new account.`}
@@ -406,9 +412,10 @@ function CreatorWaitlistPanel({ acquisitionSource, referralCode }) {
         </Field>
         {creatorCountryStatus(waitlistCountry) === 'soon' && waitlistCountry && (
           <p className="-mt-2 rounded-lg bg-[#C9A961]/15 px-3 py-2 text-xs leading-relaxed text-[#5B4718]">
-            Creator accounts open in the US first, with the UK, Europe and Canada coming after. Founding spots and the
-            10% founding rate are for US creators, so you&rsquo;ll join at standard pricing: 13%, dropping to 10% for any
-            month you earn $2,000. Join the list and we&rsquo;ll email you the day {creatorCountryName(waitlistCountry)} opens.
+            Creator accounts open in the US first, with the UK, Europe and Canada coming after. The founding spots above
+            are for US creators. When {creatorCountryName(waitlistCountry)} opens, {INTERNATIONAL_FOUNDING_LIMIT} more
+            international founding spots open at {INTERNATIONAL_FOUNDING_FEE_PERCENT}% for good. Join the list now and
+            you&rsquo;ll be first in line, and we&rsquo;ll email you the day it opens.
           </p>
         )}
         {creatorCountryStatus(waitlistCountry) === 'unsupported' && (
@@ -457,8 +464,9 @@ function CreatorWaitlistPanel({ acquisitionSource, referralCode }) {
 
       <p className="mt-4 text-xs leading-relaxed text-brand-ink/55">
         Creator accounts open soon, in the US first, with the UK, Europe and Canada coming next. We'll email you a
-        link to create your page; sign up with this same email{spotsFull ? '' : ' and your spot is yours'}. No
-        account is created yet.
+        link to create your page; sign up with this same email
+        {spotsFull || (waitlistCountry && creatorCountryStatus(waitlistCountry) !== 'launch') ? '' : ' and your spot is yours'}.
+        No account is created yet.
       </p>
     </div>
   );
