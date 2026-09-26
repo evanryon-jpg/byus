@@ -52,6 +52,7 @@ import { recordEarningAndCheckFeeTier, syncActiveSubscriptionsToFeePercent } fro
 import { syncPlatformAccess } from '@/lib/platform-sync';
 import { isSupporterSource } from '@/lib/supporter-source';
 import { alertOps } from '@/lib/alerts';
+import { recordLocationEvidence } from '@/lib/tax-location-evidence';
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -138,6 +139,7 @@ export async function POST(request) {
     // `subscriptions` row already existing yet — Stripe doesn't guarantee this event arrives
     // after checkout.session.completed has been processed on our side.
     let invoiceCreatorId = null;
+    let invoiceSubscriptionMetadata = {};
     const eventInvoiceSubscriptionId =
       event.type.startsWith('invoice.') ? invoiceSubscriptionId(event.data.object) : null;
     if (event.type === 'invoice.payment_succeeded' && eventInvoiceSubscriptionId) {
@@ -145,6 +147,7 @@ export async function POST(request) {
         subscriptionId: eventInvoiceSubscriptionId,
       });
       invoiceCreatorId = invoiceSubscription.metadata?.creator_id || null;
+      invoiceSubscriptionMetadata = invoiceSubscription.metadata || {};
     }
 
     // Sales tax/VAT collected on this payment, which ByUs owes and has to pull back from the
@@ -152,25 +155,44 @@ export async function POST(request) {
     // until ByUs has tax registrations in Stripe, so this is normally a no-op.
     let taxCents = 0;
     let taxWithholding = null;
+    // Where the fan lives, for UK/EU VAT records (lib/tax-location-evidence.js). Recorded
+    // after commit for every paid invoice and one-time payment.
+    let locationEvidence = null;
     if (event.type === 'invoice.payment_succeeded' && eventInvoiceSubscriptionId) {
       taxCents = invoiceTaxCents(event.data.object);
-      if (taxCents > 0) {
+      if (event.data.object.amount_paid > 0) {
         // This endpoint's payload version dropped Invoice.charge; the SDK's pinned version
         // still has it.
         const sdkInvoice = await paymentProvider.retrieveInvoice({ id: event.data.object.id });
         const chargeId = typeof sdkInvoice.charge === 'string' ? sdkInvoice.charge : sdkInvoice.charge?.id;
-        taxWithholding = { chargeId, taxCents, feeIncludesTax: true };
+        if (taxCents > 0) taxWithholding = { chargeId, taxCents, feeIncludesTax: true };
+        locationEvidence = {
+          chargeId,
+          invoiceId: event.data.object.id,
+          paymentKind: 'subscription',
+          fanId: invoiceSubscriptionMetadata.fan_id,
+          creatorId: invoiceSubscriptionMetadata.creator_id,
+          taxCents,
+          metadata: invoiceSubscriptionMetadata,
+        };
       }
     }
     if (event.type === 'checkout.session.completed' && tipPaymentIntent) {
       taxCents = event.data.object.total_details?.amount_tax || 0;
-      if (taxCents > 0) {
-        const chargeId =
-          typeof tipPaymentIntent.latest_charge === 'string'
-            ? tipPaymentIntent.latest_charge
-            : tipPaymentIntent.latest_charge?.id;
-        taxWithholding = { chargeId, taxCents, feeIncludesTax: false };
-      }
+      const chargeId =
+        typeof tipPaymentIntent.latest_charge === 'string'
+          ? tipPaymentIntent.latest_charge
+          : tipPaymentIntent.latest_charge?.id;
+      if (taxCents > 0) taxWithholding = { chargeId, taxCents, feeIncludesTax: false };
+      const tipMeta = tipPaymentIntent.metadata || {};
+      locationEvidence = {
+        chargeId,
+        paymentKind: tipMeta.type === 'digital_product' ? 'product' : 'tip',
+        fanId: tipMeta.fan_id,
+        creatorId: tipMeta.creator_id,
+        taxCents,
+        metadata: tipMeta,
+      };
     }
 
     // A Dispute object carries a charge ID but not which subscription (and therefore which
@@ -724,6 +746,17 @@ export async function POST(request) {
     // like the dispute alert above: if Stripe errors, the 500 below makes Stripe retry, the
     // event claim makes the DB side a no-op, and this runs again. The reversal itself is
     // tagged on the transfer, so a retry after a success never withholds twice.
+    // Location evidence first, and best-effort: a failure here is alerted but never fails
+    // the webhook, and a Stripe retry for another reason records it then (one row per charge).
+    if (locationEvidence?.chargeId) {
+      try {
+        await recordLocationEvidence(locationEvidence);
+      } catch (err) {
+        console.error('Recording fan location evidence failed:', err);
+        await alertOps('stripe-webhook:tax-location-evidence', err);
+      }
+    }
+
     if (taxWithholding) {
       await paymentProvider.withholdTaxFromDestinationCharge(taxWithholding);
     }
