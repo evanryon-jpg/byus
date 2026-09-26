@@ -2,6 +2,7 @@
 // and a verified sending domain (byusapp.com) in the Resend dashboard.
 
 import { Resend } from 'resend';
+import { creatorCountryName, creatorCountryStatus } from './creator-countries';
 
 const FROM_ADDRESS = 'ByUs <noreply@byusapp.com>';
 // Resend's batch endpoint caps a single call at 100 emails -- larger sends just make
@@ -169,10 +170,19 @@ export async function sendWelcomeSubscriptionEmail(to, { creatorName, creatorUrl
 // app/api/waitlist/route.js). Creator signup is paused as of Sep 2026, so this confirms
 // the waitlist join and sets expectations for a follow-up once signup reopens — it must
 // NOT point people straight at /signup?role=creator as if they can finish onboarding today.
-export async function sendWaitlistConfirmationEmail(to, { displayName, foundingSpot }) {
+export async function sendWaitlistConfirmationEmail(to, { displayName, foundingSpot, country }) {
   const resend = getClient();
   const greeting = displayName ? escapeHtml(displayName) : 'there';
   const spot = foundingSpot ? Number(foundingSpot) : null;
+  // Creator accounts are US-only at launch (lib/creator-countries.js).
+  const countryStatus = creatorCountryStatus(country);
+  const place = escapeHtml(creatorCountryName(country));
+  const nextStep =
+    countryStatus === 'soon'
+      ? `<p><strong>What happens next:</strong> ByUs is opening creator accounts in the US first, and ${place} is on the list to follow, along with the rest of the UK, Europe and Canada. ${spot ? 'Your spot is held until then' : 'You’re on the list'}, and I'll email you the day creator accounts open in ${place}. Just sign up with this same email address.</p>`
+      : countryStatus === 'unsupported'
+      ? '<p><strong>What happens next:</strong> ByUs can only pay creators in the US at launch, with the UK, Europe and Canada coming next. Our payment partner doesn’t support payouts to your country yet, so we can’t hold a founding spot for you, but you’re on the list and I’ll let you know if that changes.</p>'
+      : `<p><strong>What happens next:</strong> creator signups are paused for a short while. As soon as they reopen, I'll email you a link to ${spot ? 'claim your spot' : 'create your page'}. Just sign up with this same email address.</p>`;
   const { error } = await resend.emails.send({
     from: FROM_ADDRESS,
     to,
@@ -181,10 +191,10 @@ export async function sendWaitlistConfirmationEmail(to, { displayName, foundingS
       <div style="font-family: sans-serif; max-width: 520px; margin: 0 auto; color: #1A1A1A; line-height: 1.55;">
         <p>Hi ${greeting},</p>
         <p>Thank you for joining ByUs. ${spot ? "You're one of the very first creators to back what we're building, and that means a lot." : "It means a lot that you want to build your page here."}</p>
-        <p>${spot
+        ${countryStatus === 'unsupported' && !spot ? '' : `<p>${spot
           ? `<strong>Your founding spot #${spot} of 50 is reserved.</strong> It locks in a 10% platform fee for good, standard domestic processing included.`
-          : 'All 50 founding spots have been reserved, so you’re on the creator waitlist at standard pricing: a 13% platform fee, dropping to 10% for the rest of any month you earn $2,000 on ByUs.'}</p>
-        <p><strong>What happens next:</strong> creator signups are paused for a short while. As soon as they reopen, I'll email you a link to ${spot ? 'claim your spot' : 'create your page'}. Just sign up with this same email address.</p>
+          : 'All 50 founding spots have been reserved, so you’re on the creator waitlist at standard pricing: a 13% platform fee, dropping to 10% for the rest of any month you earn $2,000 on ByUs.'}</p>`}
+        ${nextStep}
         <p>In the meantime, take a look at the <a href="https://byusapp.com/demo" style="color:#146359;">example creator pages</a> to see what yours could look like. And if you'd like, reply and tell me what you create. I read every reply.</p>
         <p style="margin-top:28px;">Evan Ryon<br /><span style="color:#666;">Founder, ByUs</span></p>
       </div>
@@ -352,7 +362,7 @@ export async function sendDisputeAlertEmail(to, {
 // not the next morning; the daily digest (sendOpsDigestEmail below) still lists them too.
 // Email rather than SMS on purpose: good news can wait until you look, texts are kept for
 // things that need action.
-export async function sendNewWaitlistSignupEmail(to, { email, displayName, foundingSpot, foundingStats, adminUrl }) {
+export async function sendNewWaitlistSignupEmail(to, { email, displayName, foundingSpot, foundingStats, adminUrl, country }) {
   const resend = getClient();
   const { error } = await resend.emails.send({
     from: FROM_ADDRESS,
@@ -366,6 +376,7 @@ export async function sendNewWaitlistSignupEmail(to, { email, displayName, found
         <table style="border-collapse:collapse;width:100%;margin:16px 0;font-size:14px;">
           <tr><td style="padding:6px 0;color:#666;">Email</td><td style="padding:6px 0;font-weight:600;">${escapeHtml(email)}</td></tr>
           ${displayName ? `<tr><td style="padding:6px 0;color:#666;">Name</td><td style="padding:6px 0;">${escapeHtml(displayName)}</td></tr>` : ''}
+          ${country ? `<tr><td style="padding:6px 0;color:#666;">Country</td><td style="padding:6px 0;">${escapeHtml(country)}</td></tr>` : ''}
           <tr><td style="padding:6px 0;color:#666;">Founding spot</td><td style="padding:6px 0;">${foundingSpot ? `#${escapeHtml(String(foundingSpot))}` : 'None left (standard pricing)'}</td></tr>
         </table>
         ${foundingStats ? `<p style="color:#666;font-size:13px;">${escapeHtml(String(foundingStats.claimed))} of ${escapeHtml(String(foundingStats.limit))} founding spots reserved · ${escapeHtml(String(foundingStats.remaining))} remaining</p>` : ''}
