@@ -360,7 +360,7 @@ function CreatorWaitlistPanel({ acquisitionSource, referralCode }) {
           <p className="font-semibold text-[#172033]">All {spots.limit} founding spots are reserved</p>
           <p className="mt-1 text-sm text-brand-ink/70">
             Join the creator waitlist and we'll email you the moment creator signups open. Standard pricing
-            applies: 13%, dropping to 10% for the rest of any month you earn $2,000, and 9% once you pass $10,000.
+            applies: 13%, dropping to 10% for the rest of any month you earn $2,000.
           </p>
         </div>
       ) : (
