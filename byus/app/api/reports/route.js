@@ -17,6 +17,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { notifyStaff } from '@/lib/staff-alerts';
 
 const VALID_REASONS = new Set([
   'adult_content',
@@ -80,6 +81,7 @@ export async function POST(request) {
        RETURNING id, created_at`,
       [session.userId, creatorId, validPostId, reason, trimmedDetails || null]
     );
+    await notifyStaff('report'); // support desk heads-up; never throws
     return NextResponse.json({ report: result.rows[0] }, { status: 201 });
   } catch (err) {
     console.error('reports POST failed:', err);
