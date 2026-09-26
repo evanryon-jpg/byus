@@ -15,31 +15,50 @@ import { query } from '@/lib/db';
 import { publicAvatarUrl } from '@/lib/avatar-url';
 import { FOUNDING_CREATOR_LIMIT } from '@/lib/pricing';
 
-// 'popular' and 'trending' both need a subscriber count to sort by, so they're a
-// distinct query shape rather than just an ORDER BY swap on the same SELECT. 'trending'
-// ranks by subscribers gained in the last 30 days rather than all-time total, so a newer
-// creator who's picking up momentum right now can outrank a bigger, quieter account --
-// the same "gaining traction" signal a homepage or explore feed uses elsewhere.
+// Sorting rules (fair and rule-based, Sept 26, 2026):
+//   newest   -- most recently joined first.
+//   popular  -- most active paying members first.
+//   trending -- most new paying members in the last 30 days first, so a smaller creator
+//               picking up momentum can outrank a bigger, quieter one.
+//   shuffle  -- a different random order every day (same order all day, so paging is
+//               stable). The homepage's "Creators on ByUs right now" uses this so every
+//               creator gets the same chance to be seen there.
+// Founding creators used to be pinned above every sort. That's gone: their perk is the
+// 10% rate and the Founding badge, and pinning 50 names to the top buried every creator
+// who joined after them.
 //
-// Every sort leads with `is_founding DESC` -- the first FOUNDING_CREATOR_LIMIT creators
-// (see lib/fees.js) always float to the top of Browse and the homepage's Featured
-// Creators section (app/components/FeaturedCreators.jsx pulls from this same endpoint),
-// ahead of whatever the visitor actually asked to sort by. That's the "featured
-// placement" half of the founding-creator perk; the fee side already lives in lib/fees.js.
+// Optional filters on top of q/tag:
+//   new=1          -- "New on ByUs": creators whose first public post went up in the
+//                     last 30 days. Shown in a daily shuffle.
+//   similarTo=<id> -- "Similar creators" for a creator page: creators sharing at least one
+//                     category tag with that creator, most shared tags first, then the
+//                     daily shuffle. Never includes the creator themselves.
+// Both of those only list creators with at least one public post, so a fan who taps
+// through always finds something to look at.
+const DAILY_SHUFFLE = `md5(u.id::text || to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD'))`;
 const SORTS = {
-  newest: 'is_founding DESC, u.created_at DESC',
-  popular: 'is_founding DESC, active_subscriber_count DESC, u.created_at DESC',
-  trending: 'is_founding DESC, recent_subscriber_count DESC, active_subscriber_count DESC, u.created_at DESC',
+  newest: 'u.created_at DESC',
+  popular: 'active_subscriber_count DESC, u.created_at DESC',
+  trending: 'recent_subscriber_count DESC, active_subscriber_count DESC, u.created_at DESC',
+  shuffle: DAILY_SHUFFLE,
 };
+const HAS_PUBLIC_POST = `EXISTS (SELECT 1 FROM posts pp WHERE pp.creator_id = u.id AND pp.visibility = 'public' AND pp.pending_review = false)`;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const q = (searchParams.get('q') || '').trim();
   const tag = (searchParams.get('tag') || '').trim();
   const sort = SORTS[searchParams.get('sort')] ? searchParams.get('sort') : 'newest';
+  const newOnly = searchParams.get('new') === '1';
+  const similarTo = (searchParams.get('similarTo') || '').trim();
+  if (similarTo && !UUID_RE.test(similarTo)) {
+    return NextResponse.json({ creators: [], availableTags: [], hasMore: false, nextOffset: null });
+  }
+  const requestedLimit = Number.parseInt(searchParams.get('limit') || '', 10);
   const requestedOffset = Number.parseInt(searchParams.get('offset') || '0', 10);
   const offset = Number.isFinite(requestedOffset) && requestedOffset > 0 ? requestedOffset : 0;
-  const pageSize = 24;
+  const pageSize = Number.isFinite(requestedLimit) && requestedLimit > 0 ? Math.min(requestedLimit, 24) : 24;
 
   try {
     // A suspended creator simply doesn't exist as far as Browse/homepage/search are
@@ -60,6 +79,23 @@ export async function GET(request) {
       values.push(tag);
       i++;
     }
+    if (newOnly) {
+      conditions.push(HAS_PUBLIC_POST);
+      conditions.push(
+        `(SELECT MIN(np.created_at) FROM posts np WHERE np.creator_id = u.id AND np.visibility = 'public' AND np.pending_review = false) >= now() - interval '30 days'`
+      );
+    }
+    let orderBy = newOnly ? DAILY_SHUFFLE : SORTS[sort];
+    let sharedTagsSelect = '';
+    if (similarTo) {
+      conditions.push(`u.id <> $${i}`);
+      conditions.push(`u.tags && (SELECT tags FROM users WHERE id = $${i})`);
+      conditions.push(HAS_PUBLIC_POST);
+      sharedTagsSelect = `, cardinality(ARRAY(SELECT unnest(u.tags) INTERSECT SELECT unnest((SELECT tags FROM users WHERE id = $${i})))) AS shared_tag_count`;
+      orderBy = `shared_tag_count DESC, ${DAILY_SHUFFLE}`;
+      values.push(similarTo);
+      i++;
+    }
 
     const [creatorsResult, tagsResult] = await Promise.all([
       query(
@@ -68,7 +104,7 @@ export async function GET(request) {
                 COALESCE(r.recent_subscriber_count, 0)::int AS recent_subscriber_count,
                 COALESCE(f.follower_count, 0)::int AS follower_count,
                 (founding.id IS NOT NULL) AS is_founding,
-                founding.founding_rank AS founding_creator_rank
+                founding.founding_rank AS founding_creator_rank${sharedTagsSelect}
          FROM users u
          LEFT JOIN (
            SELECT creator_id AS id, spot_number AS founding_rank
@@ -90,8 +126,8 @@ export async function GET(request) {
            GROUP BY creator_id
          ) f ON f.creator_id = u.id
          WHERE ${conditions.join(' AND ')}
-         ORDER BY ${SORTS[sort]}
-         LIMIT 25 OFFSET $${i}`,
+         ORDER BY ${orderBy}
+         LIMIT ${pageSize + 1} OFFSET $${i}`,
         [...values, offset]
       ),
       query(
