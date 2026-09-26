@@ -83,6 +83,22 @@ function subscriptionPeriodEnd(sub) {
   return sub?.current_period_end ?? sub?.items?.data?.[0]?.current_period_end ?? null;
 }
 
+// Sales tax/VAT on an invoice, in cents, from any of Stripe's payload shapes: `total_taxes`
+// (2025-03-31 basil and later, what this endpoint receives), `total_tax_amounts` or `tax`
+// (older versions, what the SDK returns). Tax is added on top of the creator's price (see
+// PRICE_TAX_BEHAVIOR in lib/payments/providers/stripe.js), so it never counts as creator
+// earnings: the ledger and fee-tier threshold below use amount_paid minus this.
+function invoiceTaxCents(invoice) {
+  if (!invoice) return 0;
+  if (Array.isArray(invoice.total_taxes)) {
+    return invoice.total_taxes.reduce((sum, t) => sum + (t.amount || 0), 0);
+  }
+  if (Array.isArray(invoice.total_tax_amounts)) {
+    return invoice.total_tax_amounts.reduce((sum, t) => sum + (t.amount || 0), 0);
+  }
+  return typeof invoice.tax === 'number' ? invoice.tax : 0;
+}
+
 export async function POST(request) {
   const body = await request.text(); // raw body — required for signature verification
   const signature = request.headers.get('stripe-signature');
@@ -129,6 +145,32 @@ export async function POST(request) {
         subscriptionId: eventInvoiceSubscriptionId,
       });
       invoiceCreatorId = invoiceSubscription.metadata?.creator_id || null;
+    }
+
+    // Sales tax/VAT collected on this payment, which ByUs owes and has to pull back from the
+    // creator's transfer after the DB transaction commits (see taxWithholding below). Zero
+    // until ByUs has tax registrations in Stripe, so this is normally a no-op.
+    let taxCents = 0;
+    let taxWithholding = null;
+    if (event.type === 'invoice.payment_succeeded' && eventInvoiceSubscriptionId) {
+      taxCents = invoiceTaxCents(event.data.object);
+      if (taxCents > 0) {
+        // This endpoint's payload version dropped Invoice.charge; the SDK's pinned version
+        // still has it.
+        const sdkInvoice = await paymentProvider.retrieveInvoice({ id: event.data.object.id });
+        const chargeId = typeof sdkInvoice.charge === 'string' ? sdkInvoice.charge : sdkInvoice.charge?.id;
+        taxWithholding = { chargeId, taxCents, feeIncludesTax: true };
+      }
+    }
+    if (event.type === 'checkout.session.completed' && tipPaymentIntent) {
+      taxCents = event.data.object.total_details?.amount_tax || 0;
+      if (taxCents > 0) {
+        const chargeId =
+          typeof tipPaymentIntent.latest_charge === 'string'
+            ? tipPaymentIntent.latest_charge
+            : tipPaymentIntent.latest_charge?.id;
+        taxWithholding = { chargeId, taxCents, feeIncludesTax: false };
+      }
     }
 
     // A Dispute object carries a charge ID but not which subscription (and therefore which
@@ -213,7 +255,9 @@ export async function POST(request) {
             const supporterSource = isSupporterSource(metadata.supporter_source) ? metadata.supporter_source : null;
             if (!fan_id || !creator_id) break;
 
-            const grossCents = tipPaymentIntent.amount;
+            // Pre-tax: any sales tax/VAT Stripe added on top is ByUs's to pay to the
+            // government, not part of what the fan spent on the creator (see taxCents above).
+            const grossCents = tipPaymentIntent.amount - taxCents;
             const feeCents = tipPaymentIntent.application_fee_amount || 0;
             const netCents = grossCents - feeCents;
             const chargeId =
@@ -230,8 +274,8 @@ export async function POST(request) {
               // The price check compares against the price this checkout was created at
               // (metadata.purchase_price_cents, set server-side by the checkout route), not
               // the product's current price: a creator editing the price while a fan is
-              // mid-checkout used to make the fan pay and silently receive nothing. `>=`
-              // rather than `===` so any tax Stripe adds on top can't fail it either.
+              // mid-checkout used to make the fan pay and silently receive nothing. grossCents
+              // is already pre-tax; `>=` rather than `===` is just defensive.
               const productResult = await client.query(
                 `SELECT creator_id, price_cents, access_type
                  FROM digital_products WHERE id = $1`,
@@ -481,12 +525,14 @@ export async function POST(request) {
 
           // Log this payment and re-check the creator's fee rate against THIS MONTH's total
           // — see lib/fees.js. amount_paid is what the fan was actually charged (after any
-          // referral discount), i.e. the real gross revenue this invoice brought the creator.
-          if (invoiceCreatorId && invoice.amount_paid > 0) {
+          // referral discount); minus any sales tax/VAT added on top, that's the real gross
+          // revenue this invoice brought the creator.
+          const earnedCents = invoice.amount_paid - taxCents;
+          if (invoiceCreatorId && earnedCents > 0) {
             const result = await recordEarningAndCheckFeeTier(client, {
               creatorId: invoiceCreatorId,
               stripeInvoiceId: invoice.id,
-              amountCents: invoice.amount_paid,
+              amountCents: earnedCents,
             });
             if (result?.personalTierChange) {
               feeTierCrossing = { creatorId: invoiceCreatorId, feePercent: result.personalTierChange };
@@ -495,7 +541,7 @@ export async function POST(request) {
               referrerFeeGrant = result.referrerFeeGranted;
             }
             subscriptionPayment = {
-              amount_cents: invoice.amount_paid,
+              amount_cents: earnedCents,
               currency: invoice.currency || 'usd',
               payment_kind: invoice.billing_reason === 'subscription_create' ? 'initial' : 'renewal',
             };
@@ -671,6 +717,15 @@ export async function POST(request) {
           [disputeRow.stripe_dispute_id]
         );
       }
+    }
+
+    // Pull the sales tax/VAT ByUs owes back from the creator's transfer (see
+    // withholdTaxFromDestinationCharge in lib/payments/providers/stripe.js). After commit,
+    // like the dispute alert above: if Stripe errors, the 500 below makes Stripe retry, the
+    // event claim makes the DB side a no-op, and this runs again. The reversal itself is
+    // tagged on the transfer, so a retry after a success never withholds twice.
+    if (taxWithholding) {
+      await paymentProvider.withholdTaxFromDestinationCharge(taxWithholding);
     }
 
     // After commit, so the subscriptions row the referral points at is visible to
