@@ -9,6 +9,7 @@
 import { useState } from 'react';
 import MonthlyBarChart from '../components/charts/MonthlyBarChart';
 import PostVideoPlayer from '../components/PostVideoPlayer';
+import StaffClaim from '../components/StaffClaim';
 import { formatUSD, formatCompactUSD } from '@/lib/format';
 import { CREATOR_SIGNUP_PAUSED } from '@/lib/creator-signup';
 import { creatorCountryName, creatorCountryStatus } from '@/lib/creator-countries';
@@ -509,7 +510,8 @@ export function VideoModerationSection({ initialVideos, initialError }) {
             </div>
             <p className="mt-3 whitespace-pre-wrap text-sm text-brand-ink/75">{video.body}</p>
 
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <StaffClaim type="video" id={video.id} />
               <button
                 type="button"
                 disabled={pendingId === video.id || !video.creatorReviewCleared}
@@ -1268,6 +1270,8 @@ function ReportRow({ report, onUpdate, canSuspend = true }) {
             )}
           </div>
         </div>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+        {report.status === 'new' && <StaffClaim type="report" id={report.id} />}
         <select
           value={report.status}
           onChange={(e) => onUpdate({ status: e.target.value })}
@@ -1279,6 +1283,7 @@ function ReportRow({ report, onUpdate, canSuspend = true }) {
             </option>
           ))}
         </select>
+        </div>
       </div>
 
       <p className="mt-3 text-sm font-medium text-[#172033]">
