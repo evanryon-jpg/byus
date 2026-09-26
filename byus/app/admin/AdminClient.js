@@ -129,6 +129,16 @@ export default function AdminClient({
           </span>
           <span aria-hidden="true" className="text-[#0F766E]">→</span>
         </a>
+        <a
+          href="/admin/tax-evidence"
+          className="flex items-center justify-between rounded-xl border border-brand-ink/10 bg-brand-paper px-4 py-3 transition hover:bg-brand-ink/5"
+        >
+          <span>
+            <span className="block font-semibold text-[#172033]">Fan location evidence</span>
+            <span className="block text-xs text-brand-ink/65">Where paying fans live, for UK/EU VAT, and any that need confirming</span>
+          </span>
+          <span aria-hidden="true" className="text-[#0F766E]">→</span>
+        </a>
       </nav>
 
       <VideoModerationSection
