@@ -44,7 +44,7 @@ export default async function HomePage() {
       <LiveActivityTicker />
       <Hero user={session} stats={foundingStats} />
       <CreatorWalkthrough />
-      <EarningsCalculator />
+      <EarningsCalculator foundingSpotsLeft={foundingStats?.remaining ?? 0} />
       <Features />
       <FoundingCreatorProgram stats={foundingStats} />
       <HowItWorks />
