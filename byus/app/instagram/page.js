@@ -114,6 +114,13 @@ export default async function InstagramWelcomePage() {
             <p className="mt-2 text-sm leading-relaxed text-brand-ink/70">{p.body}</p>
           </div>
         ))}
+        <div className="rounded-2xl border border-[#0F766E]/25 bg-[#0F766E]/5 p-6 md:col-span-3">
+          <h2 className="font-display text-lg font-bold text-[#172033]">Already on Patreon or Ko-fi? Bring your fans. Nobody pays twice.</h2>
+          <p className="mt-2 text-sm leading-relaxed text-brand-ink/70">
+            Send your members a switching link. They join right away, and their first ByUs charge waits until
+            what they already paid on the old platform runs out.
+          </p>
+        </div>
       </section>
 
       <section aria-labelledby="how-it-works" className="mx-auto max-w-4xl px-6 pb-14">
