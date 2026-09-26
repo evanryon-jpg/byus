@@ -18,6 +18,7 @@ import { sendOpsDigestEmail } from '@/lib/email';
 import { countRiskEvents } from '@/lib/risk-score';
 import { getFoundingPromoStats } from '@/lib/fees';
 import { countFanPaymentsByRegion } from '@/lib/fan-payment-regions';
+import { countOpenLocationConflicts } from '@/lib/tax-location-evidence';
 
 async function countAutoApprovedVideosLast24h() {
   // "approved" (vs. "approved_creator_pending") is only ever set by the moderation
@@ -82,7 +83,7 @@ export async function GET(request) {
   }
 
   try {
-    const [snapshot, smsHolds, autoApprovedVideosLast24h, risk24h, openSupportRequests, newWaitlistSignups, foundingStats, newAccounts, fanRegions] = await Promise.all([
+    const [snapshot, smsHolds, autoApprovedVideosLast24h, risk24h, openSupportRequests, newWaitlistSignups, foundingStats, newAccounts, fanRegions, locationConflicts] = await Promise.all([
       loadComplianceSnapshot(),
       listPendingSmsBroadcastHolds(),
       countAutoApprovedVideosLast24h(),
@@ -99,6 +100,8 @@ export async function GET(request) {
         console.error('ops-digest: fan payment regions failed (continuing):', err);
         return null;
       }),
+      // Fan payments whose location evidence doesn't line up (lib/tax-location-evidence.js).
+      countOpenLocationConflicts().catch(() => 0),
     ]);
 
     await sendOpsDigestEmail(getAdminEmails(), {
@@ -118,6 +121,7 @@ export async function GET(request) {
       newFanAccountsLast24h: newAccounts.fans,
       newCreatorAccountsLast24h: newAccounts.creators,
       fanRegions,
+      locationConflicts,
       adminUrl: `${process.env.APP_URL}/admin`,
     });
 
