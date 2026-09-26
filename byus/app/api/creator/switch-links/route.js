@@ -61,7 +61,7 @@ export async function POST(request) {
   const maxUses = Number(body.maxUses);
   const dateMatch = typeof body.firstChargeDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.firstChargeDate);
 
-  if (!label) return NextResponse.json({ error: 'Give the link a name, like “Patreon monthly members”.' }, { status: 400 });
+  if (!label) return NextResponse.json({ error: 'Give the link a name, like “Monthly members”.' }, { status: 400 });
   if (!Number.isInteger(maxUses) || maxUses < 1 || maxUses > SWITCH_MAX_USES) {
     return NextResponse.json({ error: `How many fans are you bringing over? Enter 1 to ${SWITCH_MAX_USES}.` }, { status: 400 });
   }
