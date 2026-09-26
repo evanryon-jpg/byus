@@ -19,7 +19,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { paymentProvider } from '@/lib/payments';
-import { MIN_DISCOUNT_PERCENT, MAX_DISCOUNT_PERCENT, COUPON_DURATION } from '@/lib/discounts';
+import { MIN_DISCOUNT_PERCENT, MAX_DISCOUNT_PERCENT, COUPON_DURATION, maxDiscountPercentForPrice } from '@/lib/discounts';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 const CODE_PATTERN = /^[A-Z0-9_-]{3,40}$/;
@@ -88,9 +88,10 @@ export async function POST(request) {
   try {
     let productId = null;
     let tierName = null;
+    let lowestPriceCents = null;
     if (tierId) {
       const tierResult = await query(
-        'SELECT name, stripe_product_id FROM subscription_tiers WHERE id = $1 AND creator_id = $2',
+        'SELECT name, stripe_product_id, price_cents FROM subscription_tiers WHERE id = $1 AND creator_id = $2',
         [tierId, session.userId]
       );
       const tier = tierResult.rows[0];
@@ -99,6 +100,25 @@ export async function POST(request) {
       }
       productId = tier.stripe_product_id;
       tierName = tier.name;
+      lowestPriceCents = tier.price_cents;
+    } else {
+      const lowest = await query(
+        'SELECT MIN(price_cents)::int AS p FROM subscription_tiers WHERE creator_id = $1 AND active = true',
+        [session.userId]
+      );
+      lowestPriceCents = lowest.rows[0]?.p ?? null;
+    }
+
+    // The discounted first payment has to stay at least $4 (lib/discounts.js), so the
+    // deepest code depends on the cheapest monthly price it could apply to.
+    const allowed = maxDiscountPercentForPrice(lowestPriceCents);
+    if (lowestPriceCents && percentOff > allowed) {
+      return NextResponse.json(
+        {
+          error: `On a $${(lowestPriceCents / 100).toFixed(2)} ${tierId ? 'tier' : 'tier (your lowest)'}, the deepest first-payment discount is ${allowed}%, so the fan's first charge still covers card fees.`,
+        },
+        { status: 400 }
+      );
     }
 
     // duration: 'once' -- applies to a fan's first invoice only, never a standing discount
