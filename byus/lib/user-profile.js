@@ -10,7 +10,7 @@ import {
   getFoundingCreatorRank,
 } from '@/lib/fees';
 import { FOUNDING_CREATOR_LIMIT, DISCOUNTED_FEE_PERCENT } from '@/lib/pricing';
-import { isAdmin } from '@/lib/admin';
+import { staffFlags } from '@/lib/admin';
 import { publicAvatarUrl, publicCoverUrl } from '@/lib/avatar-url';
 
 // phone itself is deliberately left out of this shared select -- the client never
@@ -91,5 +91,5 @@ export async function loadEnrichedUser(session) {
   if (!user) return null;
 
   const enriched = await withEffectiveFee(withAvatarUrl(user));
-  return { ...enriched, is_admin: isAdmin(session) };
+  return { ...enriched, ...staffFlags(session) };
 }

@@ -12,6 +12,38 @@ export function isAdmin(session) {
   return Boolean(session?.email && ADMIN_EMAILS.has(session.email.toLowerCase()));
 }
 
+// Support staff (Sept 26, 2026): the limited role for a hired helper -- an admin
+// assistant or an outside support agency. They can review pending videos, triage content
+// reports, and answer fan support requests, on the /support-desk page. They can't see
+// money (revenue, refunds, disputes, payouts, accounting), fan IP addresses or tax
+// records, the waitlist, or suspend accounts; those stay with admins. Only these API
+// routes accept support staff: /api/admin/posts/:id/moderation, /api/admin/reports(/:id)
+// and /api/admin/support(/:id). Everything else under /api/admin still calls isAdmin().
+//
+// Addresses come from the SUPPORT_EMAILS env var (comma-separated, set in Vercel) rather
+// than this file, since the repo is public and a helper's email doesn't belong in it.
+// Unset means no support staff, which is the case today. Removing someone from the env
+// var and redeploying ends their access on their next request.
+function supportEmails() {
+  return new Set(
+    (process.env.SUPPORT_EMAILS || '')
+      .split(',')
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean)
+  );
+}
+
+export function isSupportStaff(session) {
+  if (isAdmin(session)) return true;
+  return Boolean(session?.email && supportEmails().has(session.email.toLowerCase()));
+}
+
+// The flags every "who am I" response carries, so the nav can show Admin or Support desk.
+export function staffFlags(session) {
+  const admin = isAdmin(session);
+  return { is_admin: admin, is_support: !admin && isSupportStaff(session) };
+}
+
 // Operational alerts (for example, new Stripe disputes) should go to the exact same
 // people who can act on them in /admin. Return a copy so callers can't mutate the
 // authorization allowlist by accident.
