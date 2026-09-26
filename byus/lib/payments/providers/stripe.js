@@ -138,6 +138,7 @@ export async function createSubscriptionCheckoutSession({
   applicationFeePercent,
   connectedAccountId,
   trialDays,
+  trialEnd,
   discounts,
   metadata,
   checkoutDisclosure,
@@ -173,7 +174,11 @@ export async function createSubscriptionCheckoutSession({
       application_fee_percent: applicationFeePercent,
       transfer_data: { destination: connectedAccountId },
       invoice_settings: { issuer: { type: 'self' } },
-      ...(trialDays > 0 ? { trial_period_days: trialDays } : {}),
+      // trialEnd (unix seconds) is a switching link's first charge date (lib/switch-links.js);
+      // it takes the place of the tier's own trial, since Stripe allows one or the other.
+      ...(trialEnd
+        ? { trial_end: trialEnd }
+        : trialDays > 0 ? { trial_period_days: trialDays } : {}),
       metadata,
     },
   });
