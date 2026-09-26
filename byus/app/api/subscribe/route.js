@@ -15,6 +15,7 @@ import { trackServerEvent } from '@/lib/analytics';
 import { scoreCheckout, riskMetadata } from '@/lib/risk-score';
 import { supporterSourceMetadata } from '@/lib/supporter-source';
 import { locationEvidenceMetadata } from '@/lib/tax-location-evidence';
+import { checkSwitchLinkForCheckout } from '@/lib/switch-links';
 import { MIN_ANNUAL_BILLING_MONTHS, MIN_MEMBERSHIP_PRICE_CENTS } from '@/lib/pricing';
 import {
   TERMS_VERSION,
@@ -46,7 +47,7 @@ export async function POST(request) {
     );
   }
 
-  const { tierId, interval } = await request.json();
+  const { tierId, interval, switchCode } = await request.json();
   if (!tierId) {
     return NextResponse.json({ error: 'tierId is required.' }, { status: 400 });
   }
@@ -108,6 +109,15 @@ export async function POST(request) {
       return NextResponse.json({ error: 'You already have an active subscription to this tier.' }, { status: 409 });
     }
 
+    // Switching link (lib/switch-links.js): a fan moving over from another platform isn't
+    // charged until the date their paid period there runs out.
+    let switchLink = null;
+    if (switchCode) {
+      const check = await checkSwitchLinkForCheckout({ code: switchCode, creatorId: tier.creator_id, fanId: session.userId });
+      if (check.error) return NextResponse.json({ error: check.error, switchInvalid: true }, { status: 400 });
+      switchLink = check.link;
+    }
+
     let customerId = fan.stripe_customer_id;
     if (!customerId) {
       const customer = await paymentProvider.createCustomer({ email: session.email, userId: session.userId });
@@ -127,6 +137,7 @@ export async function POST(request) {
       amountCents: purchasePriceCents,
       interval: billingInterval,
       trialDays: tier.trial_days,
+      firstChargeDate: switchLink ? switchLink.firstChargeAt : null,
     });
 
     // Advisory risk score (see lib/risk-score.js): recorded for the admin risk page
@@ -148,6 +159,7 @@ export async function POST(request) {
       applicationFeePercent: effectiveFeePercent,
       connectedAccountId: tier.stripe_connect_account_id,
       trialDays: tier.trial_days,
+      trialEnd: switchLink ? switchLink.firstChargeUnix : null,
       discounts,
       checkoutDisclosure: disclosure,
       metadata: {
@@ -160,6 +172,7 @@ export async function POST(request) {
         terms_version: TERMS_VERSION,
         refund_policy_version: MEMBERSHIP_REFUND_POLICY_VERSION,
         purchase_disclosure_shown: 'true',
+        ...(switchLink ? { switch_link_id: switchLink.id } : {}),
         ...riskMetadata(risk),
         // How this fan first found the creator -- written onto the subscriptions row by the
         // Stripe webhook (lib/supporter-source.js).
@@ -173,7 +186,8 @@ export async function POST(request) {
     await trackServerEvent('funnel_subscription_checkout_started', {
       billing_interval: billingInterval,
       price_cents: purchasePriceCents,
-      has_trial: Number(tier.trial_days) > 0,
+      has_trial: Boolean(switchLink) || Number(tier.trial_days) > 0,
+      switching: Boolean(switchLink),
       provider: 'stripe',
     }, request);
 
