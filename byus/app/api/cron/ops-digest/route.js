@@ -13,8 +13,8 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { loadComplianceSnapshot } from '@/lib/admin-data';
 import { listPendingSmsBroadcastHolds } from '@/lib/sms-holds';
-import { getAdminEmails } from '@/lib/admin';
-import { sendOpsDigestEmail } from '@/lib/email';
+import { getAdminEmails, getSupportEmails } from '@/lib/admin';
+import { sendOpsDigestEmail, sendSupportDigestEmail } from '@/lib/email';
 import { countRiskEvents } from '@/lib/risk-score';
 import { getFoundingPromoStats } from '@/lib/fees';
 import { countFanPaymentsByRegion } from '@/lib/fan-payment-regions';
@@ -72,6 +72,20 @@ async function countOpenSupportRequests() {
   return rows[0]?.n || 0;
 }
 
+// Waiting support desk items someone has already claimed (app/api/staff/claims).
+async function countClaimedWaitingItems() {
+  const { rows } = await query(
+    `SELECT COUNT(*)::int AS n FROM staff_claims c
+     WHERE c.claimed_at > now() - interval '12 hours'
+       AND (
+         (c.item_type = 'video' AND EXISTS (SELECT 1 FROM posts p WHERE p.id = c.item_id AND p.pending_review))
+         OR (c.item_type = 'report' AND EXISTS (SELECT 1 FROM reports r WHERE r.id = c.item_id AND r.status = 'new'))
+         OR (c.item_type = 'support' AND EXISTS (SELECT 1 FROM support_requests s WHERE s.id = c.item_id AND s.status = 'open'))
+       )`
+  );
+  return rows[0]?.n || 0;
+}
+
 export async function GET(request) {
   const expected = process.env.CRON_SECRET;
   if (!expected) {
@@ -124,6 +138,24 @@ export async function GET(request) {
       locationConflicts,
       adminUrl: `${process.env.APP_URL}/admin`,
     });
+
+    // Support staff get their own short summary (no money, no fan details), only on days
+    // something is waiting. Its own try so a failure here never loses the admin digest.
+    try {
+      const supportTo = getSupportEmails();
+      const waiting = snapshot.pendingVideoReviews + snapshot.openContentReports + openSupportRequests;
+      if (supportTo.length > 0 && waiting > 0) {
+        await sendSupportDigestEmail(supportTo, {
+          videos: snapshot.pendingVideoReviews,
+          reports: snapshot.openContentReports,
+          requests: openSupportRequests,
+          claimed: await countClaimedWaitingItems().catch(() => 0),
+          url: `${process.env.APP_URL}/support-desk`,
+        });
+      }
+    } catch (err) {
+      console.error('ops-digest: support digest failed (admin digest already sent):', err);
+    }
 
     return NextResponse.json({ ok: true });
   } catch (error) {
