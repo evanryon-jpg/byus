@@ -116,12 +116,13 @@ function FoundingCreatorProgram({ stats }) {
           {stats.limit} spots. <span className="text-brand-gold">10% forever.</span>
         </p>
         <p className="mx-auto mt-4 max-w-lg text-brand-paper/70">
-          The first {stats.limit} founding spots lock in our lowest fee for good.
+          The first {stats.limit} founding spots lock in our 10% rate for good.
           No follower minimum or earnings requirement. For creators in the US.
         </p>
         <p className="mx-auto mt-2 max-w-xl text-sm text-brand-paper/55">
           After the founding spots, creators start at 13% and move to 10% for the rest of
-          any calendar month in which they reach $2,000 in gross ByUs earnings.
+          any calendar month in which they reach $2,000 in gross ByUs earnings. Every creator
+          who reaches $10,000 in a month pays 9% for the rest of it.
         </p>
         <div className="mx-auto mt-8 grid max-w-3xl gap-4 text-left sm:grid-cols-3">
           {perks.map((p) => (
