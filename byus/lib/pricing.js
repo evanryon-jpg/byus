@@ -18,10 +18,11 @@ export const DISCOUNTED_FEE_PERCENT = 10;
 export const FEE_DISCOUNT_THRESHOLD_CENTS = 200000;
 
 // Big-creator rate (added Sept 26, 2026): once ANY creator -- founding or not -- reaches
-// $10,000 in gross ByUs earnings in a calendar month, the rest of that month is 9%. Worked
-// out to stay profitable even on $8 memberships: each extra $10K at 9% still leaves ByUs
-// roughly $210 (at $8 tiers) to $435 (at $20 tiers) after Stripe's processing and payout
-// fees. Resets with the other tiers at the start of each month.
+// $10,000 in gross ByUs earnings in a calendar month, the rest of that month is 9%. Still
+// profitable even on $8 memberships: each extra $10K at 9% leaves ByUs roughly $80 (at $8
+// tiers, all monthly), $155 (at $10) or $305 (at $20) after Stripe's card, Billing (0.7%),
+// non-US card (40% of fans assumed) and payout fees -- more when members pay yearly.
+// Resets with the other tiers at the start of each month.
 export const BIG_CREATOR_FEE_PERCENT = 9;
 export const BIG_CREATOR_THRESHOLD_CENTS = 1000000;
 
