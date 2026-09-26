@@ -101,7 +101,7 @@ export default async function InstagramWelcomePage() {
             Free to reserve. You can keep using any platform you already have.
           </p>
           <p className="mt-1.5 text-xs text-brand-paper/50">
-            Creator accounts open in the US first, with the UK, Europe and Canada next at standard pricing.
+            Creator accounts open in the US first, with the UK, Europe and Canada next.
           </p>
         </div>
       </section>
