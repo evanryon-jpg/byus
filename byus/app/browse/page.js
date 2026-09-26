@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import FoundingBadge from '../components/FoundingBadge';
+import CreatorRow from '../components/CreatorRow';
 
 // searchParams is passed in automatically by Next.js for page.js files, client or
 // server, so a link like /browse?q=aria (from the homepage search, or its autocomplete
@@ -159,6 +160,14 @@ export default function BrowsePage({ searchParams }) {
         </div>
       )}
 
+      {!isFiltered && (
+        <CreatorRow
+          title="New on ByUs"
+          subtitle="Creators who started posting in the last 30 days. A different mix every day."
+          params="new=1&limit=6"
+          className="mt-8"
+        />
+      )}
       {loading && <p className="mt-6 text-brand-ink/60">Loading…</p>}
       {!loading && creators.length === 0 && isFiltered && (
         <p className="mt-6 text-brand-ink/60">No creators match your search.</p>
