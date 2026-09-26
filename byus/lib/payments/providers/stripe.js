@@ -140,6 +140,7 @@ export async function createSubscriptionCheckoutSession({
   trialDays,
   trialEnd,
   discounts,
+  allowPromotionCodes = false,
   metadata,
   checkoutDisclosure,
 }) {
@@ -150,7 +151,9 @@ export async function createSubscriptionCheckoutSession({
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: successUrl,
     cancel_url: cancelUrl,
-    ...(discounts ? { discounts } : { allow_promotion_codes: true }),
+    // The "Add promotion code" box only shows while creator discount codes are on
+    // (DISCOUNT_CODES_ENABLED in lib/discounts.js). Referral discounts still apply.
+    ...(discounts ? { discounts } : allowPromotionCodes ? { allow_promotion_codes: true } : {}),
     ...(checkoutDisclosure
       ? { custom_text: { submit: { message: checkoutDisclosure } } }
       : {}),
