@@ -40,8 +40,8 @@ export const HELP_CATEGORIES = [
         a: "No. One-time tips work independently of subscription tiers — as soon as Stripe is connected, both your profile page and your standalone tip link can accept them, tiers or not.",
       },
       {
-        q: 'How do I bring my fans over from Patreon or another platform?',
-        a: 'On your dashboard, find "Bring fans from another platform" and create a switching link. Pick the date of their first ByUs charge (when what they already paid elsewhere runs out; Patreon usually bills on the 1st) and how many fans you’re bringing. Send the link to your members. They join right away and get full access, and nobody pays twice. Make a second link with a later date for yearly members. A link stops working 3 days before its charge date, and each fan can use one switching link with you once.',
+        q: 'How do I bring my fans over from another platform?',
+        a: 'On your dashboard, find "Bring fans from another platform" and create a switching link. Pick the date of their first ByUs charge (when what they already paid elsewhere runs out; many platforms bill on the 1st) and how many fans you’re bringing. Send the link to your members. They join right away and get full access, and nobody pays twice. Make a second link with a later date for yearly members. A link stops working 3 days before its charge date, and each fan can use one switching link with you once.',
       },
       {
         q: 'How do I claim a custom page URL?',
