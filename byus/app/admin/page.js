@@ -9,7 +9,6 @@ import {
   loadAdminOverview,
   loadAdminReports,
   loadAdminSuggestions,
-  loadOutreachContacts,
   loadSiteFeedback,
   loadCreatorWaitlist,
   loadCreatorReviewQueue,
@@ -46,7 +45,7 @@ export default async function AdminPage() {
   // trip was pure added latency on the server's response, which pushes out TTFB
   // and therefore this page's Real Experience Score. Running all seven together
   // cuts it to one round trip's worth of wall-clock time.
-  const [overviewResult, reportsResult, suggestionsResult, outreachResult, siteFeedbackResult, waitlistResult, reviewQueueResult, videoReviewResult, tasksResult, smsHoldsResult] =
+  const [overviewResult, reportsResult, suggestionsResult, siteFeedbackResult, waitlistResult, reviewQueueResult, videoReviewResult, tasksResult, smsHoldsResult] =
     await Promise.all([
       loadAdminOverview().catch((err) => {
         console.error('admin: overview load failed:', err);
@@ -63,12 +62,6 @@ export default async function AdminPage() {
         .catch((err) => {
           console.error('admin: suggestions load failed:', err);
           return { suggestions: null, error: 'Could not load suggestions.' };
-        }),
-      loadOutreachContacts()
-        .then((contacts) => ({ contacts, error: '' }))
-        .catch((err) => {
-          console.error('admin: creator opinion invitations load failed:', err);
-          return { contacts: null, error: 'Could not load creator opinion invitations.' };
         }),
       loadSiteFeedback()
         .then((feedback) => ({ feedback, error: '' }))
@@ -121,8 +114,6 @@ export default async function AdminPage() {
       initialReportsError={reportsResult.error}
       initialSuggestions={suggestionsResult.suggestions}
       initialSuggestionsError={suggestionsResult.error}
-      initialOutreachContacts={outreachResult.contacts}
-      initialOutreachError={outreachResult.error}
       initialSiteFeedback={siteFeedbackResult.feedback}
       initialSiteFeedbackError={siteFeedbackResult.error}
       initialWaitlist={waitlistResult.waitlist}
