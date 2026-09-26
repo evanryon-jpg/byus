@@ -15,7 +15,10 @@ import {
 // about these numbers (this component included) never has to depend on the payments
 // layer that holds the actual Stripe secret key. No more hand-duplicated constants to
 // keep in sync.
-const PATREON_PLATFORM_FEE_PERCENT = 10;
+// Starting value for the "What do you pay now?" field -- a common platform fee.
+// The creator changes it to whatever they pay today.
+const DEFAULT_CURRENT_FEE_PERCENT = 10;
+const MAX_CURRENT_FEE_PERCENT = 30;
 const ESTIMATED_PROCESSING_PERCENT = 2.9;
 const ESTIMATED_PROCESSING_FIXED_CENTS = 30;
 
@@ -109,6 +112,8 @@ export default function EarningsCalculator() {
   const [subscribers, setSubscribers] = useState(300);
   const [price, setPrice] = useState(20);
   const [tier, setTier] = useState('standard'); // 'standard' | 'founding'
+  const [currentFee, setCurrentFee] = useState(DEFAULT_CURRENT_FEE_PERCENT);
+  const [processingOnTop, setProcessingOnTop] = useState(true);
   const [revealRef, revealed] = useReveal();
 
   const grossCents = Math.round(subscribers * price * 100);
@@ -127,8 +132,8 @@ export default function EarningsCalculator() {
   const netCents = grossCents - feeCents;
 
   const competitorFeeCents = Math.round(
-    (grossCents * (PATREON_PLATFORM_FEE_PERCENT + ESTIMATED_PROCESSING_PERCENT)) / 100 +
-      subscribers * ESTIMATED_PROCESSING_FIXED_CENTS
+    (grossCents * (currentFee + (processingOnTop ? ESTIMATED_PROCESSING_PERCENT : 0))) / 100 +
+      (processingOnTop ? subscribers * ESTIMATED_PROCESSING_FIXED_CENTS : 0)
   );
   const competitorNetCents = grossCents - competitorFeeCents;
   const extraKeptCents = netCents - competitorNetCents;
@@ -213,6 +218,31 @@ export default function EarningsCalculator() {
                 with no earnings requirement. Both rates include standard domestic payment processing.
               </p>
             </div>
+
+            <div className="mt-6 border-t border-brand-ink/10 pt-6">
+              <SliderField
+                label="What do you pay now?"
+                value={currentFee}
+                min={0}
+                max={MAX_CURRENT_FEE_PERCENT}
+                step={0.5}
+                onChange={setCurrentFee}
+                display={`${currentFee % 1 === 0 ? currentFee : currentFee.toFixed(1)}%`}
+              />
+              <label htmlFor="calc-processing-on-top" className="-mt-3 flex cursor-pointer items-start gap-2 text-xs leading-relaxed text-brand-ink/75">
+                <input
+                  id="calc-processing-on-top"
+                  type="checkbox"
+                  checked={processingOnTop}
+                  onChange={(e) => setProcessingOnTop(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-[#0F766E]"
+                />
+                <span>
+                  Card processing is charged on top of that fee (about {ESTIMATED_PROCESSING_PERCENT}% + {ESTIMATED_PROCESSING_FIXED_CENTS}&cent;
+                  per payment). Untick this if your current fee already includes it.
+                </span>
+              </label>
+            </div>
           </div>
 
           {/* Outcome -- a solid teal card carries the hero number instead of a bordered
@@ -244,7 +274,7 @@ export default function EarningsCalculator() {
 
             <div className="mt-3 flex flex-col items-start gap-1.5 rounded-xl border border-brand-ink/15 bg-brand-cream px-4 py-3 text-[12.5px] min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between min-[380px]:gap-2.5">
               <span className="text-brand-ink/70">
-                Competitor estimate (10% + processing) would leave you
+                Where you are now ({currentFee % 1 === 0 ? currentFee : currentFee.toFixed(1)}%{processingOnTop ? ' + processing' : ''}) would leave you
               </span>
               <span className="self-end tabular-nums font-bold text-brand-ink/70 min-[380px]:self-auto">{fmt(competitorNetDisplay)}</span>
             </div>
@@ -266,7 +296,7 @@ export default function EarningsCalculator() {
         </div>
 
         <p className="mt-7 text-xs text-brand-ink/55">
-          Estimate only. Competitor fees vary. ByUs includes standard domestic payment processing
+          Estimate only. Set &ldquo;What do you pay now?&rdquo; to the fee your current platform charges; plans and processing costs differ from place to place. ByUs includes standard domestic payment processing
           in its fee. Other charges may apply for refunds, international payments, currency
           conversion, or optional instant payouts. For standard pricing, the estimate applies 13%
           through $2,000 and 10% after the threshold; the exact total can vary with payment timing.

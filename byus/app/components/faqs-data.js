@@ -59,7 +59,7 @@ export const FAQS = [
   },
   {
     q: 'Can I take my content with me if I leave?',
-    a: "Your work stays yours. From your dashboard you can download every video you've uploaded as an MP4, and export your full earnings history as a spreadsheet at any time. Your payouts go straight to your own Stripe account, so your payment records live there too. We're working on exports for written posts and your member list next.",
+    a: "Your work stays yours. From your dashboard you can download every video you've uploaded as an MP4, and export your full earnings history as a spreadsheet at any time. You can also download your written posts and your current member list (names and emails) from Settings. Your payouts go straight to your own Stripe account, so your payment records live there too.",
   },
   {
     q: 'Can creators connect Discord or Telegram?',
