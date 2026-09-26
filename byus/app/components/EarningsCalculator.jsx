@@ -5,6 +5,8 @@ import {
   STANDARD_FEE_PERCENT,
   DISCOUNTED_FEE_PERCENT,
   FEE_DISCOUNT_THRESHOLD_CENTS,
+  BIG_CREATOR_FEE_PERCENT,
+  BIG_CREATOR_THRESHOLD_CENTS,
   FOUNDING_CREATOR_LIMIT,
   MIN_MEMBERSHIP_PRICE_CENTS,
 } from '@/lib/pricing';
@@ -128,18 +130,26 @@ export default function EarningsCalculator({ foundingSpotsLeft = 0 }) {
   const [revealRef, revealed] = useReveal();
 
   const grossCents = Math.round(subscribers * price * 100);
-  const qualifiesForEarnedRate = grossCents >= FEE_DISCOUNT_THRESHOLD_CENTS;
-  const feeLabel = tier === 'founding'
-    ? `${DISCOUNTED_FEE_PERCENT}%`
-    : qualifiesForEarnedRate
-    ? `${STANDARD_FEE_PERCENT}% → ${DISCOUNTED_FEE_PERCENT}%`
-    : `${STANDARD_FEE_PERCENT}%`;
-  const feeCents = tier === 'founding'
-    ? Math.round((grossCents * DISCOUNTED_FEE_PERCENT) / 100)
-    : Math.round(
-        (Math.min(grossCents, FEE_DISCOUNT_THRESHOLD_CENTS) * STANDARD_FEE_PERCENT) / 100 +
-        (Math.max(0, grossCents - FEE_DISCOUNT_THRESHOLD_CENTS) * DISCOUNTED_FEE_PERCENT) / 100
-      );
+  // Monthly fee bands, same order the real billing uses (lib/fees.js): standard is 13%
+  // up to $2K, 10% up to $10K, 9% after; founding is 10% up to $10K, 9% after.
+  const bands = tier === 'founding'
+    ? [[BIG_CREATOR_THRESHOLD_CENTS, DISCOUNTED_FEE_PERCENT], [Infinity, BIG_CREATOR_FEE_PERCENT]]
+    : [
+        [FEE_DISCOUNT_THRESHOLD_CENTS, STANDARD_FEE_PERCENT],
+        [BIG_CREATOR_THRESHOLD_CENTS, DISCOUNTED_FEE_PERCENT],
+        [Infinity, BIG_CREATOR_FEE_PERCENT],
+      ];
+  let feeExact = 0;
+  let bandStart = 0;
+  const ratesUsed = [];
+  for (const [bandEnd, percent] of bands) {
+    const inBand = Math.max(0, Math.min(grossCents, bandEnd) - bandStart);
+    if (inBand > 0 || ratesUsed.length === 0) ratesUsed.push(percent);
+    feeExact += (inBand * percent) / 100;
+    bandStart = bandEnd;
+  }
+  const feeLabel = ratesUsed.map((r) => `${r}%`).join(' → ');
+  const feeCents = Math.round(feeExact);
   const netCents = grossCents - feeCents;
 
   const typicalFee = typicalAllInPercent(price);
@@ -215,17 +225,18 @@ export default function EarningsCalculator({ foundingSpotsLeft = 0 }) {
               </p>
               <div className="grid grid-cols-1 gap-1 rounded-2xl border border-brand-ink/15 bg-brand-cream p-1 text-xs font-bold sm:grid-cols-2">
                 <TierButton active={tier === 'standard'} onClick={() => setTier('standard')}>
-                  Standard — {STANDARD_FEE_PERCENT}% → {DISCOUNTED_FEE_PERCENT}% at $2K
+                  Standard — {STANDARD_FEE_PERCENT}% → {DISCOUNTED_FEE_PERCENT}% → {BIG_CREATOR_FEE_PERCENT}%
                 </TierButton>
                 <TierButton active={tier === 'founding'} onClick={() => setTier('founding')}>
-                  Founding creator — {DISCOUNTED_FEE_PERCENT}%
+                  Founding creator — {DISCOUNTED_FEE_PERCENT}% → {BIG_CREATOR_FEE_PERCENT}%
                 </TierButton>
               </div>
               <p className="mt-3 text-xs leading-relaxed text-brand-ink/75">
                 Standard pricing starts at {STANDARD_FEE_PERCENT}%. After a non-founding creator reaches $2,000 in gross
                 ByUs earnings during a calendar month, the rate becomes {DISCOUNTED_FEE_PERCENT}% for the rest of that month.
                 US creators with one of the {FOUNDING_CREATOR_LIMIT} founding spots keep {DISCOUNTED_FEE_PERCENT}% for good,
-                with no earnings requirement. Both rates include standard domestic payment processing.
+                with no earnings requirement. Every creator who reaches $10,000 in a month pays {BIG_CREATOR_FEE_PERCENT}% for the
+                rest of that month. All rates include standard domestic payment processing.
               </p>
             </div>
 
@@ -316,7 +327,8 @@ export default function EarningsCalculator({ foundingSpotsLeft = 0 }) {
           Estimate only. Set &ldquo;What do you pay now?&rdquo; to the fee your current platform charges; plans and processing costs differ from place to place. ByUs includes standard domestic payment processing
           in its fee. Other charges may apply for refunds, international payments, currency
           conversion, or optional instant payouts. For standard pricing, the estimate applies 13%
-          through $2,000 and 10% after the threshold; the exact total can vary with payment timing.
+          through $2,000, 10% through $10,000, and 9% after that (founding: 10% through $10,000, then 9%);
+          the exact total can vary with payment timing.
         </p>
       </div>
     </section>

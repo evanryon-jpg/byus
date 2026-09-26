@@ -23,7 +23,7 @@ export const FAQS = [
   },
   {
     q: 'How does the platform fee work?',
-    a: "ByUs's standard all-in platform fee starts at 13% of each payment. When a non-founding creator reaches $2,000 in gross ByUs earnings during a calendar month, the rate drops to 10% for the rest of that month and resets to 13% at the start of the next month until the threshold is reached again. The 50 founding spots, for US creators, carry a 10% rate for good, with no earnings requirement. That rate is genuinely all-in: it covers standard domestic and cross-border processing, and ByUs absorbs Stripe's extra charges for international cards and currency conversion, so a fan paying from outside the US doesn't cost you anything extra — the rest is paid straight into your connected Stripe account. Instant payouts, taxes, disputes, or other unusual processor costs may still apply separately, and we'll spell those out when they do.",
+    a: "ByUs's standard all-in platform fee starts at 13% of each payment. When a non-founding creator reaches $2,000 in gross ByUs earnings during a calendar month, the rate drops to 10% for the rest of that month and resets to 13% at the start of the next month until the threshold is reached again. The 50 founding spots, for US creators, carry a 10% rate for good, with no earnings requirement. And any creator, founding or not, who reaches $10,000 in a month pays 9% for the rest of that month. That rate is genuinely all-in: it covers standard domestic and cross-border processing, and ByUs absorbs Stripe's extra charges for international cards and currency conversion, so a fan paying from outside the US doesn't cost you anything extra — the rest is paid straight into your connected Stripe account. Instant payouts, taxes, disputes, or other unusual processor costs may still apply separately, and we'll spell those out when they do.",
   },
   {
     q: 'Do fans pay sales tax or VAT?',
@@ -43,7 +43,7 @@ export const FAQS = [
   },
   {
     q: 'Does it cost anything to become a creator?',
-    a: "Nope — setting up your page costs nothing, with zero listing fees and zero setup fees. We only make money when you do. The standard all-in fee starts at 13% and drops to 10% for the rest of a calendar month after $2,000 in gross ByUs earnings, while US creators with a reserved founding spot lock in 10% forever.",
+    a: "Nope — setting up your page costs nothing, with zero listing fees and zero setup fees. We only make money when you do. The standard all-in fee starts at 13% and drops to 10% for the rest of a calendar month after $2,000 in gross ByUs earnings, and to 9% after $10,000. US creators with a reserved founding spot lock in 10% forever, and 9% in any month they pass $10,000.",
   },
   {
     q: 'Can a creator offer more than one tier?',
