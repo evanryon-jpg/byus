@@ -526,6 +526,19 @@ export async function retrieveInvoice({ id }) {
   return stripe.invoices.retrieve(id);
 }
 
+// The two pieces of fan-location evidence Stripe holds on a charge (see
+// lib/tax-location-evidence.js): the billing country Checkout collected and the country
+// that issued the card. Either can be null (a wallet or bank payment without card details).
+export async function retrieveChargeLocation({ id }) {
+  const charge = await stripe.charges.retrieve(id);
+  return {
+    billingCountry: charge.billing_details?.address?.country || null,
+    cardCountry: charge.payment_method_details?.card?.country || null,
+    amountCents: charge.amount,
+    createdAt: charge.created,
+  };
+}
+
 // ---- Accounting (read-only) -------------------------------------------------------------
 // Used by lib/accounting/sync.js to copy Stripe's own ledger into ledger_transactions.
 // Everything here only reads from Stripe. Objects are returned raw (same deliberate
