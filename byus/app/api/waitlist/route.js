@@ -15,6 +15,7 @@ import { getAdminEmails } from '@/lib/admin';
 import { getFoundingPromoStats } from '@/lib/fees';
 import { trackServerEvent } from '@/lib/analytics';
 import { getWaitlistCount } from '@/lib/waitlist';
+import { isCreatorCountryCode, creatorCountryStatus, creatorCountryName } from '@/lib/creator-countries';
 
 // Same permissive check as signup — a sanity check, not full RFC 5322 validation.
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -40,7 +41,7 @@ export async function GET() {
 }
 
 export async function POST(request) {
-  const { email, displayName, source, referralCode, website } = await request.json().catch(() => ({}));
+  const { email, displayName, source, referralCode, website, country } = await request.json().catch(() => ({}));
 
   // --- Honeypot --- same pattern as /api/auth/signup: respond like a normal success so
   // a bot filling every field it can find never learns which one was the trap.
@@ -59,6 +60,13 @@ export async function POST(request) {
       { status: 400 }
     );
   }
+  // Required on the form since Sept 26, 2026 (lib/creator-countries.js). Older clients that
+  // don't send it are treated as US, same as rows from before the column existed.
+  if (country !== undefined && country !== null && !isCreatorCountryCode(country)) {
+    return NextResponse.json({ error: 'Choose the country you live in.' }, { status: 400 });
+  }
+  const countryCode = country || null;
+  const countryStatus = creatorCountryStatus(countryCode);
   const trimmedSource = typeof source === 'string' ? source.trim().slice(0, SOURCE_MAX) : null;
   const trimmedReferral = typeof referralCode === 'string' ? referralCode.trim().slice(0, REFERRAL_MAX) : null;
 
@@ -71,10 +79,20 @@ export async function POST(request) {
       // Shared with account creation: one email, one spot, no concurrent oversubscription.
       await client.query("SELECT pg_advisory_xact_lock(hashtext('byus_founding_creator_signup'))");
       const inserted = await client.query(
-        `INSERT INTO founding_waitlist (email, display_name, source, referral_code)
-         VALUES ($1, $2, $3, $4) ON CONFLICT (email) DO NOTHING RETURNING id`,
-        [trimmedEmail, trimmedName || null, trimmedSource, trimmedReferral]
+        `INSERT INTO founding_waitlist (email, display_name, source, referral_code, country)
+         VALUES ($1, $2, $3, $4, $5) ON CONFLICT (email) DO NOTHING RETURNING id`,
+        [trimmedEmail, trimmedName || null, trimmedSource, trimmedReferral, countryCode]
       );
+      // Countries ByUs can't pay creators in join the list without taking one of the 50
+      // spots (same rule as the insert trigger). Everyone else reserves -- or gets back the
+      // spot they already hold if this email was already on the list.
+      if (countryStatus === 'unsupported') {
+        const existing = await client.query(
+          'SELECT spot_number FROM founding_reservations WHERE email = $1',
+          [trimmedEmail]
+        );
+        return { isNew: inserted.rows.length > 0, foundingSpot: existing.rows[0]?.spot_number ?? null };
+      }
       const reserved = await client.query('SELECT reserve_founding_spot($1) AS spot', [trimmedEmail]);
       return { isNew: inserted.rows.length > 0, foundingSpot: reserved.rows[0].spot };
     });
@@ -83,7 +101,7 @@ export async function POST(request) {
       await trackServerEvent('funnel_waitlist_joined', { source: trimmedSource || 'unknown' }, request);
       // Best-effort — a delivery hiccup shouldn't block someone from joining the list.
       try {
-        await sendWaitlistConfirmationEmail(trimmedEmail, { displayName: trimmedName, foundingSpot });
+        await sendWaitlistConfirmationEmail(trimmedEmail, { displayName: trimmedName, foundingSpot, country: countryCode });
       } catch (err) {
         console.error('Waitlist confirmation email failed (continuing):', err);
       }
@@ -95,6 +113,7 @@ export async function POST(request) {
           displayName: trimmedName,
           foundingSpot,
           foundingStats,
+          country: creatorCountryName(countryCode),
           adminUrl: process.env.APP_URL ? `${process.env.APP_URL}/admin` : null,
         });
       } catch (err) {
@@ -103,7 +122,7 @@ export async function POST(request) {
     }
 
     const count = await getWaitlistCount(query);
-    return NextResponse.json({ ok: true, alreadyApplied: !isNew, count, foundingSpot });
+    return NextResponse.json({ ok: true, alreadyApplied: !isNew, count, foundingSpot, countryStatus });
   } catch (err) {
     console.error('waitlist POST failed:', err);
     return NextResponse.json({ error: 'Could not join the waitlist. Try again.' }, { status: 500 });
