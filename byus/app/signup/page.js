@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { safeNextPath } from '@/lib/safe-next';
+import { CREATOR_COUNTRY_OPTIONS, creatorCountryName, creatorCountryStatus } from '@/lib/creator-countries';
 
 export default function SignupPage() {
   return (
@@ -247,6 +248,11 @@ function SignupForm() {
 function CreatorWaitlistPanel({ acquisitionSource, referralCode }) {
   const [waitlistEmail, setWaitlistEmail] = useState('');
   const [waitlistName, setWaitlistName] = useState('');
+  // Creator accounts are US-only at launch (lib/creator-countries.js), so we ask where
+  // someone lives before they reserve: UK / Europe / Canada still reserve and are emailed
+  // when their country opens; anywhere else joins the list without taking a spot.
+  const [waitlistCountry, setWaitlistCountry] = useState('');
+  const [countryError, setCountryError] = useState('');
   const [waitlistWebsite, setWaitlistWebsite] = useState(''); // honeypot, same pattern as below
   const [waitlistError, setWaitlistError] = useState('');
   const [waitlistLoading, setWaitlistLoading] = useState(false);
@@ -271,10 +277,16 @@ function CreatorWaitlistPanel({ acquisitionSource, referralCode }) {
     setWaitlistError('');
     const trimmed = waitlistEmail.trim();
     const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    let invalid = false;
+    if (!waitlistCountry) {
+      setCountryError('Choose the country you live in.');
+      invalid = true;
+    }
     if (!trimmed || !emailRe.test(trimmed)) {
       setWaitlistError('Enter a valid email address.');
-      return;
+      invalid = true;
     }
+    if (invalid) return;
 
     setWaitlistLoading(true);
     try {
@@ -287,6 +299,7 @@ function CreatorWaitlistPanel({ acquisitionSource, referralCode }) {
           source: acquisitionSource || undefined,
           referralCode: referralCode || undefined,
           website: waitlistWebsite,
+          country: waitlistCountry,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -294,7 +307,12 @@ function CreatorWaitlistPanel({ acquisitionSource, referralCode }) {
         setWaitlistError(data.error || 'Something went wrong. Please try again.');
         return;
       }
-      setWaitlistResult({ alreadyApplied: Boolean(data.alreadyApplied), email: trimmed, foundingSpot: data.foundingSpot ?? null });
+      setWaitlistResult({
+        alreadyApplied: Boolean(data.alreadyApplied),
+        email: trimmed,
+        foundingSpot: data.foundingSpot ?? null,
+        country: waitlistCountry,
+      });
     } catch {
       setWaitlistError('Network error — please try again.');
     } finally {
@@ -312,7 +330,13 @@ function CreatorWaitlistPanel({ acquisitionSource, referralCode }) {
           {waitlistResult.alreadyApplied ? "You're already on the list" : "You're on the list"}
         </h2>
         <p className="mt-1.5 text-sm text-brand-ink/65">
-          {waitlistResult.foundingSpot
+          {creatorCountryStatus(waitlistResult.country) === 'unsupported'
+            ? `You're on the list. ByUs can't pay creators in your country yet, so we can't hold a founding spot, but we'll email ${waitlistResult.email} if that changes.`
+            : creatorCountryStatus(waitlistResult.country) === 'soon'
+            ? waitlistResult.foundingSpot
+              ? `Founding spot #${waitlistResult.foundingSpot} is held for ${waitlistResult.email}, with the 10% rate for good. Creator accounts open in the US first; we'll email you the day they open in ${creatorCountryName(waitlistResult.country)}.`
+              : `We'll email ${waitlistResult.email} the day creator accounts open in ${creatorCountryName(waitlistResult.country)}. All founding spots are reserved; standard pricing will apply.`
+            : waitlistResult.foundingSpot
             ? `Founding spot #${waitlistResult.foundingSpot} is reserved for ${waitlistResult.email}, with the 10% rate for good. Use this same email to create your creator account when signups reopen.`
             : `We'll email ${waitlistResult.email} when creator signups reopen. All founding spots are reserved; standard pricing will apply to your new account.`}
         </p>
@@ -358,6 +382,39 @@ function CreatorWaitlistPanel({ acquisitionSource, referralCode }) {
             placeholder="Your name or handle"
           />
         </Field>
+        <Field label="Where do you live?" error={countryError}>
+          <select
+            id="creator-waitlist-country"
+            className={`input ${countryError ? 'input-error' : ''}`}
+            value={waitlistCountry}
+            onChange={(e) => {
+              setWaitlistCountry(e.target.value);
+              if (countryError) setCountryError('');
+            }}
+            aria-invalid={Boolean(countryError)}
+          >
+            <option value="" disabled>
+              Choose your country
+            </option>
+            {CREATOR_COUNTRY_OPTIONS.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+        {creatorCountryStatus(waitlistCountry) === 'soon' && waitlistCountry && (
+          <p className="-mt-2 rounded-lg bg-[#C9A961]/15 px-3 py-2 text-xs leading-relaxed text-[#5B4718]">
+            Creator accounts open in the US first, with {creatorCountryName(waitlistCountry)} coming after. You can
+            still reserve now: your spot is held and we&rsquo;ll email you the day {creatorCountryName(waitlistCountry)} opens.
+          </p>
+        )}
+        {creatorCountryStatus(waitlistCountry) === 'unsupported' && (
+          <p className="-mt-2 rounded-lg bg-brand-ink/5 px-3 py-2 text-xs leading-relaxed text-brand-ink/70">
+            ByUs can&rsquo;t pay creators outside the US, UK, Europe and Canada yet, so we can&rsquo;t hold a founding
+            spot for you. You can still join the list and we&rsquo;ll let you know if that changes.
+          </p>
+        )}
         <Field label="Email" error={waitlistError}>
           <input
             className={`input ${waitlistError ? 'input-error' : ''}`}
@@ -390,13 +447,16 @@ function CreatorWaitlistPanel({ acquisitionSource, referralCode }) {
           disabled={waitlistLoading}
           className="w-full rounded-full bg-[#0F766E] py-3 font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
         >
-          {waitlistLoading ? (spotsFull ? 'Joining…' : 'Reserving…') : spotsFull ? 'Join the waitlist' : 'Reserve my spot'}
+          {waitlistLoading
+            ? spotsFull || creatorCountryStatus(waitlistCountry) === 'unsupported' ? 'Joining…' : 'Reserving…'
+            : spotsFull || creatorCountryStatus(waitlistCountry) === 'unsupported' ? 'Join the waitlist' : 'Reserve my spot'}
         </button>
       </form>
 
       <p className="mt-4 text-xs leading-relaxed text-brand-ink/55">
-        Creator accounts open soon. We'll email you a link to create your page; sign up with this same email
-        {spotsFull ? '' : ' and your spot is yours'}. No account is created yet.
+        Creator accounts open soon, in the US first, with the UK, Europe and Canada coming next. We'll email you a
+        link to create your page; sign up with this same email{spotsFull ? '' : ' and your spot is yours'}. No
+        account is created yet.
       </p>
     </div>
   );
