@@ -54,6 +54,10 @@ export const FAQS = [
     a: "Yes, and we mean that literally: every payment and payout runs through Stripe, and ByUs never sees or stores a single card number — not what a fan pays with, not what a creator gets paid out to.",
   },
   {
+    q: 'Can I bring my fans over from Patreon or somewhere else?',
+    a: "Yes, and nobody pays twice. From your dashboard, make a switching link and send it to your members. They join right away and get full access, but their first ByUs charge waits until the date you pick — when what they already paid on the other platform runs out. If they cancel before then, they're never charged. Make one link for monthly members and another with a later date for yearly members.",
+  },
+  {
     q: 'Can I take my content with me if I leave?',
     a: "Your work stays yours. From your dashboard you can download every video you've uploaded as an MP4, and export your full earnings history as a spreadsheet at any time. Your payouts go straight to your own Stripe account, so your payment records live there too. We're working on exports for written posts and your member list next.",
   },
