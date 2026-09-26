@@ -342,6 +342,10 @@ export default function DashboardClient({
           tier to attach a code to. */}
       {tiers.length > 0 && <DiscountSection tiers={tiers} />}
 
+      {/* Switching links -- bring existing fans over from another platform with their first
+          ByUs charge delayed until what they already paid there runs out. */}
+      {tiers.length > 0 && <SwitchLinksSection />}
+
       {/* Posts */}
       <PostSection posts={posts} pinnedPostId={user?.pinned_post_id || null} onCreated={load} />
 
@@ -1578,8 +1582,10 @@ function DiscountSection({ tiers }) {
         </button>
       </div>
       <p className="mt-2 text-sm text-brand-ink/60">
-        A percentage off a fan's first payment — they enter it at checkout. Never a full
-        100% off; the deepest a code goes is ByUs waiving its own fee.
+        A percentage off a fan's first payment — they enter it at checkout. Up to 75% off,
+        as long as the first charge stays at least $4 (so 50% on an $8 tier, 60% on $10).
+        Bringing fans over from another platform? Use a switching link below instead, so
+        nobody pays twice.
       </p>
 
       {loaded && codes.length > 0 && (
@@ -1665,6 +1671,178 @@ function DiscountSection({ tiers }) {
           {error && <p className="text-sm text-red-600">{error}</p>}
           <button disabled={creating} className="rounded-full bg-[#0F766E] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
             {creating ? 'Creating…' : 'Create code'}
+          </button>
+        </form>
+      )}
+    </div>
+  );
+}
+
+// Switching links (lib/switch-links.js): a private link for fans the creator is bringing
+// over from Patreon or elsewhere. They join now and their first charge waits until the
+// date the creator picks, so nobody pays twice.
+function SwitchLinksSection() {
+  const [links, setLinks] = useState([]);
+  const [loaded, setLoaded] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [label, setLabel] = useState('Patreon members');
+  const [firstChargeDate, setFirstChargeDate] = useState(() => {
+    const d = new Date();
+    const next = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1));
+    if (next.getTime() - Date.now() < 5 * 86400000) next.setUTCMonth(next.getUTCMonth() + 1);
+    return next.toISOString().slice(0, 10);
+  });
+  const [maxUses, setMaxUses] = useState('');
+  const [error, setError] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [copiedId, setCopiedId] = useState(null);
+
+  async function load() {
+    const res = await fetch('/api/creator/switch-links');
+    if (res.ok) setLinks((await res.json()).links || []);
+    setLoaded(true);
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  async function handleCreate(e) {
+    e.preventDefault();
+    setError('');
+    setCreating(true);
+    const res = await fetch('/api/creator/switch-links', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ label, firstChargeDate, maxUses: Number(maxUses) }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setCreating(false);
+    if (!res.ok) {
+      setError(data.error || 'Could not create this link.');
+      return;
+    }
+    setLinks(data.links || []);
+    setOpen(false);
+    setMaxUses('');
+  }
+
+  async function handleTurnOff(id) {
+    if (!confirm('Turn this link off? Fans who already joined keep their date; nobody new can use it.')) return;
+    const res = await fetch(`/api/creator/switch-links/${id}`, { method: 'DELETE' });
+    if (res.ok) load();
+  }
+
+  async function copy(link) {
+    try {
+      await navigator.clipboard.writeText(link.url);
+      setCopiedId(link.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      /* the link is also shown in full, so it can be copied by hand */
+    }
+  }
+
+  const fmt = (v) => new Date(v).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+
+  return (
+    <div className="mt-8 rounded-2xl border border-brand-ink/5 bg-brand-paper p-6">
+      <div className="flex items-center justify-between">
+        <h2 className="font-semibold">Bring fans from another platform</h2>
+        <button onClick={() => setOpen(!open)} className="text-sm font-medium text-[#0F766E]">
+          {open ? 'Cancel' : '+ New switching link'}
+        </button>
+      </div>
+      <p className="mt-2 text-sm text-brand-ink/60">
+        Moving from Patreon, Ko-fi or somewhere else? Send your members a switching link. They join
+        today and get in right away, and their first ByUs charge waits until the date you pick (when
+        what they already paid there runs out), so nobody pays twice. Patreon usually bills on the
+        1st, so the 1st of next month is a good date for monthly members. Make a separate link with a
+        later date for yearly members.
+      </p>
+
+      {loaded && links.length > 0 && (
+        <ul className="mt-4 space-y-2">
+          {links.map((l) => (
+            <li key={l.id} className={`rounded-xl bg-brand-ink/5 p-4 ${l.usable ? '' : 'opacity-60'}`}>
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <span className="font-semibold">{l.label}</span>
+                <span className="text-sm text-brand-ink/70">First charge {fmt(l.first_charge_at)}</span>
+              </div>
+              <p className="mt-1 text-xs text-brand-ink/60">
+                {l.uses} of {l.max_uses} fans joined
+                {!l.active ? ' · turned off' : !l.usable ? ' · closed (too close to the charge date or full)' : ''}
+              </p>
+              {l.usable && (
+                <>
+                  <p className="mt-2 break-all rounded-lg bg-white px-3 py-2 font-mono text-xs text-brand-ink/80">{l.url}</p>
+                  <div className="mt-2 flex gap-4">
+                    <button onClick={() => copy(l)} className="text-xs font-semibold text-[#0F766E]">
+                      {copiedId === l.id ? 'Copied' : 'Copy link'}
+                    </button>
+                    <button onClick={() => handleTurnOff(l.id)} className="text-xs font-medium text-brand-ink/65 hover:text-red-600">
+                      Turn off
+                    </button>
+                  </div>
+                </>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      {loaded && links.length === 0 && !open && (
+        <p className="mt-4 text-sm text-brand-ink/60">No switching links yet.</p>
+      )}
+
+      {open && (
+        <form onSubmit={handleCreate} className="mt-4 space-y-3 border-t border-brand-ink/5 pt-4">
+          <div>
+            <label htmlFor="switch-label" className="mb-1 block text-xs font-medium text-brand-ink/65">Name (just for you)</label>
+            <input
+              id="switch-label"
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              maxLength={80}
+              required
+              className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label htmlFor="switch-date" className="mb-1 block text-xs font-medium text-brand-ink/65">
+              First ByUs charge on (when their paid period elsewhere ends)
+            </label>
+            <input
+              id="switch-date"
+              type="date"
+              value={firstChargeDate}
+              onChange={(e) => setFirstChargeDate(e.target.value)}
+              required
+              className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label htmlFor="switch-max" className="mb-1 block text-xs font-medium text-brand-ink/65">
+              How many fans are you bringing over?
+            </label>
+            <input
+              id="switch-max"
+              type="number"
+              min="1"
+              max="5000"
+              value={maxUses}
+              onChange={(e) => setMaxUses(e.target.value)}
+              placeholder="e.g. 40"
+              required
+              className="w-full rounded-lg border border-brand-ink/10 px-3 py-2 text-sm"
+            />
+          </div>
+          <p className="text-xs text-brand-ink/55">
+            The link stops working 3 days before the charge date, and each fan can use one switching
+            link with you once.
+          </p>
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <button disabled={creating} className="rounded-full bg-[#0F766E] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+            {creating ? 'Creating…' : 'Create link'}
           </button>
         </form>
       )}
