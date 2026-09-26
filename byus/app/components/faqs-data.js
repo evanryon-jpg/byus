@@ -26,6 +26,10 @@ export const FAQS = [
     a: "ByUs's standard all-in platform fee starts at 13% of each payment. When a non-founding creator reaches $2,000 in gross ByUs earnings during a calendar month, the rate drops to 10% for the rest of that month and resets to 13% at the start of the next month until the threshold is reached again. The 50 founding spots, for US creators, carry a 10% rate for good, with no earnings requirement. That rate is genuinely all-in: it covers standard domestic and cross-border processing, and ByUs absorbs Stripe's extra charges for international cards and currency conversion, so a fan paying from outside the US doesn't cost you anything extra — the rest is paid straight into your connected Stripe account. Instant payouts, taxes, disputes, or other unusual processor costs may still apply separately, and we'll spell those out when they do.",
   },
   {
+    q: 'Do fans pay sales tax or VAT?',
+    a: "Only where the law says so, and it's always added on top, never taken out of the price you set. A $10 membership is $10 for a fan in the US and $10 plus VAT for a fan in the UK or Europe, shown as its own line before they pay. ByUs collects that tax and pays it to the government, so it never touches your earnings and there's nothing for you to file.",
+  },
+  {
     q: 'When and how do creators get paid?',
     a: "Straight to you, no detours. Connect your own Stripe Express account once. Your share of every payment lands in your Stripe balance the moment a fan pays, and Stripe sends it to your bank every Monday. ByUs never holds your money, and there's no minimum to hit first. Stripe holds a brand-new account's very first payout for about 7 to 14 days while it verifies you; after that it's every week.",
   },
