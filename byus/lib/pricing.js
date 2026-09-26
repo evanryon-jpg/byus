@@ -17,15 +17,6 @@ export const STANDARD_FEE_PERCENT = 13;
 export const DISCOUNTED_FEE_PERCENT = 10;
 export const FEE_DISCOUNT_THRESHOLD_CENTS = 200000;
 
-// Big-creator rate (added Sept 26, 2026): once ANY creator -- founding or not -- reaches
-// $10,000 in gross ByUs earnings in a calendar month, the rest of that month is 9%. Still
-// profitable even on $8 memberships: each extra $10K at 9% leaves ByUs roughly $80 (at $8
-// tiers, all monthly), $155 (at $10) or $305 (at $20) after Stripe's card, Billing (0.7%),
-// non-US card (40% of fans assumed) and payout fees -- more when members pay yearly.
-// Resets with the other tiers at the start of each month.
-export const BIG_CREATOR_FEE_PERCENT = 9;
-export const BIG_CREATOR_THRESHOLD_CENTS = 1000000;
-
 // Sustainable floors for new paid checkouts. Existing subscriptions below this amount
 // may renew unchanged, but no new supporter can start a below-floor checkout.
 // Raised from $5 to $8 on Sept 25, 2026: with Stripe's 30-cent fixed fee per payment, a $5
@@ -47,9 +38,7 @@ export const MIN_ANNUAL_BILLING_MONTHS = 10;
 // homepage gauge, with no effect on anyone's bill. This constant is kept as the hard floor
 // in case that ever changes. If a second payment provider is ever added with different fee
 // economics, this floor is the first number worth re-checking.
-// Lowered to BIG_CREATOR_FEE_PERCENT (9) on Sept 26, 2026 so the big-creator rate isn't
-// floored back up to 10% by applyPlatformMilestoneReduction.
-export const MIN_FEE_PERCENT = 9;
+export const MIN_FEE_PERCENT = 10;
 
 // Launch promo: FOUNDING_CREATOR_LIMIT permanent spots shared by waitlist reservations and creator accounts
 // get DISCOUNTED_FEE_PERCENT (10%) permanently, from day one, without needing to reach
