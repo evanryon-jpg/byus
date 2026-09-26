@@ -458,21 +458,49 @@ export async function sendOpsDigestEmail(to, {
   adminUrl,
 }) {
   const resend = getClient();
-  // UK/EU fan payments: VAT is owed from the first one (see lib/fan-payment-regions.js).
+  // Fan payments abroad: VAT/GST triggers by country (see lib/fan-payment-regions.js).
   const intlMonth = fanRegions ? fanRegions.monthToDate.uk + fanRegions.monthToDate.eu : 0;
-  const usd = (cents) => `$${(cents / 100).toFixed(2)}`;
-  const fanRegionsHtml = fanRegions
-    ? `
-        <h3 style="margin:24px 0 4px;font-size:16px;color:#146359;">Fan payments from the UK and EU</h3>
+  const usd = (cents) => `$${(cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const esc = (v) => String(v).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+  const row = (label, value, last = false) =>
+    `<tr><td style="padding:6px 0;${last ? '' : 'border-bottom:1px solid #EEE;'}">${label}</td><td style="padding:6px 0;${last ? '' : 'border-bottom:1px solid #EEE;'}text-align:right;">${value}</td></tr>`;
+  const note = (html) => `<p style="background:#FBF3E0;border-radius:8px;padding:10px 12px;font-size:13px;color:#5B4718;margin:8px 0 0;">${html}</p>`;
+  const quiet = (html) => `<p style="color:#999;font-size:12px;margin:4px 0 0;">${html}</p>`;
+  let fanRegionsHtml = '';
+  if (fanRegions) {
+    const noThr = fanRegions.noThresholdThisYear || [];
+    const thr = fanRegions.thresholdsThisYear || [];
+    const other = fanRegions.otherThisYear || [];
+    const nearThr = thr.filter((t) => t.pct >= 50);
+    fanRegionsHtml = `
+        <h3 style="margin:24px 0 4px;font-size:16px;color:#146359;">Fan payments outside the US</h3>
         <table style="border-collapse:collapse;width:100%;margin:8px 0 4px;font-size:14px;">
-          <tr><td style="padding:6px 0;border-bottom:1px solid #EEE;">UK, last 24h</td><td style="padding:6px 0;border-bottom:1px solid #EEE;text-align:right;">${fanRegions.last24h.uk} (${usd(fanRegions.last24h.ukCents)})</td></tr>
-          <tr><td style="padding:6px 0;border-bottom:1px solid #EEE;">EU, last 24h</td><td style="padding:6px 0;border-bottom:1px solid #EEE;text-align:right;">${fanRegions.last24h.eu} (${usd(fanRegions.last24h.euCents)})</td></tr>
-          <tr><td style="padding:6px 0;">This month: UK / EU / all fan payments</td><td style="padding:6px 0;text-align:right;">${fanRegions.monthToDate.uk} / ${fanRegions.monthToDate.eu} / ${fanRegions.monthToDate.total}</td></tr>
+          ${row('UK, last 24h', `${fanRegions.last24h.uk} (${usd(fanRegions.last24h.ukCents)})`)}
+          ${row('EU, last 24h', `${fanRegions.last24h.eu} (${usd(fanRegions.last24h.euCents)})`)}
+          ${row('This month: UK / EU / all fan payments', `${fanRegions.monthToDate.uk} / ${fanRegions.monthToDate.eu} / ${fanRegions.monthToDate.total}`, true)}
         </table>
         ${intlMonth > 0
-          ? '<p style="background:#FBF3E0;border-radius:8px;padding:10px 12px;font-size:13px;color:#5B4718;margin:8px 0 0;">UK/EU fans are paying. VAT is owed on these from the first sale, so if ByUs isn’t registered for UK/EU VAT yet (Stripe → Tax → Registrations), that’s the next step.</p>'
-          : '<p style="color:#999;font-size:12px;margin:4px 0 0;">No UK/EU fan payments yet this month. Once they start, that’s the signal to finish UK/EU VAT registration.</p>'}`
-    : '';
+          ? note('UK/EU fans are paying. VAT is owed on these from the first sale, so if ByUs isn’t registered for UK/EU VAT yet (Stripe → Tax → Registrations), that’s the next step.')
+          : quiet('No UK/EU fan payments yet this month. Once they start, that’s the signal to finish UK/EU VAT registration.')}
+        ${noThr.length
+          ? `<table style="border-collapse:collapse;width:100%;margin:12px 0 4px;font-size:14px;">
+              ${noThr.map((c, i) => row(`${esc(c.name)} (no threshold), this year`, `${c.count} (${usd(c.cents)})`, i === noThr.length - 1)).join('')}
+            </table>
+            ${note('These countries tax foreign digital sellers from the first sale, and ByUs isn’t registered in them. Small amounts are low risk; ask the tax service whether to register or block any that keep growing.')}`
+          : ''}
+        ${thr.length
+          ? `<table style="border-collapse:collapse;width:100%;margin:12px 0 4px;font-size:14px;">
+              ${thr.map((t, i) => row(`${esc(t.name)} this year, vs ${esc(t.local)} threshold`, `${usd(t.cents)} (${t.pct}%)`, i === thr.length - 1)).join('')}
+            </table>
+            ${nearThr.length
+              ? note(`${nearThr.map((t) => esc(t.name)).join(', ')} ${nearThr.length === 1 ? 'is' : 'are'} past half of the yearly threshold. Tax starts once it’s passed, so line up registration now.`)
+              : quiet('All under half of their yearly thresholds. Nothing to do yet.')}`
+          : ''}
+        ${other.length
+          ? quiet(`Other countries this year: ${other.slice(0, 8).map((c) => `${esc(c.code)} ${usd(c.cents)}`).join(', ')}${other.length > 8 ? `, and ${other.length - 8} more` : ''}.`)
+          : ''}
+        ${fanRegions.truncated ? quiet('Year totals only count the most recent 3,000 payments, so they’re lower than the real figure. Stripe → Tax → Registrations has the exact numbers.') : ''}`;
+  }
   // Video moderation, content reports, and SMS holds are all sections on the single
   // /admin page (see app/admin/AdminClient.js) rather than dedicated routes -- only
   // appeals and disputes get their own sub-page, so only those two links go deeper.
