@@ -19,7 +19,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { paymentProvider } from '@/lib/payments';
-import { MIN_DISCOUNT_PERCENT, MAX_DISCOUNT_PERCENT, COUPON_DURATION, maxDiscountPercentForPrice } from '@/lib/discounts';
+import { MIN_DISCOUNT_PERCENT, MAX_DISCOUNT_PERCENT, COUPON_DURATION, maxDiscountPercentForPrice, DISCOUNT_CODES_ENABLED } from '@/lib/discounts';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 const CODE_PATTERN = /^[A-Z0-9_-]{3,40}$/;
@@ -62,6 +62,10 @@ export async function POST(request) {
   const session = await getCurrentUser();
   if (!session || session.role !== 'creator') {
     return NextResponse.json({ error: 'Only creators can create discount codes.' }, { status: 403 });
+  }
+
+  if (!DISCOUNT_CODES_ENABLED) {
+    return NextResponse.json({ error: 'Discount codes are turned off on ByUs for now.' }, { status: 403 });
   }
 
   const rateCheck = await checkRateLimit('discount-create', `user:${session.userId}`);
