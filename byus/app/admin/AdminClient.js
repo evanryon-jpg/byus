@@ -11,6 +11,7 @@ import MonthlyBarChart from '../components/charts/MonthlyBarChart';
 import PostVideoPlayer from '../components/PostVideoPlayer';
 import { formatUSD, formatCompactUSD } from '@/lib/format';
 import { CREATOR_SIGNUP_PAUSED } from '@/lib/creator-signup';
+import { creatorCountryName, creatorCountryStatus } from '@/lib/creator-countries';
 
 export default function AdminClient({
   data,
@@ -579,7 +580,11 @@ function CreatorWaitlistSection({ initialWaitlist, initialError }) {
   const [sending, setSending] = useState(false);
   const [notice, setNotice] = useState('');
   const [sendError, setSendError] = useState('');
-  const notYetEmailed = (waitlist || []).filter((w) => !w.reopenNotifiedAt).length;
+  // The reopening email only goes to people in countries where creator accounts are open
+  // (US at launch -- see app/api/admin/waitlist/notify-reopen/route.js).
+  const openNow = (w) => creatorCountryStatus(w.country) === 'launch';
+  const notYetEmailed = (waitlist || []).filter((w) => !w.reopenNotifiedAt && openNow(w)).length;
+  const waitingOnCountry = (waitlist || []).filter((w) => creatorCountryStatus(w.country) === 'soon').length;
 
   async function emailWaitlist() {
     if (!window.confirm(`Email ${notYetEmailed} ${notYetEmailed === 1 ? 'person' : 'people'} that creator signups are open?`)) return;
@@ -597,7 +602,7 @@ function CreatorWaitlistSection({ initialWaitlist, initialError }) {
       );
       if (body.sent > 0 && body.remaining === 0 && !body.failed) {
         const now = new Date().toISOString();
-        setWaitlist((current) => (current || []).map((w) => (w.reopenNotifiedAt ? w : { ...w, reopenNotifiedAt: now })));
+        setWaitlist((current) => (current || []).map((w) => (w.reopenNotifiedAt || !openNow(w) ? w : { ...w, reopenNotifiedAt: now })));
       }
     } catch (err) {
       setSendError(err.message || 'Could not send the emails. Try again.');
@@ -639,6 +644,12 @@ function CreatorWaitlistSection({ initialWaitlist, initialError }) {
               : `${notYetEmailed.toLocaleString()} not emailed yet.`}
         </span>
       </div>
+      {waitingOnCountry > 0 && (
+        <p className="mt-2 text-xs text-brand-ink/60">
+          {waitingOnCountry.toLocaleString()} {waitingOnCountry === 1 ? 'person is' : 'people are'} in the UK, Europe or
+          Canada and won't get this email until creator accounts open in their country.
+        </p>
+      )}
       {notice && <p className="mt-2 text-xs text-[#0F766E]">{notice}</p>}
       {sendError && <p className="mt-2 text-xs text-red-600">{sendError}</p>}
 
@@ -654,6 +665,7 @@ function CreatorWaitlistSection({ initialWaitlist, initialError }) {
             <thead>
               <tr className="border-b border-brand-ink/10 text-left text-xs font-medium uppercase tracking-wide text-brand-ink/60">
                 <th className="py-2 pr-4">Contact</th>
+                <th className="py-2 pr-4">Country</th>
                 <th className="py-2 pr-4">Source</th>
                 <th className="py-2 pr-4">Referral</th>
                 <th className="py-2 pr-4">Joined</th>
@@ -668,6 +680,15 @@ function CreatorWaitlistSection({ initialWaitlist, initialError }) {
                     <a href={`mailto:${w.email}`} className="text-xs text-[#0F766E] hover:underline">
                       {w.email}
                     </a>
+                  </td>
+                  <td className="py-2.5 pr-4 text-brand-ink/70">
+                    {w.country ? creatorCountryName(w.country) : 'United States*'}
+                    {creatorCountryStatus(w.country) === 'soon' && (
+                      <span className="ml-1.5 rounded-full bg-[#C9A961]/20 px-2 py-0.5 text-[11px] font-semibold text-[#6B531F]">Later</span>
+                    )}
+                    {creatorCountryStatus(w.country) === 'unsupported' && (
+                      <span className="ml-1.5 rounded-full bg-brand-ink/10 px-2 py-0.5 text-[11px] font-semibold text-brand-ink/60">Not supported</span>
+                    )}
                   </td>
                   <td className="py-2.5 pr-4 text-brand-ink/70">
                     {w.source ? WAITLIST_SOURCE_LABELS[w.source] || w.source : '—'}
@@ -689,6 +710,7 @@ function CreatorWaitlistSection({ initialWaitlist, initialError }) {
               ))}
             </tbody>
           </table>
+          <p className="mt-2 text-xs text-brand-ink/50">* Joined before the country question was added; treated as US.</p>
         </div>
       )}
     </section>
