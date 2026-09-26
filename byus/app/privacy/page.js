@@ -3,7 +3,7 @@ export const metadata = {
   description: 'What information ByUs collects, how it is used, and who to contact about it.',
 };
 
-const LAST_UPDATED = 'September 23, 2026';
+const LAST_UPDATED = 'September 26, 2026';
 const CONTACT_EMAIL = 'support@byusapp.com';
 
 export default function PrivacyPage() {
@@ -62,8 +62,18 @@ export default function PrivacyPage() {
           <p>
             We share what&rsquo;s necessary to run the service with the vendors that power
             it &mdash; Stripe for payments and payouts, our hosting and database providers, and
-            our email provider for transactional messages. We don&rsquo;t share your information
-            with anyone else except where required by law.
+            our email provider for transactional messages. Apart from the creators you join (see
+            below), we don&rsquo;t share your information with anyone else except where required
+            by law.
+          </p>
+          <p className="mt-3">
+            <strong>Creators you join.</strong> When you become a paying member of a creator, that
+            creator can see your name, email address, tier, and when you joined, and can download
+            this as a member list. This is so they can keep in touch with you about their work and
+            bring their members along if they ever move to another service. Creators agree to use
+            member details only to communicate about their own work, never to sell or hand them to
+            anyone else, and to stop emailing you if you ask. Once you leave a creator, you&rsquo;re
+            no longer included in any new member list they download.
           </p>
           <p className="mt-3">
             When a payment is refunded, reported as unauthorized, or disputed, relevant transaction
@@ -72,7 +82,8 @@ export default function PrivacyPage() {
           </p>
           <p className="mt-3">
             A creator&rsquo;s public profile, posts, and tier information are visible to anyone
-            who visits their page, by design. Your email address is never shown publicly.
+            who visits their page, by design. Your email address is never shown publicly; only the
+            creators you pay can see it.
           </p>
         </Section>
 
