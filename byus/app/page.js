@@ -642,7 +642,7 @@ function VideoUploadDemo() {
         </span>
       </div>
       <p className="mt-3 text-xs text-brand-ink/55">
-        Up to 30 minutes and 2 GB per video, with resolutions up to 4K. Every video gets an
+        Up to 30 minutes and 2 GB per video, played in up to 1080p HD. Every video gets an
         automatic safety scan before fans see it, usually within minutes; a new creator&rsquo;s
         first video also gets a quick human review. ByUs cannot pull from a TikTok or YouTube
         link or bulk-import a channel or library.
