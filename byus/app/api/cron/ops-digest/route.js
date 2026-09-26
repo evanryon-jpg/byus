@@ -1,5 +1,5 @@
 export const dynamic = 'force-dynamic';
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 // Fires once a day (see vercel.json's crons entry) and emails the single ByUs operator
 // a rollup of everything sitting in a queue -- reusing the exact same loaders /admin's
@@ -93,7 +93,8 @@ export async function GET(request) {
       listNewWaitlistSignups().catch(() => []),
       getFoundingPromoStats(query).catch(() => null),
       countNewAccountsLast24h().catch(() => ({ fans: 0, creators: 0 })),
-      // UK/EU fan payments (VAT trigger). A Stripe hiccup just leaves this section out.
+      // Fan payments by country (VAT/GST triggers, see lib/fan-payment-regions.js). A Stripe
+      // hiccup just leaves this section out.
       countFanPaymentsByRegion().catch((err) => {
         console.error('ops-digest: fan payment regions failed (continuing):', err);
         return null;
