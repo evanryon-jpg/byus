@@ -2,7 +2,12 @@
 // and a verified sending domain (byusapp.com) in the Resend dashboard.
 
 import { Resend } from 'resend';
-import { creatorCountryName, creatorCountryStatus } from './creator-countries';
+import {
+  creatorCountryName,
+  creatorCountryStatus,
+  INTERNATIONAL_FOUNDING_LIMIT,
+  INTERNATIONAL_FOUNDING_FEE_PERCENT,
+} from './creator-countries';
 
 const FROM_ADDRESS = 'ByUs <noreply@byusapp.com>';
 // Resend's batch endpoint caps a single call at 100 emails -- larger sends just make
@@ -192,7 +197,7 @@ export async function sendWaitlistConfirmationEmail(to, { displayName, foundingS
         <p>Hi ${greeting},</p>
         <p>Thank you for joining ByUs. ${spot ? "You're one of the very first creators to back what we're building, and that means a lot." : "It means a lot that you want to build your page here."}</p>
         ${countryStatus === 'unsupported' && !spot ? '' : countryStatus === 'soon' && !spot
-          ? '<p>Founding spots are for creators in the US, so you’ll join at standard pricing: a 13% platform fee, dropping to 10% for the rest of any month you earn $2,000 on ByUs.</p>'
+          ? `<p><strong>You’re first in line for an international founding spot.</strong> When creator accounts open in ${place}, ${INTERNATIONAL_FOUNDING_LIMIT} international founding spots open with a ${INTERNATIONAL_FOUNDING_FEE_PERCENT}% platform fee for good, offered in the order people joined the list.</p>`
           : `<p>${spot
           ? `<strong>Your founding spot #${spot} of 50 is reserved.</strong> It locks in a 10% platform fee for good, standard domestic processing included.`
           : 'All 50 founding spots have been reserved, so you’re on the creator waitlist at standard pricing: a 13% platform fee, dropping to 10% for the rest of any month you earn $2,000 on ByUs.'}</p>`}
@@ -379,7 +384,7 @@ export async function sendNewWaitlistSignupEmail(to, { email, displayName, found
           <tr><td style="padding:6px 0;color:#666;">Email</td><td style="padding:6px 0;font-weight:600;">${escapeHtml(email)}</td></tr>
           ${displayName ? `<tr><td style="padding:6px 0;color:#666;">Name</td><td style="padding:6px 0;">${escapeHtml(displayName)}</td></tr>` : ''}
           ${country ? `<tr><td style="padding:6px 0;color:#666;">Country</td><td style="padding:6px 0;">${escapeHtml(country)}</td></tr>` : ''}
-          <tr><td style="padding:6px 0;color:#666;">Founding spot</td><td style="padding:6px 0;">${foundingSpot ? `#${escapeHtml(String(foundingSpot))}` : country && country !== 'United States' ? 'None: outside the US (standard pricing)' : 'None left (standard pricing)'}</td></tr>
+          <tr><td style="padding:6px 0;color:#666;">Founding spot</td><td style="padding:6px 0;">${foundingSpot ? `#${escapeHtml(String(foundingSpot))}` : country && country !== 'United States' ? 'None yet: international founding list (11%)' : 'None left (standard pricing)'}</td></tr>
         </table>
         ${foundingStats ? `<p style="color:#666;font-size:13px;">${escapeHtml(String(foundingStats.claimed))} of ${escapeHtml(String(foundingStats.limit))} founding spots reserved · ${escapeHtml(String(foundingStats.remaining))} remaining</p>` : ''}
         ${adminUrl ? `<p style="margin:24px 0;"><a href="${adminUrl}" style="background:#146359;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;">Open ByUs admin</a></p>` : ''}

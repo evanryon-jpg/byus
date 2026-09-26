@@ -17,6 +17,15 @@
 
 export const LAUNCH_COUNTRIES = ['US'];
 
+// A second group of founding spots for creators in the UK, Europe and Canada, opening
+// when creator accounts launch there (decided Sept 26, 2026). 11% rather than 10% because
+// cross-border payouts cost ByUs ~1.25% more; at 11% an international founding creator
+// leaves ByUs about the same margin as a US founding creator at 10%. First in line = the
+// order people joined founding_waitlist (created_at). Not enforced in billing yet -- that
+// ships with the international launch, before any non-US creator can be paid.
+export const INTERNATIONAL_FOUNDING_LIMIT = 50;
+export const INTERNATIONAL_FOUNDING_FEE_PERCENT = 11;
+
 const SOON = [
   ['GB', 'United Kingdom'], ['CA', 'Canada'],
   ['AT', 'Austria'], ['BE', 'Belgium'], ['BG', 'Bulgaria'], ['HR', 'Croatia'], ['CY', 'Cyprus'],
