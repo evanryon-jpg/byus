@@ -17,7 +17,7 @@ import LivePlayer from '../../components/LivePlayer';
 import PostVideoPlayer from '../../components/PostVideoPlayer';
 import DigitalProductShop from '../../components/DigitalProductShop';
 
-export default function ProfileClient({ data, justSubscribed, subscribedTierId, justTipped, creatorId }) {
+export default function ProfileClient({ data, justSubscribed, subscribedTierId, justTipped, creatorId, switchOffer = null }) {
   const router = useRouter();
   const [subscribing, setSubscribing] = useState(null);
   const [subscribeError, setSubscribeError] = useState('');
@@ -47,7 +47,7 @@ export default function ProfileClient({ data, justSubscribed, subscribedTierId, 
     const res = await fetch('/api/subscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tierId, interval }),
+      body: JSON.stringify({ tierId, interval, ...(switchOffer ? { switchCode: switchOffer.code } : {}) }),
     });
     const result = await res.json();
     if (result.url) {
@@ -57,7 +57,8 @@ export default function ProfileClient({ data, justSubscribed, subscribedTierId, 
     if (res.status === 401) {
       // Not logged in — send them to log in and land right back here afterward, rather
       // than losing their place and having to search for this creator again.
-      router.push(`/login?next=${encodeURIComponent(`/creator/${creatorId}`)}`);
+      const back = `/creator/${creatorId}${switchOffer ? `?switch=${switchOffer.code}` : ''}`;
+      router.push(`/login?next=${encodeURIComponent(back)}`);
       return;
     }
     setSubscribeError(result.error || 'Could not start checkout. Try again.');
@@ -273,6 +274,18 @@ export default function ProfileClient({ data, justSubscribed, subscribedTierId, 
       <div id="tiers" className="scroll-mt-6">
         {!hasActiveSubscription && tiers.length > 0 && (
           <div className="mt-8">
+            {switchOffer && (
+              <div className="mb-4 rounded-2xl border border-[#0F766E]/25 bg-[#0F766E]/5 p-4 text-sm text-[#172033]">
+                <p className="font-semibold">Switching over? You won&rsquo;t pay twice.</p>
+                <p className="mt-1 text-brand-ink/70">
+                  Join now and get in right away. Your first charge is on{' '}
+                  <span className="font-semibold">
+                    {new Date(switchOffer.firstChargeAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}
+                  </span>
+                  , when what you already paid elsewhere runs out. Cancel before then and you&rsquo;re never charged.
+                </p>
+              </div>
+            )}
             {tiers.some((t) => t.annual_price_cents) && (
               <div className="mb-4 flex justify-center">
                 <div className="inline-flex rounded-full bg-brand-ink/5 p-1 text-sm" role="group" aria-label="Billing period">
@@ -337,7 +350,7 @@ export default function ProfileClient({ data, justSubscribed, subscribedTierId, 
                       disabled={subscribing === t.id}
                       className="mt-4 w-full rounded-full bg-[#0F766E] py-2 text-sm font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
                     >
-                      {subscribing === t.id ? 'Redirecting…' : 'Subscribe'}
+                      {subscribing === t.id ? 'Redirecting…' : switchOffer ? 'Join — no charge today' : 'Subscribe'}
                     </button>
                     {/* Sits right under the button that actually leads to a payment form — the
                         one place on this page where a trust signal matters most. */}

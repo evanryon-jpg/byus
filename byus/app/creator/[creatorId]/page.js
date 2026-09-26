@@ -16,6 +16,7 @@ import { getCurrentUser } from '@/lib/session';
 import { loadCreatorProfile } from '@/lib/creator-profile-data';
 import ProfileClient from './ProfileClient';
 import SupporterSourceCapture from '@/app/components/SupporterSourceCapture';
+import { loadSwitchOffer } from '@/lib/switch-links';
 
 export const dynamic = 'force-dynamic';
 
@@ -62,6 +63,12 @@ export default async function CreatorProfilePage({ params, searchParams }) {
     redirect(`/creator/${data.creator.slug}${qs ? `?${qs}` : ''}`);
   }
 
+  // ?switch=CODE: a switching link from this creator (lib/switch-links.js). Shown as a
+  // banner, and passed along to checkout, only while the link is still usable.
+  const switchOffer = searchParams.switch
+    ? await loadSwitchOffer({ code: String(searchParams.switch), creatorId: data.creator.id }).catch(() => null)
+    : null;
+
   return (
     <>
       <SupporterSourceCapture creatorId={data.creator.id} />
@@ -71,6 +78,7 @@ export default async function CreatorProfilePage({ params, searchParams }) {
         subscribedTierId={searchParams.tier || null}
         justTipped={searchParams.tipped === 'true'}
         creatorId={creatorId}
+        switchOffer={switchOffer}
       />
     </>
   );
