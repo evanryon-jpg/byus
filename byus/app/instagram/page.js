@@ -14,7 +14,7 @@ export const revalidate = 300; // founding-spot count refreshes every 5 minutes
 export const metadata = {
   title: 'Your fans. Your page. Your cut. | ByUs',
   description:
-    'Set up a creator page in minutes, offer memberships from $8, and get paid every Monday. The first 50 creators keep 90% for good.',
+    'Set up a creator page in minutes, offer memberships from $8, and get paid every Monday. The first 50 US creators keep 90% for good.',
 };
 
 async function loadRemainingSpots() {
@@ -31,7 +31,7 @@ const PROMISES = [
   {
     stat: '90%',
     title: 'Keep 90%, for good',
-    body: `The first ${FOUNDING_CREATOR_LIMIT} creators pay a 10% platform fee for as long as they're on ByUs, with standard domestic card processing included. After that, it's ${STANDARD_FEE_PERCENT}%.`,
+    body: `The first ${FOUNDING_CREATOR_LIMIT} US creators pay a 10% platform fee for as long as they're on ByUs, with standard domestic card processing included. After that, it's ${STANDARD_FEE_PERCENT}%, dropping to 10% for any month you earn $2,000.`,
   },
   {
     stat: 'Mon',
@@ -78,7 +78,7 @@ export default async function InstagramWelcomePage() {
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-brand-paper/80">
             Set up a creator page in minutes, offer memberships from $8, and get paid every Monday.
-            The first {FOUNDING_CREATOR_LIMIT} creators keep 90% of what they earn, for good.
+            The first {FOUNDING_CREATOR_LIMIT} US creators keep 90% of what they earn, for good.
           </p>
 
           <div className="mt-9 flex flex-wrap justify-center gap-3">
@@ -101,7 +101,7 @@ export default async function InstagramWelcomePage() {
             Free to reserve. You can keep using any platform you already have.
           </p>
           <p className="mt-1.5 text-xs text-brand-paper/50">
-            Creator accounts open in the US first, with the UK, Europe and Canada next.
+            Creator accounts open in the US first, with the UK, Europe and Canada next at standard pricing.
           </p>
         </div>
       </section>
