@@ -124,8 +124,7 @@ function FoundingCreatorProgram({ stats }) {
         </p>
         <p className="mx-auto mt-2 max-w-xl text-sm text-brand-paper/55">
           After the founding spots, creators start at 13% and move to 10% for the rest of
-          any calendar month in which they reach $2,000 in gross ByUs earnings. Every creator
-          who reaches $10,000 in a month pays 9% for the rest of it.
+          any calendar month in which they reach $2,000 in gross ByUs earnings.
         </p>
         <div className="mx-auto mt-8 grid max-w-3xl gap-4 text-left sm:grid-cols-3">
           {perks.map((p) => (
