@@ -209,7 +209,7 @@ export default function EarningsCalculator() {
               <p className="mt-3 text-xs leading-relaxed text-brand-ink/75">
                 Standard pricing starts at {STANDARD_FEE_PERCENT}%. After a non-founding creator reaches $2,000 in gross
                 ByUs earnings during a calendar month, the rate becomes {DISCOUNTED_FEE_PERCENT}% for the rest of that month.
-                Creators with one of the {FOUNDING_CREATOR_LIMIT} founding spots keep {DISCOUNTED_FEE_PERCENT}% for good,
+                US creators with one of the {FOUNDING_CREATOR_LIMIT} founding spots keep {DISCOUNTED_FEE_PERCENT}% for good,
                 with no earnings requirement. Both rates include standard domestic payment processing.
               </p>
             </div>
