@@ -10,12 +10,12 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
 import { USER_SELECT_FIELDS, withAvatarUrl, withEffectiveFee } from '@/lib/user-profile';
-import { isAdmin } from '@/lib/admin';
+import { staffFlags } from '@/lib/admin';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 async function respondWithUser(session, row) {
   const enriched = await withEffectiveFee(withAvatarUrl(row));
-  return NextResponse.json({ user: { ...enriched, is_admin: isAdmin(session) } });
+  return NextResponse.json({ user: { ...enriched, ...staffFlags(session) } });
 }
 
 export async function PATCH(request) {
