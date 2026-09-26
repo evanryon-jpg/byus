@@ -3,7 +3,7 @@ export const metadata = {
   description: 'The terms that govern using ByUs as a creator or a fan.',
 };
 
-const LAST_UPDATED = 'September 23, 2026';
+const LAST_UPDATED = 'September 26, 2026';
 const CONTACT_EMAIL = 'support@byusapp.com';
 
 export default function TermsPage() {
@@ -47,7 +47,10 @@ export default function TermsPage() {
             becomes 10% for the remainder of a calendar month after reaching $2,000 in gross ByUs
             earnings during that month, and resets to 13% at the beginning of the next month until the
             threshold is reached again. Memberships, tips, and paid digital downloads count toward
-            that threshold. The first 50 founding creators, who must be based in the United States, receive a 10% rate from day one. Separate
+            that threshold. The first 50 founding creators, who must be based in the United States, receive a 10% rate from day one.
+            Any creator, founding or not, whose gross ByUs earnings reach $10,000 during a calendar
+            month pays 9% for the remainder of that month, on the same monthly reset and counting
+            rules. Separate
             promotional fee credits may also apply. The rate actually charged is shown in the creator
             dashboard and checkout flow, and ByUs routes the remaining proceeds to the creator&rsquo;s
             connected Stripe account. Instant payouts, taxes, disputes, nonstandard payment methods,
