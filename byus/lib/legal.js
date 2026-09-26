@@ -8,10 +8,12 @@ export const CONTENT_POLICY_VERSION = '2026-09-23';
 export const MEMBERSHIP_REFUND_POLICY_VERSION = '2026-09-12';
 export const TIP_REFUND_POLICY_VERSION = '2026-09-12';
 
-export function membershipCheckoutDisclosure({ amountCents, interval, trialDays = 0 }) {
+export function membershipCheckoutDisclosure({ amountCents, interval, trialDays = 0, firstChargeDate = null }) {
   const amount = `$${(amountCents / 100).toFixed(2)}`;
   const cadence = interval === 'year' ? 'year' : 'month';
-  const trialPrefix = Number.isInteger(trialDays) && trialDays > 0
+  const trialPrefix = firstChargeDate
+    ? `No charge today. Starting ${firstChargeDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}, `
+    : Number.isInteger(trialDays) && trialDays > 0
     ? `After your ${trialDays}-day free trial, `
     : '';
 
