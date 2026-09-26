@@ -17,6 +17,7 @@ import { getAdminEmails } from '@/lib/admin';
 import { sendOpsDigestEmail } from '@/lib/email';
 import { countRiskEvents } from '@/lib/risk-score';
 import { getFoundingPromoStats } from '@/lib/fees';
+import { countFanPaymentsByRegion } from '@/lib/fan-payment-regions';
 
 async function countAutoApprovedVideosLast24h() {
   // "approved" (vs. "approved_creator_pending") is only ever set by the moderation
@@ -81,7 +82,7 @@ export async function GET(request) {
   }
 
   try {
-    const [snapshot, smsHolds, autoApprovedVideosLast24h, risk24h, openSupportRequests, newWaitlistSignups, foundingStats, newAccounts] = await Promise.all([
+    const [snapshot, smsHolds, autoApprovedVideosLast24h, risk24h, openSupportRequests, newWaitlistSignups, foundingStats, newAccounts, fanRegions] = await Promise.all([
       loadComplianceSnapshot(),
       listPendingSmsBroadcastHolds(),
       countAutoApprovedVideosLast24h(),
@@ -92,6 +93,11 @@ export async function GET(request) {
       listNewWaitlistSignups().catch(() => []),
       getFoundingPromoStats(query).catch(() => null),
       countNewAccountsLast24h().catch(() => ({ fans: 0, creators: 0 })),
+      // UK/EU fan payments (VAT trigger). A Stripe hiccup just leaves this section out.
+      countFanPaymentsByRegion().catch((err) => {
+        console.error('ops-digest: fan payment regions failed (continuing):', err);
+        return null;
+      }),
     ]);
 
     await sendOpsDigestEmail(getAdminEmails(), {
@@ -110,6 +116,7 @@ export async function GET(request) {
       foundingStats,
       newFanAccountsLast24h: newAccounts.fans,
       newCreatorAccountsLast24h: newAccounts.creators,
+      fanRegions,
       adminUrl: `${process.env.APP_URL}/admin`,
     });
 
