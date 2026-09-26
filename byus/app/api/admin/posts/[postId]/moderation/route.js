@@ -9,13 +9,14 @@ export const maxDuration = 30;
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/session';
-import { isAdmin } from '@/lib/admin';
+import { isSupportStaff } from '@/lib/admin';
 import { deleteAsset } from '@/lib/mux';
 import { notifySubscribersOfNewPost } from '@/lib/post-notifications';
 
+// Open to support staff as well as admins (see isSupportStaff in lib/admin.js).
 export async function POST(request, { params }) {
   const session = await getCurrentUser();
-  if (!session || !isAdmin(session)) {
+  if (!session || !isSupportStaff(session)) {
     return NextResponse.json({ error: 'Not authorized.' }, { status: 403 });
   }
 
