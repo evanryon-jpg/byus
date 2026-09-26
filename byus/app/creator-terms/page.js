@@ -9,7 +9,7 @@ export default function CreatorAgreementPage() {
   return (
     <div className="mx-auto max-w-2xl px-6 py-16">
       <h1 className="font-display text-3xl font-semibold text-[#172033]">Creator Agreement</h1>
-      <p className="mt-2 text-sm text-brand-ink/60">Version 2026-09-23 · Last updated September 23, 2026</p>
+      <p className="mt-2 text-sm text-brand-ink/60">Version 2026-09-26 · Last updated September 26, 2026</p>
       <p className="mt-6 text-[15px] leading-relaxed text-brand-ink/85">
         This Creator Agreement supplements the <a href="/terms" className="text-brand-teal underline">Terms of Service</a>.
         If you create, publish, sell, or receive money through ByUs, you agree to both documents and the{' '}
@@ -31,6 +31,7 @@ export default function CreatorAgreementPage() {
         </Section>
         <Section title="5. Supporters, delivery, and disputes">
           <p>You are responsible for your relationship with supporters, including promised benefits, digital products, customer communications, lawful refund obligations, and the creator portion of refunds, reversals, and chargebacks. ByUs may remove an offer, issue or facilitate a refund, reserve or recover funds, or provide transaction evidence to a payment processor when reasonably necessary and permitted by law.</p>
+          <p className="mt-3"><strong>Member information.</strong> ByUs lets you see and download the names and email addresses of your current members. You may use this information only to communicate with those members about your own work and memberships, including telling them where to find you if you move to another service. You will not sell, rent, or share it with anyone else (other than a service provider handling it for you under the same limits), will honor every request to stop receiving messages, will keep it reasonably secure, and will follow the email and privacy laws that apply to you. ByUs may remove access to member information if these limits are broken.</p>
         </Section>
         <Section title="6. Taxes and compliance">
           <p>You are responsible for licenses, registrations, reporting, and taxes assigned to you by law. ByUs may collect, withhold, report, or remit amounts when legally required and may request accurate tax or identity information before enabling or releasing payments.</p>
